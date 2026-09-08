@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc11] - 2026-09-08 [PUBLISHED]
+
+### Added
+
+- **Imperative open/close API — `open()`, `close()`, `toggle()`, `isOpen`.** The element (and the
+  underlying `WebMultiSelect`) now expose a programmatic API to drive the dropdown: `open()`, `close()`,
+  `toggle()`, plus an `isOpen` property whose getter reports the state and whose setter opens/closes it.
+  Each element method flushes pending property writes first (same contract as `getSelected()` /
+  `setSelected()`), so `el.options = data; el.open()` works with no `await`. Mirrors the calendar
+  open/close API in web-daterangepicker. Calling `open()` from a consumer's **own** click handler now
+  opens and *stays* open — the method arms the same one-tick guard the internal pointer path uses, so the
+  trailing document click is no longer misread as an outside-click that re-closes it. New demo:
+  `examples-data-api.html` §API07.
+
+- **`show-clear` — inline clear (✕) button in the input.** A new opt-in attribute/property (off by
+  default) that renders a small ✕ inside the input, just left of the toggle chevron. It appears only
+  while something is selected and the control is enabled; clicking it wipes the whole selection and any
+  search text, fires a single `change`, and refocuses the input. Rendered as a themeable CSS mask icon
+  (`--ms-input-clear-*`, including `--ms-input-clear-border-radius` which follows `--ms-border-radius`).
+  New demo: `examples-basic.html` §BU01b.
+
+### Changed
+
+- **Input decorations now use a flex "field shell" instead of absolute overlays.** `.ms__input-wrapper`
+  is now the bordered field (border, background, radius, and the focus ring via `:focus-within`); the
+  `<input>` is a transparent `flex: 1; min-width: 0` child, and the `[N]` counter, the ✕ clear, and the
+  chevron are real flex siblings in the trailing row. They space themselves (`--ms-input-gap`) and never
+  collide — previously each was absolutely pinned by a hard-coded `inset-inline-end`, so `show-counter` +
+  `show-clear` overlapped. Long typed text / single-select labels now clip inside the input's own box and
+  can never slide under the icons. RTL falls out of the flex direction (no inset mirroring needed). The
+  chevron, now a real box rather than a click-through overlay, drives open/close itself. **Removed
+  now-obsolete internal theming vars:** `--ms-input-padding`, `--ms-input-padding-right`,
+  `--ms-toggle-right`, `--ms-counter-offset`, `--ms-input-clear-inset`, `--ms-input-clear-gutter`,
+  `--ms-transform-center-y` (positioning is no longer manual). Field padding is `--ms-input-padding-h`;
+  inter-item spacing is the new `--ms-input-gap`.
+
+- **The selected-items popover now defaults to the field width, matching the dropdown.**
+  `--ms-selected-popover-width` previously defaulted to a fixed `32rem` independent of the control;
+  it now defaults to `var(--ms-input-current-width)`, so both floating panels line up under the field.
+  Set `selected-popover-width` (or the CSS var) to a fixed length for the old behavior.
+
+- **Toggle chevron is now a Lucide mask icon instead of the `▼` text character.** The dropdown indicator
+  renders the shared `--ms-icon-chevron` glyph via a CSS mask (consistent with the ✕ / count-clear /
+  badge-remove icons) rather than a Unicode arrow, so it no longer depends on font rendering and themes
+  uniformly through `--ms-toggle-icon-color` / `--ms-toggle-icon-size`. It points down when closed and
+  rotates to point up when open, as before. Purely visual — no API or markup change (still `.ms__toggle`).
+
 ## [2.0.0-rc10] - 2026-08-28 [PUBLISHED]
 
 ### Added
