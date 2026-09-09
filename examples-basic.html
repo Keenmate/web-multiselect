@@ -45,6 +45,41 @@
             </div>
         </div>
 
+        <!-- Clear button -->
+        <div class="card">
+            <h2>BU01b · Inline Clear (✕) Button</h2>
+            <p>Add <code>show-clear</code> for an inline ✕ inside the input that wipes the whole
+            selection. It appears only while something is selected and refocuses the input after clearing.</p>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Multi-select with clear</label>
+                    <web-multiselect
+                        id="clear-multi"
+                        show-clear
+                        show-counter
+                        value-member="value"
+                        display-value-member="label"
+                        search-placeholder="Search technologies...">
+                    </web-multiselect>
+                    <small class="form-text">With <code>show-counter</code> too — the <code>[N]</code> counter, the ✕, and the chevron all sit at the input's trailing edge</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Single-select with clear</label>
+                    <web-multiselect
+                        id="clear-single"
+                        show-clear
+                        multiple="false"
+                        value-member="value"
+                        display-value-member="label"
+                        icon-member="icon"
+                        search-placeholder="Select language...">
+                    </web-multiselect>
+                    <small class="form-text">The ✕ resets the field to empty</small>
+                </div>
+            </div>
+        </div>
+
         <!-- Single Select Mode -->
         <div class="card">
             <h2>BU02 · Single-Select Mode</h2>
@@ -565,6 +600,17 @@
                 countriesSelect.options = countries;
             }
 
+            // Clear button (multi + single)
+            const clearMulti = document.getElementById('clear-multi');
+            if (clearMulti) {
+                clearMulti.options = technologies;
+                clearMulti.setSelected(['js', 'ts']);
+            }
+            const clearSingle = document.getElementById('clear-single');
+            if (clearSingle) {
+                clearSingle.options = languages;
+            }
+
             // Single select
             const singleSelect = document.getElementById('single-select');
             if (singleSelect) {
@@ -741,6 +787,7 @@
 
     <!-- Development mode: Load from src -->
     <script type="module" src="/src/index.ts"></script>
+    <script type="module" src="examples-copy-link.js"></script>
     <script type="module" src="examples-chapter-nav.js"></script>
 </body>
 </html>

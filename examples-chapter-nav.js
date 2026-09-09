@@ -60,7 +60,10 @@
         var section = h2.closest('.card, .example-section') || h2.parentElement || h2;
 
         var clone = h2.cloneNode(true);
-        Array.prototype.forEach.call(clone.querySelectorAll('.badge'), function (b) { b.remove(); });
+        // Drop inline chips before reading the label: `.badge` (e.g. a "NEW" pill) and
+        // `.copy-link` (the share-link button appended by examples-copy-link.js, whose
+        // hidden "Copied!" text would otherwise leak into the nav label).
+        Array.prototype.forEach.call(clone.querySelectorAll('.badge, .copy-link'), function (b) { b.remove(); });
         var label = (clone.textContent || '').replace(/\s+/g, ' ').trim() || ('Section ' + (i + 1));
 
         var id = section.id || h2.id;

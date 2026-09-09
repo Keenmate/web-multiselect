@@ -332,6 +332,51 @@ multiselect.options = products;</pre></div>
             </div>
         </section>
 
+        <!-- Example 7b: Open / Close API -->
+        <section class="example-section">
+            <h2>API07 · Open / Close API</h2>
+            <p class="description">
+                Drive the dropdown open state from your own code — wizards, "open on step",
+                or custom trigger buttons. Calling <code>open()</code> from a button's own
+                click handler works directly: the component ignores that opening click so it
+                won't immediately re-close.
+            </p>
+
+            <ul class="feature-list">
+                <li><code>open()</code> - Open the dropdown</li>
+                <li><code>close()</code> - Close the dropdown</li>
+                <li><code>toggle()</code> - Toggle the dropdown open/closed</li>
+                <li><code>isOpen</code> - Boolean property; reading returns the state, assigning <code>true</code>/<code>false</code> opens/closes it</li>
+            </ul>
+
+            <div class="demo-area">
+                <label class="demo-label">Controlled Multiselect:</label>
+                <web-multiselect id="openclose-demo"></web-multiselect>
+
+                <div class="controls" style="margin-top: 1rem;">
+                    <button onclick="openCloseDemo('open')">open()</button>
+                    <button onclick="openCloseDemo('close')">close()</button>
+                    <button onclick="openCloseDemo('toggle')">toggle()</button>
+                    <button onclick="showOpenState()">Read isOpen</button>
+                </div>
+
+                <div class="output">
+                    <div class="output-label">isOpen:</div>
+                    <pre id="output-openclose">false</pre>
+                </div>
+            </div>
+
+            <div class="code-block"><pre>const multiselect = document.querySelector('web-multiselect');
+
+multiselect.open();      // Open the dropdown
+multiselect.close();     // Close the dropdown
+multiselect.toggle();    // Toggle open/closed
+
+multiselect.isOpen;          // → true / false
+multiselect.isOpen = true;   // open by assignment
+multiselect.isOpen = false;  // close by assignment</pre></div>
+        </section>
+
         <!-- Example 8: Async Search / Lookup -->
         <section class="example-section">
             <h2>DA04 · Async Search / Lookup</h2>
@@ -809,6 +854,15 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
                     'Array.isArray': Array.isArray(value)
                 }, null, 2);
             });
+
+            // API07: open/close/toggle + isOpen.
+            const openCloseSelect = document.querySelector('#openclose-demo');
+            openCloseSelect.options = [
+                ['opt1', 'Option 1'],
+                ['opt2', 'Option 2'],
+                ['opt3', 'Option 3'],
+                ['opt4', 'Option 4']
+            ];
 
             // Example 8: Async Search
 
@@ -1462,6 +1516,20 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
             }, null, 2);
         };
 
+        // API07: call the imperative method, then reflect the resulting isOpen state.
+        window.openCloseDemo = (method) => {
+            const select = document.querySelector('#openclose-demo');
+            select[method]();
+            window.showOpenState();
+        };
+
+        window.showOpenState = () => {
+            const select = document.querySelector('#openclose-demo');
+            document.getElementById('output-openclose').textContent = JSON.stringify({
+                'isOpen': select.isOpen
+            }, null, 2);
+        };
+
         window.showAsyncData = () => {
             const select = document.querySelector('#async-search');
             const value = select.getValue();
@@ -1491,6 +1559,7 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
 
     <!-- Development mode: Load from src -->
     <script type="module" src="/src/index.ts"></script>
+    <script type="module" src="examples-copy-link.js"></script>
     <script type="module" src="examples-chapter-nav.js"></script>
 </body>
 </html>

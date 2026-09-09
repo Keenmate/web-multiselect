@@ -6,6 +6,12 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 
+# Pin to the latest npm before installing anything. The npm bundled in the base
+# image can lag by weeks; newer npm ships fixes and stricter registry handling
+# that reduce exposure to supply-chain attacks. Kept as its own cached layer so
+# it only re-runs when the base image changes.
+RUN npm install -g npm@latest
+
 # Install deps from package.json against the npm registry.
 #
 # NOT `npm ci`: the committed package-lock.json resolves
@@ -48,11 +54,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # The example pages load the library via <script type="module"> from ./dist and
 # fetch demo data from ./examples-data, so the served root needs the HTML pages,
-# the shared stylesheet, the shared chapter-nav script, the demo data, the docs,
-# and the compiled dist/.
+# the shared stylesheet, the shared chapter-nav + copy-link scripts, the demo
+# data, the docs, and the compiled dist/.
 COPY --from=build /app/*.html            /usr/share/nginx/html/
 COPY --from=build /app/examples-shared.css /usr/share/nginx/html/
 COPY --from=build /app/examples-chapter-nav.js /usr/share/nginx/html/
+COPY --from=build /app/examples-copy-link.js /usr/share/nginx/html/
 COPY --from=build /app/examples-data     /usr/share/nginx/html/examples-data/
 COPY --from=build /app/docs              /usr/share/nginx/html/docs/
 COPY --from=build /app/dist              /usr/share/nginx/html/dist/
