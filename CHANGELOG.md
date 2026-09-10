@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc12] - 2026-09-10 [PUBLISHED]
+
+### Added
+
+- **`overlay-group` — scope the "one overlay open at a time" coordination.** The dropdown now joins a
+  cross-component single-active-overlay group (core `registerOverlay`): opening it dismisses every other
+  participating overlay — other multiselects, datepickers, or any external popover that dispatches the
+  `km-overlay-activated` document event — and it closes itself when another overlay in its group opens.
+  The new `overlay-group` attribute/property scopes this to a named group; overlays sharing a group
+  coordinate, different groups are independent, and unset means the default (ungrouped) group in which
+  every ungrouped overlay coordinates. Outside-click dismissal is unchanged and always on — this only
+  governs the open-broadcast. Fixes the old behaviour where two multiselects could sit open at once.
+  Targeted by `e2e/single-active.spec.ts` (fixture `test/single-active.html`).
+
+- **`--ms-toggle-rotate-closed` / `--ms-toggle-rotate-open` — themeable toggle-chevron rotation.**
+  The toggle rotates the *directional* `--base-icon-chevron` into place (defaults `90deg` closed →
+  down, `-90deg` open → up). A theme that supplies a **pre-oriented** chevron glyph (one that already
+  points down) can now opt out of the orientation: set both to `0deg` for a static glyph, or
+  `0deg` / `180deg` for a down-glyph that flips up on open — without touching the base contract. See
+  the Material Design card in `examples-theming.html`, which pairs a down-caret glyph with the
+  `0deg` / `180deg` opt-out.
+
+- **`--ms-fullscreen-nav-btn-icon` — dedicated glyph for the fullscreen match-navigator pager.**
+  The pager's prev/next (`^` / `⌄`) buttons previously masked the shared `--ms-icon-chevron`, so a
+  theme that repointed `--base-icon-chevron` at a pre-oriented toggle glyph would leak it into the
+  pager (which rotates its source ±90° and expects a right-pointing chevron). The pager now reads its
+  own token, defaulting to `--ms-icon-chevron` — so nothing changes by default, but a theme can
+  diverge the pager glyph independently. The Material card demonstrates the pairing.
+
+### Fixed
+
+- **Dropdown / selected-items popover rendered 2px wider than the input.** Both panels take their
+  width from `--ms-input-current-width` — the input wrapper's `offsetWidth`, a **border-box**
+  measurement — but were themselves `content-box`, so each added its own 1px border *on top*, making
+  the panel overhang the input it's anchored to. Both now use `box-sizing: border-box`, so their
+  outer width matches the input exactly.
+
+### Changed
+
+- **Icon glyphs now flow from the shared `--base-icon-*` contract.** The four `--ms-icon-*` glyphs
+  that have a shared counterpart are wired through the `@keenmate/base-css-variables` layer so a
+  single `--base-icon-*` override re-skins the affordance across every KeenMate component at once —
+  matching how the ~95 other `--ms-*` tokens already fall back to `--base-*`:
+  - **Toggle + pager → `--base-icon-chevron`.** `--ms-icon-chevron` (the dropdown toggle and the
+    fullscreen pager nav) now flows from the base chevron — a Lucide angle that fills its viewBox, so
+    it keeps the previous optical size. It points **right** at rest; the toggle rotates it 90° to
+    point down (closed) / -90° to point up (open), and the pager rotates it -90° (prev/up) / 90°
+    (next/down) — replacing the old up-chevron + `scaleY(-1)` flip. (An earlier iteration used the
+    solid `--base-icon-caret-down`, but that glyph is a small custom triangle that rendered visibly
+    smaller than the rest of the Lucide-based set.)
+  - **Field-clear → `--base-icon-clear`.** `--ms-icon-clear` (the input clear ✕ and count-display
+    clear) prefers `--base-icon-clear`, so a theme can diverge field-clear from close/remove; it still
+    falls back to the remove glyph by default.
+  - **Badge remove → `--base-icon-remove` → `--base-icon-close`.** `--ms-icon-remove` (badge ×,
+    fullscreen/popover close ✕) now follows the base remove/close glyph.
+  - **Search → `--base-icon-search`.** `--ms-icon-search` (fullscreen search-mode toggle) follows the
+    base search glyph.
+
+  Each keeps its existing inline Lucide SVG as the standalone fallback, so default appearance is
+  unchanged when no base layer is loaded. `--ms-icon-search-clear` (the distinct Lucide `search-x`)
+  stays local — it has no `--base-icon-*` counterpart.
+
+- **More tokens flow from `--base-*` (theming + dark-mode fidelity).** A follow-up audit wired five
+  more `--ms-*` tokens that hardcoded a value where a dedicated `--base-*` counterpart exists:
+  - `--ms-input-bg-disabled` → `--base-input-bg-disabled` (now `light-dark()`-aware — the flat gray
+    no longer stays light on dark themes).
+  - `--ms-dropdown-box-shadow` → `--base-dropdown-box-shadow` (now `light-dark()`-aware — deepens on
+    dark themes).
+  - `--ms-input-clear-color` → `--base-input-clear-color`, `--ms-input-clear-bg-hover` →
+    `--base-input-clear-bg-hover` (dedicated field-clear knobs).
+  - `--ms-easing-snappy` → `--base-ease-standard` (exact-match cubic-bezier).
+
+  All keep their prior value as the standalone fallback. **Deliberately left local:** the transition
+  *durations* (the `--ms` 150/200ms scale doesn't align with `--base-duration-*`, so wiring would
+  silently retime animations) and the z-index scale (the multiselect keeps a deliberate high stack —
+  dropdown 9999, fullscreen 10001+ — that must sit above app chrome, independent of `--base-z-*`).
+
 ## [2.0.0-rc11] - 2026-09-08 [PUBLISHED]
 
 ### Added

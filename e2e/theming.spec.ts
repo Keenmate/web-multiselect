@@ -23,7 +23,8 @@ test('--ms-rem scales the input height proportionally', async ({ page }) => {
 
 test('individual --ms-* override flows through to the rendered border', async ({ page }) => {
     const p = picker(page, 'custom-border');
-    const borderColor = await p.locator('.ms__input').evaluate(el => getComputedStyle(el).borderTopColor);
+    // The field border lives on the wrapper shell (the <input> itself is borderless).
+    const borderColor = await p.locator('.ms__input-wrapper').evaluate(el => getComputedStyle(el).borderTopColor);
     expect(borderColor).toBe('rgb(255, 0, 0)');
 });
 

@@ -93,13 +93,12 @@ test.describe('width constraints', () => {
         expect(dropW).toBeGreaterThan(inputW + 100); // decoupled from the input
     });
 
-    test('removing selected-popover-width falls back to the intrinsic 32rem default', async ({ page }) => {
+    test('removing selected-popover-width falls back to the field width', async ({ page }) => {
         const p = picker(page, 'panel-widths');
         // Drop the per-instance override; the attribute handler must clear the inline var so the
-        // :host default (calc(32 * --ms-rem)) takes over.
+        // :host default (var(--ms-input-current-width)) takes over — the popover then tracks the
+        // live field width, same as the dropdown.
         await p.evaluate((el: HTMLElement) => el.removeAttribute('selected-popover-width'));
-        const remPx = await p.evaluate((el: HTMLElement) =>
-            parseFloat(getComputedStyle(el).getPropertyValue('--ms-rem')) || 10);
 
         await openDropdown(p);
         await p.locator('.ms__option').first().click();
@@ -107,8 +106,8 @@ test.describe('width constraints', () => {
         const popover = p.locator('.ms__selected-popover');
         await expect(popover).toBeVisible();
         const popW = (await popover.boundingBox())!.width;
-        expect(popW).toBeGreaterThanOrEqual(32 * remPx - 3);
-        expect(popW).toBeLessThanOrEqual(32 * remPx + 3); // 32rem intrinsic default, not the input width
+        const fieldW = (await p.locator('.ms__input-wrapper').boundingBox())!.width;
+        expect(Math.abs(popW - fieldW)).toBeLessThan(3); // tracks the field width, not a fixed 32rem
     });
 });
 
@@ -211,11 +210,12 @@ test.describe('containing-block drift detection', () => {
         const p = picker(page, 'transform-anchored');
         const dropdown = await openDropdown(p);
 
-        // The panel really is where it belongs: left-aligned with the input, just below it.
-        const inputBox = (await p.locator('.ms__input').boundingBox())!;
+        // The panel really is where it belongs: left-aligned with the field (the wrapper
+        // shell the panel anchors to), just below it.
+        const fieldBox = (await p.locator('.ms__input-wrapper').boundingBox())!;
         const dropBox = (await dropdown.boundingBox())!;
-        expect(Math.abs(dropBox.x - inputBox.x)).toBeLessThan(2);
-        expect(dropBox.y - (inputBox.y + inputBox.height)).toBeLessThan(12);
+        expect(Math.abs(dropBox.x - fieldBox.x)).toBeLessThan(2);
+        expect(dropBox.y - (fieldBox.y + fieldBox.height)).toBeLessThan(12);
 
         expect(warnings, 'drift warning fired for a correctly-anchored panel').toEqual([]);
     });

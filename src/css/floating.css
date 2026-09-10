@@ -37,6 +37,10 @@
 .ms__dropdown {
   display: none;
   position: fixed;
+  /* --ms-dropdown-width is the input wrapper's offsetWidth (a border-box measurement), so this
+     surface must be border-box too — otherwise its own 1px border is added on top and the panel
+     renders 2px wider than the input it's anchored to. */
+  box-sizing: border-box;
   font-family: inherit; /* Ensure font inherits from container */
   z-index: var(--ms-z-index-dropdown);
   background: var(--ms-dropdown-bg);
@@ -284,13 +288,16 @@
   width: var(--ms-fullscreen-nav-btn-icon-size);
   height: var(--ms-fullscreen-nav-btn-icon-size);
   background-color: currentColor;
-  -webkit-mask: var(--ms-icon-chevron) center / contain no-repeat;
-          mask: var(--ms-icon-chevron) center / contain no-repeat;
+  -webkit-mask: var(--ms-fullscreen-nav-btn-icon) center / contain no-repeat;
+          mask: var(--ms-fullscreen-nav-btn-icon) center / contain no-repeat;
+  /* --ms-fullscreen-nav-btn-icon points RIGHT (defaults to the base chevron); rotate it to
+     point up for "prev". Its own token so a pre-oriented toggle glyph can't leak in here. */
+  transform: rotate(-90deg);
 }
 
-/* Chevron points up by default; the "next" (down) button flips it vertically. */
+/* The "next" (down) button rotates the same right-pointing chevron the other way. */
 .ms__fullscreen-nav-btn--next::before {
-  transform: scaleY(-1);
+  transform: rotate(90deg);
 }
 
 /* The leading element (search field's wrapper or the title) fills the bar, pushing
@@ -712,6 +719,10 @@
 .ms__selected-popover {
   display: none;
   position: fixed;
+  /* Border-box so the 1px border sits inside --ms-selected-popover-width (the input's border-box
+     offsetWidth) rather than adding to it — otherwise the popover renders 2px wider than the input
+     and overhangs it. Matches .ms__dropdown. */
+  box-sizing: border-box;
   z-index: var(--ms-z-index-popover);
   background: var(--ms-selected-popover-bg);
   border: var(--ms-selected-popover-border);

@@ -181,6 +181,9 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `show-counter` displays count next to toggle                  | ✓      | `counter.spec.ts`            | `counter.html`            |
 | Counter click opens selected-items popover                    | ✓      | `counter.spec.ts`            | `counter.html`            |
 | `getCounterCallback` formats count text (i18n)                | ✓      | `counter.spec.ts`            | `counter.html`            |
+| `show-clear` ✕ appears only while something is selected       | ✓      | `clear-button.spec.ts`       | `clear-button.html`       |
+| Clicking ✕ wipes the selection and fires one `change`         | ✓      | `clear-button.spec.ts`       | `clear-button.html`       |
+| ✕ single-select clears value + input; absent without opt-in   | ✓      | `clear-button.spec.ts`       | `clear-button.html`       |
 
 ## 15. Events & API
 
@@ -194,6 +197,9 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `options` setter replaces options                             | ✓      | `events-api.spec.ts`         | `events-api.html`         |
 | `updateOptions(partial)` updates without rebuilding DOM       | ✗      |      |         |
 | Attribute changes update without losing selection             | ✓      | `events-api.spec.ts`         | `events-api.html`         |
+| `open()` from a consumer click opens and stays open           | ✓      | `open-close-api.spec.ts`     | `open-close-api.html`     |
+| `close()` / `toggle()` drive the dropdown                     | ✓      | `open-close-api.spec.ts`     | `open-close-api.html`     |
+| `isOpen` property get/set                                     | ✓      | `open-close-api.spec.ts`     | `open-close-api.html`     |
 
 ## 16. Sizing & theming
 

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — input clear (✕) button</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>input clear (✕) button</h1>
+    <p>Targeted by <code>e2e/clear-button.spec.ts</code>. The inline ✕ (opt-in via
+    <code>show-clear</code>) wipes the whole selection, appears only while something is
+    selected, and refocuses the input.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">show-clear (multi-select)</div>
+        <web-multiselect id="ms-clear" show-clear show-counter value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">show-clear (single-select)</div>
+        <web-multiselect id="ms-clear-single" show-clear multiple="false"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">no show-clear (control)</div>
+        <web-multiselect id="ms-noclear" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = [
+            { value: 'apple',  label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' }
+        ];
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['ms-clear', 'ms-clear-single', 'ms-noclear']) {
+                document.getElementById(id).options = items;
+            }
+        });
+    </script>
+</body>
+</html>

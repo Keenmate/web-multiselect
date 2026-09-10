@@ -123,6 +123,7 @@ Tree + multiple only.` },
   { configKey: 'badgesThresholdMode',     attribute: 'badges-threshold-mode',       converter: toEnum(['count', 'partial'] as const, { default: 'count' }), on: 'update', description: 'How `badgesThreshold` is interpreted: collapse to a count badge, or keep partial badges + a "more" badge.' },
   { configKey: 'searchInputMode',         attribute: 'search-input-mode',           converter: toEnum(['normal', 'readonly', 'hidden'] as const, { default: 'normal' }), on: 'reinit', description: 'Search field mode: editable, read-only, or hidden.' },
   { configKey: 'searchMode',              attribute: 'search-mode',                 converter: toEnum(['filter', 'navigate'] as const, { default: 'filter' }), on: 'reinit', description: 'Whether typing filters the list or navigates it.' },
+  { configKey: 'overlayGroup',            attribute: 'overlay-group',               converter: toText({ isNullable: true }), on: 'reinit', description: 'Scope the "one overlay open at a time" coordination to a named group. Overlays (multiselects, datepickers, external popovers) sharing a group dismiss each other when one opens; different groups are independent. Unset = the default (ungrouped) group.' },
   { configKey: 'actionsLayout',           attribute: 'actions-layout',              converter: toEnum(['nowrap', 'wrap'] as const, { default: 'nowrap' }), on: 'reinit', description: 'Whether the action bar wraps or stays on one line.' },
   { configKey: 'actionsPosition',         attribute: 'actions-position',            converter: toEnum(['top', 'bottom'] as const, { default: 'top' }), on: 'reinit', description: 'Whether the action bar sits above or below the list.' },
   { configKey: 'actionsAlign',            attribute: 'actions-align',               converter: toEnum(['stretch', 'left', 'right', 'center', 'space-between'] as const, { default: 'stretch' }), on: 'update', description: 'Horizontal alignment of the action buttons.' },
@@ -165,6 +166,7 @@ Tree + multiple only.` },
   { configKey: 'isCloseOnSelect',         attribute: 'close-on-select',             converter: toBool('default-false'), on: 'update', description: 'Close the dropdown immediately after a selection.' },
   { configKey: 'isAddNewAllowed',         attribute: 'allow-add-new',               converter: toBool('default-false'), on: 'reinit', description: 'Allow adding a new option from the search text.' },
   { configKey: 'isCounterShown',          attribute: 'show-counter',                converter: toBool('default-false'), on: 'update', description: 'Show a selected-count indicator.' },
+  { configKey: 'isClearShown',            attribute: 'show-clear',                  converter: toBool('default-false'), on: 'update', description: 'Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses.' },
   { configKey: 'isBadgeFullTitleShown',   attribute: 'show-badge-full-title',       converter: toBool('default-false'), on: 'update', description: 'Show the full title on badges instead of the short label.' },
   { configKey: 'isVirtualScrollEnabled',  attribute: 'enable-virtual-scroll',       converter: toBool('default-false'), on: 'reinit', description: 'Force virtual scrolling on regardless of the threshold.' },
   { configKey: 'isBadgeTooltipsEnabled',  attribute: 'enable-badge-tooltips',       converter: toBool('default-false'), on: 'update', description: 'Enable tooltips on badges.' },
@@ -828,6 +830,37 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /** Dismiss the transient message shown by {@link showMessage}, if any. */
   hideMessage(): void {
     this.#picker?.hideMessage();
+  }
+
+  // ── imperative open/close API (flush pending writes, then delegate) ─────────
+
+  /** Open the dropdown. */
+  open(): void {
+    this.flush();
+    this.#picker?.open();
+  }
+
+  /** Close the dropdown. */
+  close(): void {
+    this.flush();
+    this.#picker?.close();
+  }
+
+  /** Toggle the dropdown open/closed. */
+  toggle(): void {
+    this.flush();
+    this.#picker?.toggle();
+  }
+
+  /** Whether the dropdown is currently open. Assigning opens/closes it. */
+  get isOpen(): boolean {
+    this.flush();
+    return this.#picker?.isOpen ?? false;
+  }
+
+  set isOpen(value: boolean) {
+    this.flush();
+    if (this.#picker) this.#picker.isOpen = value;
   }
 
   destroy(): void {

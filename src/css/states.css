@@ -7,15 +7,16 @@
    the `.ms` block that flow through to multiple internal elements.
 */
 
-/* Disabled state */
-.ms--disabled .ms__input {
+/* Disabled state — the wrapper is the field shell now, so dim + grey it there
+   (opacity flows down to the input/counter/clear/toggle children). */
+.ms--disabled .ms__input-wrapper {
   opacity: var(--ms-disabled-input-opacity);
-  cursor: not-allowed;
   background: var(--ms-input-bg-disabled);
+  cursor: not-allowed;
 }
 
-.ms--disabled .ms__toggle {
-  opacity: var(--ms-disabled-input-opacity);
+.ms--disabled .ms__input {
+  cursor: not-allowed;
 }
 
 /* No checkboxes modifier (for simple select mode) */

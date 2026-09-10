@@ -131,6 +131,7 @@ multiselect.setSelected(['js', 'ts']);
 | `badges-max-visible` | `number` | `3` | Max badges shown in partial mode |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
 | `show-counter` | `boolean` | `false` | Show `[3]` badge next to toggle icon |
+| `show-clear` | `boolean` | `false` | Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses |
 | `enable-badge-tooltips` | `boolean` | `false` | Enable tooltips on selected badges |
 | `badge-tooltip-placement` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Tooltip placement relative to badge |
 | `badge-tooltip-delay` | `number` | `100` | Delay in ms before showing tooltip |
@@ -155,6 +156,7 @@ multiselect.setSelected(['js', 'ts']);
 | `enable-search` | `boolean` | `true` | Enable/disable search functionality |
 | `search-input-mode` | `'normal' \| 'readonly' \| 'hidden'` | `'normal'` | Search input display mode |
 | `search-mode` | `'filter' \| 'navigate'` | `'filter'` | Search behavior: `filter` hides non-matches, `navigate` jumps to matches |
+| `overlay-group` | `string` | — | Scope the "one overlay open at a time" coordination to a named group. Overlays (multiselects, datepickers, external popovers) sharing a group dismiss each other when one opens; different groups are independent. Unset = the default (ungrouped) group |
 | `show-search-mode-toggle` | `boolean` | `false` | In the phone fullscreen overlay, show a leading icon in the search bar that flips `search-mode` between `filter` and `navigate` live (no reopen). Fullscreen-only |
 | `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list |
 | `value-member` | `string` | - | Property name for value/ID extraction from custom objects |
@@ -390,6 +392,10 @@ You do **not** need to await between a property write and an imperative method �
 | `getSelected()` | Get currently selected options as array of option objects |
 | `setSelected(values: (string \| number)[])` | Set selected values by ID/value |
 | `getValue()` | Get selected value(s) — returns single value in single-select mode, array in multi-select mode |
+| `open()` | Open the dropdown |
+| `close()` | Close the dropdown |
+| `toggle()` | Toggle the dropdown open/closed |
+| `isOpen` | Property: `true` when the dropdown is open. Assigning `true`/`false` opens/closes it |
 | `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `searchPlaceholder`) or their kebab attribute (`search-placeholder`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
 | `destroy()` | Clean up and destroy instance |
 

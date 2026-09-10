@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — single active overlay</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+        .fixture { display: flex; gap: 2rem; align-items: flex-start; }
+    </style>
+</head>
+<body>
+    <h1>single active overlay</h1>
+    <p>Targeted by <code>e2e/single-active.spec.ts</code>. Opening one multiselect dismisses any
+    other open overlay via the core coordination primitive (`registerOverlay`).</p>
+
+    <div class="fixture">
+        <web-multiselect id="ms-a" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="ms-b" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <p>Grouped: <code>alpha-1</code>/<code>alpha-2</code> share <code>overlay-group="alpha"</code>;
+    <code>beta-1</code> is in <code>overlay-group="beta"</code>.</p>
+    <div class="fixture">
+        <web-multiselect id="alpha-1" overlay-group="alpha" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="alpha-2" overlay-group="alpha" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="beta-1" overlay-group="beta" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+        const items = [
+            { value: 'apple',  label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' }
+        ];
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['ms-a', 'ms-b', 'alpha-1', 'alpha-2', 'beta-1'])
+                document.getElementById(id).options = items;
+        });
+    </script>
+</body>
+</html>

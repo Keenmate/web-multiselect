@@ -204,7 +204,8 @@ const SIGNALS_PAGE = '/test/dark-mode-signals.html';
 
 /** Returns the relative luminance (0-1) of the rendered input background. */
 async function inputBgLuminance(p: Locator): Promise<number> {
-    const bgString = await input(p).evaluate(el => getComputedStyle(el).backgroundColor);
+    // The field background lives on the wrapper shell (the <input> itself is transparent).
+    const bgString = await p.locator('.ms__input-wrapper').evaluate(el => getComputedStyle(el).backgroundColor);
     const [r, g, b] = parseColor(bgString);
     return relativeLuminance([r, g, b]);
 }

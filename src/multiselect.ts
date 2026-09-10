@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { lockBodyScroll, observeKeyboardInset, presentationContext } from '@keenmate/web-components-core';
+import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
 import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions } from './types';
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import { VirtualScroll } from './virtual-scroll';
@@ -32,7 +32,10 @@ export class WebMultiSelect<T = any> {
     private instanceId: string;
     private options: MultiSelectConfig<T>;
 
-    private isOpen = false;
+    // Backing field for the open state. Read/written internally via `this.#isOpen`
+    // so the public `isOpen` accessor (get/set) can drive open()/close() without
+    // recursing. See the imperative API at the bottom of the class.
+    #isOpen = false;
     private selectedValues = new Set<string>();
     private selectedOptions = new Map<string, T>();
     private allOptions: T[] = [];
@@ -151,16 +154,28 @@ export class WebMultiSelect<T = any> {
 
     // DOM elements
     private input!: HTMLInputElement;
+    // The field shell (border/background) wrapping the input + trailing decorations.
+    // Floating panels anchor to this (not the narrower flex <input>) so they align to
+    // and match the full field width.
+    private inputWrapper!: HTMLDivElement;
     private dropdown!: HTMLDivElement;
     private dropdownInner!: HTMLDivElement;
     private badgesContainer!: HTMLDivElement;
     private counter!: HTMLSpanElement;
+    // Inline ✕ inside the input that wipes the whole selection (opt-in via isClearShown).
+    // Always in the DOM; updateClearButton() toggles its display by selection/enabled state.
+    private clearButton!: HTMLButtonElement;
     private hint?: HTMLDivElement;
     private selectedPopover!: HTMLDivElement;
 
     // Document-level event handlers (stored for cleanup)
     private documentKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
     private documentClickHandler: ((e: MouseEvent) => void) | null = null;
+
+    // Cross-component "one overlay open at a time" coordination (core). activate() on
+    // open() dismisses every OTHER participating overlay (multiselects, datepickers, …);
+    // our onDismiss closes this dropdown when another opens. Torn down in destroy().
+    private overlayCoord: OverlayHandle | null = null;
 
     // ========================================================================
     // DATA EXTRACTION METHODS (following svelte-treeview pattern)
@@ -761,9 +776,10 @@ export class WebMultiSelect<T = any> {
             this.element.classList.add('ms--no-selected-popover');
         }
 
-        // Create input wrapper
+        // Create input wrapper (the field shell — floating panels anchor to this)
         const inputWrapper = document.createElement('div');
         inputWrapper.className = 'ms__input-wrapper';
+        this.inputWrapper = inputWrapper;
 
         this.input = document.createElement('input');
         this.input.type = 'text';
@@ -778,16 +794,50 @@ export class WebMultiSelect<T = any> {
             this.input.style.display = 'none';
         }
 
+        // Chevron rendered via a CSS mask icon (see .ms__toggle in controls.css) for
+        // consistency with the other glyphs — no text character. It's now a real flex
+        // box beside the input (not an overlay the click falls through), so it drives
+        // open/close itself, mirroring the input's mousedown toggle.
         const toggle = document.createElement('span');
         toggle.className = 'ms__toggle';
-        toggle.innerHTML = '▼';
+        toggle.addEventListener('mousedown', (e) => {
+            e.preventDefault();      // keep the tap from shifting focus; we drive open/close directly
+            e.stopPropagation();
+            if (this.#isOpen) {
+                this.justClosedViaClick = true;
+                this.close();
+                setTimeout(() => { this.justClosedViaClick = false; }, 0);
+            } else {
+                this.open();
+                // Focus the search field so keyboard nav works right after opening (open()
+                // already guards the trailing click). The fullscreen overlay owns its own focus.
+                if (this.presentationMode !== 'fullscreen') this.input.focus();
+            }
+        });
 
         this.counter = document.createElement('span');
         this.counter.className = 'ms__counter';
         this.counter.style.display = 'none';
 
+        // Inline clear (✕). tabIndex -1 keeps it out of the tab order (it mirrors the
+        // Clear-All action); mousedown/preventDefault stops the tap blurring the input
+        // first, so clearClick() can clear and then restore focus. Hidden until
+        // updateClearButton() finds a selection to clear.
+        this.clearButton = document.createElement('button');
+        this.clearButton.type = 'button';
+        this.clearButton.className = 'ms__input-clear';
+        this.clearButton.tabIndex = -1;
+        this.clearButton.setAttribute('aria-label', 'Clear selection');
+        this.clearButton.style.display = 'none';
+        this.clearButton.addEventListener('mousedown', (e) => e.preventDefault());
+        this.clearButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.clearClick();
+        });
+
         inputWrapper.appendChild(this.input);
         inputWrapper.appendChild(this.counter);
+        inputWrapper.appendChild(this.clearButton);
         inputWrapper.appendChild(toggle);
 
         // Create badges container
@@ -1468,6 +1518,9 @@ export class WebMultiSelect<T = any> {
     }
 
     private renderBadges(): void {
+        // Keep the inline clear (✕) in sync with the current selection on every refresh.
+        this.updateClearButton();
+
         // Clean up existing tooltips before re-rendering
         this.destroyAllBadgeTooltips();
 
@@ -1488,9 +1541,9 @@ export class WebMultiSelect<T = any> {
                 }
             }
 
-            if (!this.isOpen && count > 0 && selectedOptions.length > 0) {
+            if (!this.#isOpen && count > 0 && selectedOptions.length > 0) {
                 this.input.value = selectedLabel!;
-            } else if (!this.isOpen) {
+            } else if (!this.#isOpen) {
                 this.input.value = '';
             }
             return;
@@ -1504,7 +1557,7 @@ export class WebMultiSelect<T = any> {
             effectiveMode = this.options.badgesThresholdMode || 'count';
         }
 
-        if (!this.isOpen) {
+        if (!this.#isOpen) {
             if (count > 0 && effectiveMode === 'count') {
                 const countText = this.options.getCounterCallback ? this.options.getCounterCallback(count) : `${count} selected`;
                 this.input.placeholder = countText;
@@ -1616,7 +1669,7 @@ export class WebMultiSelect<T = any> {
         this.input.addEventListener('mousedown', (e) => {
             e.stopPropagation();
 
-            if (this.isOpen) {
+            if (this.#isOpen) {
                 // Close if already open and prevent focus from reopening
                 this.justClosedViaClick = true;
                 this.close();
@@ -1634,21 +1687,17 @@ export class WebMultiSelect<T = any> {
                 if (this.presentationMode === 'fullscreen') {
                     e.preventDefault();
                 }
-                // Open if closed (don't rely on focus event as input might already be focused).
-                // Guard the click that follows this mousedown from the fullscreen self-close
-                // (see justOpenedViaClick); cleared next tick, after that click is dispatched.
-                this.justOpenedViaClick = true;
+                // Open if closed (don't rely on focus event as input might already be
+                // focused). open() itself arms justOpenedViaClick for one tick, so the
+                // click that follows this mousedown won't be misread as an outside-click.
                 this.open();
-                setTimeout(() => {
-                    this.justOpenedViaClick = false;
-                }, 0);
             }
         });
 
         this.input.addEventListener('focus', () => {
             // Open on focus only if not already open and didn't just close via click
             // This handles keyboard navigation (Tab key)
-            if (!this.isOpen && !this.justClosedViaClick) {
+            if (!this.#isOpen && !this.justClosedViaClick) {
                 this.open();
             }
         });
@@ -1656,7 +1705,7 @@ export class WebMultiSelect<T = any> {
             const value = (e.target as HTMLInputElement).value;
 
             // Auto-open dropdown when user starts typing (if search is enabled)
-            if (this.options.isSearchEnabled && !this.isOpen) {
+            if (this.options.isSearchEnabled && !this.#isOpen) {
                 this.open();
             }
 
@@ -1669,6 +1718,11 @@ export class WebMultiSelect<T = any> {
         setTimeout(() => {
             document.addEventListener('click', this.documentClickHandler!);
         }, 0);
+
+        // Join the single-active-overlay group (scoped by `overlay-group`, default ungrouped):
+        // when another KM overlay in the same group (or an external popover) opens, close this
+        // dropdown. open() broadcasts the reverse.
+        this.overlayCoord = registerOverlay(() => this.close(), this.options.overlayGroup || undefined);
 
         // Document-level Escape handler for closing popover when input doesn't have focus
         this.documentKeydownHandler = (e: KeyboardEvent) => {
@@ -1990,7 +2044,7 @@ export class WebMultiSelect<T = any> {
             const handled = this.options.keydownCallback({
                 event: e,
                 key: e.key,
-                isOpen: this.isOpen,
+                isOpen: this.#isOpen,
                 presentation: this.presentationMode,
                 searchTerm: this.searchTerm,
                 focusedIndex: this.focusedIndex,
@@ -2002,7 +2056,7 @@ export class WebMultiSelect<T = any> {
             if (handled === true) return;
         }
 
-        if (!this.isOpen) {
+        if (!this.#isOpen) {
             if (e.key === 'Enter' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 this.open();
@@ -2172,7 +2226,7 @@ export class WebMultiSelect<T = any> {
                 // dropdown's fullscreen mousedown guard already keeps focus where it
                 // was (on the sheet search if the keyboard was up, nowhere if it was
                 // down), so no refocus is needed — and none that would raise the keyboard.
-                if (this.isOpen && this.presentationMode !== 'fullscreen') {
+                if (this.#isOpen && this.presentationMode !== 'fullscreen') {
                     this.input.focus();
                 } else if (this.presentationMode === 'fullscreen') {
                     // Tapping a result signals "done typing" — blur the sheet search so
@@ -2265,7 +2319,7 @@ export class WebMultiSelect<T = any> {
             }
         }
 
-        if (!this.isOpen) return;
+        if (!this.#isOpen) return;
 
         // Swallow the click that came from the opening gesture — a fullscreen overlay
         // that just appeared over the pointer makes it look like an outside-click.
@@ -2631,6 +2685,37 @@ export class WebMultiSelect<T = any> {
     }
 
     /**
+     * Inline clear (✕) handler: wipe the whole selection and any search text, then
+     * restore focus to the input. clearAll() → commit() → renderBadges() already
+     * refreshes this button's visibility (it hides once nothing is selected).
+     */
+    private clearClick(): void {
+        interactionLogger.debug(`[${this.instanceId}] input clear (✕) clicked`);
+        this.clearAll();
+        if (this.searchTerm || this.input.value) this.clearSearch();
+        // Nothing is selected anymore — close the selected-items popover if it was open
+        // (it would otherwise linger showing "Selected Items (0)").
+        if (this.showSelectedPopover) this.hideSelectedPopover();
+        // Refocus for keyboard use, but guard the focus handler so clearing doesn't pop the
+        // dropdown open (it opens on focus otherwise). Same one-tick guard the click-close uses.
+        this.justClosedViaClick = true;
+        this.input.focus();
+        setTimeout(() => { this.justClosedViaClick = false; }, 0);
+    }
+
+    /**
+     * Show the inline clear (✕) only when it is opted in (isClearShown), something is
+     * selected, and the control is enabled. Called from renderBadges() so it tracks
+     * every selection change. Uses inline display like the counter / fullscreen clear.
+     */
+    private updateClearButton(): void {
+        if (!this.clearButton) return;
+        const enabled = !this.element.classList.contains('ms--disabled');
+        const show = !!this.options.isClearShown && this.selectedValues.size > 0 && enabled;
+        this.clearButton.style.display = show ? '' : 'none';
+    }
+
+    /**
      * Re-render and fire callbacks after a selection state change.
      * `added` / `removed` drive per-item select/deselect callbacks.
      * `onChange` fires once if anything actually changed.
@@ -2656,9 +2741,21 @@ export class WebMultiSelect<T = any> {
         }
     }
 
-    private open(): void {
-        uiLogger.debug(`[${this.instanceId}] open() called`, { isOpen: this.isOpen });
-        if (this.isOpen) return;
+    /** Open the dropdown (no-op if already open, or if there is nothing to show). */
+    open(): void {
+        uiLogger.debug(`[${this.instanceId}] open() called`, { isOpen: this.#isOpen });
+        if (this.#isOpen) return;
+
+        // Guard the trailing document `click` for one tick. A consumer that opens the
+        // dropdown from their OWN button's click handler (`el.open()` / `el.toggle()`)
+        // would otherwise have that same click bubble to our document-level
+        // outside-click listener and immediately re-close it. The internal pointer path
+        // sets this flag too (see the input `mousedown` handler); centralizing it here
+        // means every open() caller is covered. Cleared next tick, so a genuine later
+        // outside-click still closes as normal. Harmless for non-click opens (typing,
+        // programmatic-on-load): no trailing click arrives before it clears.
+        this.justOpenedViaClick = true;
+        setTimeout(() => { this.justOpenedViaClick = false; }, 0);
 
         // A message reflects the state at the moment it was shown. Opening changes that
         // state (and, on a phone, moves from a control-anchored toast to a fullscreen
@@ -2666,7 +2763,7 @@ export class WebMultiSelect<T = any> {
         // stale anchor and above-overlay z-index — over the sheet.
         this.hideMessage();
 
-        this.isOpen = true;
+        this.#isOpen = true;
         this.element.classList.add('ms--open');
         this.dropdown.classList.add('ms__dropdown--visible');
         uiLogger.info(`[${this.instanceId}] Dropdown opened`);
@@ -2712,13 +2809,18 @@ export class WebMultiSelect<T = any> {
             this.hint.classList.add('ms__hint--visible');
             this.positionHint();
         }
+
+        // We're now open — dismiss every other participating overlay (other multiselects,
+        // datepickers, external popovers). Our own onDismiss is skipped (we're the source).
+        this.overlayCoord?.activate();
     }
 
-    private close(): void {
-        uiLogger.debug(`[${this.instanceId}] close() called`, { isOpen: this.isOpen });
-        if (!this.isOpen) return;
+    /** Close the dropdown (no-op if already closed). */
+    close(): void {
+        uiLogger.debug(`[${this.instanceId}] close() called`, { isOpen: this.#isOpen });
+        if (!this.#isOpen) return;
 
-        this.isOpen = false;
+        this.#isOpen = false;
         this.element.classList.remove('ms--open');
         this.dropdown.classList.remove('ms__dropdown--visible');
         if (this.hint) {
@@ -2762,7 +2864,32 @@ export class WebMultiSelect<T = any> {
         // Reset placement tracking
         this.dropdownPlacement = null;
 
+        // Release the active-overlay marker for this instance (no broadcast on close).
+        this.overlayCoord?.deactivate();
+
         uiLogger.debug(`[${this.instanceId}] Dropdown closed`);
+    }
+
+    /** Toggle the dropdown open/closed. */
+    toggle(): void {
+        if (this.#isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+
+    /** Whether the dropdown is currently open. Assigning opens/closes it. */
+    get isOpen(): boolean {
+        return this.#isOpen;
+    }
+
+    set isOpen(value: boolean) {
+        if (value) {
+            this.open();
+        } else {
+            this.close();
+        }
     }
 
     /**
@@ -2782,7 +2909,7 @@ export class WebMultiSelect<T = any> {
     }): () => void {
         const locked = opts.isLocked?.() ?? true;
 
-        const handle = anchor(panel, this.input, {
+        const handle = anchor(panel, this.inputWrapper, {
             strategy: 'fixed',
             placement: 'bottom-start',
             offset: 4,
@@ -2810,14 +2937,14 @@ export class WebMultiSelect<T = any> {
             beforeCompute: () => {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
-                // defaults to the input width, which CSS can't measure — so we publish the live input
-                // width as --ms-input-current-width and let `.ms__dropdown { width: var(--ms-dropdown-width) }`
+                // defaults to the field width, which CSS can't measure — so we publish the live field
+                // (wrapper) width as --ms-input-current-width and let `.ms__dropdown { width: var(--ms-dropdown-width) }`
                 // (whose default is that var) resolve it. It MUST be set on the host: --ms-dropdown-width is
                 // declared on :host, so its nested var() resolves against the host, not the panel where the
                 // width is used. From there the resolved width inherits down to the shadow-tree panels.
                 // Set BEFORE positioning so shift() measures the final width; otherwise it sees the
                 // natural content width and strands the panel.
-                (this.options.hostElement ?? this.element).style.setProperty('--ms-input-current-width', `${this.input.offsetWidth}px`);
+                (this.options.hostElement ?? this.element).style.setProperty('--ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
             onPlaced: (resolved) => {
@@ -2911,7 +3038,7 @@ export class WebMultiSelect<T = any> {
             },
             isLocked: () => !!this.options.isPlacementLocked,
             applyMaxWidth: true,
-            afterPosition: () => { if (this.hint && this.isOpen) this.positionHint(); }
+            afterPosition: () => { if (this.hint && this.#isOpen) this.positionHint(); }
         });
     }
 
@@ -2929,7 +3056,7 @@ export class WebMultiSelect<T = any> {
         this.presentationMode = mode;
 
         // Re-apply live to whichever panel is currently open (they're mutually exclusive).
-        if (this.isOpen) {
+        if (this.#isOpen) {
             if (mode === 'fullscreen') {
                 // Drop the floating anchor + hint, stand up the overlay chrome. Re-render
                 // so the list rebuilds at fullscreen sizing (e.g. virtual rows switch from
@@ -3182,7 +3309,7 @@ export class WebMultiSelect<T = any> {
         window.removeEventListener('popstate', this.onOverlayPopstate);
         // Close whichever fullscreen sheet pushed the entry — the options dropdown or the
         // selected-items popover (mutually exclusive; showPopover() closes the dropdown first).
-        if (this.isOpen) this.close();
+        if (this.#isOpen) this.close();
         else if (this.showSelectedPopover) this.hideSelectedPopover();
     }
 
@@ -3460,7 +3587,7 @@ export class WebMultiSelect<T = any> {
             }
         }
 
-        const handle = anchor(this.hint, this.input, {
+        const handle = anchor(this.hint, this.inputWrapper, {
             strategy: 'fixed',
             placement: hintPlacement,
             offset: 4,
@@ -3522,7 +3649,7 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
-        if (this.isOpen) {
+        if (this.#isOpen) {
             this.close();
         }
 
@@ -3982,7 +4109,7 @@ export class WebMultiSelect<T = any> {
         // Input placeholder (only safe to set when dropdown is closed; otherwise renderBadges takes over).
         // Recomputed unconditionally so live changes to any input — placeholder text (e.g. a language
         // switch), search mode, or the option list emptying/filling for cascades — are reflected.
-        if (!this.isOpen) {
+        if (!this.#isOpen) {
             this.input.placeholder = this.getPlaceholderText();
         }
 
@@ -4336,12 +4463,12 @@ export class WebMultiSelect<T = any> {
         // panel is closed — so without the open check, a message fired with nothing open
         // would pin a detached toast to the bottom of the page. When closed (or floating),
         // anchor beneath the control so it reads as belonging to this component.
-        const overlayOpen = this.presentationMode === 'fullscreen' && (this.isOpen || this.showSelectedPopover);
+        const overlayOpen = this.presentationMode === 'fullscreen' && (this.#isOpen || this.showSelectedPopover);
         if (overlayOpen) {
             // Positioned by CSS (fixed, bottom-centre of the viewport, above the overlay).
             el.classList.add('ms__message--fullscreen');
         } else {
-            const handle = anchor(el, this.input, {
+            const handle = anchor(el, this.inputWrapper, {
                 strategy: 'fixed',
                 placement: opts?.placement ?? 'bottom',
                 offset: 8,
@@ -4485,6 +4612,10 @@ export class WebMultiSelect<T = any> {
             document.removeEventListener('keydown', this.documentKeydownHandler);
             this.documentKeydownHandler = null;
         }
+
+        // Leave the single-active-overlay group.
+        this.overlayCoord?.dispose();
+        this.overlayCoord = null;
 
         // Clean up virtual scroll
         if (this.virtualScroll) {

@@ -430,6 +430,20 @@ export interface MultiSelectConfig<T = any> {
     /** Show count badge next to toggle icon (internal: isCounterShown) */
     isCounterShown?: boolean;
     /**
+     * Show an inline clear (✕) button inside the input that wipes the whole selection.
+     * Appears only while something is selected (and the control is enabled). Clicking it
+     * clears the selection and any search text, fires `change`, and refocuses the input.
+     * Default `false`. (internal: isClearShown)
+     */
+    isClearShown?: boolean;
+    /**
+     * Scope the "one overlay open at a time" coordination to a named group. Overlays
+     * (multiselects, datepickers, external popovers) sharing a group dismiss each other
+     * when one opens; different groups are independent. Unset = the default (ungrouped)
+     * group, in which every ungrouped overlay coordinates. (internal: overlayGroup)
+     */
+    overlayGroup?: string;
+    /**
      * Allow the selected-items popover to open. Defaults to `true`. The popover is triggered by
      * the count / compact / "+X more" badge and by the in-input counter (`isCounterShown`). Set
      * to `false` when you render your own selection UI (e.g. an external container fed by the

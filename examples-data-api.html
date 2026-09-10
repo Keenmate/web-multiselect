@@ -351,13 +351,15 @@ multiselect.options = products;</pre></div>
 
             <div class="demo-area">
                 <label class="demo-label">Controlled Multiselect:</label>
-                <web-multiselect id="openclose-demo"></web-multiselect>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+                    <web-multiselect id="openclose-demo" style="flex: 1 1 240px;"></web-multiselect>
 
-                <div class="controls" style="margin-top: 1rem;">
-                    <button onclick="openCloseDemo('open')">open()</button>
-                    <button onclick="openCloseDemo('close')">close()</button>
-                    <button onclick="openCloseDemo('toggle')">toggle()</button>
-                    <button onclick="showOpenState()">Read isOpen</button>
+                    <div class="controls" style="margin-bottom: 0;">
+                        <button onclick="openCloseDemo('open')">open()</button>
+                        <button onclick="openCloseDemo('close')">close()</button>
+                        <button onclick="openCloseDemo('toggle')">toggle()</button>
+                        <button onclick="showOpenState()">Read isOpen</button>
+                    </div>
                 </div>
 
                 <div class="output">

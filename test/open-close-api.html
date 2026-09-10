@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — open/close API</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>open / close API</h1>
+    <p>Targeted by <code>e2e/open-close-api.spec.ts</code>. External (light-DOM) buttons drive the
+    imperative <code>open()</code> / <code>close()</code> / <code>toggle()</code> methods and the
+    <code>isOpen</code> property. Key regression: calling <code>open()</code> from a button's own
+    click must NOT be swallowed by the outside-click close that fires on the same click.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">imperative open / close / toggle / isOpen</div>
+        <!-- Buttons sit ABOVE the component: the dropdown is position:fixed and opens
+             downward, so keeping the controls above (plus the spacer below) means the open
+             panel never covers a button and intercepts its click. -->
+        <div class="fixture-controls">
+            <button id="btn-open" onclick="document.getElementById('ms').open()">open()</button>
+            <button id="btn-close" onclick="document.getElementById('ms').close()">close()</button>
+            <button id="btn-toggle" onclick="document.getElementById('ms').toggle()">toggle()</button>
+            <button id="btn-prop-open" onclick="document.getElementById('ms').isOpen = true">isOpen = true</button>
+            <button id="btn-prop-close" onclick="document.getElementById('ms').isOpen = false">isOpen = false</button>
+        </div>
+        <web-multiselect id="ms" value-member="value" display-value-member="label"></web-multiselect>
+        <!-- Guarantees room below so floating-ui never flips the panel upward onto the buttons. -->
+        <div style="height: 500px;"></div>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = [
+            { value: 'apple',  label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' }
+        ];
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            document.getElementById('ms').options = items;
+        });
+    </script>
+</body>
+</html>

@@ -11,35 +11,49 @@
    INPUT
    ============================================================================== */
 
+/* The wrapper is the FIELD SHELL: it carries the border, background, radius, and
+   focus ring. The <input>, the [N] counter, the ✕ clear, and the ▾ chevron are its
+   flex children (in that DOM order), laid out in a row with a gap. The input is
+   `flex: 1; min-width: 0`, so it only occupies the space left of the trailing
+   decorations — long text clips/scrolls inside the input's own box and can never
+   slide under the icons. RTL falls out of the flex direction for free. */
 .ms__input-wrapper {
+  box-sizing: border-box;
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.ms__input {
-  box-sizing: border-box;
-  width: 100%;
-  font-family: inherit; /* Form elements don't inherit font by default */
+  gap: var(--ms-input-gap);
   height: var(--ms-input-height);
-  padding: var(--ms-input-padding);
-  padding-inline-end: var(--ms-input-padding-right); /* Space for dropdown icon (trailing side; flips in RTL) */
-  font-size: var(--ms-input-font-size);
-  border: var(--ms-input-border);
-  border-radius: var(--ms-input-border-radius);
+  padding-inline: var(--ms-input-padding-h);
   background: var(--ms-input-bg);
   color: var(--ms-input-color);
+  border: var(--ms-input-border);
+  border-radius: var(--ms-input-border-radius);
   cursor: pointer;
   transition: border var(--ms-transition-fast) var(--ms-easing-snappy);
 }
 
-.ms__input:hover:not(:focus):not(:disabled) {
+.ms__input-wrapper:hover:not(:focus-within) {
   border: var(--ms-input-border-hover);
 }
 
-.ms__input:focus {
-  outline: none;
+.ms__input-wrapper:focus-within {
   border: var(--ms-input-border-focus);
+}
+
+.ms__input {
+  flex: 1 1 auto;
+  min-width: 0; /* let the input shrink so text clips instead of overflowing the row */
+  box-sizing: border-box;
+  font-family: inherit; /* Form elements don't inherit font by default */
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: var(--ms-input-font-size);
+  color: var(--ms-input-color);
+  cursor: pointer;
+  outline: none;
 }
 
 .ms__input::placeholder {
@@ -98,18 +112,41 @@
    ============================================================================== */
 
 .ms__toggle {
-  position: absolute;
-  inset-inline-end: var(--ms-toggle-right); /* trailing edge; flips to the left in RTL */
-  top: 50%;
-  transform: var(--ms-transform-center-y);
-  pointer-events: none;
+  flex: 0 0 auto;
+  display: block;
+  width: var(--ms-toggle-icon-size);
+  height: var(--ms-toggle-icon-size);
   color: var(--ms-toggle-icon-color);
+  cursor: pointer; /* real box now (not an overlay the click falls through) — opens on click */
+}
+
+/* Chevron as a mask icon (consistent with the ✕ / count-clear / badge-remove glyphs),
+   not a text character. --ms-icon-chevron points RIGHT (wired to --base-icon-chevron, a
+   Lucide angle that fills its viewBox for full optical size); the closed state rotates it
+   90° to point down, opening rotates it -90° to point up (a 180° sweep).
+
+   The two rotations are themeable via --ms-toggle-rotate-closed / --ms-toggle-rotate-open:
+   the defaults (90deg / -90deg) orient the directional right-pointing base chevron. A theme
+   supplying a PRE-ORIENTED glyph (already pointing down) can opt out of the orientation —
+   set both to `0deg` for a static glyph, or `0deg` / `180deg` to flip it up on open. */
+.ms__toggle::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: currentColor;
+  -webkit-mask: var(--ms-icon-chevron) center / contain no-repeat;
+          mask: var(--ms-icon-chevron) center / contain no-repeat;
+  transform: rotate(var(--ms-toggle-rotate-closed, 90deg));
   transition: transform var(--ms-transition-fast) var(--ms-easing-snappy);
 }
 
 .ms--open .ms__toggle {
-  transform: var(--ms-transform-center-y) rotate(var(--ms-transform-rotate-180));
   color: var(--ms-toggle-icon-color-open);
+}
+
+.ms--open .ms__toggle::before {
+  transform: rotate(var(--ms-toggle-rotate-open, -90deg));
 }
 
 /* ==============================================================================
@@ -117,10 +154,7 @@
    ============================================================================== */
 
 .ms__counter {
-  position: absolute;
-  inset-inline-end: var(--ms-counter-offset); /* trailing edge (past the toggle icon); flips in RTL */
-  top: 50%;
-  transform: var(--ms-transform-center-y);
+  flex: 0 0 auto;
   padding: var(--ms-counter-padding);
   background: var(--ms-counter-badge-bg);
   color: var(--ms-counter-badge-color);
@@ -133,7 +167,43 @@
 
 .ms__counter:hover {
   background: var(--ms-counter-badge-bg-hover);
-  transform: var(--ms-transform-center-y) scale(var(--ms-transform-scale-hover));
+  transform: scale(var(--ms-transform-scale-hover));
+}
+
+/* ==============================================================================
+   INPUT CLEAR (✕)
+   ==============================================================================
+   Opt-in via `show-clear`. A small mask-icon ✕ that sits in the trailing flex row,
+   just before the chevron. JS (updateClearButton) toggles its `display` by
+   selection/enabled state; the flex layout handles spacing (no inset math). */
+.ms__input-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ms-input-clear-size);
+  height: var(--ms-input-clear-size);
+  padding: 0;
+  color: var(--ms-input-clear-color);
+  background: transparent;
+  border: none;
+  border-radius: var(--ms-input-clear-border-radius);
+  cursor: pointer;
+  transition: background var(--ms-transition-fast) var(--ms-easing-snappy);
+}
+
+.ms__input-clear:hover {
+  background: var(--ms-input-clear-bg-hover);
+}
+
+.ms__input-clear::before {
+  content: "";
+  display: block;
+  width: var(--ms-input-clear-icon-size);
+  height: var(--ms-input-clear-icon-size);
+  background-color: currentColor;
+  -webkit-mask: var(--ms-icon-clear) center / contain no-repeat;
+          mask: var(--ms-icon-clear) center / contain no-repeat;
 }
 
 /* ==============================================================================
