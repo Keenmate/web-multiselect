@@ -246,15 +246,13 @@
   content: '';
   position: absolute;
   display: none;
-  /* Checkmark positioning (centered, slightly offset for visual balance) */
-  left: 50%;
-  top: 40%;
-  width: 30%;
-  height: 55%;
-  transform: translate(-50%, -50%) rotate(45deg);
-  /* Checkmark shape (right and bottom borders form the check) */
-  border: solid var(--ms-checkbox-checkmark-color);
-  border-width: 0 var(--ms-checkbox-checkmark-thickness, 2px) var(--ms-checkbox-checkmark-thickness, 2px) 0;
+  /* Checkmark glyph — a currentColor-tinted mask so it follows --ms-icon-check →
+     the shared --base-icon-check contract (was a CSS-border checkmark). Fills the
+     box; the Lucide glyph's own viewBox padding keeps it visually inset. */
+  inset: 0;
+  background-color: var(--ms-checkbox-checkmark-color);
+  -webkit-mask: var(--ms-icon-check) no-repeat center / contain;
+  mask: var(--ms-icon-check) no-repeat center / contain;
 }
 
 /* Hover state */
@@ -283,14 +281,10 @@
 
 .ms__checkbox--indeterminate::after {
   display: block;
-  top: 50%;
-  left: 50%;
-  width: 55%;
-  height: 0;
-  /* Override the rotated checkmark: a centered horizontal dash. */
-  transform: translate(-50%, -50%);
-  border: none;
-  border-bottom: var(--ms-checkbox-checkmark-thickness, 2px) solid var(--ms-checkbox-checkmark-color);
+  /* Swap the check glyph for the dash — follows --ms-icon-indeterminate →
+     --base-icon-indeterminate. Inherits the mask box from .ms__checkbox::after. */
+  -webkit-mask-image: var(--ms-icon-indeterminate);
+  mask-image: var(--ms-icon-indeterminate);
 }
 
 .ms__checkbox--indeterminate:hover:not(:disabled) {

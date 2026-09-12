@@ -109,6 +109,9 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box; /* Include border in height to prevent clipping */
+  padding: 0; /* Zero the UA <button> padding — this is a fixed-size flex box that centers its
+                 icon (like .ms__toggle / .ms__input-clear / .ms__count-clear). Without this the
+                 UA inline padding shrinks the content box below the icon width and clips/off-centers it. */
   font-family: inherit; /* Form elements don't inherit font by default */
   width: var(--ms-badge-remove-width);
   height: 100%;

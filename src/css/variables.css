@@ -45,10 +45,12 @@
      BASE SIZING UNIT
      ==========================================================================
      All sizing values are based on this unit for consistent scaling.
+     Bridges to the shared --base-rem knob so a theme scales every KeenMate
+     component from one variable; falls back to 10px when no base layer is loaded.
      Default: 10px produces standard pixel values
-     Pure Admin: Set to 1rem (inherits from html { font-size: 10px })
-     Custom: Set to any value to scale all sizes proportionally */
-  --ms-rem: 10px;
+     Pure Admin: Set --base-rem to 1rem (inherits from html { font-size: 10px })
+     Custom: Set --base-rem (or --ms-rem for this component only) to scale all sizes */
+  --ms-rem: var(--base-rem, 10px);
 
   /* ==========================================================================
      FONT FAMILY (set at :host so all shadow DOM content inherits)
@@ -675,7 +677,10 @@
   --ms-badge-remove-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-badge-remove-bg-hover: var(--ms-accent-color-hover);
   --ms-badge-remove-box-shadow-focus: 0 0 0 2px color-mix(in srgb, var(--ms-accent-color) 50%, transparent);
-  --ms-badge-remove-icon-size: calc(1.0 * var(--ms-rem));
+  /* Matches the input-clear / count-clear ✕ glyphs (also 1.4×rem) so all three read at the
+     same size; the old 1.0×rem was fine for the default stroke `x` but rendered a filled
+     custom --base-icon-remove glyph (square-with-x) too small inside the mask box. */
+  --ms-badge-remove-icon-size: calc(1.4 * var(--ms-rem));
   /* SVG X glyph (Lucide `x`) — rendered via mask so it inherits --ms-badge-remove-color via
      currentColor. Drives the badge remove (×) and the fullscreen/popover close (✕). Follows the
      shared --base-icon contract: prefers --base-icon-remove, then --base-icon-close, so a theme
@@ -693,7 +698,12 @@
      `filter`) for filter. Rendered via mask (inherit color via currentColor); override
      with any mask-friendly SVG url(). */
   --ms-icon-search: var(--base-icon-search, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>"));
-  --ms-icon-filter: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'/></svg>");
+  --ms-icon-filter: var(--base-icon-filter, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'/></svg>"));
+  /* Checkbox glyphs — the checkmark (checked) and dash (indeterminate/tri-state),
+     rendered as masks so they inherit --ms-checkbox-checkmark-color and follow the
+     shared --base-icon-* contract. Override either to diverge from the base. */
+  --ms-icon-check: var(--base-icon-check, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>"));
+  --ms-icon-indeterminate: var(--base-icon-indeterminate, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/></svg>"));
 
   /* Badge Counter Indicator (layout-only properties, colors come from semantic section) */
   --ms-badge-counter-bg: transparent;

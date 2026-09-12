@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-rc13] - 2026-09-10
+
+### Added
+
+- **Checkbox check/dash + the filter funnel now chain to the shared `--base-icon-*` contract.**
+  Three base tokens (`--base-icon-check`, `--base-icon-indeterminate`, `--base-icon-filter`) are
+  consumed via `--ms-icon-check` / `--ms-icon-indeterminate` / `--ms-icon-filter`
+  (`var(--base-icon-X, <inline Lucide fallback>)`), so a theme reskins the checkmark, the tri-state
+  dash and the search-mode funnel across every KeenMate component from one place. New manifest
+  entries for all three base tokens + the three `--ms-icon-*` vars.
+
+### Changed
+
+- **The checkbox checkmark and indeterminate dash are now mask glyphs, not CSS-border shapes.**
+  `.ms__checkbox::after` (checked) and `.ms__checkbox--indeterminate::after` (partial) previously
+  drew the check with rotated borders and the dash with a `border-bottom`; they now render
+  `--ms-icon-check` / `--ms-icon-indeterminate` as a `currentColor` mask tinted by
+  `--ms-checkbox-checkmark-color`. This makes both themeable via the base contract and matches the
+  disclosure-glyph approach. `--ms-checkbox-checkmark-thickness` no longer affects the glyph (stroke
+  width is baked into the SVG) — kept as a no-op for back-compat.
+- **`--ms-rem` now bridges to the shared `--base-rem` knob.** The global sizing unit was hard-coded
+  to `10px`, so the component sat off the single scaling knob every other KeenMate component reads.
+  It now resolves `--ms-rem: var(--base-rem, 10px)` — a theme that sets `--base-rem` rescales the
+  whole component from one variable, and the `10px` fallback keeps the default (and per-instance
+  `--ms-rem` overrides) working unchanged when no base layer is loaded.
+
+### Fixed
+
+- **Badge-remove ✕ was clipped / off-center and too small for filled custom glyphs.** The remove
+  button carried the UA `<button>` inline padding, which shrank its content box below the icon width
+  (clipping and off-centering the masked glyph), and its icon size (`1.0×rem`) was tuned for the
+  default stroke `x` — so a filled custom `--base-icon-remove` (e.g. the square-x from a theme)
+  rendered too small inside the mask box. The button now zeroes its padding (a fixed-size centered
+  flex box, like `.ms__toggle` / `.ms__input-clear` / `.ms__count-clear`) and the icon size is
+  bumped to `1.4×rem` to match the input-clear / count-clear ✕ glyphs.
+
+- **`component-variables.manifest.json` undercounted its `--base-*` surface.** The manifest listed
+  51 `baseVariables` while the CSS actually reads 67, so theme-designer (which parses this manifest
+  to build its editor) was working from an incomplete token set. Added the 16 missing entries —
+  `base-rem`, `base-ease-standard`, `base-checkbox-border-color`, `base-input-clear-color`,
+  `base-input-clear-bg-hover`, the five `base-icon-*` glyphs (chevron, clear, remove, close, search),
+  and the eight status tokens (`base-{danger,warning,success}-{bg,color}`). Manifest and CSS now
+  match exactly at 67, with no stale (listed-but-unused) entries.
+
 ## [2.0.0-rc12] - 2026-09-10 [PUBLISHED]
 
 ### Added
