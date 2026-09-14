@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-14
+
+### Internal
+
+- **Build-time variable-manifest validator.** New `scripts/check-variable-manifest.mjs`
+  (wired into `build` via the `check:vars` step) diffs the `--ms-*` *declared* and `--base-*`
+  *consumed* in `src/css/**` against `component-variables.manifest.json`, and **fails the build**
+  on dead entries or missing `--base-*` coverage — closing the silent-drift gap behind the IDE
+  autocomplete (`vscode.css-custom-data.json` / `web-types.json`) and theme-designer, which are
+  generated from that manifest. `check:vars:strict` additionally enforces full `--ms-*` coverage
+  (118 declared component vars are currently undocumented — reconciliation pending).
+
+### Fixed
+
+- **Variable-manifest drift.** Removed 24 inert entries the manifest still advertised — the
+  commented-out `--ms-input-size-*` / `--base-input-size-*-height` size-preset surface, plus the
+  five positioning vars dropped in the rc11 field-shell rework — and added the missing
+  `--base-icon-plus` / `--base-icon-add` glyphs. The shipped autocomplete no longer offers
+  non-functional knobs and now covers the "add new" prompt icons.
+
 ## [2.0.0] - 2026-09-14 [PUBLISHED]
 
 ### Added
