@@ -5,10 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0-rc13] - 2026-09-10
+## [2.0.0] - 2026-09-14 [PUBLISHED]
 
 ### Added
 
+- **Scroll-to imperative API — `scrollToIndex` / `scrollToValue` / `scrollToGroup` (+ `clearSearch`).**
+  New public methods on the element and picker to bring an option or group into view, e.g. an
+  "open + jump" gesture: `el.open(); el.scrollToGroup('backend')`. They resolve within the current
+  `filteredOptions` and return `false` when the target isn't visible (filtered out by search, a
+  collapsed tree branch, or `scrollToGroup` in tree mode). Mode-aware: virtual scroll uses the
+  fixed-height index math (the row need not be rendered — works even right after `open()`, via an
+  internal one-frame deferral); standard/floating and fullscreen use `scrollIntoView` with the
+  keyboard-safe `center` block on the mobile sheet (`opts.block` overrides). `scrollToGroup` centers
+  the group header in standard rendering (new `data-group` anchor on `.ms__group-label`) and falls
+  back to the group's first option in virtual mode (which renders no headers). `clearSearch()` is now
+  public too — a composable building block to reveal a filtered-out option before scrolling to it
+  (`el.clearSearch(); el.scrollToValue(v)`) without a bespoke `reveal` flag. A **`searchText`**
+  getter (element + picker) reads the current search box text and a **`search(term)`** method sets it
+  programmatically — filtering exactly as if typed (runs `beforeSearchCallback` / `minSearchLength` /
+  async `searchCallback`), without opening the dropdown (demo: `examples-data-api.html` §API08). The
+  query's behavior follows `searchMode` (filter / navigate) and `searchCallback` — no separate
+  "filter" method, since the mode already governs that. Virtual
+  `scrollToIndex` was also made **deterministic** (aligns to `start` by default, clamps, refreshes
+  the viewport height and renders synchronously) — it previously did a nearest-edge scroll that
+  landed the target at the bottom / inconsistently. Demos: `examples-basic.html` (BU06b — grouped +
+  virtual), `examples-virtual-scrolling.html` (VS03 — 15,000 rows), `examples-tree.html` (TR09b —
+  ISCO tree); each logs where the scroll landed.
+- **"Add new" creation mode — turn the picker into an inline creation tool.** With
+  `allow-add-new` (`isAddNewAllowed`) on, a search that yields no matches now shows a clickable
+  **"Add new …"** prompt in the empty dropdown instead of the plain `emptyMessage`; choosing it
+  (click or <kbd>Enter</kbd>) commits the creation. The prompt label is configurable statically via
+  `add-new-text` / `addNewText` (the `{value}` placeholder is replaced with the HTML-escaped typed
+  text; default `Add "{value}"`) or dynamically via `getAddNewTextCallback`. A new bubbling **`add`
+  CustomEvent** (with the `onAdd` handler-property twin, and the `onAddNew` config callback) fires on
+  creation — `detail.value` is the typed text and `detail.option` is the materialized item when
+  `addNewCallback` produced one. Creation now works **with or without** `addNewCallback`: supply the
+  callback to auto-create + select the option, or omit it and handle creation yourself off the `add`
+  event. `addNewCallback` is **async and cancelable** — return `null`/`undefined` (checked with
+  `== null`, so falsy-but-valid primitive options `0`/`false`/`""` still create) to abort creation
+  (no add, no select, no `add` event, search left intact) after an async validation / confirm dialog
+  / server round-trip; the returned option may be a **rich object** that flows through the same
+  `get*` / `render*` callbacks as any other option. New CSS: `.ms__add-new` row (+ `.ms__add-new-icon`
+  / `.ms__add-new-text`, and `.ms__add-new--focused` for arrow-key focus), the `--ms-add-new-*`
+  variables, and an `--ms-icon-add-new` plus glyph chained to the `--base-icon-plus` →
+  `--base-icon-add` contract. While an async `addNewCallback` is in flight the prompt shows a
+  **pending state** (self-contained spinner + `addNewPendingText` / `add-new-pending-text`, default
+  `Adding "{value}"…`) instead of freezing. The empty-state prompt is keyboard-navigable (arrow to
+  focus, Enter to commit). Demos: `examples-events-callbacks.html` (EV4b basics + cancel, EV4c async
+  + rich option).
 - **Checkbox check/dash + the filter funnel now chain to the shared `--base-icon-*` contract.**
   Three base tokens (`--base-icon-check`, `--base-icon-indeterminate`, `--base-icon-filter`) are
   consumed via `--ms-icon-check` / `--ms-icon-indeterminate` / `--ms-icon-filter`
@@ -33,6 +77,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Count-chip clear ✕ and popover close ✕ vanished on hover.** Both `.ms__count-clear` and
+  `.ms__selected-popover-close` derived their hover *background* and their glyph *color* from the
+  same `--ms-accent-color` — an accent-coloured ✕ sitting on an accent-tinted background is the same
+  hue, so the glyph melted into its own hover state (fully invisible on near-white accents such as
+  the Minimal theme's dark mode, low-contrast blue-on-blue everywhere else). Both now fill with a
+  solid accent background and flip the glyph to `--ms-text-color-on-accent` on hover, mirroring
+  `.ms__badge-remove`. Relies on the theme's accent / on-accent contrast contract (a theme with a
+  light accent must set a dark `--base-text-color-on-accent`).
 - **Badge-remove ✕ was clipped / off-center and too small for filled custom glyphs.** The remove
   button carried the UA `<button>` inline padding, which shrank its content box below the icon width
   (clipping and off-centering the masked glyph), and its icon size (`1.0×rem`) was tuned for the

@@ -425,8 +425,32 @@ export interface MultiSelectConfig<T = any> {
     fullscreenAutofocus?: boolean;
     /** Lock dropdown placement after first open (internal: isPlacementLocked) */
     isPlacementLocked?: boolean;
-    /** Allow adding new options not in the list (internal: isAddNewAllowed) */
+    /**
+     * Allow adding new options not in the list (internal: isAddNewAllowed).
+     * When on and a search yields no matches, the empty dropdown shows a clickable
+     * "add new" prompt (text from `addNewText` / `getAddNewTextCallback`) instead of
+     * the `emptyMessage`; choosing it (click or Enter) fires the `add` event and, if
+     * `addNewCallback` is set, materializes + selects the created option.
+     */
     isAddNewAllowed?: boolean;
+    /**
+     * Template for the clickable "add new" prompt (see `isAddNewAllowed`). The substring
+     * `{value}` is replaced with the (HTML-escaped) typed text. Default: `Add "{value}"`.
+     * `getAddNewTextCallback` takes precedence. (internal: addNewText)
+     */
+    addNewText?: string;
+    /**
+     * Dynamically compute the "add new" prompt label from the typed text. Takes precedence
+     * over `addNewText`. Returns plain text (inserted as text, not HTML). Use it for i18n or
+     * context-aware wording, e.g. `(v) => \`Add new member: ${v}\``.
+     */
+    getAddNewTextCallback?: ((value: string) => string) | null;
+    /**
+     * Template for the pending prompt shown (spinner + this text) while an async `addNewCallback`
+     * is in flight. `{value}` is replaced with the (HTML-escaped) typed text. Default:
+     * `Adding "{value}"…`. (internal: addNewPendingText)
+     */
+    addNewPendingText?: string;
     /** Show count badge next to toggle icon (internal: isCounterShown) */
     isCounterShown?: boolean;
     /**
@@ -639,8 +663,29 @@ export interface MultiSelectConfig<T = any> {
      * to cancel the in-flight request; ignoring it is fine — stale results are discarded.
      */
     searchCallback?: ((searchTerm: string, signal?: AbortSignal) => Promise<T[]>) | null;
-    /** Callback to add a new option when isAddNewAllowed is true */
-    addNewCallback?: ((value: string) => T | Promise<T>) | null;
+    /**
+     * Callback to create the new option object from the typed text when `isAddNewAllowed` is on.
+     * Return (or resolve to) the new option — it is appended to the list and auto-selected. The
+     * returned `T` can be a rich option object (icon/subtitle/custom-render fields and all): it flows
+     * through the same `get*` / `render*` callbacks as any other option, so the created row and its
+     * badge render exactly like the rest.
+     *
+     * **Cancelable (async):** return `null` or `undefined` (or a Promise of either) to abort — nothing
+     * is added or selected, the search is left intact, and the `add` event does NOT fire. Use it for
+     * async validation, a confirm dialog, or a server round-trip that may say no. The cancel sentinel
+     * is strictly `null`/`undefined` (checked with `== null`), so a falsy-but-valid option in
+     * primitive mode (`0`, `false`, `""`) still creates normally.
+     *
+     * Omit the callback entirely to handle creation yourself via the `add` event / `onAddNew` (e.g.
+     * open a modal, POST to a server, then add the option imperatively).
+     */
+    addNewCallback?: ((value: string) => T | null | undefined | Promise<T | null | undefined>) | null;
+    /**
+     * Event handler: the user chose to create a new option from the typed text (via the "add new"
+     * row or Enter). `value` is the typed text; `option` is the created item when `addNewCallback`
+     * produced one (absent otherwise). Mirrors the bubbling `add` CustomEvent on the element.
+     */
+    onAddNew?: ((detail: { value: string; option?: T }) => void) | null;
     /**
      * Intercept keyboard input before the built-in handling. Runs on every keydown (open or
      * closed) with a {@link MultiSelectKeydownContext} carrying the event, current state, and a
@@ -723,8 +768,10 @@ export interface MultiSelectEventDetail<T = any> {
     selectedOptions: T[];
     /** Selected values array */
     selectedValues: (string | number)[];
-    /** The option that triggered the event (for select/deselect) */
+    /** The option that triggered the event (for select/deselect/add) */
     option?: T;
+    /** The typed text that triggered the `add` event (add only) */
+    value?: string;
 }
 
 /**

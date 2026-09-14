@@ -56,6 +56,10 @@ export class WebMultiSelect<T = any> {
     private keyboardController: MultiSelectKeyboardController<T> | null = null;
     private matchingIndices: Set<number> = new Set();
     private searchTerm = '';
+    /** Keyboard focus sits on the empty-state "add new" prompt (arrow-navigated). */
+    private addNewFocused = false;
+    /** An async addNewCallback is in flight — the prompt shows a spinner + pending text. */
+    private addNewPending = false;
     private isLoading = false;
     private searchDebounceTimer?: ReturnType<typeof setTimeout>;
     private searchAbortController?: AbortController;
@@ -364,6 +368,8 @@ export class WebMultiSelect<T = any> {
             badgesThresholdMode: (element.dataset.badgesThresholdMode as any) || 'count',
             maxHeight: element.dataset.maxHeight || '20rem',
             emptyMessage: element.dataset.emptyMessage || 'No results found',
+            addNewText: element.dataset.addNewText || undefined,
+            addNewPendingText: element.dataset.addNewPendingText || undefined,
             loadingMessage: element.dataset.loadingMessage || 'Loading...',
             searchInputMode: (element.dataset.searchInputMode as SearchInputMode) || 'normal',
             searchMode: (element.dataset.searchMode as SearchMode) || 'filter',
@@ -972,7 +978,7 @@ export class WebMultiSelect<T = any> {
         }
 
         if (this.filteredOptions.length === 0) {
-            html += `<div class="ms__empty">${this.options.emptyMessage}</div>`;
+            html += this.renderEmptyStateHTML();
         } else if (this.isTreeMode()) {
             this.treeNodes.forEach((node, index) => {
                 html += this.renderTreeNode(node, index);
@@ -988,6 +994,8 @@ export class WebMultiSelect<T = any> {
                 Object.keys(groups).forEach(groupName => {
                     html += '<div class="ms__group">';
                     if (groupName !== '__ungrouped__') {
+                        // `data-group` anchors the label for scrollToGroup() (public API).
+                        const groupAttr = ` data-group="${this.escapeHtml(groupName)}"`;
                         // Check if custom group label callback is provided
                         if (this.options.renderGroupLabelContentCallback) {
                             const customContent = this.options.renderGroupLabelContentCallback(groupName);
@@ -995,15 +1003,16 @@ export class WebMultiSelect<T = any> {
                                 // HTMLElement - wrap in group-label div
                                 const wrapper = document.createElement('div');
                                 wrapper.className = 'ms__group-label';
+                                wrapper.dataset.group = groupName;
                                 wrapper.appendChild(customContent);
                                 html += wrapper.outerHTML;
                             } else {
                                 // String (HTML or plain text)
-                                html += `<div class="ms__group-label">${customContent}</div>`;
+                                html += `<div class="ms__group-label"${groupAttr}>${customContent}</div>`;
                             }
                         } else {
                             // Default rendering
-                            html += `<div class="ms__group-label">${groupName}</div>`;
+                            html += `<div class="ms__group-label"${groupAttr}>${groupName}</div>`;
                         }
                     }
                     groups[groupName].forEach(option => {
@@ -1148,7 +1157,7 @@ export class WebMultiSelect<T = any> {
                 this.virtualScroll.destroy();
                 this.virtualScroll = null;
             }
-            this.optionsContainer.innerHTML = `<div class="ms__empty">${this.options.emptyMessage}</div>`;
+            this.optionsContainer.innerHTML = this.renderEmptyStateHTML();
             return;
         }
 
@@ -1450,6 +1459,67 @@ export class WebMultiSelect<T = any> {
         html += '</div>';
 
         return html;
+    }
+
+    /**
+     * Empty-dropdown content. When "add new" is enabled (isAddNewAllowed) AND the user has typed
+     * a non-empty search term, show a clickable "add new" prompt instead of the plain emptyMessage —
+     * choosing it (click via handleDropdownClick, or Enter via the keydown handler) runs handleAddNew.
+     * Otherwise fall back to the emptyMessage.
+     */
+    private renderEmptyStateHTML(): string {
+        if (this.isAddNewPromptShown()) {
+            const value = (this.searchTerm || '').trim();
+            // Pending: an async addNewCallback is running — spinner + "Adding …", not clickable.
+            if (this.addNewPending) {
+                return `<div class="ms__add-new ms__add-new--loading" aria-busy="true">`
+                    + `<span class="ms__add-new-spinner" aria-hidden="true"></span>`
+                    + `<span class="ms__add-new-text">${this.getAddNewPendingText(value)}</span>`
+                    + `</div>`;
+            }
+            const focused = this.addNewFocused ? ' ms__add-new--focused' : '';
+            return `<div class="ms__add-new${focused}" role="button" data-action="add-new">`
+                + `<span class="ms__add-new-icon" aria-hidden="true"></span>`
+                + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
+                + `</div>`;
+        }
+        return `<div class="ms__empty">${this.options.emptyMessage}</div>`;
+    }
+
+    /** True when the empty dropdown is currently showing the clickable "add new" prompt. */
+    private isAddNewPromptShown(): boolean {
+        return !!this.options.isAddNewAllowed
+            && this.filteredOptions.length === 0
+            && !!(this.searchTerm || '').trim();
+    }
+
+    /**
+     * Resolve the "add new" prompt label for the typed text. Priority: getAddNewTextCallback
+     * (returns plain text — fully escaped here) → addNewText template (trusted config string;
+     * only the `{value}` substitution is escaped) → the default `Add "{value}"`.
+     */
+    private getAddNewText(value: string): string {
+        if (this.options.getAddNewTextCallback) {
+            return this.escapeHtml(this.options.getAddNewTextCallback(value));
+        }
+        const template = this.options.addNewText ?? 'Add "{value}"';
+        return template.replace(/\{value\}/g, this.escapeHtml(value));
+    }
+
+    /** Pending-prompt label shown (with a spinner) while an async addNewCallback runs. */
+    private getAddNewPendingText(value: string): string {
+        const template = this.options.addNewPendingText ?? 'Adding "{value}"…';
+        return template.replace(/\{value\}/g, this.escapeHtml(value));
+    }
+
+    /** Minimal HTML entity escape for untrusted text spliced into an innerHTML string. */
+    private escapeHtml(value: string): string {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     private highlightMatch(text: string, searchTerm: string): string {
@@ -1803,6 +1873,8 @@ export class WebMultiSelect<T = any> {
 
     private async handleSearch(value: string): Promise<void> {
         this.searchTerm = value;
+        // A fresh keystroke drops the "add new" prompt highlight — arrows re-focus it.
+        this.addNewFocused = false;
 
         // If search is disabled, don't filter options
         if (!this.options.isSearchEnabled) {
@@ -2078,7 +2150,10 @@ export class WebMultiSelect<T = any> {
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                if (e.ctrlKey || e.metaKey) {
+                if (this.isAddNewPromptShown()) {
+                    // The "add new" prompt is the only actionable row — arrow to highlight it.
+                    this.focusAddNewPrompt();
+                } else if (e.ctrlKey || e.metaKey) {
                     // Ctrl/Cmd+Down: Jump to next match (navigate mode only)
                     this.focusNextMatch();
                 } else {
@@ -2088,7 +2163,9 @@ export class WebMultiSelect<T = any> {
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                if (e.ctrlKey || e.metaKey) {
+                if (this.isAddNewPromptShown()) {
+                    this.focusAddNewPrompt();
+                } else if (e.ctrlKey || e.metaKey) {
                     // Ctrl/Cmd+Up: Jump to previous match (navigate mode only)
                     this.focusPreviousMatch();
                 } else {
@@ -2100,9 +2177,15 @@ export class WebMultiSelect<T = any> {
                 e.preventDefault();
                 if (this.focusedIndex >= 0) {
                     this.toggleOption(this.filteredOptions[this.focusedIndex]);
-                } else if (this.options.isAddNewAllowed && this.options.addNewCallback && this.input.value.trim()) {
-                    // Allow adding a new option if enabled and there's input text
-                    this.handleAddNew(this.input.value.trim());
+                } else if (
+                    this.options.isAddNewAllowed
+                    && this.filteredOptions.length === 0
+                    && (this.searchTerm || '').trim()
+                ) {
+                    // No matches + typed text: commit the "add new" prompt (mirrors clicking it).
+                    // Works with or without addNewCallback — the `add` event fires either way, so a
+                    // consumer can handle creation themselves.
+                    this.handleAddNew((this.searchTerm || '').trim());
                 }
                 // On the fullscreen sheet the on-screen Enter/Search key doubles as
                 // "done typing" — drop focus off the header search so the soft keyboard
@@ -2187,6 +2270,9 @@ export class WebMultiSelect<T = any> {
                 this.selectAll();
             } else if (action === 'clear-all') {
                 this.clearAll();
+            } else if (action === 'add-new') {
+                const value = (this.searchTerm || '').trim();
+                if (value) this.handleAddNew(value);
             } else if (action === 'custom') {
                 // Look up the custom button by its rendered index (set as data-button-index)
                 const buttonIndex = parseInt(actionBtn.dataset.buttonIndex || '-1');
@@ -2395,6 +2481,13 @@ export class WebMultiSelect<T = any> {
     private focusPageUp(): void   { this.focusBy((i)    => Math.max(0, i - 10), -1); }
     private focusPageDown(): void { this.focusBy((i, n) => Math.min(n - 1, i + 10), 1); }
 
+    /** Move keyboard focus onto the empty-state "add new" prompt (the only actionable row). */
+    private focusAddNewPrompt(): void {
+        if (this.addNewFocused) return;
+        this.addNewFocused = true;
+        this.renderDropdown();
+    }
+
     private focusNextMatch(): void {
         if (this.matchingIndices.size === 0) return;
         const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
@@ -2459,7 +2552,13 @@ export class WebMultiSelect<T = any> {
 
     /** Clear the search box (both the main input and the fullscreen search) and reset the visible
      *  list. Shared by Escape and the keyboard controller. */
-    private clearSearch(): void {
+    /**
+     * Clear the search box and restore the full option list (resets the visible/matched sets and
+     * drops keyboard focus). Public building block: pair it with `scrollToValue()` to reveal then
+     * scroll to an option the current search had filtered out — `el.clearSearch(); el.scrollToValue(v)`.
+     * Does not touch the selection (use `clearAll()` for that).
+     */
+    public clearSearch(): void {
         this.input.value = '';
         if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
         this.searchTerm = '';
@@ -2471,28 +2570,141 @@ export class WebMultiSelect<T = any> {
         this.updateFullscreenSearchClear();
     }
 
+    /**
+     * Programmatically set the search text and filter — exactly as if the user typed it, so
+     * `beforeSearchCallback`, `minSearchLength` and async `searchCallback` all apply the same way.
+     * Reflects into the search box (and the fullscreen sheet's field). Does NOT open the dropdown —
+     * call `open()` if you want it visible. Passing `''` clears (equivalent to `clearSearch()`).
+     */
+    public search(term: string): void {
+        const value = term ?? '';
+        this.input.value = value;
+        if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = value;
+        void this.handleSearch(value);
+        this.updateFullscreenSearchClear();
+    }
+
     private scrollToFocused(): void {
         if (this.virtualScroll && this.focusedIndex >= 0) {
-            // Use virtual scroll's scrollToIndex for smooth scrolling
-            this.virtualScroll.scrollToIndex(this.focusedIndex);
+            // Keyboard nav wants MINIMAL movement ('nearest') — don't slam the focused row to the
+            // top on every arrow keypress (the public scrollTo* commands default to 'start' instead).
+            this.virtualScroll.scrollToIndex(this.focusedIndex, 'nearest');
             return;
         }
         // Standard mode: use scrollIntoView
-        const focusedElement = this.dropdown.querySelector('.ms__option--focused');
+        const focusedElement = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
         if (!focusedElement) return;
+        this.applyScrollIntoView(focusedElement);
+    }
 
-        // In the fullscreen sheet the soft keyboard covers the lower part of the
-        // viewport while the user types (navigate mode jumps focus per keystroke).
-        // `block:'nearest'` bottom-aligns a below-the-fold match to the scroller's
-        // bottom edge — which can sit BEHIND the keyboard, so the match "scrolls"
-        // but lands hidden. Centre it in the visible area instead (comfortably above
-        // the keys), and scroll INSTANTLY: a smooth animation kicked off on one
-        // keystroke is torn down by the next re-render, so it never settles (the
-        // "list jumps on every letter" without ever revealing the match).
+    /**
+     * scrollIntoView with the fullscreen-safe default. In the fullscreen sheet the soft keyboard
+     * covers the lower viewport, so `block:'nearest'` can bottom-align a match BEHIND the keyboard;
+     * centre it instead and scroll INSTANTLY (a smooth animation kicked off per-keystroke is torn
+     * down by the next re-render and never settles — the "list jumps every letter" bug). Floating
+     * scrolls the nearest edge smoothly. The caller may override `block`.
+     */
+    private applyScrollIntoView(el: HTMLElement, opts?: { block?: ScrollLogicalPosition }): void {
         if (this.presentationMode === 'fullscreen') {
-            focusedElement.scrollIntoView({ block: 'center', behavior: 'auto' });
+            el.scrollIntoView({ block: opts?.block ?? 'center', behavior: 'auto' });
         } else {
-            focusedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            el.scrollIntoView({ block: opts?.block ?? 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    /**
+     * Scroll the open dropdown so the option at `index` (into the current `filteredOptions`) is
+     * visible. Works in floating, fullscreen (mobile), virtual-scroll and tree modes. Returns
+     * false if the dropdown is closed or the index is out of range. The scroll is deferred a frame
+     * when the list isn't rendered yet (e.g. right after `open()` in virtual mode / the fullscreen
+     * sheet build), so `el.open(); el.scrollToIndex(i)` works.
+     */
+    public scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): boolean {
+        const block = opts?.block ?? 'start';
+        if (!this.#isOpen) {
+            interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}) → false (closed)`);
+            return false;
+        }
+        if (index < 0 || index >= this.filteredOptions.length) {
+            interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}) → false (out of range, ${this.filteredOptions.length} options)`);
+            return false;
+        }
+        interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}, block=${block}) — virtual=${!!this.virtualScroll}, mode=${this.presentationMode}`);
+        this.scrollToRenderedIndex(index, { block });
+        return true;
+    }
+
+    /**
+     * Scroll to the option whose value matches `value` (resolved within the current
+     * `filteredOptions`). Returns false if it isn't in the currently visible list — e.g. filtered
+     * out by a search, or (tree) under a collapsed ancestor. Call `clearSearch()` (or expand the
+     * branch) first to reveal it, then scroll.
+     */
+    public scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): boolean {
+        const index = this.filteredOptions.findIndex(o => String(this.getItemValue(o)) === String(value));
+        interactionLogger.debug(`[${this.instanceId}] scrollToValue(${String(value)}) → index ${index} of ${this.filteredOptions.length}`);
+        if (index < 0) return false;
+        return this.scrollToIndex(index, opts);
+    }
+
+    /**
+     * Scroll to a group. In standard rendering the group's header (`.ms__group-label`) is brought
+     * into view; in virtual-scroll mode (which renders no headers) it scrolls to the group's FIRST
+     * option instead. Returns false in tree mode (groups don't apply) or if the group has no
+     * options in the current filtered list.
+     */
+    public scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): boolean {
+        const block = opts?.block ?? 'start';
+        if (!this.#isOpen || this.isTreeMode()) {
+            interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) → false (${this.isTreeMode() ? 'tree mode' : 'closed'})`);
+            return false;
+        }
+        // Standard render: a real header exists — scroll it into view (shows the label).
+        if (!this.virtualScroll) {
+            const label = this.dropdown.querySelector(
+                `.ms__group-label[data-group="${CSS.escape(name)}"]`
+            ) as HTMLElement | null;
+            if (label) {
+                interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — header found, scrolling label into view (block=${block})`);
+                this.applyScrollIntoView(label, { block });
+                return true;
+            }
+        }
+        // Virtual mode (no headers), or the header isn't rendered yet: scroll to the group's first
+        // option by index.
+        const index = this.filteredOptions.findIndex(o => (this.getItemGroup(o) || '') === name);
+        interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — no header (virtual=${!!this.virtualScroll}), first member index ${index}`);
+        if (index < 0) return false;
+        return this.scrollToIndex(index, { block });
+    }
+
+    /**
+     * Shared scroll worker for the public scrollTo* methods. Virtual mode uses the fixed-height
+     * math (works even if the row isn't currently rendered); otherwise scrolls the
+     * `.ms__option[data-index]` element into view. Defers one frame if the list isn't ready yet
+     * (post-open virtual init / fullscreen sheet build), then retries once.
+     */
+    private scrollToRenderedIndex(index: number, opts?: { block?: ScrollLogicalPosition }, retried = false): void {
+        if (!this.#isOpen || index < 0 || index >= this.filteredOptions.length) return;
+        if (this.virtualScroll) {
+            // Map the DOM ScrollLogicalPosition to the virtual list's supported blocks ('end' → nearest).
+            const vBlock = opts?.block === 'center' ? 'center'
+                : opts?.block === 'nearest' ? 'nearest'
+                : 'start';
+            this.virtualScroll.scrollToIndex(index, vBlock);
+            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${vBlock})`);
+            return;
+        }
+        const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
+        if (el) {
+            this.applyScrollIntoView(el, opts);
+            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via DOM scrollIntoView`);
+            return;
+        }
+        // Not rendered yet (virtual instance still initializing, or sheet mid-build): retry once.
+        if (!retried) {
+            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) not rendered yet — deferring one frame`);
+            requestAnimationFrame(() => this.scrollToRenderedIndex(index, opts, true));
         }
     }
 
@@ -2586,30 +2798,75 @@ export class WebMultiSelect<T = any> {
         return true;
     }
 
+    /**
+     * Commit the "add new" affordance for the typed text. Two modes:
+     *  - `addNewCallback` set → create the option, append it, select it, clear the search.
+     *  - no callback → the consumer owns creation; we only notify (via the `add` event) so they
+     *    can open a modal / POST / add the option imperatively.
+     * The `add` event fires in BOTH modes (with `option` present only when one was created).
+     */
     private async handleAddNew(value: string): Promise<void> {
-        if (!this.options.addNewCallback) return;
-
         try {
-            dataLogger.debug(`[${this.instanceId}] Adding new option:`, value);
-            const newOption = await this.options.addNewCallback(value);
+            let newOption: T | undefined;
 
-            // Add to options list
-            this.allOptions.push(newOption);
-            this.filteredOptions.push(newOption);
+            if (this.options.addNewCallback) {
+                dataLogger.debug(`[${this.instanceId}] Adding new option:`, value);
 
-            // Select the new option
-            this.selectOption(newOption);
+                // Show a pending state (spinner + "Adding …") while the callback runs — an async
+                // creation (validation / server round-trip) otherwise leaves the prompt frozen.
+                this.addNewFocused = false;
+                this.addNewPending = true;
+                this.renderDropdown();
 
-            // Clear input and re-render
-            this.input.value = '';
-            this.renderDropdown();
-            this.renderBadges();
+                let created: T | null | undefined;
+                try {
+                    created = await this.options.addNewCallback(value);
+                } finally {
+                    this.addNewPending = false;
+                }
 
-            if (this.options.isCloseOnSelect) {
+                // Cancelable: a null/undefined return aborts the whole creation — no push, no select,
+                // no `add` event, search left intact so the user can adjust. Use `== null` (NOT a
+                // falsy check) so a valid primitive-mode option of 0 / false / "" still creates.
+                if (created == null) {
+                    dataLogger.debug(`[${this.instanceId}] addNewCallback canceled creation for:`, value);
+                    this.renderDropdown(); // clear the spinner, restore the clickable prompt
+                    return;
+                }
+                newOption = created;
+
+                // Append to the master list (selectOption + resetVisibleToAll read from it).
+                // `newOption` may be a rich option object — it renders via the same get*/render*
+                // callbacks as every other option.
+                this.allOptions.push(newOption);
+
+                // Reset the search box + visible list to ALL options so the picker leaves the
+                // "one filtered result" state and shows the full (now longer) list — otherwise it
+                // stays stuck showing only the just-added row until the user searches again.
+                this.searchTerm = '';
+                this.input.value = '';
+                if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
+                this.matchingIndices.clear();
+                this.focusedIndex = -1;
+                this.addNewFocused = false;
+                this.resetVisibleToAll();
+
+                // Select the new option (commit() re-renders the now-full list + badges).
+                this.selectOption(newOption);
+                this.updateFullscreenSearchClear();
+            }
+
+            // Notify the consumer that a creation was requested. Fires whether or not an option
+            // was materialized here — a callback-less consumer handles creation off this event.
+            this.options.onAddNew?.({ value, option: newOption });
+
+            if (newOption && this.options.isCloseOnSelect) {
                 this.close();
             }
         } catch (error) {
+            this.addNewPending = false;
             dataLogger.error(`[${this.instanceId}] Error adding new option:`, error);
+            this.renderDropdown(); // clear the spinner if the callback threw
         }
     }
 
@@ -4133,6 +4390,11 @@ export class WebMultiSelect<T = any> {
     public get selectedItem(): T | null {
         if (this.selectedOptions.size === 0) return null;
         return Array.from(this.selectedOptions.values())[0];
+    }
+
+    /** The current search box text (empty string when nothing is typed). Read-only; clear it with `clearSearch()`. */
+    public get searchText(): string {
+        return this.searchTerm;
     }
 
     public get selectedValue(): string | number | (string | number)[] | null {

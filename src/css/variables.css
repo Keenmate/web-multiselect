@@ -189,15 +189,20 @@
 
   /* Badge Semantic Variables */
   --ms-badge-bg: var(--ms-accent-color-light);
-  /* Hover deepens the accent tint (dark-mode aware). Using --ms-input-bg here
-     made a light-blue badge go WHITE on hover — reading as "background lost". */
-  --ms-badge-bg-hover: var(--base-hover-bg, var(--ms-accent-color-light-hover));
+  /* Hover DEEPENS the badge's OWN rest background toward its OWN text colour.
+     Deliberately self-referential: NOT --base-hover-bg (a generic surface token →
+     accent pill flipped near-white in dark/neon), and NOT --ms-accent-color-light-hover
+     (a separate accent-tint token themes forget to set when they change the accent →
+     a black brutalist pill fell back to the hardcoded blue tint on hover). Mixing 12%
+     of the text colour into the rest bg is a subtle, always-readable nudge that follows
+     whatever bg/text pair a theme sets. */
+  --ms-badge-bg-hover: color-mix(in srgb, var(--ms-badge-bg) 88%, var(--ms-badge-text-color) 12%);
   --ms-badge-bg-active: var(--ms-accent-color-light-hover);
 
   /* Badge Text Semantic Variables */
   --ms-badge-text-bg: var(--ms-accent-color-light);
   --ms-badge-text-color: var(--ms-accent-color);
-  --ms-badge-text-bg-hover: var(--base-hover-bg, var(--ms-accent-color-light-hover));
+  --ms-badge-text-bg-hover: color-mix(in srgb, var(--ms-badge-text-bg) 88%, var(--ms-badge-text-color) 12%);
   --ms-badge-text-color-hover: var(--ms-badge-text-color);
 
   /* Badge Remove Button Semantic Variables */
@@ -205,14 +210,24 @@
   --ms-badge-remove-bg-hover: var(--ms-accent-color-hover);
   --ms-badge-remove-color: var(--ms-text-color-on-accent);
 
-  /* Badge Counter Variant Semantic Variables */
-  /* Neutral/gray styling to distinguish from accent-colored selection badges */
+  /* Badge Counter Variant Semantic Variables
+     Neutral/gray styling to distinguish from accent-coloured selection badges.
+     Self-contained: the pill is a translucent tint of the strong text colour, and
+     text/glyph use the text-colour hierarchy — so contrast holds even when a theme
+     omits --base-main-bg (the old --ms-primary-bg-hover chain collapsed to
+     light-on-light there). The counter must NOT inherit the accent-coloured hover
+     of regular badges — its text stays neutral; only the surface deepens. */
   --ms-badge-counter-border-color: var(--ms-border-color);
-  --ms-badge-counter-text-bg: var(--ms-primary-bg-hover);
+  --ms-badge-counter-text-bg: color-mix(in srgb, var(--ms-text-color-1) 10%, transparent);
+  --ms-badge-counter-text-bg-hover: color-mix(in srgb, var(--ms-text-color-1) 16%, transparent);
   --ms-badge-counter-text-color: var(--ms-text-color-1);
-  --ms-badge-counter-remove-bg: var(--ms-text-color-3);
-  --ms-badge-counter-remove-bg-hover: var(--ms-text-color-1);
-  --ms-badge-counter-remove-color: var(--ms-text-color-on-accent);
+  --ms-badge-counter-text-color-hover: var(--ms-text-color-1);
+  --ms-badge-counter-remove-bg: color-mix(in srgb, var(--ms-text-color-1) 10%, transparent);
+  --ms-badge-counter-remove-bg-hover: color-mix(in srgb, var(--ms-text-color-1) 16%, transparent);
+  /* Neutral glyph (text-3 at rest → text-1 on hover), NOT white-on-accent — the old
+     on-accent glyph vanished once the hover bg became a light text colour. */
+  --ms-badge-counter-remove-color: var(--ms-text-color-3);
+  --ms-badge-counter-remove-color-hover: var(--ms-text-color-1);
 
   /* Count Display Semantic Variables */
   --ms-counter-wrapper-bg: transparent;
@@ -223,7 +238,7 @@
   --ms-count-clear-bg: transparent;
   --ms-count-clear-bg-hover: var(--ms-accent-color);
   --ms-count-clear-color: var(--ms-text-color-3);
-  --ms-count-clear-color-hover: var(--ms-accent-color);
+  --ms-count-clear-color-hover: var(--ms-text-color-on-accent);
 
   /* Tooltip Semantic Variables
      Tooltips invert relative to the page: dark tooltip on light page, light tooltip on dark page.
@@ -240,7 +255,7 @@
   --ms-selected-popover-close-bg: transparent;
   --ms-selected-popover-close-bg-hover: var(--ms-accent-color);
   --ms-selected-popover-close-color: var(--ms-text-color-3);
-  --ms-selected-popover-close-color-hover: var(--ms-accent-color);
+  --ms-selected-popover-close-color-hover: var(--ms-text-color-on-accent);
 
   /* ==========================================================================
      INPUT COMPONENT
@@ -631,6 +646,16 @@
   --ms-empty-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-empty-color: var(--ms-text-color-3);
 
+  /* "Add new" prompt (empty state when isAddNewAllowed + typed text). A clickable
+     row keyed off the accent so it reads as an action, not a dead message. */
+  --ms-add-new-padding: var(--ms-option-padding);
+  --ms-add-new-gap: var(--ms-option-gap);
+  --ms-add-new-font-size: var(--ms-empty-font-size);
+  --ms-add-new-color: var(--ms-accent-color);
+  --ms-add-new-color-hover: var(--ms-accent-color);
+  --ms-add-new-bg-hover: var(--ms-option-bg-hover);
+  --ms-add-new-icon-size: calc(1.6 * var(--ms-rem));
+
   /* Loader */
   --ms-loader-padding: calc(1.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-loader-gap: calc(0.8 * var(--ms-rem));
@@ -704,6 +729,10 @@
      shared --base-icon-* contract. Override either to diverge from the base. */
   --ms-icon-check: var(--base-icon-check, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>"));
   --ms-icon-indeterminate: var(--base-icon-indeterminate, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/></svg>"));
+  /* "Add new" glyph (empty-state create prompt) — a plus, rendered as a mask so it
+     inherits the row's currentColor. Follows the shared --base-icon-* contract:
+     prefers --base-icon-plus, then --base-icon-add, then an inline "+" fallback. */
+  --ms-icon-add-new: var(--base-icon-plus, var(--base-icon-add, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='M12 5v14'/></svg>")));
 
   /* Badge Counter Indicator (layout-only properties, colors come from semantic section) */
   --ms-badge-counter-bg: transparent;
@@ -749,8 +778,12 @@
   --ms-count-clear-color: var(--ms-text-color-3);
   --ms-count-clear-font-size: calc(var(--base-font-size-lg, 1.8) * var(--ms-rem));
   --ms-count-clear-border-radius: var(--ms-border-radius-sm);
-  --ms-count-clear-bg-hover: color-mix(in srgb, var(--ms-accent-color) 20%, transparent);
-  --ms-count-clear-color-hover: var(--ms-accent-color);
+  /* Hover fills with SOLID accent and flips the glyph to text-on-accent — mirrors
+     .ms__badge-remove. The old "accent-tint bg + accent glyph" was same-hue: the ✕
+     melted into its own hover background (invisible on near-white accents like
+     minimal-dark, low-contrast blue-on-blue everywhere else). */
+  --ms-count-clear-bg-hover: var(--ms-accent-color);
+  --ms-count-clear-color-hover: var(--ms-text-color-on-accent);
   --ms-count-clear-icon-size: calc(1.4 * var(--ms-rem));
   /* Field-clear ✕ (input clear + count clear). Its own knob in the --base-icon contract:
      prefers --base-icon-clear so a theme can diverge field-clear from close/remove, then falls
@@ -839,8 +872,10 @@
   --ms-selected-popover-close-color: var(--ms-text-color-3);
   --ms-selected-popover-close-font-size: calc(var(--base-font-size-xl, 2) * var(--ms-rem));
   --ms-selected-popover-close-border-radius: var(--ms-border-radius-sm);
-  --ms-selected-popover-close-bg-hover: color-mix(in srgb, var(--ms-accent-color) 20%, transparent);
-  --ms-selected-popover-close-color-hover: var(--ms-accent-color);
+  /* Solid accent fill + on-accent glyph (see .ms__count-clear note) — avoids the
+     same-hue "accent glyph on accent-tint" melt on hover. */
+  --ms-selected-popover-close-bg-hover: var(--ms-accent-color);
+  --ms-selected-popover-close-color-hover: var(--ms-text-color-on-accent);
   --ms-selected-popover-close-icon-size: calc(1.4 * var(--ms-rem));
 
   /* ==========================================================================

@@ -146,6 +146,49 @@
                 </span>
             </div>
         </div>
+
+        <div class="card">
+            <h2>VS03 · Scroll-to API with virtual scroll</h2>
+            <p>
+                In virtual mode <code>scrollToIndex</code> / <code>scrollToValue</code> scroll by
+                fixed-height <strong>index math</strong> — the target row need not be rendered, so
+                jumping to item #14,999 in a 15,000-row list is instant. Pair with <code>open()</code>
+                for an "open + jump" gesture. Default alignment is <code>start</code> (target at the top);
+                pass <code>{ block: 'center' }</code> to center it.
+            </p>
+            <div class="form-group mt-1">
+                <label for="scroll-virtual-large">15,000 options</label>
+                <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
+                    <div style="flex:1 1 260px; min-width:260px;">
+                        <web-multiselect
+                            id="scroll-virtual-large"
+                            value-member="value"
+                            display-value-member="label"
+                            enable-virtual-scroll="true"
+                            virtual-scroll-threshold="100"
+                            search-placeholder="Search or use the buttons..."></web-multiselect>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:210px;">
+                        <button type="button" data-vs="index:0">⇱ index 0</button>
+                        <button type="button" data-vs="index:7500">index 7500</button>
+                        <button type="button" data-vs="index:14999">index 14999 (last)</button>
+                        <button type="button" data-vs="value:12345">value 12345</button>
+                        <button type="button" data-vs="center:7500">index 7500 · block "center"</button>
+                        <button type="button" data-vs="clear">clearSearch()</button>
+                    </div>
+                </div>
+                <span class="form-text">The log shows the resulting <code>scrollTop</code> and which rows landed in view.</span>
+            </div>
+            <div id="vs-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>el.open();
+el.scrollToIndex(14999);              // instant — row 14,999 isn't rendered yet
+el.scrollToValue(12345);             // resolves value → index
+el.scrollToIndex(7500, { block: 'center' });</code></pre>
+            </details>
+        </div>
     </div>
 
     <script type="module">
@@ -342,6 +385,63 @@
                     if (e.detail.selectedOptions.length >= 100) {
                         console.log('✅ Virtual scroll enabled in popover!');
                     }
+                });
+            }
+
+            // --- VS03 · Scroll-to API with virtual scroll ------------
+            const vsLarge = document.getElementById('scroll-virtual-large');
+            const vsLogEl = document.getElementById('vs-scroll-log');
+            const vsLog = (msg) => {
+                if (!vsLogEl) return;
+                if (vsLogEl.querySelector('.muted')) vsLogEl.innerHTML = '';
+                const row = document.createElement('div');
+                row.style.marginBottom = '0.4rem';
+                row.textContent = msg;
+                vsLogEl.appendChild(row);
+                vsLogEl.scrollTop = vsLogEl.scrollHeight;
+            };
+            // Inspect the shadow DOM to report where the (virtual) scroll landed.
+            const vsDescribe = (el, targetIndex) => {
+                const container = el.shadowRoot && el.shadowRoot.querySelector('.ms__options');
+                if (!container) { vsLog('   ↳ (dropdown not open)'); return; }
+                const crect = container.getBoundingClientRect();
+                const rows = [...container.querySelectorAll('.ms__option')];
+                const visible = rows.filter((o) => {
+                    const r = o.getBoundingClientRect();
+                    return r.bottom > crect.top + 1 && r.top < crect.bottom - 1;
+                });
+                const idxOf = (o) => o.closest('[data-index]')?.dataset.index ?? '?';
+                const first = visible[0];
+                const last = visible[visible.length - 1];
+                const lbl = (o) => o ? `#${idxOf(o)} "${(o.querySelector('.ms__option-title') || o).textContent.trim()}"` : '—';
+                let note = '';
+                if (targetIndex != null) {
+                    const hit = visible.some((o) => o.closest('[data-index]')?.dataset.index === String(targetIndex));
+                    note = hit ? ` · target index ${targetIndex} VISIBLE` : ` · target index ${targetIndex} NOT in view`;
+                }
+                vsLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows ${lbl(first)} … ${lbl(last)} (${visible.length} rows)${note}`);
+            };
+            if (vsLarge) {
+                vsLarge.options = largeDataset.map((item) => ({ value: item.id, label: item.name }));
+                document.querySelectorAll('[data-vs]').forEach((btn) => {
+                    btn.addEventListener('click', (e) => {
+                        // stopPropagation: keep this outside-the-component click from bubbling to the
+                        // document "click outside → close" handler (which would shut an open dropdown).
+                        e.stopPropagation();
+                        vsLarge.open();
+                        const spec = btn.dataset.vs;
+                        if (spec === 'clear') { vsLarge.clearSearch(); vsLog('clearSearch() — search reset'); return; }
+                        const [kind, arg] = spec.split(':');
+                        let ok, targetIndex = null;
+                        if (kind === 'index')       { ok = vsLarge.scrollToIndex(Number(arg)); targetIndex = Number(arg); }
+                        else if (kind === 'value')  { ok = vsLarge.scrollToValue(Number(arg)); }
+                        else if (kind === 'center') { ok = vsLarge.scrollToIndex(Number(arg), { block: 'center' }); targetIndex = Number(arg); }
+                        const call = kind === 'value' ? `scrollToValue(${arg})`
+                            : kind === 'center' ? `scrollToIndex(${arg}, {block:'center'})`
+                            : `scrollToIndex(${arg})`;
+                        vsLog(`▶ ${call} → ${ok}`);
+                        setTimeout(() => vsDescribe(vsLarge, targetIndex), 90);
+                    });
                 });
             }
         });

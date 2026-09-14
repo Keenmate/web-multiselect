@@ -175,6 +175,17 @@
 
 .ms__badge--counter .ms__badge-remove:hover {
   background: var(--ms-badge-counter-remove-bg-hover);
+  color: var(--ms-badge-counter-remove-color-hover, var(--ms-badge-counter-remove-color));
+}
+
+/* The counter/"+X more" badge is ALSO a .ms__badge, so the generic
+   `.ms__badge:hover .ms__badge-text` rule (which paints text in the ACCENT colour)
+   would fire on it and turn the neutral "+X more" label accent-coloured. This block
+   keeps it neutral: same specificity as the generic rule (three classes), so source
+   order decides — it must (and does) live after it. */
+.ms__badge--counter:hover .ms__badge-text {
+  background: var(--ms-badge-counter-text-bg-hover, var(--ms-badge-counter-text-bg));
+  color: var(--ms-badge-counter-text-color-hover, var(--ms-badge-counter-text-color));
 }
 
 /* ==============================================================================

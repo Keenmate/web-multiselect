@@ -245,6 +245,69 @@
             </div>
         </div>
 
+        <!-- Scroll-to API -->
+        <div class="card">
+            <h2>BU06b · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
+            <p>
+                Imperative commands that bring an option or group into view. Pair with <code>open()</code>
+                for an “open + jump” gesture (deep-linking to a member, revealing the active row on open).
+                They work in floating, mobile fullscreen, virtual-scroll and tree modes and return
+                <code>false</code> when the target isn't in the current filtered list. A companion
+                <code>clearSearch()</code> reveals an option a search had filtered out so you can then
+                scroll to it.
+            </p>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Grouped (headers)</label>
+                    <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
+                        <div style="flex:1 1 220px; min-width:220px;">
+                            <web-multiselect id="scroll-grouped"
+                                value-member="value" display-value-member="label"
+                                icon-member="icon" group-member="group"></web-multiselect>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:190px;">
+                            <button type="button" data-scroll-grouped="group:backend">▶ group “backend”</button>
+                            <button type="button" data-scroll-grouped="group:database">▶ group “database”</button>
+                            <button type="button" data-scroll-grouped="value:redis">◎ value “redis”</button>
+                            <button type="button" data-scroll-grouped="index:0">⇱ index 0</button>
+                        </div>
+                    </div>
+                    <small class="form-text"><code>scrollToGroup</code> centers the group header.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Long list + virtual scroll</label>
+                    <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
+                        <div style="flex:1 1 220px; min-width:220px;">
+                            <web-multiselect id="scroll-virtual"
+                                value-member="value" display-value-member="label"
+                                enable-virtual-scroll></web-multiselect>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:190px;">
+                            <button type="button" data-scroll-virtual="value:jp">Japan</button>
+                            <button type="button" data-scroll-virtual="value:us">United States</button>
+                            <button type="button" data-scroll-virtual="value:vn">Vietnam (last)</button>
+                            <button type="button" data-scroll-virtual="clear">clearSearch()</button>
+                        </div>
+                    </div>
+                    <small class="form-text">Virtual mode scrolls by index math — the row need not be rendered yet.</small>
+                </div>
+            </div>
+            <div id="scroll-log" class="log-panel"><div class="muted">scrollTo* return values log here…</div></div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>el.open();
+el.scrollToGroup('backend');   // header centered (or the group's first row in virtual mode)
+el.scrollToValue('redis');     // → false if filtered out by the current search
+el.scrollToIndex(0);
+
+// Reveal a filtered-out option, then scroll to it:
+el.clearSearch();
+el.scrollToValue('jp');</code></pre>
+            </details>
+        </div>
+
         <!-- Search Modes -->
         <div class="card">
             <h2>BU07 · Search Modes: Filter vs Navigate</h2>
@@ -660,6 +723,69 @@
 
                 customGroupsClassic.setSelected(['react', 'nodejs']);
             }
+
+            // Scroll-to API (BU06b)
+            const scrollGrouped = document.getElementById('scroll-grouped');
+            const scrollVirtual = document.getElementById('scroll-virtual');
+            const scrollLogEl = document.getElementById('scroll-log');
+            const scrollLog = (msg) => {
+                if (!scrollLogEl) return;
+                if (scrollLogEl.querySelector('.muted')) scrollLogEl.innerHTML = '';
+                const row = document.createElement('div');
+                row.style.marginBottom = '0.4rem';
+                row.textContent = msg;
+                scrollLogEl.appendChild(row);
+                scrollLogEl.scrollTop = scrollLogEl.scrollHeight;
+            };
+            if (scrollGrouped) scrollGrouped.options = groupedTechnologies;
+            if (scrollVirtual) scrollVirtual.options = allCountries;
+
+            // Inspect the (open) shadow DOM and report which option rows are actually in view —
+            // so we can SEE where a scrollTo* call landed. Runs after a tick so the scroll settles.
+            const describeViewport = (el, targetValue) => {
+                const container = el.shadowRoot && el.shadowRoot.querySelector('.ms__options');
+                if (!container) { scrollLog('   ↳ (dropdown not open / no list)'); return; }
+                const crect = container.getBoundingClientRect();
+                const rows = [...container.querySelectorAll('.ms__option')];
+                const visible = rows.filter((o) => {
+                    const r = o.getBoundingClientRect();
+                    return r.bottom > crect.top + 1 && r.top < crect.bottom - 1;
+                });
+                const label = (o) => (o.querySelector('.ms__option-title') || o).textContent.trim();
+                const first = visible[0] ? label(visible[0]) : '—';
+                const last = visible.length ? label(visible[visible.length - 1]) : '—';
+                let targetNote = '';
+                if (targetValue != null) {
+                    const hit = visible.find((o) => o.dataset.value === String(targetValue));
+                    targetNote = hit
+                        ? ` · target "${label(hit)}" VISIBLE`
+                        : ` · target "${targetValue}" NOT in view`;
+                }
+                scrollLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows "${first}" … "${last}" (${visible.length} rows)${targetNote}`);
+            };
+
+            const runScroll = (el, spec) => {
+                el.open(); // scrollTo* defers internally, so open()+scroll in one gesture works
+                if (spec === 'clear') { el.clearSearch(); scrollLog('clearSearch() — search reset, full list restored'); return; }
+                const [kind, arg] = spec.split(':');
+                let ok, target = null;
+                if (kind === 'group')      { ok = el.scrollToGroup(arg); }
+                else if (kind === 'value') { ok = el.scrollToValue(arg); target = arg; }
+                else if (kind === 'index') { ok = el.scrollToIndex(Number(arg)); }
+                const call = kind === 'index' ? `scrollToIndex(${arg})`
+                    : kind === 'group' ? `scrollToGroup('${arg}')`
+                    : `scrollToValue('${arg}')`;
+                scrollLog(`▶ ${call} → ${ok}`);
+                // Give the (possibly deferred) scroll a moment, then report where we landed.
+                setTimeout(() => describeViewport(el, target), 90);
+            };
+            // stopPropagation: these buttons live OUTSIDE the component, so their click would
+            // otherwise bubble to the document "click outside → close" handler and shut an
+            // already-open dropdown (the "every second click closes it" symptom).
+            document.querySelectorAll('[data-scroll-grouped]').forEach((btn) =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); runScroll(scrollGrouped, btn.dataset.scrollGrouped); }));
+            document.querySelectorAll('[data-scroll-virtual]').forEach((btn) =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); runScroll(scrollVirtual, btn.dataset.scrollVirtual); }));
             // RTL Support - Basic RTL
             const rtlBasicSelect = document.getElementById('rtl-basic');
             if (rtlBasicSelect) {

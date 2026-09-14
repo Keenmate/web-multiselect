@@ -79,6 +79,8 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'dropdownMaxWidth',        attribute: 'dropdown-max-width',          converter: toText({ isNullable: true }),            on: 'update', description: 'Maximum width of the dropdown panel (any CSS length).' },
   { configKey: 'maxHeight',               attribute: 'max-height',                  converter: toText({ default: '20rem' }),          on: 'update', description: 'Maximum height of the dropdown list before it scrolls.' },
   { configKey: 'emptyMessage',            attribute: 'empty-message',               converter: toText({ default: 'No results found' }), on: 'update', description: 'Message shown when a search yields no matches.' },
+  { configKey: 'addNewText',              attribute: 'add-new-text',                converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the clickable "add new" prompt shown (when `allow-add-new` is on) in place of the empty message once a search yields no matches. `{value}` is replaced with the typed text. Default: `Add "{value}"`. A `getAddNewTextCallback` wins.' },
+  { configKey: 'addNewPendingText',       attribute: 'add-new-pending-text',        converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the pending prompt (spinner + text) shown while an async `addNewCallback` runs. `{value}` is replaced with the typed text. Default: `Adding "{value}"…`.' },
   { configKey: 'loadingMessage',          attribute: 'loading-message',             converter: toText({ default: 'Loading...' }),     on: 'update', description: 'Message shown while options are loading.' },
   { configKey: 'removeButtonTooltipText', attribute: 'remove-button-tooltip-text',  converter: toText({ isNullable: true }),            on: 'update', description: 'Tooltip text for a badge remove (×) button.' },
   { configKey: 'formFieldId',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
@@ -220,7 +222,8 @@ Tree + multiple only.` },
   { configKey: 'beforeSearchCallback',    converter: cb(), on: 'update', type: '(searchTerm: string) => string | null', description: 'Runs before a search; return a rewritten term or null to veto.' },
   { configKey: 'beforeSelectCallback',    converter: cb(), on: 'update', type: '(option: unknown, selectedOptions: unknown[]) => boolean | string | void', description: 'Runs before selecting; return false to veto, or a string to veto and show it as a message.' },
   { configKey: 'beforeDeselectCallback',  converter: cb(), on: 'update', type: '(option: unknown, selectedOptions: unknown[]) => boolean | string | void', description: 'Runs before deselecting; return false to veto, or a string to veto and show it as a message.' },
-  { configKey: 'addNewCallback',          converter: cb(), on: 'update', type: '(value: string) => unknown | Promise<unknown>', description: 'Create a new option from the typed text.' },
+  { configKey: 'addNewCallback',          converter: cb(), on: 'update', type: '(value: string) => unknown | null | undefined | Promise<unknown | null | undefined>', description: 'Create a new option from the typed text. May return a rich option object (renders via the same get*/render* callbacks as any option). Async + cancelable: return null/undefined to abort (no add, no `add` event). Omit entirely to handle creation yourself via the `add` event.' },
+  { configKey: 'getAddNewTextCallback',   converter: cb(), on: 'update', type: '(value: string) => string', description: 'Dynamically compute the "add new" prompt label from the typed text (returns plain text). Takes precedence over `add-new-text`.' },
   { configKey: 'keydownCallback',         converter: cb(), on: 'update', type: '(context: MultiSelectKeydownContext) => boolean | void', description: 'Intercept keydown before built-in handling; return true to suppress the default. Gets the event, current state, and an imperative controller.' },
 ];
 
@@ -232,11 +235,13 @@ type MultiSelectEvents = {
   select: MultiSelectEventDetail;
   deselect: MultiSelectEventDetail;
   change: MultiSelectEventDetail;
+  add: MultiSelectEventDetail;
 };
 const EVENTS = [
   { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
   { name: 'deselect', description: 'An option was removed from the selection. `detail.option` is that option.' },
   { name: 'change', description: 'The selection changed. `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
+  { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `addNewCallback` produced one.' },
 ] as const;
 
 /**
@@ -287,6 +292,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   declare onSelect: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
   declare onDeselect: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
   declare onChange: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
+  declare onAdd: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
 
   #shadow: ShadowRoot;
   #picker?: WebMultiSelect<T>;
@@ -588,6 +594,14 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
         selectedValues: this.#collectSelectedValues(),
       });
     };
+    cfg.onAddNew = (detail: { value: string; option?: T }) => {
+      this.emit('add', {
+        value: detail.value,
+        option: detail.option,
+        selectedOptions: this.#picker?.getSelected() ?? [],
+        selectedValues: this.#collectSelectedValues(),
+      });
+    };
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs.
     cfg.container = this.#shadow as unknown as HTMLElement;
@@ -830,6 +844,63 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /** Dismiss the transient message shown by {@link showMessage}, if any. */
   hideMessage(): void {
     this.#picker?.hideMessage();
+  }
+
+  // ── scroll-to API ───────────────────────────────────────────────────────────
+
+  /**
+   * Clear the search box and restore the full option list (does not touch the selection — use
+   * {@link clearAll} for that). Pair with {@link scrollToValue} to reveal then scroll to an option
+   * a search had filtered out: `el.clearSearch(); el.scrollToValue(v)`.
+   */
+  clearSearch(): void {
+    this.flush();
+    this.#picker?.clearSearch();
+  }
+
+  /** The current search box text (empty string when nothing is typed). Read via this getter, write with {@link search}. */
+  get searchText(): string {
+    this.flush();
+    return this.#picker?.searchText ?? '';
+  }
+
+  /**
+   * Programmatically set the search text and filter, as if the user typed it (runs
+   * `beforeSearchCallback` / `minSearchLength` / async `searchCallback`). Does not open the dropdown
+   * — call {@link open} if you want it visible. Pass `''` to clear (same as {@link clearSearch}).
+   */
+  search(term: string): void {
+    this.flush();
+    this.#picker?.search(term);
+  }
+
+  /**
+   * Scroll the open dropdown to the option at `index` (into the current filtered list). Returns
+   * false if closed or out of range. Deferred internally so `el.open(); el.scrollToIndex(i)` works.
+   */
+  scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): boolean {
+    this.flush();
+    return this.#picker?.scrollToIndex(index, opts) ?? false;
+  }
+
+  /**
+   * Scroll the open dropdown to the option with this `value`. Returns false if it isn't in the
+   * currently visible list (filtered out by search, or under a collapsed tree branch) — call
+   * {@link clearSearch} / expand first.
+   */
+  scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): boolean {
+    this.flush();
+    return this.#picker?.scrollToValue(value, opts) ?? false;
+  }
+
+  /**
+   * Scroll to a group: its header in standard rendering, or the group's first option in
+   * virtual-scroll mode (no headers there). Returns false in tree mode or if the group is empty
+   * in the current filtered list.
+   */
+  scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): boolean {
+    this.flush();
+    return this.#picker?.scrollToGroup(name, opts) ?? false;
   }
 
   // ── imperative open/close API (flush pending writes, then delegate) ─────────

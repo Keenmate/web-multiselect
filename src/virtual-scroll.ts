@@ -238,25 +238,39 @@ export class VirtualScroll<T> {
      * Scroll to make item at index visible (like scrollIntoView with block: 'nearest')
      * Only scrolls if item is outside visible area, and scrolls minimally
      */
-    public scrollToIndex(index: number): void {
+    public scrollToIndex(index: number, block: 'start' | 'center' | 'nearest' = 'start'): void {
         if (index < 0 || index >= this.items.length) {
             return;
         }
 
+        // Refresh the height first — right after open() the container may not have been measured
+        // yet, and a stale (or 0) viewportHeight throws off the center/nearest math.
+        this.updateViewportHeight();
+
         const itemTop = index * this.itemHeight;
         const itemBottom = itemTop + this.itemHeight;
-        const viewportTop = this.container.scrollTop;
-        const viewportBottom = viewportTop + this.viewportHeight;
+        const maxScroll = Math.max(0, this.items.length * this.itemHeight - this.viewportHeight);
 
-        // Only scroll if item is not fully visible
-        if (itemTop < viewportTop) {
-            // Item is above viewport - scroll up to show it at top
-            this.container.scrollTop = itemTop;
-        } else if (itemBottom > viewportBottom) {
-            // Item is below viewport - scroll down to show it at bottom
-            this.container.scrollTop = itemBottom - this.viewportHeight;
+        let target: number;
+        if (block === 'center') {
+            target = itemTop - (this.viewportHeight - this.itemHeight) / 2;
+        } else if (block === 'nearest') {
+            const viewportTop = this.container.scrollTop;
+            const viewportBottom = viewportTop + this.viewportHeight;
+            if (itemTop >= viewportTop && itemBottom <= viewportBottom) return; // already fully visible
+            target = itemTop < viewportTop ? itemTop : itemBottom - this.viewportHeight;
+        } else {
+            // 'start' — deterministic: put the item at the top of the viewport.
+            target = itemTop;
         }
-        // If item is already fully visible, don't scroll
+
+        target = Math.max(0, Math.min(target, maxScroll));
+
+        // Set scrollTop AND sync our cached value + re-render synchronously, rather than waiting
+        // for the async 'scroll' event — so the correct rows are in place immediately.
+        this.container.scrollTop = target;
+        this.scrollTop = target;
+        this.render();
     }
 
     /**

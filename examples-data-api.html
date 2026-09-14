@@ -379,6 +379,62 @@ multiselect.isOpen = true;   // open by assignment
 multiselect.isOpen = false;  // close by assignment</pre></div>
         </section>
 
+        <section class="example-section">
+            <h2>API08 · Search text — read &amp; drive the query</h2>
+            <p class="description">
+                Read the current search box text with <code>searchText</code>, set it programmatically
+                with <code>search(term)</code> — it applies exactly as if the user typed (runs
+                <code>beforeSearchCallback</code> / <code>minSearchLength</code> / async
+                <code>searchCallback</code>) and does <em>not</em> open the dropdown — and reset it with
+                <code>clearSearch()</code>. <strong>There's no separate "filter" method:</strong> what the
+                query <em>does</em> is governed by <code>searchMode</code> — set
+                <code>el.searchMode = 'filter'</code> (narrow the list) or <code>'navigate'</code> (keep
+                all options, jump focus to the match) before searching. Handy for deep-links
+                ("open with a query pre-filled"), syncing an external field, or restoring saved state.
+            </p>
+
+            <ul class="feature-list">
+                <li><code>searchText</code> - read the current query (empty string when nothing is typed)</li>
+                <li><code>search(term)</code> - set the query and apply it (does not open the dropdown)</li>
+                <li><code>searchMode</code> - <code>'filter'</code> | <code>'navigate'</code>; governs what the query does</li>
+                <li><code>clearSearch()</code> - clear the query and restore the full list</li>
+            </ul>
+
+            <div class="demo-area">
+                <label class="demo-label">Pick a mode, type a query, then apply:</label>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+                    <web-multiselect id="search-api-demo" style="flex: 1 1 240px;"></web-multiselect>
+
+                    <div class="controls" style="margin-bottom: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                        <label><input type="radio" name="search-api-mode" value="filter" checked> filter</label>
+                        <label style="margin-right: 0.5rem;"><input type="radio" name="search-api-mode" value="navigate"> navigate</label>
+                        <input type="text" id="search-api-input" placeholder="query, e.g. an" value="an" style="padding: 0.4rem;">
+                        <button onclick="searchApiDemo('apply')">searchMode + search + open</button>
+                        <button onclick="searchApiDemo('clear')">clearSearch()</button>
+                        <button onclick="searchApiDemo('read')">read searchText</button>
+                    </div>
+                </div>
+
+                <p class="description" style="font-size: 0.85rem; opacity: 0.8; margin: 0.5rem 0 0;">
+                    Try <code>an</code> in each mode: <strong>filter</strong> narrows to Banana / Mango / Orange;
+                    <strong>navigate</strong> keeps every fruit visible and just focuses the first match.
+                </p>
+
+                <div class="output">
+                    <div class="output-label">searchText:</div>
+                    <pre id="output-search-api">""</pre>
+                </div>
+            </div>
+
+            <div class="code-block"><pre>const el = document.querySelector('web-multiselect');
+
+el.searchMode = 'filter';  // or 'navigate' — governs how the query behaves
+el.search('an');           // apply (as if typed); flush() applies the mode first
+el.open();                 // …call open() to see the effect
+el.searchText;             // → "an"
+el.clearSearch();          // → ""</pre></div>
+        </section>
+
         <!-- Example 8: Async Search / Lookup -->
         <section class="example-section">
             <h2>DA04 · Async Search / Lookup</h2>
@@ -864,6 +920,15 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
                 ['opt2', 'Option 2'],
                 ['opt3', 'Option 3'],
                 ['opt4', 'Option 4']
+            ];
+
+            // API08: search text read/drive
+            const searchApiSelect = document.querySelector('#search-api-demo');
+            searchApiSelect.options = [
+                ['apple', 'Apple'], ['apricot', 'Apricot'], ['banana', 'Banana'],
+                ['blueberry', 'Blueberry'], ['cherry', 'Cherry'], ['grape', 'Grape'],
+                ['mango', 'Mango'], ['melon', 'Melon'], ['orange', 'Orange'],
+                ['peach', 'Peach'], ['pear', 'Pear'], ['pineapple', 'Pineapple']
             ];
 
             // Example 8: Async Search
@@ -1530,6 +1595,23 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
             document.getElementById('output-openclose').textContent = JSON.stringify({
                 'isOpen': select.isOpen
             }, null, 2);
+        };
+
+        // API08: set searchMode, drive/read the search text, then reflect el.searchText.
+        window.searchApiDemo = (action) => {
+            const select = document.querySelector('#search-api-demo');
+            const input = document.getElementById('search-api-input');
+            if (action === 'apply') {
+                const mode = document.querySelector('input[name="search-api-mode"]:checked').value;
+                select.searchMode = mode;   // reactive; search()'s flush() applies the mode first
+                select.search(input.value);
+                select.open();              // open so filter-vs-navigate is visible
+            } else if (action === 'clear') {
+                select.clearSearch();
+                input.value = '';
+            }
+            // 'read' just falls through to the reflect below.
+            document.getElementById('output-search-api').textContent = JSON.stringify(select.searchText);
         };
 
         window.showAsyncData = () => {

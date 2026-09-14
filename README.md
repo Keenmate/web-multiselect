@@ -21,6 +21,40 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
+## What's New in v2.0.0
+
+- **"Add new" creation mode — the picker doubles as a creation tool.** Turn on `allow-add-new`
+  and a search with no matches shows a clickable "Add new …" prompt (label via `add-new-text` /
+  `getAddNewTextCallback`). Choosing it (click, Enter, or arrow-to-focus) fires a new bubbling
+  `add` event; `addNewCallback` creates the option and is **async and cancelable** (return
+  `null`/`undefined` to abort after a confirm dialog or server round-trip) and may return a
+  **rich option** that renders like any other. While it runs the prompt shows a spinner +
+  `add-new-pending-text`. Creation also works with no callback — handle it entirely off the `add`
+  event. See `examples-events-callbacks.html` §EV4b/EV4c.
+
+- **Scroll-to imperative API — jump to any option or group.** New `scrollToIndex()` /
+  `scrollToValue()` / `scrollToGroup()` on the element and picker bring a row into view — pair with
+  `open()` for an "open + jump" gesture. Mode-aware (virtual scroll, tree, mobile fullscreen sheet),
+  they align to the top by default (`{ block: 'center' }` to center) and return `false` when the
+  target isn't in the current filtered list. A companion public `clearSearch()` reveals a
+  filtered-out option so you can then scroll to it, plus a `searchText` getter and a `search(term)`
+  method to read and programmatically drive the query. See §BU06b, §VS03, §TR09b.
+
+- **Checkbox check/dash + filter funnel now flow from the shared `--base-icon-*` contract.** The
+  checkmark and indeterminate dash are now `currentColor` mask glyphs (not CSS-border shapes) reading
+  `--base-icon-check` / `--base-icon-indeterminate`, and the search-mode funnel reads
+  `--base-icon-filter` — so one base override reskins them across every KeenMate component. Inline
+  Lucide fallbacks keep the default look unchanged.
+
+- **`--ms-rem` now bridges to the shared `--base-rem` knob.** The global sizing unit resolves
+  `var(--base-rem, 10px)`, so a theme that sets `--base-rem` rescales the whole component from one
+  variable (the `10px` fallback and per-instance overrides still work with no base layer loaded).
+
+- **Fixed: the count-chip clear ✕ and popover close ✕ vanished on hover.** Both derived their hover
+  background *and* glyph colour from the same accent, so the ✕ melted into its own hover state
+  (fully invisible on near-white accents like Minimal dark). They now fill with a solid accent
+  background and flip the glyph to the on-accent colour, matching the badge remove button.
+
 ## What's New in v2.0.0-rc12
 
 - **`overlay-group` — one overlay open at a time, across components.** The dropdown now joins a cross-component single-active-overlay group (core `registerOverlay`): opening it dismisses every other participating overlay — other multiselects, datepickers, or any external popover that fires the `km-overlay-activated` document event — and it closes itself when another overlay in its group opens. The new `overlay-group` attribute/property scopes this to a named group (same group = coordinate, different groups = independent, unset = the default ungrouped pool). Outside-click dismissal is unchanged and always on; this only governs the open-broadcast. Fixes the old behavior where two multiselects could sit open simultaneously.
@@ -34,18 +68,6 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
 - **More tokens flow from `--base-*` for dark-mode fidelity.** A follow-up audit wired five more `--ms-*` tokens that hardcoded a value where a dedicated `--base-*` counterpart exists: disabled-input background and dropdown box-shadow are now `light-dark()`-aware (they no longer stay light on dark themes), the field-clear color/hover knobs gain dedicated base hooks, and the snappy easing matches the base standard curve. All keep their prior value as the standalone fallback; transition *durations* and the z-index stack are deliberately left local.
 
 - **Dropdown / selected-items popover no longer render 2px wider than the field.** Both panels size from `--ms-input-current-width` (the field wrapper's border-box `offsetWidth`) but were themselves `content-box`, so each added its own 1px border on top and overhung the input it anchors to. Both now use `box-sizing: border-box`, so their outer width matches the field exactly.
-
-## What's New in v2.0.0-rc11
-
-- **Imperative open/close API — drive the dropdown from code.** The `<web-multiselect>` element and the underlying `WebMultiSelect` now expose `open()`, `close()`, `toggle()`, and a read/write `isOpen` property, mirroring the calendar API in web-daterangepicker. Each element method flushes pending property writes first (the same contract as `getSelected()`/`setSelected()`), so `el.options = data; el.open()` works with no `await` in between. Calling `open()` from your own button's click handler now opens *and stays open* — previously the same click bubbled to the outside-click listener and re-closed it. See the new `examples-data-api.html` §API07 demo.
-
-- **Inline clear (✕) button — wipe the whole selection from inside the input.** A new opt-in `show-clear` attribute renders a small ✕ at the input's trailing edge that appears only while something is selected. Clicking it clears the selection and any search text, fires a single `change`, refocuses the input, and closes the selected-items popover if it was open — without popping the dropdown open. It's drawn as a themeable CSS mask icon (`--ms-input-clear-*`, whose corner radius follows `--ms-border-radius`). See the new `examples-basic.html` §BU01b demo.
-
-- **Input decorations rebuilt as a flex "field shell" — no more overlap or text bleed.** `.ms__input-wrapper` is now the bordered field (border, background, radius, focus ring via `:focus-within`), with the `<input>`, the `[N]` counter, the ✕ clear, and the chevron as real flex children in a spaced row. Previously each was absolutely pinned by a hard-coded inset, so `show-counter` + `show-clear` collided and long text could slide under the icons. Now they space themselves via `--ms-input-gap`, long text clips cleanly inside the input's own box, and RTL mirroring falls out of the flex direction for free. Several obsolete positioning vars were removed (`--ms-input-padding`, `--ms-input-padding-right`, `--ms-toggle-right`, `--ms-counter-offset`, `--ms-input-clear-inset`, `--ms-input-clear-gutter`, `--ms-transform-center-y`).
-
-- **Selected-items popover now lines up with the field.** `--ms-selected-popover-width` used to default to a fixed 32rem independent of the control, which looked detached under a wide field; it now defaults to `var(--ms-input-current-width)`, so the popover and the dropdown both track the field width and align under it. Set `selected-popover-width` (or the CSS var) to a fixed length to restore the old constant-width behavior.
-
-- **Toggle chevron is now a crisp icon, not a text character.** The dropdown indicator renders the shared `--ms-icon-chevron` glyph through a CSS mask — consistent with the ✕, count-clear, and badge-remove icons — instead of the Unicode `▼`, so it no longer depends on font rendering and themes uniformly via `--ms-toggle-icon-color` / `--ms-toggle-icon-size`. It still points down when closed and rotates up when open.
 
 ## Demos & docs
 

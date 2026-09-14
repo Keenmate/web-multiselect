@@ -435,6 +435,76 @@
   color: var(--ms-empty-color);
 }
 
+/* "Add new" prompt — replaces the empty message when isAddNewAllowed is on and the
+   user has typed a term with no matches. Clickable (data-action="add-new" → handleAddNew);
+   styled like an accent-coloured option row so it reads as an action. */
+.ms__add-new {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-add-new-gap);
+  /* Size like a normal option row (padding + content) — NOT the tall empty/loading
+     footprint. The empty-state min-height is only for the "no results" / spinner swap. */
+  padding: var(--ms-add-new-padding);
+  font-size: var(--ms-add-new-font-size);
+  color: var(--ms-add-new-color);
+  cursor: pointer;
+  /* Same rationale as .ms__option: a click here is an action gesture, not text selection. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Hover gated to real pointing devices (see .ms__option for the touch rationale). */
+@media (hover: hover) {
+  .ms__add-new:hover {
+    background: var(--ms-add-new-bg-hover);
+    color: var(--ms-add-new-color-hover);
+  }
+}
+
+/* Keyboard focus (arrow-navigated) — mirror the hover surface so the prompt reads
+   as the active row, matching .ms__option--focused. */
+.ms__add-new--focused {
+  background: var(--ms-add-new-bg-hover);
+  color: var(--ms-add-new-color-hover);
+}
+
+/* Pending state — an async addNewCallback is in flight (spinner + "Adding …"). Not
+   clickable (no data-action on the row), so drop the pointer cursor. */
+.ms__add-new--loading {
+  cursor: default;
+}
+
+/* Self-contained spinner (no external .pa-loader dependency — it can't cross the
+   shadow boundary). Sized to the prompt's icon box; tinted by the row's currentColor. */
+.ms__add-new-spinner {
+  flex-shrink: 0;
+  width: var(--ms-add-new-icon-size);
+  height: var(--ms-add-new-icon-size);
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: ms-spin 0.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ms__add-new-spinner { animation-duration: 1.5s; }
+}
+
+.ms__add-new-icon {
+  flex-shrink: 0;
+  width: var(--ms-add-new-icon-size);
+  height: var(--ms-add-new-icon-size);
+  background-color: currentColor;
+  -webkit-mask: var(--ms-icon-add-new) center / contain no-repeat;
+          mask: var(--ms-icon-add-new) center / contain no-repeat;
+}
+
+.ms__add-new-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Loading state */
 .ms__loader {
   display: flex;

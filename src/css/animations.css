@@ -1,1 +1,6 @@
-/* animations.css — no @keyframes in this component (state transitions are inline on each rule). */
+/* animations.css — state transitions are inline on each rule; the only @keyframes is the
+   spinner used by the "add new" pending prompt (an async addNewCallback in flight). */
+
+@keyframes ms-spin {
+  to { transform: rotate(360deg); }
+}

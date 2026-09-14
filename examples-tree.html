@@ -260,6 +260,46 @@ el.getBadgeTooltipCallback = (item) =&gt; item.fullTitle || item.label;</pre></d
             </p>
         </section>
 
+        <!-- Example 9b: Scroll-to API in a tree -->
+        <section class="example-section">
+            <h2>TR09b · Scroll-to API in a tree</h2>
+            <p class="description">
+                The tree is <strong>always fully expanded</strong>, so <code>scrollToValue</code> reaches
+                any node by its value (here the ISCO code) — and it works with virtual scroll (the row
+                need not be rendered). <code>scrollToGroup</code> does <em>not</em> apply in tree mode and
+                returns <code>false</code>. If a <strong>search</strong> has filtered the tree, the node
+                may be hidden — call <code>clearSearch()</code> first to reveal it, then scroll.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label">Jump to an ISCO occupation by code:</label>
+                <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
+                    <div style="flex:1 1 260px; min-width:260px;">
+                        <web-multiselect id="tree-scroll" multiple="true"
+                            enable-virtual-scroll="true" option-height="32"
+                            style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:210px;">
+                        <button type="button" data-tr="value:1111">1111 · Legislators</button>
+                        <button type="button" data-tr="value:2211">2211 · Medical Practitioners</button>
+                        <button type="button" data-tr="value:7212">7212 · Welders</button>
+                        <button type="button" data-tr="last">⇲ last node (index)</button>
+                        <button type="button" data-tr="group:health">scrollToGroup (tree → false)</button>
+                        <button type="button" data-tr="clear">clearSearch()</button>
+                    </div>
+                </div>
+                <div id="tr-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
+            </div>
+
+            <div class="code-block"><pre>el.open();
+el.scrollToValue('2211');        // any node by value — tree is always expanded
+el.scrollToIndex(el /* count-1 */); // last visible node
+el.scrollToGroup('x');           // → false in tree mode
+
+// If a search filtered the node out, reveal it first:
+el.clearSearch();
+el.scrollToValue('2211');</pre></div>
+        </section>
+
         <!-- Example 10: Cascade checkbox mode + value policy -->
         <section class="example-section">
             <h2>TR10 · Cascade Checkboxes &amp; Value Policy</h2>
@@ -645,6 +685,69 @@ web-multiselect {
                     // Full breadcrumb in the badge tooltip.
                     el.getBadgeTooltipCallback = (item) => item.fullTitle || item.label;
                     el.options = isco;
+
+                    // --- TR09b · Scroll-to API in a tree (reuses the ISCO data) ---
+                    const treeScroll = document.querySelector('#tree-scroll');
+                    const trLogEl = document.querySelector('#tr-scroll-log');
+                    if (treeScroll && trLogEl) {
+                        treeScroll.valueMember = 'value';
+                        treeScroll.displayValueMember = 'label';
+                        treeScroll.pathMember = 'path';
+                        treeScroll.isSelectableMember = 'selectable';
+                        treeScroll.getSearchValueCallback = (item) => `${item.label} ${item.value} ${item.fullTitle}`;
+                        treeScroll.options = isco;
+
+                        const trLog = (msg) => {
+                            if (trLogEl.querySelector('.muted')) trLogEl.innerHTML = '';
+                            const row = document.createElement('div');
+                            row.style.marginBottom = '0.4rem';
+                            row.textContent = msg;
+                            trLogEl.appendChild(row);
+                            trLogEl.scrollTop = trLogEl.scrollHeight;
+                        };
+                        const trDescribe = (targetValue) => {
+                            const container = treeScroll.shadowRoot && treeScroll.shadowRoot.querySelector('.ms__options');
+                            if (!container) { trLog('   ↳ (dropdown not open)'); return; }
+                            const crect = container.getBoundingClientRect();
+                            const rows = [...container.querySelectorAll('.ms__option')];
+                            const visible = rows.filter((o) => {
+                                const r = o.getBoundingClientRect();
+                                return r.bottom > crect.top + 1 && r.top < crect.bottom - 1;
+                            });
+                            const lbl = (o) => o ? `"${(o.querySelector('.ms__option-title') || o).textContent.trim()}"` : '—';
+                            let note = '';
+                            if (targetValue != null) {
+                                const hit = visible.some((o) => o.dataset.value === String(targetValue));
+                                note = hit ? ` · target ${targetValue} VISIBLE` : ` · target ${targetValue} NOT in view`;
+                            }
+                            trLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows ${lbl(visible[0])} … ${lbl(visible[visible.length - 1])} (${visible.length} rows)${note}`);
+                        };
+
+                        document.querySelectorAll('[data-tr]').forEach((btn) => {
+                            btn.addEventListener('click', (e) => {
+                                // stopPropagation: keep this outside-the-component click from bubbling to
+                                // the document "click outside → close" handler (which would shut the dropdown).
+                                e.stopPropagation();
+                                treeScroll.open();
+                                const spec = btn.dataset.tr;
+                                if (spec === 'clear') { treeScroll.clearSearch(); trLog('clearSearch() — search reset, full tree restored'); return; }
+                                if (spec === 'last') {
+                                    const lastIndex = isco.length - 1;
+                                    const ok = treeScroll.scrollToIndex(lastIndex);
+                                    trLog(`▶ scrollToIndex(${lastIndex}) → ${ok}`);
+                                    setTimeout(() => trDescribe(null), 90);
+                                    return;
+                                }
+                                const [kind, arg] = spec.split(':');
+                                let ok, target = null;
+                                if (kind === 'value')      { ok = treeScroll.scrollToValue(arg); target = arg; }
+                                else if (kind === 'group') { ok = treeScroll.scrollToGroup(arg); }
+                                const call = kind === 'group' ? `scrollToGroup('${arg}')` : `scrollToValue('${arg}')`;
+                                trLog(`▶ ${call} → ${ok}`);
+                                if (kind === 'value') setTimeout(() => trDescribe(target), 90);
+                            });
+                        });
+                    }
                 });
 
             // Leaves-only selectability: branches become pure structure (no checkbox,
