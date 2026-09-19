@@ -2,7 +2,7 @@
 
 `@keenmate/web-multiselect` is styled entirely through CSS custom properties. The component uses Shadow DOM for encapsulation, but every visible color, size, and effect is exposed as a `--ms-*` variable that you can override from the light DOM.
 
-For interactive theme exploration, use the [KeenMate Theme Designer](https://theme-designer.keenmate.dev).
+For interactive theme exploration, use the [Keenmate Theme Designer](https://theme-designer.keenmate.dev).
 
 ## Sizing
 
@@ -45,7 +45,7 @@ Override individual sizing variables for specific adjustments:
 
 **Input size variants:**
 
-Five size variants for consistent input sizing across KeenMate components:
+Five size variants for consistent input sizing across Keenmate components:
 
 | Size | Variable | Height | Base variable |
 |------|----------|--------|---------------|
@@ -55,7 +55,7 @@ Five size variants for consistent input sizing across KeenMate components:
 | LG | `--ms-input-size-lg-height` | 38px | `--base-input-size-lg-height` |
 | XL | `--ms-input-size-xl-height` | 41px | `--base-input-size-xl-height` |
 
-Heights reference `--base-input-size-*-height` from the [Theme Designer](https://theme-designer.keenmate.dev), ensuring consistent input heights across all KeenMate components.
+Heights reference `--base-input-size-*-height` from the [Theme Designer](https://theme-designer.keenmate.dev), ensuring consistent input heights across all Keenmate components.
 
 ```css
 /* Set consistent input heights across all components */
@@ -66,7 +66,7 @@ Heights reference `--base-input-size-*-height` from the [Theme Designer](https:/
 
 ## Theme Designer integration
 
-The easiest way to customize the appearance of this component is the **KeenMate Theme Designer** at [theme-designer.keenmate.dev](https://theme-designer.keenmate.dev).
+The easiest way to customize the appearance of this component is the **Keenmate Theme Designer** at [theme-designer.keenmate.dev](https://theme-designer.keenmate.dev).
 
 1. **Choose 3 base colors** — background, text, and accent.
 2. **Preview changes live** — see your theme applied instantly.
@@ -75,7 +75,7 @@ The easiest way to customize the appearance of this component is the **KeenMate 
 
 ### CSS variable layers
 
-KeenMate components support a **two-layer theming architecture**:
+Keenmate components support a **two-layer theming architecture**:
 
 **Standalone mode (simple)** — just override the component-specific variables you need:
 
@@ -87,7 +87,7 @@ KeenMate components support a **two-layer theming architecture**:
 }
 ```
 
-**Cascading mode (multi-component)** — when using multiple KeenMate components, you can define a shared base layer:
+**Cascading mode (multi-component)** — when using multiple Keenmate components, you can define a shared base layer:
 
 ```css
 :root {
@@ -107,7 +107,7 @@ Change `--base-accent-color` once → all components update automatically.
 
 ### Unified variable naming
 
-All KeenMate components follow a consistent naming convention for **Tier 1 variables** (core theming):
+All Keenmate components follow a consistent naming convention for **Tier 1 variables** (core theming):
 
 | Purpose | web-multiselect | web-daterangepicker |
 |---------|-----------------|---------------------|

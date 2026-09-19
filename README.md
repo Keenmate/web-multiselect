@@ -43,7 +43,7 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
 - **Checkbox check/dash + filter funnel now flow from the shared `--base-icon-*` contract.** The
   checkmark and indeterminate dash are now `currentColor` mask glyphs (not CSS-border shapes) reading
   `--base-icon-check` / `--base-icon-indeterminate`, and the search-mode funnel reads
-  `--base-icon-filter` — so one base override reskins them across every KeenMate component. Inline
+  `--base-icon-filter` — so one base override reskins them across every Keenmate component. Inline
   Lucide fallbacks keep the default look unchanged.
 
 - **`--ms-rem` now bridges to the shared `--base-rem` knob.** The global sizing unit resolves
@@ -59,7 +59,7 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
 
 - **`overlay-group` — one overlay open at a time, across components.** The dropdown now joins a cross-component single-active-overlay group (core `registerOverlay`): opening it dismisses every other participating overlay — other multiselects, datepickers, or any external popover that fires the `km-overlay-activated` document event — and it closes itself when another overlay in its group opens. The new `overlay-group` attribute/property scopes this to a named group (same group = coordinate, different groups = independent, unset = the default ungrouped pool). Outside-click dismissal is unchanged and always on; this only governs the open-broadcast. Fixes the old behavior where two multiselects could sit open simultaneously.
 
-- **Icon glyphs now flow from the shared `--base-icon-*` contract.** The four `--ms-icon-*` glyphs with a shared counterpart (chevron, field-clear, badge-remove, search) are wired through the `@keenmate/base-css-variables` layer, so a single `--base-icon-*` override re-skins that affordance across every KeenMate component at once — matching how the ~95 other `--ms-*` tokens already fall back to `--base-*`. The toggle/pager chevron now flows from `--base-icon-chevron` (a Lucide angle that keeps the previous optical size); field-clear, badge-remove, and search follow their base equivalents. Each keeps its inline Lucide SVG as the standalone fallback, so default appearance is unchanged when no base layer is loaded.
+- **Icon glyphs now flow from the shared `--base-icon-*` contract.** The four `--ms-icon-*` glyphs with a shared counterpart (chevron, field-clear, badge-remove, search) are wired through the `@keenmate/base-css-variables` layer, so a single `--base-icon-*` override re-skins that affordance across every Keenmate component at once — matching how the ~95 other `--ms-*` tokens already fall back to `--base-*`. The toggle/pager chevron now flows from `--base-icon-chevron` (a Lucide angle that keeps the previous optical size); field-clear, badge-remove, and search follow their base equivalents. Each keeps its inline Lucide SVG as the standalone fallback, so default appearance is unchanged when no base layer is loaded.
 
 - **`--ms-toggle-rotate-closed` / `--ms-toggle-rotate-open` — themeable chevron rotation.** The toggle rotates the *directional* base chevron into place (defaults `90deg` closed → down, `-90deg` open → up). A theme that supplies a **pre-oriented** glyph (one that already points down) can now opt out: set both to `0deg` for a static icon, or `0deg` / `180deg` for a down-glyph that flips up on open — without touching the base contract. The new Material Design card in `examples-theming.html` demonstrates the pairing.
 

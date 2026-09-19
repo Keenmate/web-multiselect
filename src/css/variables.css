@@ -45,7 +45,7 @@
      BASE SIZING UNIT
      ==========================================================================
      All sizing values are based on this unit for consistent scaling.
-     Bridges to the shared --base-rem knob so a theme scales every KeenMate
+     Bridges to the shared --base-rem knob so a theme scales every Keenmate
      component from one variable; falls back to 10px when no base layer is loaded.
      Default: 10px produces standard pixel values
      Pure Admin: Set --base-rem to 1rem (inherits from html { font-size: 10px })

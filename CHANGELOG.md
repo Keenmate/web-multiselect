@@ -77,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Three base tokens (`--base-icon-check`, `--base-icon-indeterminate`, `--base-icon-filter`) are
   consumed via `--ms-icon-check` / `--ms-icon-indeterminate` / `--ms-icon-filter`
   (`var(--base-icon-X, <inline Lucide fallback>)`), so a theme reskins the checkmark, the tri-state
-  dash and the search-mode funnel across every KeenMate component from one place. New manifest
+  dash and the search-mode funnel across every Keenmate component from one place. New manifest
   entries for all three base tokens + the three `--ms-icon-*` vars.
 
 ### Changed
@@ -90,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   disclosure-glyph approach. `--ms-checkbox-checkmark-thickness` no longer affects the glyph (stroke
   width is baked into the SVG) — kept as a no-op for back-compat.
 - **`--ms-rem` now bridges to the shared `--base-rem` knob.** The global sizing unit was hard-coded
-  to `10px`, so the component sat off the single scaling knob every other KeenMate component reads.
+  to `10px`, so the component sat off the single scaling knob every other Keenmate component reads.
   It now resolves `--ms-rem: var(--base-rem, 10px)` — a theme that sets `--base-rem` rescales the
   whole component from one variable, and the `10px` fallback keeps the default (and per-instance
   `--ms-rem` overrides) working unchanged when no base layer is loaded.
@@ -162,7 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Icon glyphs now flow from the shared `--base-icon-*` contract.** The four `--ms-icon-*` glyphs
   that have a shared counterpart are wired through the `@keenmate/base-css-variables` layer so a
-  single `--base-icon-*` override re-skins the affordance across every KeenMate component at once —
+  single `--base-icon-*` override re-skins the affordance across every Keenmate component at once —
   matching how the ~95 other `--ms-*` tokens already fall back to `--base-*`:
   - **Toggle + pager → `--base-icon-chevron`.** `--ms-icon-chevron` (the dropdown toggle and the
     fullscreen pager nav) now flows from the base chevron — a Lucide angle that fills its viewBox, so
@@ -1380,7 +1380,7 @@ The wrapper class is internal layout chrome and rarely styled externally; the de
 
 ## [1.11.0] - PUBLISHED - 2026-06-09
 
-This release strengthens dropdown positioning across containing-block edge cases, adopts OS-aware light/dark defaults via the CSS `light-dark()` function, and realigns the `--base-*` theming hooks with the cleaner taxonomy used across other KeenMate components.
+This release strengthens dropdown positioning across containing-block edge cases, adopts OS-aware light/dark defaults via the CSS `light-dark()` function, and realigns the `--base-*` theming hooks with the cleaner taxonomy used across other Keenmate components.
 
 ### Added
 
@@ -1737,7 +1737,7 @@ This release reworks substantial chunks of the internals (attribute pipeline, to
   - `--ms-input-size-lg-height`: `calc(var(--base-input-size-lg-height, 3.8) * var(--ms-rem))` (38px)
   - `--ms-input-size-xl-height`: `calc(var(--base-input-size-xl-height, 4.1) * var(--ms-rem))` (41px)
   - Each size also includes `-font`, `-padding-v`, `-padding-h` variables
-  - Heights reference `--base-input-size-*-height` from theme-designer for consistent sizing across all KeenMate components
+  - Heights reference `--base-input-size-*-height` from theme-designer for consistent sizing across all Keenmate components
 
 ### Changed
 
@@ -1896,9 +1896,9 @@ This release reworks substantial chunks of the internals (attribute pipeline, to
 
 ### Changed
 
-- **BREAKING: Unified Theming Variable Rename** - Renamed `--ms-text-white` to `--ms-text-on-accent` for consistency with unified theming system across KeenMate components
+- **BREAKING: Unified Theming Variable Rename** - Renamed `--ms-text-white` to `--ms-text-on-accent` for consistency with unified theming system across Keenmate components
   - This variable represents text color on accent-colored backgrounds (e.g., white text on blue buttons)
-  - The new name better describes its purpose and matches the naming convention used in other KeenMate components (web-daterangepicker, etc.)
+  - The new name better describes its purpose and matches the naming convention used in other Keenmate components (web-daterangepicker, etc.)
   - **Migration**: Find and replace `--ms-text-white` with `--ms-text-on-accent` in your stylesheets
 
 - **Removed Redundant CSS Variables** - Removed 8 CSS custom properties that used `inherit` fallbacks
