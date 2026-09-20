@@ -64,6 +64,7 @@
     { "name": "base-icon-plus", "required": false, "usage": "Plus glyph for the \"add new\" empty-state prompt; chained by --ms-icon-add-new; falls back to base-icon-add then inline Lucide SVG" },
     { "name": "base-icon-add", "required": false, "usage": "Alternate add glyph (fallback for base-icon-plus in the \"add new\" prompt)" },
     { "name": "base-icon-check", "required": false, "usage": "Checkbox/option checkmark glyph; chained by --ms-icon-check; inline Lucide SVG fallback" },
+    { "name": "base-icon-check-size", "required": false, "usage": "mask-size for the checkbox glyph inside its box (shared with pure-admin's .pa-checkbox); default 68%. Also sizes the indeterminate dash (shares the mask box)" },
     { "name": "base-icon-indeterminate", "required": false, "usage": "Tri-state (partial) checkbox dash glyph; chained by --ms-icon-indeterminate; inline Lucide SVG fallback" },
     { "name": "base-danger-bg", "required": false, "usage": "Error message background" },
     { "name": "base-danger-color", "required": false, "usage": "Error message text color" },

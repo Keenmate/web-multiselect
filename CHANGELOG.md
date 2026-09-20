@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the ✕ (`show-clear`) button's job, as intended. Multi-select toggle-off and single-select
   replacement (picking a different option) are unchanged.
 
+- **Checkbox checkmark sizing.** The selected-row checkmark masked its glyph at `contain`
+  (≈100% of the box), which assumed every glyph carried its own viewBox padding — so a theme
+  swapping `--base-icon-check` for an edge-to-edge glyph (e.g. a star) rendered it oversized, and
+  it diverged from pure-admin's `.pa-checkbox`. It now reads `var(--base-icon-check-size, 68%)` —
+  the same knob `.pa-checkbox` uses — so the mark renders identically in both and a theme can
+  rescale it once for every component. The indeterminate dash inherits the mask box. The default
+  Lucide check shrinks ≈100% → 68% to match (intended). Token registered in the variable manifest.
+
 - **Variable-manifest drift.** Removed 24 inert entries the manifest still advertised — the
   commented-out `--ms-input-size-*` / `--base-input-size-*-height` size-preset surface, plus the
   five positioning vars dropped in the rc11 field-shell rework — and added the missing
