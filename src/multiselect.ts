@@ -2739,6 +2739,18 @@ export class WebMultiSelect<T = any> {
         }
 
         const wasSelected = this.selectedValues.has(valueKey);
+
+        // Single-select: re-clicking (or Enter on) the already-selected option is a
+        // no-op confirm, NOT a toggle-off. A single-select must always keep one value
+        // once chosen — clearing the field is the clear (✕) button's job, not an
+        // option re-click. Deselecting here would silently empty the control and
+        // confuses users (the row gives no "you'd be un-picking this" cue in single
+        // mode — there's no checkbox). Just close on the confirming click.
+        if (wasSelected && !this.options.isMultipleEnabled) {
+            this.close();
+            return;
+        }
+
         const changed = wasSelected
             ? this.interactiveDeselect(option)
             : this.interactiveSelect(option);

@@ -21,6 +21,12 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
+## What's New in v2.0.1
+
+- **Single-select — re-clicking the selected option no longer clears the field** — In a `multiple="false"` picker, clicking or pressing Enter on the option that's already selected used to toggle it off and empty the control. Because a single-select row shows no checkbox, there was no cue you were un-picking, so a confirming click read as an accidental wipe. It's now a no-op that simply closes the dropdown, keeping the value selected; clearing stays the dedicated ✕ button's job (`show-clear`). Multi-select toggle-off and single-select replacement are untouched.
+- **Build-time variable-manifest validator** — A new `scripts/check-variable-manifest.mjs` step (wired into `npm run build` as `check:vars`) diffs the `--ms-*` declared and `--base-*` consumed across `src/css/**` against `component-variables.manifest.json` and fails the build on dead or missing entries. This closes the silent-drift gap behind the generated IDE autocomplete and theme-designer surfaces, which are all derived from that manifest.
+- **Manifest drift cleanup** — Removed 24 inert entries the manifest still advertised (the commented-out `--ms-input-size-*` size-preset surface and five positioning vars dropped in the rc11 field-shell rework) and added the missing `--base-icon-plus` / `--base-icon-add` glyphs, so autocomplete no longer offers non-functional knobs and now covers the "add new" prompt icons.
+
 ## What's New in v2.0.0
 
 - **"Add new" creation mode — the picker doubles as a creation tool.** Turn on `allow-add-new`
@@ -54,20 +60,6 @@ Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https:/
   background *and* glyph colour from the same accent, so the ✕ melted into its own hover state
   (fully invisible on near-white accents like Minimal dark). They now fill with a solid accent
   background and flip the glyph to the on-accent colour, matching the badge remove button.
-
-## What's New in v2.0.0-rc12
-
-- **`overlay-group` — one overlay open at a time, across components.** The dropdown now joins a cross-component single-active-overlay group (core `registerOverlay`): opening it dismisses every other participating overlay — other multiselects, datepickers, or any external popover that fires the `km-overlay-activated` document event — and it closes itself when another overlay in its group opens. The new `overlay-group` attribute/property scopes this to a named group (same group = coordinate, different groups = independent, unset = the default ungrouped pool). Outside-click dismissal is unchanged and always on; this only governs the open-broadcast. Fixes the old behavior where two multiselects could sit open simultaneously.
-
-- **Icon glyphs now flow from the shared `--base-icon-*` contract.** The four `--ms-icon-*` glyphs with a shared counterpart (chevron, field-clear, badge-remove, search) are wired through the `@keenmate/base-css-variables` layer, so a single `--base-icon-*` override re-skins that affordance across every Keenmate component at once — matching how the ~95 other `--ms-*` tokens already fall back to `--base-*`. The toggle/pager chevron now flows from `--base-icon-chevron` (a Lucide angle that keeps the previous optical size); field-clear, badge-remove, and search follow their base equivalents. Each keeps its inline Lucide SVG as the standalone fallback, so default appearance is unchanged when no base layer is loaded.
-
-- **`--ms-toggle-rotate-closed` / `--ms-toggle-rotate-open` — themeable chevron rotation.** The toggle rotates the *directional* base chevron into place (defaults `90deg` closed → down, `-90deg` open → up). A theme that supplies a **pre-oriented** glyph (one that already points down) can now opt out: set both to `0deg` for a static icon, or `0deg` / `180deg` for a down-glyph that flips up on open — without touching the base contract. The new Material Design card in `examples-theming.html` demonstrates the pairing.
-
-- **`--ms-fullscreen-nav-btn-icon` — the pager glyph is now independent.** The fullscreen match-navigator's prev/next buttons previously masked the shared `--ms-icon-chevron`, so a theme that repointed the base chevron at a pre-oriented toggle glyph would leak it into the pager (which rotates its source ±90° and expects a right-pointing chevron). The pager now reads its own token, defaulting to `--ms-icon-chevron` — nothing changes by default, but a theme can diverge the pager glyph on its own.
-
-- **More tokens flow from `--base-*` for dark-mode fidelity.** A follow-up audit wired five more `--ms-*` tokens that hardcoded a value where a dedicated `--base-*` counterpart exists: disabled-input background and dropdown box-shadow are now `light-dark()`-aware (they no longer stay light on dark themes), the field-clear color/hover knobs gain dedicated base hooks, and the snappy easing matches the base standard curve. All keep their prior value as the standalone fallback; transition *durations* and the z-index stack are deliberately left local.
-
-- **Dropdown / selected-items popover no longer render 2px wider than the field.** Both panels size from `--ms-input-current-width` (the field wrapper's border-box `offsetWidth`) but were themselves `content-box`, so each added its own 1px border on top and overhung the input it anchors to. Both now use `box-sizing: border-box`, so their outer width matches the field exactly.
 
 ## Demos & docs
 

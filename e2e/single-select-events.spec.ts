@@ -76,10 +76,12 @@ test.describe('single-select event semantics', () => {
             document.addEventListener('change',   record('change'));
         });
 
+        // Select apple (select + change), then clear via the ✕ (deselect + change).
+        // Single-select re-click no longer deselects, so the deselect flag coverage
+        // rides the clear button — the same web-component dispatch site.
         await openDropdown(p);
         await p.locator('.ms__option[data-value="apple"]').click();
-        await openDropdown(p);
-        await p.locator('.ms__option[data-value="apple"]').click();
+        await p.locator('.ms__input-clear').click();
 
         const bubbled = await page.evaluate(() => (window as any).__bubbled);
 
@@ -94,7 +96,10 @@ test.describe('single-select event semantics', () => {
         expect(bubbled.change[1]).toEqual({ bubbles: true, composed: true });
     });
 
-    test('toggle off: clicking already-selected fires deselect + change', async ({ page }) => {
+    // Single-select must NOT toggle off on a re-click: a single-select always keeps
+    // one value once chosen (clearing is the clear-✕ button's job). Re-clicking the
+    // selected option is a no-op confirm — it just closes, firing no deselect/change.
+    test('re-click keeps selection: clicking already-selected is a no-op (no deselect)', async ({ page }) => {
         const p = picker(page, 'single');
 
         await openDropdown(p);
@@ -103,11 +108,17 @@ test.describe('single-select event semantics', () => {
         await openDropdown(p);
         await p.locator('.ms__option[data-value="apple"]').click();
 
+        // Dropdown closes on the confirming click.
+        await expect(p.locator('.ms__dropdown')).toBeHidden();
+
         const ev = await page.evaluate(() => (window as any).__events);
         expect(ev.select).toHaveLength(1);
-        expect(ev.deselect).toHaveLength(1);
-        expect(ev.deselect[0].selectedValues).toEqual([]);
-        expect(ev.change).toHaveLength(2);
-        expect(ev.change[1].selectedValues).toEqual([]);
+        expect(ev.deselect).toHaveLength(0);
+        expect(ev.change).toHaveLength(1);
+
+        // Selection is untouched — apple stays selected.
+        const sel = await page.evaluate(() =>
+            (document.getElementById('single') as any).getSelected().map((o: any) => o.value));
+        expect(sel).toEqual(['apple']);
     });
 });
