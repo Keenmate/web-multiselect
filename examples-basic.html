@@ -779,13 +779,13 @@ el.scrollToValue('jp');</code></pre>
                 // Give the (possibly deferred) scroll a moment, then report where we landed.
                 setTimeout(() => describeViewport(el, target), 90);
             };
-            // stopPropagation: these buttons live OUTSIDE the component, so their click would
-            // otherwise bubble to the document "click outside → close" handler and shut an
-            // already-open dropdown (the "every second click closes it" symptom).
+            // These buttons live OUTSIDE the component, yet clicking one repeatedly to
+            // re-drive the already-open dropdown stays open: open()/scrollTo* arm the
+            // component's one-tick outside-click guard, so no stopPropagation is needed.
             document.querySelectorAll('[data-scroll-grouped]').forEach((btn) =>
-                btn.addEventListener('click', (e) => { e.stopPropagation(); runScroll(scrollGrouped, btn.dataset.scrollGrouped); }));
+                btn.addEventListener('click', () => runScroll(scrollGrouped, btn.dataset.scrollGrouped)));
             document.querySelectorAll('[data-scroll-virtual]').forEach((btn) =>
-                btn.addEventListener('click', (e) => { e.stopPropagation(); runScroll(scrollVirtual, btn.dataset.scrollVirtual); }));
+                btn.addEventListener('click', () => runScroll(scrollVirtual, btn.dataset.scrollVirtual)));
             // RTL Support - Basic RTL
             const rtlBasicSelect = document.getElementById('rtl-basic');
             if (rtlBasicSelect) {

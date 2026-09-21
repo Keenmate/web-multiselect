@@ -729,6 +729,11 @@
      shared --base-icon-* contract. Override either to diverge from the base. */
   --ms-icon-check: var(--base-icon-check, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>"));
   --ms-icon-indeterminate: var(--base-icon-indeterminate, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/></svg>"));
+  /* mask-size for the checkmark/dash glyph inside the checkbox box. Defaults to the
+     shared --base-icon-check-size (the SAME knob pure-admin's .pa-checkbox reads), so a
+     theme rescales the mark once for both; override --ms-icon-check-size to diverge just
+     this component. 68% assumes a Lucide-style glyph that fills its viewBox edge-to-edge. */
+  --ms-icon-check-size: var(--base-icon-check-size, 68%);
   /* "Add new" glyph (empty-state create prompt) — a plus, rendered as a mask so it
      inherits the row's currentColor. Follows the shared --base-icon-* contract:
      prefers --base-icon-plus, then --base-icon-add, then an inline "+" fallback. */

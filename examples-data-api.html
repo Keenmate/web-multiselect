@@ -726,6 +726,59 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
                 </div>
             </div>
         </section>
+
+        <!-- Deferred initialization: the render gate -->
+        <section class="example-section">
+            <h2>API09 · Deferred initialization — <code>defer</code> / <code>ready()</code></h2>
+            <p class="description">
+                Add the <code>defer</code> attribute and the component builds <strong>nothing</strong> on
+                upgrade — it only reserves space. Wire everything from JS first (options, callbacks like
+                <code>customStylesCallback</code>, event listeners), then call <code>el.ready()</code> to
+                build <strong>once</strong> with all of it already in place. This closes the classic
+                custom-element flash where the component paints with its <em>default</em> styles for a beat
+                before a post-upgrade <code>customStylesCallback</code> (or a framework's shared-stylesheet
+                adoption) restyles it — the styled result appears in one shot.
+            </p>
+
+            <ul class="feature-list">
+                <li><code>defer</code> — boolean attribute; present = hold the first render</li>
+                <li><code>ready()</code> — release the gate and build once (latched — it never re-closes)</li>
+                <li>Removing the <code>defer</code> attribute also releases it — handy for server-driven frameworks (e.g. Phoenix LiveView) that patch attributes without a JS hook</li>
+                <li><code>isReady</code> — boolean getter; reflected as the <code>is-ready</code> attribute (CSS hook <code>:host([defer]:not([is-ready]))</code> reserves space while held)</li>
+                <li><code>ready</code> — event dispatched once, right after the first build</li>
+            </ul>
+
+            <div class="demo-area">
+                <label class="demo-label">Deferred with a simulated 2 s data load — watch the reserved space stay empty while held, then the purple, pre-selected badges appear in <strong>one shot</strong> on release (no default-style flash). The badge color + options are wired while held:</label>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+                    <web-multiselect id="defer-demo" defer
+                        value-member="value" display-value-member="label"
+                        initial-values='["js","ts"]' style="flex: 1 1 240px;"></web-multiselect>
+
+                    <div class="controls" style="margin-bottom: 0;">
+                        <button id="defer-ready-btn" onclick="releaseDefer()">release now (ready())</button>
+                        <button onclick="location.reload()">Reload to replay</button>
+                    </div>
+                </div>
+
+                <div class="output">
+                    <div class="output-label">state:</div>
+                    <pre id="output-defer">held — waiting for data…</pre>
+                </div>
+            </div>
+
+            <p class="code-label">Framework integration (e.g. Phoenix LiveView):</p>
+            <div class="code-block"><pre>&lt;!-- server-rendered markup: `defer` holds the build through the upgrade race --&gt;
+&lt;web-multiselect defer phx-update="ignore" id="skills"&gt;&lt;/web-multiselect&gt;
+
+// in the phx-hook `mounted()` — everything is wired BEFORE the first paint:
+const el = this.el;
+el.options = JSON.parse(el.dataset.options);
+el.customStylesCallback = () =&gt; `.ms__badge { background: var(--brand); color: #fff; }`;
+el.addEventListener('change', (e) =&gt; this.pushEvent('changed', e.detail));
+el.ready();                       // build once, flash-free
+// (or, driven from the server: patch the attribute off — remove `defer`)</pre></div>
+        </section>
     </div>
 
     <script type="module">
@@ -918,6 +971,50 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
                 ['mango', 'Mango'], ['melon', 'Melon'], ['orange', 'Orange'],
                 ['peach', 'Peach'], ['pear', 'Pear'], ['pineapple', 'Pineapple']
             ];
+
+            // API09: deferred initialization. The element carries `defer`, so it builds
+            // NOTHING until ready(). We set the badge-coloring customStylesCallback up front,
+            // then SIMULATE a 2 s data load: the picker stays held (reserved empty space, live
+            // countdown) until the data "arrives", when we assign options and call ready(). The
+            // styled, pre-selected (initial-values) badges paint in ONE shot — no default-styled
+            // flash. The `ready` event fires once, right after that first build.
+            const deferDemo = document.querySelector('#defer-demo');
+            const deferOut = document.getElementById('output-defer');
+            if (deferDemo) {
+                // Wired while held — just stored; nothing paints yet.
+                deferDemo.customStylesCallback = () => `
+                    .ms__badge { background: #6d28d9; color: #fff; border-color: #6d28d9; }
+                `;
+                deferDemo.addEventListener('ready', () => {
+                    deferOut.textContent = `isReady: ${deferDemo.isReady} — built flash-free ✓`;
+                });
+
+                const DELAY_MS = 2000;
+                let released = false;
+                const started = performance.now();
+                (function tick() {
+                    if (released) return;
+                    const remain = Math.max(0, DELAY_MS - (performance.now() - started));
+                    deferOut.textContent = `held — building in ${(remain / 1000).toFixed(1)}s (loading options, no flash)`;
+                    if (remain > 0) requestAnimationFrame(tick);
+                })();
+
+                window.releaseDefer = () => {
+                    if (released) return;
+                    released = true;
+                    // "Data" arrived: assign options, THEN release — both land in the single build.
+                    deferDemo.options = [
+                        { value: 'js', label: 'JavaScript' },
+                        { value: 'ts', label: 'TypeScript' },
+                        { value: 'py', label: 'Python' },
+                        { value: 'go', label: 'Go' },
+                        { value: 'rust', label: 'Rust' }
+                    ];
+                    deferDemo.ready();
+                    document.getElementById('defer-ready-btn').disabled = true;
+                };
+                setTimeout(() => window.releaseDefer(), DELAY_MS);
+            }
 
             // Example 8: Async Search
 

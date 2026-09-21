@@ -229,6 +229,18 @@ form {
     margin-bottom: 0.5rem;
 }
 
+/* Trailing action buttons in a demo panel (e.g. "Show Selected Data") sit as
+   direct children after the component / `.output` box. Give them top spacing so
+   they don't butt up against the content above. Scoped to DIRECT children so it
+   never touches buttons nested in a `.controls` row (which lays out its own way).
+   Adjacent buttons on the same line share the margin, so they stay aligned. */
+.demo-area > button {
+    margin-top: 1rem;
+}
+.demo-area > button + button {
+    margin-inline-start: 0.5rem;
+}
+
 /* Output display */
 .output {
     margin-top: 1rem;

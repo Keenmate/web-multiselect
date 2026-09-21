@@ -69,11 +69,16 @@ export class WebMultiSelect<T = any> {
     private isRTL = false;
     private effectiveBadgesPosition: BadgesPosition = 'bottom';
     private justClosedViaClick = false;
-    // Set for one tick when the dropdown is opened by a pointer gesture. A fullscreen
-    // overlay (position:fixed, inset:0) appears over the pointer between mousedown and
-    // the follow-up click, so that click can target a common ancestor above the
-    // portaled panel and be misread as an outside-click. This guard swallows exactly
-    // that one click. See attachEvents() (mousedown) and handleClickOutside().
+    // Set for one tick when the dropdown is opened by a pointer gesture, or when a
+    // consumer drives the already-open panel from their own click handler (a repeat
+    // open()/toggle(), or a scrollTo* command). A fullscreen overlay (position:fixed,
+    // inset:0) appears over the pointer between mousedown and the follow-up click, so
+    // that click can target a common ancestor above the portaled panel and be misread
+    // as an outside-click; and an EXTERNAL control clicked to re-drive the open panel
+    // sends its click bubbling to our document-level outside-click listener, which
+    // would otherwise close the very panel the command just re-scrolled. This guard
+    // swallows exactly that one click. See armClickGuard(), attachEvents() (mousedown)
+    // and handleClickOutside().
     private justOpenedViaClick = false;
     private positioningDriftWarned = false;
     // Fullscreen counterpart of positioningDriftWarned: warn once per instance when an
@@ -2630,6 +2635,11 @@ export class WebMultiSelect<T = any> {
             return false;
         }
         interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}, block=${block}) — virtual=${!!this.virtualScroll}, mode=${this.presentationMode}`);
+        // Re-driving the open panel from an external control's click handler: shield the
+        // trailing click so it doesn't bubble to our outside-click listener and close.
+        // Re-driving the open panel from an external control's click handler: shield the
+        // trailing click so it doesn't bubble to our outside-click listener and close.
+        this.armClickGuard();
         this.scrollToRenderedIndex(index, { block });
         return true;
     }
@@ -2659,6 +2669,9 @@ export class WebMultiSelect<T = any> {
             interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) → false (${this.isTreeMode() ? 'tree mode' : 'closed'})`);
             return false;
         }
+        // Shield the driving click (see scrollToIndex). The header branch below scrolls
+        // directly without routing through scrollToIndex, so arm here to cover it too.
+        this.armClickGuard();
         // Standard render: a real header exists — scroll it into view (shows the label).
         if (!this.virtualScroll) {
             const label = this.dropdown.querySelector(
@@ -3010,21 +3023,30 @@ export class WebMultiSelect<T = any> {
         }
     }
 
+    /**
+     * Shield the trailing document `click` for one tick. A consumer that drives the
+     * dropdown from their OWN button's click handler (`el.open()` / `el.toggle()`, or a
+     * scrollTo* command re-driving the already-open panel) would otherwise have that
+     * same click bubble to our document-level outside-click listener and immediately
+     * close it. Centralizing it here means every entry point — open(), the internal
+     * pointer path, and the public scrollTo* API — is covered. Cleared next tick, so a
+     * genuine later outside-click still closes as normal. Harmless for non-click
+     * callers (typing, programmatic-on-load, server-driven): no trailing click arrives
+     * before it clears.
+     */
+    private armClickGuard(): void {
+        this.justOpenedViaClick = true;
+        setTimeout(() => { this.justOpenedViaClick = false; }, 0);
+    }
+
     /** Open the dropdown (no-op if already open, or if there is nothing to show). */
     open(): void {
         uiLogger.debug(`[${this.instanceId}] open() called`, { isOpen: this.#isOpen });
+        // Arm BEFORE the already-open early-return: a repeat open() from a consumer's
+        // click handler must still shield that click, or it bubbles out and closes the
+        // panel that's already showing.
+        this.armClickGuard();
         if (this.#isOpen) return;
-
-        // Guard the trailing document `click` for one tick. A consumer that opens the
-        // dropdown from their OWN button's click handler (`el.open()` / `el.toggle()`)
-        // would otherwise have that same click bubble to our document-level
-        // outside-click listener and immediately re-close it. The internal pointer path
-        // sets this flag too (see the input `mousedown` handler); centralizing it here
-        // means every open() caller is covered. Cleared next tick, so a genuine later
-        // outside-click still closes as normal. Harmless for non-click opens (typing,
-        // programmatic-on-load): no trailing click arrives before it clears.
-        this.justOpenedViaClick = true;
-        setTimeout(() => { this.justOpenedViaClick = false; }, 0);
 
         // A message reflects the state at the moment it was shown. Opening changes that
         // state (and, on a phone, moves from a control-anchored toast to a fullscreen

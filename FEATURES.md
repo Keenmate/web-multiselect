@@ -188,6 +188,7 @@ Fire-and-forget notifications are **events** — available both as bubbling DOM 
 | Select event | event | `select` | `{ option, selectedOptions, selectedValues }` | bubbles + composed | | |
 | Deselect event | event | `deselect` | `{ option, selectedOptions, selectedValues }` | bubbles + composed | | |
 | Change event | event | `change` | `{ selectedOptions, selectedValues }` | bubbles + composed; fires on every selection change | | |
+| Ready event | event | `ready` | — | bubbles + composed; fires once, right after the first build (see §13 `defer`) | | ✓ `defer-gate` |
 | Select handler (event prop) | prop | `onSelect(option)` | — | Property twin of the `select` event (fire-and-forget) | | |
 | Deselect handler (event prop) | prop | `onDeselect(option)` | — | Property twin of the `deselect` event | | |
 | Change handler (event prop) | prop | `onChange(selectedOptions)` | — | Property twin of the `change` event | | |
@@ -203,6 +204,9 @@ Fire-and-forget notifications are **events** — available both as bubbling DOM 
 | Set selected | method | `setSelected(values[])` | | | |
 | Get value | method | `getValue()` | | | |
 | Destroy | method | `destroy()` | Cleanup / teardown | | |
+| Defer first render | attr | `defer` | Present = build nothing on upgrade (reserve space only); wire options/callbacks/listeners first, then release. Closes the upgrade-then-restyle flash | | ✓ `defer-gate` |
+| Release the render gate | method | `ready()` | Build once with everything in place; latched (never re-closes). Removing the `defer` attribute releases it too (server-driven) | | ✓ `defer-gate` |
+| Readiness state | prop/attr | `isReady` / reflected `is-ready` | `true` once built; CSS hook `:host([defer]:not([is-ready]))` reserves space while held | | ✓ `defer-gate` |
 | Live attribute reactivity | behavior | `attributeChangedCallback` | Most attrs update in place (no teardown); good for i18n / cascades | | |
 
 ## 14. Theming, styling & i18n

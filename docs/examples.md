@@ -1250,3 +1250,72 @@ select.options = [
   }
 ];
 ```
+
+## Deferred initialization (`defer` / `ready()`)
+
+A custom element upgrades the moment its script loads: the browser builds its shadow DOM
+and paints it with the component's **default** styles. If you then assign a
+[`customStylesCallback`](#custom-rendering) (or your framework adopts a shared stylesheet)
+*after* upgrade, there's a visible beat where badges/options show unstyled before they
+restyle — the classic custom-element flash. The same race bites any post-upgrade wiring
+(options, event listeners) that you'd rather have in place before the first paint.
+
+The `defer` attribute holds the first render until you say go:
+
+- Add `defer` and the component builds **nothing** on upgrade — it only reserves space
+  (via `:host([defer]:not([is-ready]))`, mirroring the pre-upgrade `:not(:defined)` window).
+- Wire everything from JS — `options`, `customStylesCallback`, listeners.
+- Call `el.ready()` (or remove the `defer` attribute) to build **once**, with all of it
+  already applied. The gate is *latched* — once released it never re-closes.
+
+```html
+<web-multiselect id="skills" defer value-member="value" display-value-member="label"></web-multiselect>
+```
+
+```javascript
+const el = document.getElementById('skills');
+
+el.options = await loadSkills();
+el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
+
+el.ready();          // builds once — the styled badges appear in one shot, no flash
+el.isReady;          // → true
+```
+
+`ready` fires once, right after the first build (synchronously during upgrade for a
+normal, non-deferred element; on release for a deferred one):
+
+```javascript
+el.addEventListener('ready', () => {
+  // the picker is live and painted — safe to read state, focus it, etc.
+});
+```
+
+### Framework integration (Phoenix LiveView, etc.)
+
+Server-rendered frameworks emit the `<web-multiselect>` tag in the initial HTML, then a
+JS hook wires it up — exactly the ordering that flashes. Put `defer` in the dead-render
+and release from the hook (or by patching the attribute off from the server):
+
+```elixir
+<web-multiselect defer phx-update="ignore" id="skills"
+  phx-hook="MultiSelect" data-options={Jason.encode!(@skills)}></web-multiselect>
+```
+
+```javascript
+// app.js
+Hooks.MultiSelect = {
+  mounted() {
+    const el = this.el;
+    el.options = JSON.parse(el.dataset.options);
+    el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+    el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
+    el.ready();                // build once, flash-free
+  },
+};
+```
+
+> Removing the `defer` attribute has the same effect as `ready()`, so a purely
+> server-driven integration can release the gate by patching the attribute off — no
+> client hook required. `is-ready` is reflected for CSS/debugging; don't set it yourself.

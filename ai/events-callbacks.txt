@@ -2,7 +2,7 @@ EVENTS & CALLBACKS
 ==================
 
 CRITICAL: Two ways to handle component interactions
-- DOM Events: select, deselect, change (CustomEvent)
+- DOM Events: select, deselect, change, ready (CustomEvent)
 - Callback Functions: All get*/render*/before* callbacks
 - Events for listening, callbacks for side effects
 - Both provide access to component state
@@ -52,6 +52,17 @@ Event detail:
   selectedOptions: [{ value, label }],  // All selected option objects
   selectedValues: [value1, value2]      // All selected values
 }
+
+ready event:
+Fired once, right after the FIRST build — synchronously during upgrade for a
+normal element, or when a `defer` render gate is released (via ready() / removing
+the attribute) for a deferred one. No detail. Bubbles + composed.
+
+select.addEventListener('ready', () => {
+  // the picker is built and painted — safe to read state, focus it, etc.
+});
+
+// See advanced-patterns.txt (DEFERRED INITIALIZATION) for defer / ready() / isReady.
 
 CALLBACK FUNCTIONS
 ------------------

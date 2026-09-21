@@ -248,15 +248,16 @@
   display: none;
   /* Checkmark glyph — a currentColor-tinted mask so it follows --ms-icon-check →
      the shared --base-icon-check contract (was a CSS-border checkmark). Sized via
-     --base-icon-check-size (default 68%) — the SAME knob pure-admin's .pa-checkbox
-     reads, so the mark renders identically in both and a theme swapping the glyph
-     (e.g. an edge-to-edge star) can shrink it once for everyone. Was `contain`,
-     which assumed every glyph carried its own viewBox padding. The indeterminate
-     dash below inherits this mask box, so it follows the same size. */
+     --ms-icon-check-size, which defaults to the shared --base-icon-check-size (68%) —
+     the SAME knob pure-admin's .pa-checkbox reads, so the mark renders identically in
+     both and a theme swapping the glyph (e.g. an edge-to-edge star) can shrink it once
+     for everyone. Was `contain`, which assumed every glyph carried its own viewBox
+     padding. The indeterminate dash below inherits this mask box, so it follows the
+     same size. */
   inset: 0;
   background-color: var(--ms-checkbox-checkmark-color);
-  -webkit-mask: var(--ms-icon-check) no-repeat center / var(--base-icon-check-size, 68%);
-  mask: var(--ms-icon-check) no-repeat center / var(--base-icon-check-size, 68%);
+  -webkit-mask: var(--ms-icon-check) no-repeat center / var(--ms-icon-check-size);
+  mask: var(--ms-icon-check) no-repeat center / var(--ms-icon-check-size);
 }
 
 /* Hover state */

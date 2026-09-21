@@ -74,6 +74,8 @@ D
 Data → data-handling.txt
 Data formats → data-handling.txt
 Declarative → basic-setup.txt
+defer → advanced-patterns.txt
+Deferred initialization → advanced-patterns.txt
 deselectCallback → events-callbacks.txt
 destroy() → basic-setup.txt, typescript-types.txt
 Disabled options → data-handling.txt
@@ -93,6 +95,7 @@ Examples → basic-setup.txt
 F
 -
 Filter mode → search-features.txt
+Flash / FOUC (flash of unstyled content) → advanced-patterns.txt
 Floating UI → basic-setup.txt
 Focus → keyboard-navigation.txt
 Form → form-integration.txt
@@ -136,6 +139,8 @@ input-size → styling-theming.txt
 inputSize → styling-theming.txt
 Installation → basic-setup.txt
 Internationalization → display-modes.txt, events-callbacks.txt
+is-ready → advanced-patterns.txt
+isReady → advanced-patterns.txt
 
 J
 -
@@ -191,6 +196,9 @@ Props → basic-setup.txt, typescript-types.txt
 
 R
 -
+ready() → advanced-patterns.txt
+ready event → events-callbacks.txt, advanced-patterns.txt
+Render gate (defer) → advanced-patterns.txt
 renderBadgeContentCallback → custom-rendering.txt
 renderOptionContentCallback → custom-rendering.txt
 renderSelectedContentCallback → custom-rendering.txt, selection-modes.txt
@@ -308,6 +316,9 @@ A: → typescript-types.txt
 Q: How do I implement async search with initial options?
 A: → advanced-patterns.txt (hybrid search)
 
+Q: How do I avoid a flash of default/unstyled badges (FOUC) when the component loads?
+A: → advanced-patterns.txt (deferred initialization: defer / ready)
+
 Q: I'm migrating from another multiselect library
 A: → migration-guide.txt
 
@@ -352,6 +363,8 @@ INTEGRATION
 - Forms → form-integration.txt
 - Events → events-callbacks.txt
 - TypeScript → typescript-types.txt
+- Deferred init / flash-free (defer, ready) → advanced-patterns.txt
+- SSR → advanced-patterns.txt
 
 ACCESSIBILITY & I18N
 - Keyboard navigation → keyboard-navigation.txt

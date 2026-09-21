@@ -117,6 +117,7 @@ multiselect.setSelected(['js', 'ts']);
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
+| `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `customStylesCallback`) and listeners first, then release with `ready()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `is-ready` attribute after building |
 | `search-placeholder` | `string` | `'Search...'` | Placeholder text shown while search is usable. When unset and `show-search-mode-toggle` is on, the default becomes mode-aware (`Search…` in navigate, `Filter…` in filter) and switches with the toggle; an explicit value always wins and stays fixed |
 | `select-placeholder` | `string` | `'Pick an option...'` | Placeholder shown when search is disabled (`enable-search="false"`, or `search-input-mode` `readonly`/`hidden`) — the input acts as a picker, not a search box |
 | `no-data-placeholder` | `string` | - | Opt-in placeholder shown when the option list is empty, so users see there's no data without opening. Highest priority when the list is empty. Useful for cascade multiselects (a child whose parent isn't resolved yet) |
@@ -397,6 +398,8 @@ You do **not** need to await between a property write and an imperative method �
 | `toggle()` | Toggle the dropdown open/closed |
 | `isOpen` | Property: `true` when the dropdown is open. Assigning `true`/`false` opens/closes it |
 | `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `searchPlaceholder`) or their kebab attribute (`search-placeholder`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
+| `ready()` | Release the `defer` render gate: build the picker once with everything wired while deferred (flushes pending property writes first). No-op if not deferred or already built. Latched. Fires the `ready` event |
+| `isReady` | Property (read-only): `true` once the picker has been built (the `ready` event has fired). `false` while a `defer` gate is still held. Reflected as the `is-ready` attribute |
 | `destroy()` | Clean up and destroy instance |
 
 ## Events
@@ -406,6 +409,7 @@ You do **not** need to await between a property write and an imperative method �
 | `select` | `{ option, selectedOptions }` | Fired when an option is selected |
 | `deselect` | `{ option, selectedOptions }` | Fired when an option is deselected |
 | `change` | `{ selectedOptions, selectedValues }` | Fired when selection changes |
+| `ready` | — | Fired once, right after the first build — synchronously during upgrade for a normal element, or when the `defer` gate is released for a deferred one. Bubbles + composed |
 
 ## Option structure
 

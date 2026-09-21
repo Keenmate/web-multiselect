@@ -52,6 +52,22 @@ test('toggle() flips the dropdown open then closed', async ({ page }) => {
     await expect(dropdown(page)).toBeHidden();
 });
 
+test('scrollToIndex from a button click re-drives the open panel without closing it', async ({ page }) => {
+    await page.locator('#btn-open').click();
+    await expect(dropdown(page)).toBeVisible();
+
+    // Repeat-click an EXTERNAL control that re-drives the already-open dropdown. The
+    // regression: open() no-ops when already open, so its guard didn't arm and the
+    // scroll command's own click bubbled to the outside-click listener and closed the
+    // panel — the "every second click closes it" symptom. scrollTo* now arms the guard.
+    for (let i = 0; i < 4; i++) {
+        await page.locator('#btn-scroll').click();
+        await page.waitForTimeout(30);
+        await expect(dropdown(page)).toBeVisible();
+    }
+    expect(await isOpen(page)).toBe(true);
+});
+
 test('isOpen property setter opens and closes', async ({ page }) => {
     await page.locator('#btn-prop-open').click();
     await expect(dropdown(page)).toBeVisible();

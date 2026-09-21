@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — defer / ready() render gate</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>defer / ready() render gate</h1>
+    <p>Targeted by <code>e2e/defer-gate.spec.ts</code>. Each element carries the <code>defer</code>
+    attribute, so it builds nothing on upgrade — options and a badge-coloring
+    <code>customStylesCallback</code> are wired while held, then released. The load-bearing case:
+    the styled, pre-selected badges must appear in <em>one shot</em> on release (no default-style flash).</p>
+
+    <!-- Released imperatively via ready(). -->
+    <div class="fixture">
+        <div class="fixture-label">release via ready()</div>
+        <div class="fixture-controls">
+            <button id="btn-ready" onclick="document.getElementById('ms-ready').ready()">ready()</button>
+            <span>ready events: <strong id="ready-count">0</strong></span>
+        </div>
+        <web-multiselect id="ms-ready" defer value-member="value" display-value-member="label"
+            initial-values='["js","ts"]'></web-multiselect>
+        <div style="height: 300px;"></div>
+    </div>
+
+    <!-- Released declaratively by removing the `defer` attribute (server-driven path). -->
+    <div class="fixture">
+        <div class="fixture-label">release via attribute removal</div>
+        <div class="fixture-controls">
+            <button id="btn-remove" onclick="document.getElementById('ms-attr').removeAttribute('defer')">remove defer</button>
+        </div>
+        <web-multiselect id="ms-attr" defer value-member="value" display-value-member="label"></web-multiselect>
+        <div style="height: 300px;"></div>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const data = [
+            { value: 'js', label: 'JavaScript' },
+            { value: 'ts', label: 'TypeScript' },
+            { value: 'py', label: 'Python' },
+            { value: 'go', label: 'Go' }
+        ];
+        // A distinctive badge color, wired WHILE deferred, so a passing test proves the
+        // style was present at first paint (no default-styled frame).
+        const badgeCss = () => `.ms__badge { background: rgb(109, 40, 217); border-color: rgb(109, 40, 217); }`;
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            const msReady = document.getElementById('ms-ready');
+            msReady.options = data;
+            msReady.customStylesCallback = badgeCss;
+            let count = 0;
+            msReady.addEventListener('ready', () => {
+                count += 1;
+                document.getElementById('ready-count').textContent = String(count);
+            });
+
+            const msAttr = document.getElementById('ms-attr');
+            msAttr.options = data;
+            msAttr.customStylesCallback = badgeCss;
+        });
+    </script>
+</body>
+</html>

@@ -130,6 +130,12 @@
                     <td>Allow multiple selections. Set to "false" for single-select mode.</td>
                 </tr>
                 <tr>
+                    <td><code>defer</code></td>
+                    <td class="type">boolean</td>
+                    <td class="default">false</td>
+                    <td>Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire <code>options</code>, callbacks (e.g. <code>customStylesCallback</code>) and listeners first, then release with <code>ready()</code> (or by removing the attribute) so it builds once, flash-free. Latched; reflects an <code>is-ready</code> attribute after building.</td>
+                </tr>
+                <tr>
                     <td><code>enable-search</code></td>
                     <td class="type">boolean</td>
                     <td class="default">true</td>
@@ -385,6 +391,11 @@
                     <td class="type">MultiSelectEventDetail</td>
                     <td>Fired when selection changes. Detail contains: selectedOptions, selectedValues.</td>
                 </tr>
+                <tr>
+                    <td><code>ready</code></td>
+                    <td class="type">—</td>
+                    <td>Fired once, right after the first build — synchronously during upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. No detail.</td>
+                </tr>
             </tbody>
         </table>
 
@@ -419,6 +430,16 @@
                     <td><code>setAttributes</code></td>
                     <td class="type">(values: Record&lt;string, unknown&gt;) => void</td>
                     <td>Apply several inputs as one in-place update (one re-render instead of one per property). Keys are property names (<code>configKey</code>, e.g. <code>searchPlaceholder</code>) or their kebab attribute (<code>search-placeholder</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>ready</code></td>
+                    <td class="type">() => void</td>
+                    <td>Release the <code>defer</code> render gate: build the picker once with everything wired while deferred (flushes pending property writes first). No-op if not deferred or already built. Latched. Fires the <code>ready</code> event.</td>
+                </tr>
+                <tr>
+                    <td><code>isReady</code></td>
+                    <td class="type">boolean (get)</td>
+                    <td>Read-only property: <code>true</code> once the picker has been built (the <code>ready</code> event has fired); <code>false</code> while a <code>defer</code> gate is held. Reflected as the <code>is-ready</code> attribute.</td>
                 </tr>
                 <tr>
                     <td><code>destroy</code></td>

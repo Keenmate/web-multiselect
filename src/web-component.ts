@@ -180,6 +180,10 @@ Tree + multiple only.` },
   { configKey: 'initialValues',           attribute: 'initial-values',              converter: toInitialValues(), default: [], on: 'reinit', type: 'Array<string | number>', description: 'Values selected on first render. Accepts a JSON array (`["a","b"]`) or a bare CSV (`a,b,c`).' },
   { configKey: 'showDebugInfo',           attribute: 'show-debug-info',             converter: toBool('default-false'), on: 'update', description: 'Render an in-component debug panel.', deprecated: 'Use per-instance logging (el.enableLogging()) instead.' },
 
+  // ── Render gate (element-only; NON_PICKER) ───────────────────────────────
+  { configKey: 'deferRender',             attribute: 'defer',                       converter: toBool('presence'), on: 'reinit',
+    description: 'Hold the initial render. When the `defer` attribute is present on upgrade the component builds nothing (it only reserves space) — so options, callbacks (e.g. `customStylesCallback`) and event listeners can all be wired first, then released with `el.ready()` (or by removing the `defer` attribute, for server-driven frameworks). The release builds the picker ONCE with everything already in place, avoiding the upgrade-then-restyle flash. Absent (default): builds immediately on connect. Latched — once released the gate never re-closes.' },
+
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'reinit', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
   { configKey: 'optionsSource', attribute: 'data-options',                            converter: toText({ isNullable: true }), on: 'reinit', type: 'string', description: 'HTML-authoring source for the option list, parsed per `data-options-format`. Reactive: changing either attribute re-renders. Prefer the `options` property in JS; a set `options` property and declarative <option> children both win over this.' },
@@ -236,12 +240,14 @@ type MultiSelectEvents = {
   deselect: MultiSelectEventDetail;
   change: MultiSelectEventDetail;
   add: MultiSelectEventDetail;
+  ready: undefined;
 };
 const EVENTS = [
   { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
   { name: 'deselect', description: 'An option was removed from the selection. `detail.option` is that option.' },
   { name: 'change', description: 'The selection changed. `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
   { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `addNewCallback` produced one.' },
+  { name: 'ready', description: 'The picker was built and painted for the first time (once per element lifetime). Fires right after the first build — synchronously during upgrade for a normal element, or when the render gate is released (`el.ready()` / removing `defer`) for a deferred one. No detail.' },
 ] as const;
 
 /**
@@ -249,7 +255,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, debug panel, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow']);
+const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -293,10 +299,14 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   declare onDeselect: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
   declare onChange: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
   declare onAdd: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
+  declare onReady: ((e: CustomEvent<undefined>) => void) | null;
 
   #shadow: ShadowRoot;
   #picker?: WebMultiSelect<T>;
   #container?: HTMLDivElement;
+  // Render gate (`defer`): true once released via ready() / attribute removal /
+  // the first build. Latched — the gate never re-closes. See #renderHeld().
+  #released = false;
   #customStyles: StyleSlot | null = null;
   // Dev-mode customStylesCallback lint: unknown --ms-* names already warned about.
   #warnedCssVars = new Set<string>();
@@ -351,7 +361,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     this.#mirrorAllCssVars();
     // reinit() runs on first connect (isConnected true) and on later on:'reinit'
     // changes. Build/rebuild here; connect() covers the plain-reconnect case.
-    if (this.isConnected) this.#rebuildPicker();
+    // While the render gate is held (`defer` set, not yet released) skip the
+    // build — config keeps accumulating and lands whole on release. Removing the
+    // `defer` attribute flips deferRender false, so this same reinit then builds.
+    if (this.isConnected && !this.#renderHeld()) this.#rebuildPicker();
   }
 
   /** Cosmetic change: mirror CSS vars / custom styles / debug, patch the picker in place. */
@@ -385,7 +398,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
 
   /** Activate: ensure the picker exists (a DOM move destroyed it in disconnect()). */
   protected override connect(): void {
-    if (!this.#picker) this.#buildPicker();
+    if (!this.#picker && !this.#renderHeld()) this.#buildPicker();
+  }
+
+  /** Whether the initial render is being held by the `defer` gate (not yet released). */
+  #renderHeld(): boolean {
+    return this.config.deferRender === true && !this.#released;
   }
 
   /** Deactivate: tear the picker down (rebuilt on the next connect). */
@@ -505,6 +523,17 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     // next box change). getBoundingClientRect is the synchronous read core suggests.
     this.#badgesCollapsed = false;
     this.#applyBadgeCollapse(this.getBoundingClientRect().width);
+
+    // First build of this element's lifetime: latch the gate open (a later
+    // re-added `defer` must not re-hold), reflect `is-ready` for CSS hooks
+    // (`:host([defer]:not([is-ready]))` stops reserving space), and announce
+    // `ready` once. `is-ready`'s presence is the once-guard: a rebuild (reinit)
+    // or a disconnect/reconnect re-enters #buildPicker but never re-fires.
+    if (!this.hasAttribute('is-ready')) {
+      this.#released = true;
+      this.setAttribute('is-ready', '');
+      this.emit('ready');
+    }
   }
 
   #ensureContainer(): void {
@@ -936,6 +965,27 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
 
   destroy(): void {
     this.#picker?.destroy();
+  }
+
+  // ── render gate (`defer`) ───────────────────────────────────────────────────
+
+  /**
+   * Release the `defer` render gate: build the picker now (once), with every
+   * option, callback and listener wired while deferred already in place. No-op
+   * when the element wasn't deferred or is already built. `flush()` first so a
+   * synchronous `el.options = …; el.customStylesCallback = …; el.ready()` lands
+   * those pending writes in the single build rather than after it. Latched — the
+   * gate never re-closes. Fires the `ready` event on the first build.
+   */
+  ready(): void {
+    this.#released = true;
+    this.flush(); // apply pending input writes (may itself build via reinit())
+    if (this.isConnected && !this.#picker) this.#buildPicker();
+  }
+
+  /** Whether the picker has been built (the `ready` event has fired). False while a `defer` gate is still held. */
+  get isReady(): boolean {
+    return this.hasAttribute('is-ready');
   }
 }
 

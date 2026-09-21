@@ -386,6 +386,60 @@ const MultiSelect = dynamic(
   { ssr: false }
 );
 
+DEFERRED INITIALIZATION (defer / ready) — FLASH-FREE
+----------------------------------------------------
+A custom element upgrades as soon as its script loads: the browser builds the
+shadow DOM and paints it with the component's DEFAULT styles. If you then assign
+a customStylesCallback (or your framework adopts a shared stylesheet) AFTER
+upgrade, there is a visible beat where badges/options show unstyled before they
+restyle — the classic custom-element flash. The same race hits any post-upgrade
+wiring (options, listeners) you'd rather have in place before the first paint.
+
+The `defer` attribute holds the first render until you release it:
+
+  - Add `defer` and the component builds NOTHING on upgrade (reserves space only,
+    via :host([defer]:not([is-ready])), mirroring the :not(:defined) window).
+  - Wire everything from JS — options, customStylesCallback, listeners.
+  - Call el.ready() (or REMOVE the `defer` attribute) to build ONCE with it all
+    applied. The gate is latched — once released it never re-closes.
+
+<web-multiselect id="skills" defer value-member="value" display-value-member="label"></web-multiselect>
+
+const el = document.getElementById('skills');
+el.options = await loadSkills();
+el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
+el.ready();          // builds once — styled badges appear in one shot, no flash
+el.isReady;          // → true
+
+The `ready` event fires once, right after the first build (synchronously during
+upgrade for a normal element; on release for a deferred one):
+
+el.addEventListener('ready', () => { /* picker is live and painted */ });
+
+Phoenix LiveView (server-rendered tag + JS hook — the ordering that flashes):
+
+<web-multiselect defer phx-update="ignore" id="skills"
+  phx-hook="MultiSelect" data-options={Jason.encode!(@skills)}></web-multiselect>
+
+Hooks.MultiSelect = {
+  mounted() {
+    const el = this.el;
+    el.options = JSON.parse(el.dataset.options);
+    el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+    el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
+    el.ready();                // build once, flash-free
+  },
+};
+
+Notes:
+  - Removing the `defer` attribute has the same effect as ready(), so a purely
+    server-driven integration can release the gate by patching the attribute off
+    — no client hook required.
+  - `isReady` (getter) is reflected as the `is-ready` attribute; don't set it
+    yourself. CSS hook: :host([defer]:not([is-ready])).
+  - See also: styling-theming.txt (customStylesCallback), basic-setup.txt.
+
 PERFORMANCE MONITORING
 ----------------------
 Track performance metrics:

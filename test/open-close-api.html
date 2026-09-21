@@ -26,6 +26,9 @@
             <button id="btn-toggle" onclick="document.getElementById('ms').toggle()">toggle()</button>
             <button id="btn-prop-open" onclick="document.getElementById('ms').isOpen = true">isOpen = true</button>
             <button id="btn-prop-close" onclick="document.getElementById('ms').isOpen = false">isOpen = false</button>
+            <!-- Re-drives the ALREADY-open panel from an external click. Repeat-clicking
+                 must keep it open: scrollTo* arms the same one-tick outside-click guard. -->
+            <button id="btn-scroll" onclick="document.getElementById('ms').scrollToIndex(20)">scrollToIndex(20)</button>
         </div>
         <web-multiselect id="ms" value-member="value" display-value-member="label"></web-multiselect>
         <!-- Guarantees room below so floating-ui never flips the panel upward onto the buttons. -->
@@ -35,11 +38,12 @@
     <script type="module">
         import '/src/index.ts';
 
-        const items = [
-            { value: 'apple',  label: 'Apple' },
-            { value: 'banana', label: 'Banana' },
-            { value: 'cherry', label: 'Cherry' }
-        ];
+        // 30 items so scrollToIndex(20) resolves to a real row (the repeat-click
+        // regression fixture needs a scrollable list).
+        const items = Array.from({ length: 30 }, (_, i) => ({
+            value: `item-${i}`,
+            label: `Item ${i}`
+        }));
 
         customElements.whenDefined('web-multiselect').then(() => {
             document.getElementById('ms').options = items;

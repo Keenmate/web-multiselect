@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-21 [PUBLISHED]
+
+### Added
+
+- **`defer` render gate — flash-free deferred initialization.** A new boolean attribute
+  `defer` holds the very first render: while it's present the element builds **no** shadow
+  content on upgrade (it only reserves space), so a consumer can wire options, callbacks
+  (e.g. `customStylesCallback`) and event listeners *before* anything paints, then release
+  the gate with `el.ready()` (or by removing the `defer` attribute, for server-driven
+  frameworks like LiveView). The release builds the picker **once**, with everything already
+  in place — closing the upgrade-then-restyle flash that otherwise shows default badge styles
+  for a beat before a post-upgrade `customStylesCallback` (or shared-stylesheet adoption) lands.
+  The gate is latched (once released it never re-closes) and pairs with an element-owned
+  `is-ready` reflected attribute (CSS hook: `:host([defer]:not([is-ready]))`), an `el.isReady`
+  getter, and a once-per-lifetime `ready` event fired right after the first build. Elements
+  without `defer` are unchanged — they build immediately and fire `ready` synchronously on
+  upgrade.
+
+### Fixed
+
+- **External control re-driving an open dropdown no longer closes it.** Clicking an
+  *external* (consumer-owned) button to re-drive the already-open panel — a repeat
+  `open()`/`toggle()`, or a `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()`
+  command — let that same click bubble to the component's document-level outside-click
+  listener and immediately close the panel (the "every second click closes it" / "0 rows
+  → 11 rows" alternation). `open()` already armed a one-tick outside-click guard, but it
+  early-returned when already open (so the guard never armed) and the `scrollTo*` methods
+  never armed it at all. The guard is now centralized in `armClickGuard()` and armed by
+  `open()` before its already-open early-return and by every public `scrollTo*` entry
+  point. One-shot opens, keyboard/typing opens, and server-driven commands are unchanged
+  (no trailing click arrives before the guard clears next tick). Consumers that added a
+  `stopPropagation()` workaround on their external controls can drop it.
+
 ## [2.0.1] - 2026-09-20 [PUBLISHED]
 
 ### Internal
