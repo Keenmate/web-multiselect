@@ -113,7 +113,11 @@
   /* A single digit is too narrow with padding alone — floor the width so it reads as a
      balanced badge (grows for 2+ digits via padding). Scales with --ms-rem. */
   min-width: calc(2 * var(--ms-rem));
-  padding: var(--ms-counter-padding);
+  /* Horizontal padding only. The chip shares the header's font size, so with zero vertical
+     padding its box height equals the text line — the header row height stays identical whether
+     the chip is shown or hidden (no layout shift on select/deselect). */
+  padding-block: 0;
+  padding-inline: calc(0.4 * var(--ms-rem));
   background: var(--ms-counter-badge-bg);
   color: var(--ms-counter-badge-color);
   font-size: var(--ms-counter-font-size);

@@ -66,6 +66,26 @@ test('per-group selected-count chip shows in a plain (non-cascade) grouped list'
     await expect(fruitsCount).toHaveCount(0);
 });
 
+test('group header height does not shift when the count chip appears/disappears', async ({ page }) => {
+    const p = picker(page, 'grouped');
+    await openDropdown(p);
+
+    const fruits = p.locator('.ms__group-label[data-group="Fruits"]');
+    const empty = (await fruits.boundingBox())!.height;
+
+    await p.locator('.ms__option[data-value="a1"]').click();
+    await expect(fruits.locator('.ms__group-count')).toHaveText('[1]'); // chip now shown
+    const withChip = (await fruits.boundingBox())!.height;
+
+    // The chip shares the header font size and adds no vertical padding, so the row height holds.
+    expect(Math.abs(withChip - empty)).toBeLessThanOrEqual(0.5);
+
+    // …and it returns to the same height when the chip goes away.
+    await p.locator('.ms__option[data-value="a1"]').click();
+    await expect(fruits.locator('.ms__group-count')).toHaveCount(0);
+    expect(Math.abs((await fruits.boundingBox())!.height - empty)).toBeLessThanOrEqual(0.5);
+});
+
 test('getCountLabelCallback formats both the in-input counter and the group count (x/y)', async ({ page }) => {
     const p = picker(page, 'group-count-callback'); // getCountLabelCallback = (s,t) => `${s}/${t}`
     await openDropdown(p);
