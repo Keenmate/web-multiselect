@@ -58,8 +58,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # data, the docs, and the compiled dist/.
 COPY --from=build /app/*.html            /usr/share/nginx/html/
 COPY --from=build /app/examples-shared.css /usr/share/nginx/html/
-COPY --from=build /app/examples-chapter-nav.js /usr/share/nginx/html/
-COPY --from=build /app/examples-copy-link.js /usr/share/nginx/html/
+# All shared example scripts (chapter-nav, copy-link, controls-store, …). A glob so a
+# newly-added examples-*.js is served automatically — a missing one 404s at import and
+# aborts the page's inline module, leaving every picker empty.
+COPY --from=build /app/examples-*.js     /usr/share/nginx/html/
 COPY --from=build /app/examples-data     /usr/share/nginx/html/examples-data/
 COPY --from=build /app/docs              /usr/share/nginx/html/docs/
 COPY --from=build /app/dist              /usr/share/nginx/html/dist/
