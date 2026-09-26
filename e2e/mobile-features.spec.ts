@@ -77,6 +77,21 @@ test('count chip updates on individual taps in the overlay (indeterminate → ch
     await expect(box).toBeChecked();
 });
 
+test('count chip scales with the header font in the fullscreen overlay (not distorted)', async ({ page }) => {
+    const p = picker(page, 'group-cascade');
+    await openFullscreen(p);
+    await fsOption(p, 'a1').click(); // chip appears
+
+    const label = fsGroupLabel(p, 'Fruits');
+    const labelFs = await label.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+    const chipFs = await label.locator('.ms__group-count')
+        .evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+
+    // The chip inherits the header font-size, so in the enlarged overlay it grows with the
+    // label instead of staying small inside an oversized box.
+    expect(chipFs).toBeCloseTo(labelFs, 1);
+});
+
 test('renderGroupLabelContentCallback receives isFullscreen=true + count in the overlay', async ({ page }) => {
     const p = picker(page, 'group-cascade-custom');
     await openFullscreen(p);
