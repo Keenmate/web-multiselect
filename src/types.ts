@@ -783,14 +783,20 @@ export interface MultiSelectConfig<T = any> {
     onDeselect?: ((option: T) => void) | null;
     /** Event handler: the selection set changed (fire-and-forget). Mirrors the bubbling `change` CustomEvent on the element. */
     onChange?: ((selectedOptions: T[]) => void) | null;
-    /** Callback to format count badge text (for i18n/pluralization). When moreCount is provided, it's for the "+X more" badge in partial mode. */
+    /**
+     * Formats the badges-area count/summary text: the `count` mode badge ("N selected") and the
+     * partial-mode "+X more" badge (when `moreCount` is provided). NOT the small `[N]` chip — that's
+     * {@link getCountLabelCallback}. For i18n/pluralization.
+     */
     getCounterCallback?: ((count: number, moreCount?: number) => string) | null;
     /**
-     * Formats the small count chip shared by the in-input counter (`show-counter`) and each group
-     * header's per-group count. Receives `selected` and `total`: for the in-input counter `total`
-     * is the whole option list; for a group header it's that group's member count. Return the label
-     * as plain text. Default `[selected]` (e.g. `[3]`). Set it to `` (s, t) => `${s}/${t}` `` for an
-     * "x / y" style. One callback drives both so they always read the same way.
+     * Formats the small count CHIP shared by the in-input counter (`show-counter`) and each group
+     * header's per-group count. Distinct from {@link getCounterCallback}, which formats the
+     * badges-area "N selected" / "+X more" text. Receives `selected` and `total`: for the in-input
+     * counter `total` is the whole option list; for a group header it's that group's member count.
+     * Return the label as plain text. Default `[selected]` (e.g. `[3]`). Set it to
+     * `` (s, t) => `${s}/${t}` `` for an "x / y" style. One callback drives both so they always
+     * read the same way.
      */
     getCountLabelCallback?: ((selected: number, total: number) => string) | null;
 

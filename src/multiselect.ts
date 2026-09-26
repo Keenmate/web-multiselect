@@ -1061,12 +1061,24 @@ export class WebMultiSelect<T = any> {
         return `<span class="ms__group-count" aria-label="${selectedCount} selected">${this.escapeHtml(label)}</span>`;
     }
 
-    /** Markup for a group-header tristate checkbox, mirroring the option/tree checkbox. */
+    /**
+     * Shared markup for a `.ms__checkbox` input — the single source of truth for option rows, tree
+     * nodes, and group headers. Indeterminate is a pure CSS state (the box is `appearance: none`, so
+     * no native `input.indeterminate` is needed — virtual-scroll-safe) plus `aria-checked="mixed"`.
+     */
+    private checkboxHtml(opts: { checked?: boolean; indeterminate?: boolean; disabled?: boolean } = {}): string {
+        const cls = opts.indeterminate ? 'ms__checkbox ms__checkbox--indeterminate' : 'ms__checkbox';
+        const attrs = [
+            opts.checked ? 'checked' : '',
+            opts.indeterminate ? 'aria-checked="mixed"' : '',
+            opts.disabled ? 'disabled' : ''
+        ].filter(Boolean).join(' ');
+        return `<input type="checkbox" class="${cls}"${attrs ? ' ' + attrs : ''}>`;
+    }
+
+    /** Group-header tristate checkbox (maps the group's roll-up state onto `checkboxHtml`). */
     private groupCheckboxHtml(state: NodeCheckState): string {
-        const indeterminate = state === 'indeterminate';
-        const cls = indeterminate ? 'ms__checkbox ms__checkbox--indeterminate' : 'ms__checkbox';
-        const aria = indeterminate ? ' aria-checked="mixed"' : '';
-        return `<input type="checkbox" class="${cls}" ${state === 'checked' ? 'checked' : ''}${aria}>`;
+        return this.checkboxHtml({ checked: state === 'checked', indeterminate: state === 'indeterminate' });
     }
 
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
@@ -1160,15 +1172,12 @@ export class WebMultiSelect<T = any> {
                         if (this.options.renderGroupLabelContentCallback) {
                             // Custom label owns its content — it gets the selection via context and
                             // renders its own count (see BU03). We still inject the checkbox chrome.
+                            // `info` is exactly the selection half of GroupLabelRenderContext, so
+                            // spread it rather than re-listing every field (can't drift).
                             const context = {
                                 ...presentationContext(this.presentationMode),
                                 groupName,
-                                members: info.members,
-                                selectedMembers: info.selectedMembers,
-                                selectedCount: info.selectedCount,
-                                memberCount: info.memberCount,
-                                selectableCount: info.selectableCount,
-                                checkState: info.checkState
+                                ...info
                             };
                             const customContent = this.options.renderGroupLabelContentCallback(groupName, context);
                             if (customContent instanceof HTMLElement) {
@@ -1193,7 +1202,7 @@ export class WebMultiSelect<T = any> {
                             // members are currently selected (any grouped list, cascade or not).
                             const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount);
                             const labelClass = countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
-                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${groupName}${countHtml}</div>`;
+                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${this.escapeHtml(groupName)}${countHtml}</div>`;
                         }
                     }
                     groups[groupName].forEach(option => {
@@ -1489,7 +1498,7 @@ export class WebMultiSelect<T = any> {
         let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}"${checkboxAlignAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultipleEnabled) {
-            html += `<input type="checkbox" class="ms__checkbox" ${isSelected ? 'checked' : ''} ${disabled ? 'disabled' : ''}>`;
+            html += this.checkboxHtml({ checked: isSelected, disabled });
         }
 
         html += '<div class="ms__option-content">';
@@ -1593,11 +1602,7 @@ export class WebMultiSelect<T = any> {
         let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}" data-path="${node.path}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultipleEnabled && selectable) {
-            // Indeterminate is a pure CSS state (the checkbox is `appearance: none`,
-            // so no native `input.indeterminate` needed) — virtual-scroll-safe.
-            const checkboxClass = isIndeterminate ? 'ms__checkbox ms__checkbox--indeterminate' : 'ms__checkbox';
-            const ariaChecked = isIndeterminate ? ' aria-checked="mixed"' : '';
-            html += `<input type="checkbox" class="${checkboxClass}" ${isSelected ? 'checked' : ''}${ariaChecked} ${disabled ? 'disabled' : ''}>`;
+            html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
         }
 
         html += '<div class="ms__option-content">';
