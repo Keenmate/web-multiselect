@@ -108,9 +108,21 @@ describe('tree mode — enabled via JS property (not just attribute)', () => {
 });
 
 describe('tree mode — selection', () => {
-    it('selects a node (branch or leaf) on click like a normal option', () => {
+    // Cascade is the DEFAULT checkbox mode (tree + multiple). Clicking Gala
+    // (1.1.1) — Apple's only child — fills Apple's whole subtree, so the
+    // rolled-up policy collapses the selection to 'apple'.
+    it('cascade (default): clicking the only leaf rolls its subtree up to the parent', () => {
+        const gala = rows().find(r => r.dataset.path === '1.1.1')!;
+        (gala.querySelector('.ms__option-content') as HTMLElement).click();
+        expect(el.getValue()).toContain('apple');
+    });
+
+    it('checkbox-mode="independent" selects the literal clicked node only', async () => {
+        el.setAttribute('checkbox-mode', 'independent');
+        await el.whenSettled();
         const gala = rows().find(r => r.dataset.path === '1.1.1')!;
         (gala.querySelector('.ms__option-content') as HTMLElement).click();
         expect(el.getValue()).toContain('gala');
+        expect(el.getValue()).not.toContain('apple');
     });
 });

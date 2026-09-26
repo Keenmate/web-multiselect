@@ -107,22 +107,35 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'isSelectableMember',      attribute: 'is-selectable-member',        converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name marking whether a node can be selected.' },
   { configKey: 'treePathSeparator',       attribute: 'tree-path-separator',         converter: toText({ default: '.' }), reflect: true, on: 'reinit', description: 'Separator between segments in a materialized tree path.' },
   { configKey: 'isTreeEnabled',           converter: toBool('tristate'), on: 'reinit', type: 'boolean', description: 'Force tree mode on/off. Property-only; when unset (null) tree mode auto-enables if a path source (path-member / getPathCallback) is present.' },
-  { configKey: 'checkboxMode',            attribute: 'checkbox-mode',               converter: toEnum(['independent', 'cascade'] as const, { default: 'independent' }), reflect: true, on: 'update',
+  { configKey: 'checkboxMode',            attribute: 'checkbox-mode',               converter: toEnum(['independent', 'cascade'] as const, { default: 'cascade' }), reflect: true, on: 'update',
     description: `Tree checkbox interaction.
-- \`independent\` (default) — toggles only the clicked node.
-- \`cascade\` — checks a node whole subtree and shows a tristate (checked / indeterminate / unchecked) box on branches.
+- \`cascade\` (default) — checks a node's whole subtree and shows a tristate (checked / indeterminate / unchecked) box on branches. This is what most tree-select UIs do, so it's the default.
+- \`independent\` — toggles only the clicked node, ignoring ancestors/descendants.
 
-Tree + multiple only.` },
+Tree + multiple only — has no effect on flat lists or single-select (there is no subtree to cascade into).` },
   { configKey: 'cascadeSelectPolicy',     attribute: 'cascade-select-policy',       converter: toEnum(['rolled-up', 'leaves', 'all'] as const, { default: 'rolled-up' }), reflect: true, on: 'update',
     description: `In \`cascade\` mode, which values a selection emits (badges / form / change):
 - \`rolled-up\` (default) — minimal cover: a fully-selected subtree collapses to its root; partially-selected branches emit their individually-checked descendants.
 - \`leaves\` — only the checked leaf-level nodes.
 - \`all\` — every fully-checked node (branches and leaves).` },
+  { configKey: 'groupSelectMode',         attribute: 'group-select-mode',           converter: toEnum(['none', 'cascade'] as const, { default: 'none' }), reflect: true, on: 'update',
+    description: `Group-header selection in a FLAT (non-tree) grouped, multi-select list.
+- \`none\` (default) — group headers are inert labels.
+- \`cascade\` — each header shows a tristate checkbox that checks/unchecks all of that group's currently-visible members; a partially-selected group reads indeterminate. The group itself is never a selected value (getValue / badges / form carry member values only).
+
+Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or single-select.` },
 
   // ── Enums ────────────────────────────────────────────────────────────────
-  { configKey: 'badgesDisplayMode',       attribute: 'badges-display-mode',         converter: toEnum(['badges', 'count', 'compact', 'partial', 'none'] as const, { default: 'badges' }), on: 'reinit', description: 'How the current selection is shown in the control.' },
-  { configKey: 'badgesPosition',          attribute: 'badges-position',             converter: toEnum(['top', 'bottom', 'left', 'right'] as const, { default: 'bottom' }), on: 'reinit', description: 'Where the badges/selection appear relative to the input.' },
+  { configKey: 'badgesDisplayMode',       attribute: 'badges-display-mode',         converter: toEnum(['badges', 'count', 'compact', 'partial', 'none'] as const, { default: 'badges' }), on: 'update', description: 'How the current selection is shown in the control.' },
+  { configKey: 'badgesPosition',          attribute: 'badges-position',             converter: toEnum(['top', 'bottom', 'left', 'right'] as const, { default: 'bottom' }), on: 'update', description: 'Where the badges/selection appear relative to the input.' },
   { configKey: 'badgesThresholdMode',     attribute: 'badges-threshold-mode',       converter: toEnum(['count', 'partial'] as const, { default: 'count' }), on: 'update', description: 'How `badgesThreshold` is interpreted: collapse to a count badge, or keep partial badges + a "more" badge.' },
+  { configKey: 'selectedOrder',           attribute: 'selected-order',              converter: toEnum(['as-selected', 'label-asc', 'label-desc', 'member', 'custom'] as const, { default: 'as-selected' }), reflect: true, on: 'update',
+    description: `Order of the CURRENTLY-SELECTED items where they are displayed — badges, partial mode (which items sit behind the "+N more" badge), and the selected-items popover. Display only: \`getValue()\`, the form output, and \`getSelected()\` keep as-selected (insertion) order, and the options dropdown is never reordered.
+- \`as-selected\` (default) — the order items were picked.
+- \`label-asc\` / \`label-desc\` — by the badge label, A→Z / Z→A (locale-aware).
+- \`member\` — by the \`selected-order-member\` property (or \`getSelectedOrderCallback\`); numeric keys sort numerically, everything else with a locale string compare.
+- \`custom\` — delegate to \`selectedOrderCompareCallback\`.` },
+  { configKey: 'selectedOrderMember',     attribute: 'selected-order-member',       converter: toText({ isNullable: true }), reflect: true, on: 'update', description: 'Property name used as the sort key when `selected-order="member"`. Sorts the SELECTED-items display only (not the dropdown). Overridden by `getSelectedOrderCallback`.' },
   { configKey: 'searchInputMode',         attribute: 'search-input-mode',           converter: toEnum(['normal', 'readonly', 'hidden'] as const, { default: 'normal' }), on: 'reinit', description: 'Search field mode: editable, read-only, or hidden.' },
   { configKey: 'searchMode',              attribute: 'search-mode',                 converter: toEnum(['filter', 'navigate'] as const, { default: 'filter' }), on: 'reinit', description: 'Whether typing filters the list or navigates it.' },
   { configKey: 'overlayGroup',            attribute: 'overlay-group',               converter: toText({ isNullable: true }), on: 'reinit', description: 'Scope the "one overlay open at a time" coordination to a named group. Overlays (multiselects, datepickers, external popovers) sharing a group dismiss each other when one opens; different groups are independent. Unset = the default (ungrouped) group.' },
@@ -205,10 +218,13 @@ Tree + multiple only.` },
   { configKey: 'getDisplayValueCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Compute the display label for an option (overrides displayValueMember).' },
   { configKey: 'getBadgeDisplayCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Compute the text shown on an option badge.' },
   { configKey: 'getBadgeClassCallback',          converter: cb(), on: 'update', type: '(item: unknown) => string | string[]', description: 'Extra CSS class(es) for an option badge.' },
+  { configKey: 'getSelectedOrderCallback',       converter: cb(), on: 'update', type: '(item: unknown) => string | number', description: 'Sort key for the selected-items display when `selected-order="member"` (overrides `selected-order-member`).' },
+  { configKey: 'selectedOrderCompareCallback',   converter: cb(), on: 'update', type: '(a: unknown, b: unknown) => number', description: 'Comparator for the selected-items display when `selected-order="custom"`.' },
   { configKey: 'getIconCallback',                converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Icon for an option (overrides iconMember).' },
   { configKey: 'getSubtitleCallback',            converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Subtitle for an option (overrides subtitleMember).' },
   { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Full title for an option (used by badges when show-badge-full-title is on).' },
   { configKey: 'getCounterCallback',             converter: cb(), on: 'update', type: '(count: number, moreCount?: number) => string', description: 'Render the selected-count label.' },
+  { configKey: 'getCountLabelCallback',          converter: cb(), on: 'update', type: '(selected: number, total: number) => string', description: 'Format the small count chip shared by the in-input counter and each group header count (default `[selected]`; e.g. `(s,t)=>`${s}/${t}``). One callback drives both.' },
   { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(selectedValues: (string | number)[]) => string', description: 'Serialize the selected values for form submission.' },
   { configKey: 'getBadgeTooltipCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string | HTMLElement', description: 'Tooltip content for an option badge.' },
   { configKey: 'getOptionTooltipCallback',       converter: cb(), on: 'update', type: '(item: unknown) => string | HTMLElement', description: 'Tooltip content for an option row.' },
@@ -217,9 +233,9 @@ Tree + multiple only.` },
   { configKey: 'renderOptionContentCallback',    converter: cb(), on: 'update', type: '(item: unknown, context: OptionContentRenderContext) => string | HTMLElement', description: 'Custom render for an option row; may return HTML or an element.' },
   { configKey: 'renderBadgeContentCallback',     converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for a badge content (fills the built-in pill); may return HTML or an element.' },
   { configKey: 'renderBadgeCallback',            converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement | null', description: 'Custom render for the WHOLE badge (main area), not just its content — return the entire pill/card. The component wraps it in `.ms__badge.ms__badge--custom` with `data-value` and delegates removal to any inner element with `data-action="remove"` (or `.ms__badge-remove`). Return null/empty to fall back to the default pill for that item.' },
-  { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(groupName: string) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element.' },
-  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Custom render for the whole selected area.' },
-  { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(item: unknown) => string | HTMLElement', description: 'Custom render for one selected item.' },
+  { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(groupName: string, context: GroupLabelRenderContext) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element. The second arg carries the group members + selection (e.g. `context.selectedCount`) so a custom header can show a per-group count.' },
+  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(item: unknown, context: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (2nd arg carries the presentation context).' },
+  { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for one selected item in the popover (2nd arg is a BadgeContentRenderContext; isInPopover=true).' },
   { configKey: 'customStylesCallback',           converter: cb(), on: 'update', type: '() => string', description: 'Returns a CSS string injected into the component via a replaceable style slot (§12.8).' },
 
   // ── Callbacks: before-hooks (behavior-shaping) ───────────────────────────
@@ -304,6 +320,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   #shadow: ShadowRoot;
   #picker?: WebMultiSelect<T>;
   #container?: HTMLDivElement;
+  // The `initial-values` JSON applied at the last build. Lets a rebuild (reinit)
+  // tell an explicit `initial-values` change (honour the new values) apart from a
+  // cosmetic/structural reinit (preserve the user's runtime selection). See #buildPicker.
+  #lastInitialValuesJSON?: string;
   // Render gate (`defer`): true once released via ready() / attribute removal /
   // the first build. Latched — the gate never re-closes. See #renderHeld().
   #released = false;
@@ -330,11 +350,15 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     // replacing the per-instance inline <style>.
     adoptStyles(this.#shadow, styles);
 
-    // Mark ready on the next frame so placeholder-visibility CSS can key off it.
+    // Reveal the input placeholder one frame after upgrade: `data-placeholder-ready`
+    // gates ONLY the placeholder opacity fade-in (controls.css). Distinct from
+    // `is-ready` (the defer build gate) — this flag is cosmetic and safe to pre-seed
+    // in SSR (the LiveView wrapper does, so LV's data-* stripping on phx-update="ignore"
+    // elements can't tear it off). Renamed from the ambiguous `data-ready`.
     if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => this.setAttribute('data-ready', ''));
+      requestAnimationFrame(() => this.setAttribute('data-placeholder-ready', ''));
     } else {
-      this.setAttribute('data-ready', '');
+      this.setAttribute('data-placeholder-ready', '');
     }
   }
 
@@ -492,19 +516,40 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   // ── picker lifecycle ──────────────────────────────────────────────────────
 
   #rebuildPicker(): void {
+    // Capture the live selection before tearing down so the rebuilt picker can keep
+    // it (a reinit from a cosmetic/structural attribute change shouldn't wipe what
+    // the user picked). #buildPicker decides whether to honour it.
+    const runtimeSelection = this.#picker ? this.#collectSelectedValues() : undefined;
     this.#picker?.destroy();
     this.#picker = undefined;
-    this.#buildPicker();
+    this.#buildPicker(runtimeSelection);
   }
 
-  #buildPicker(): void {
+  #buildPicker(runtimeSelection?: (string | number)[]): void {
     this.#ensureContainer();
     this.#parseDeclarativeOptionsOnce();
 
     const cfg = this.#assembleConfig();
 
+    // Seed the picker's initial selection. On a rebuild we prefer the user's live
+    // selection (`runtimeSelection`) so a reinit doesn't reset it — UNLESS the
+    // consumer explicitly changed `initial-values` since the last build, in which
+    // case that new value wins. First build has no runtime selection, so it uses
+    // the configured/declarative initial values.
+    const configInitial = this.#resolveInitialValues();
+    const configJSON = JSON.stringify(configInitial ?? null);
+    // Only preserve a NON-EMPTY runtime selection: an empty one is ambiguous (the
+    // user cleared everything OR the first build ran before options were available,
+    // so `initial-values` couldn't match yet) — falling back to the configured
+    // initial values keeps declarative `initial-values` working when options arrive
+    // on a later reinit.
+    const preserve = runtimeSelection !== undefined
+      && runtimeSelection.length > 0
+      && configJSON === this.#lastInitialValuesJSON;
+    const initialValues = preserve ? runtimeSelection : configInitial;
+    this.#lastInitialValuesJSON = configJSON;
+
     // The picker reads initial values off the container dataset.
-    const initialValues = this.#resolveInitialValues();
     if (initialValues && initialValues.length > 0) {
       this.#container!.dataset.initialValues = JSON.stringify(initialValues);
     } else {

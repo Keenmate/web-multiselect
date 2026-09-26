@@ -58,12 +58,15 @@
 
 .ms__input::placeholder {
   color: var(--ms-input-placeholder-color);
-  opacity: 0; /* Initially hidden until component is ready */
+  opacity: 0; /* Hidden until [data-placeholder-ready] is set (see web-component.ts) */
   transition: opacity var(--ms-transition-fast) var(--ms-easing-snappy);
 }
 
-/* Show placeholder only after component is fully initialized */
-:host([data-ready]) .ms__input::placeholder {
+/* Fade the placeholder in once the component has upgraded (one frame after
+   connect). Named `data-placeholder-ready` — distinct from `is-ready` (the defer
+   build gate) — because this flag governs ONLY placeholder opacity and is safe to
+   pre-seed in SSR, whereas is-ready must never be faked. */
+:host([data-placeholder-ready]) .ms__input::placeholder {
   opacity: var(--ms-placeholder-opacity);
 }
 

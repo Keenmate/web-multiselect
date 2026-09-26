@@ -128,6 +128,42 @@ export interface BadgeContentRenderContext extends PresentationContext {
 }
 
 /**
+ * Context handed to `renderSelectedContentCallback` (single-select selected-value display). Carries
+ * only the shared {@link PresentationContext} fields (`presentation` / `isFullscreen` / `isModal`),
+ * so the single-select label can render leaner in the phone fullscreen overlay.
+ */
+export type SelectedContentRenderContext = PresentationContext;
+
+/**
+ * Context handed to `renderGroupLabelContentCallback` as its second argument, so a custom group
+ * header can reflect the selection — e.g. render a "3 / 8" count next to the title. The fields are
+ * populated for every group header; the selection fields are meaningful mainly under
+ * `groupSelectMode: 'cascade'` (a flat multi-select grouped list). Under the default rendering
+ * (no callback) the component draws the count itself; with a callback, YOU own the content and can
+ * render the count however you like from these fields.
+ *
+ * Like {@link OptionContentRenderContext} / {@link BadgeContentRenderContext}, it extends the
+ * shared {@link PresentationContext} (`presentation` / `isFullscreen` / `isModal`), so a group
+ * header can also render leaner in the phone fullscreen overlay.
+ */
+export interface GroupLabelRenderContext<T = any> extends PresentationContext {
+    /** The group name (identical to the callback's first argument). */
+    groupName: string;
+    /** The group's currently-visible (filtered) members, in render order. */
+    members: T[];
+    /** The subset of `members` that are currently selected (includes disabled-but-selected). */
+    selectedMembers: T[];
+    /** `selectedMembers.length` — the number to show "behind the group title". */
+    selectedCount: number;
+    /** `members.length` — total visible members in the group. */
+    memberCount: number;
+    /** Visible, non-disabled members — the cascade "select-all" denominator. */
+    selectableCount: number;
+    /** Tristate roll-up of the group under cascade selection. */
+    checkState: 'checked' | 'indeterminate' | 'unchecked';
+}
+
+/**
  * Imperative facade handed to `keydownCallback` so a consumer can drive the picker without
  * reaching into internals. Every method mirrors a built-in keyboard action.
  */
@@ -259,6 +295,26 @@ export interface MultiSelectConfig<T = any> {
     getBadgeDisplayCallback?: (item: T) => string;
 
     /**
+     * Order of the CURRENTLY-SELECTED items *where they are displayed* — badges, partial mode
+     * (i.e. which items sit behind the "+N more" badge), and the selected-items popover. This is a
+     * display concern only: `getValue()`, the form output, and `getSelected()` always keep
+     * as-selected (insertion) order regardless of this setting, and the options dropdown is never
+     * reordered.
+     * - `as-selected` (default) — the order items were picked.
+     * - `label-asc` / `label-desc` — by the badge label, A→Z / Z→A (locale-aware).
+     * - `member` — by the `selectedOrderMember` property (or `getSelectedOrderCallback`); numeric
+     *   keys sort numerically, everything else with a locale string compare.
+     * - `custom` — delegate to `selectedOrderCompareCallback`.
+     */
+    selectedOrder?: 'as-selected' | 'label-asc' | 'label-desc' | 'member' | 'custom';
+    /** Property name used as the sort key when `selectedOrder === 'member'` (selected-items display only). */
+    selectedOrderMember?: string;
+    /** Extract the sort key when `selectedOrder === 'member'` (overrides `selectedOrderMember`). */
+    getSelectedOrderCallback?: (item: T) => string | number;
+    /** Comparator used when `selectedOrder === 'custom'`; standard `(a,b) => number` contract. */
+    selectedOrderCompareCallback?: (a: T, b: T) => number;
+
+    /**
      * Member property name for a "full title" — a fully-qualified label that ships with the
      * data (e.g. a breadcrumb like "Fruit / Pome fruit / Apple"). It is never computed by the
      * component. When `isBadgeFullTitleShown` is on, badges display this instead of the display
@@ -326,9 +382,10 @@ export interface MultiSelectConfig<T = any> {
     getIsSelectableCallback?: (node: LTreeNode<T>) => boolean;
 
     /**
-     * Tree checkbox interaction. `independent` (default) toggles only the clicked
-     * node. `cascade` checks a node's whole subtree and shows a tristate
-     * (checked / indeterminate / unchecked) box on branches. Tree + multiple only.
+     * Tree checkbox interaction. `cascade` (default) checks a node's whole subtree
+     * and shows a tristate (checked / indeterminate / unchecked) box on branches —
+     * what most tree-select UIs do. `independent` toggles only the clicked node.
+     * Tree + multiple only (no subtree to cascade otherwise). Unset → cascade.
      */
     checkboxMode?: 'independent' | 'cascade';
     /**
@@ -347,8 +404,23 @@ export interface MultiSelectConfig<T = any> {
     groupMember?: string;
     /** Callback to extract group from item */
     getGroupCallback?: (item: T) => string;
-    /** Callback to customize group label content (can return HTML) */
-    renderGroupLabelContentCallback?: (groupName: string) => string | HTMLElement;
+    /**
+     * Callback to customize group label content (can return HTML). Receives the group name and a
+     * {@link GroupLabelRenderContext} with the group's members and selection (e.g. `selectedCount`),
+     * so a custom header can show a per-group count. The second argument is additive — existing
+     * one-argument callbacks keep working.
+     */
+    renderGroupLabelContentCallback?: (groupName: string, context: GroupLabelRenderContext<T>) => string | HTMLElement;
+    /**
+     * Group-header selection in a flat (non-tree) grouped, multi-select list.
+     * - `none` (default) — group headers are inert labels.
+     * - `cascade` — each header shows a **tristate** checkbox that checks/unchecks
+     *   all of that group's currently-visible members. The group itself is never a
+     *   selected value (`getValue()`/badges/form carry member values only); a
+     *   partially-selected group reads indeterminate. Flat + multiple only — no
+     *   effect in tree mode (use `checkboxMode`) or single-select.
+     */
+    groupSelectMode?: 'none' | 'cascade';
 
     /** Member property name for disabled state extraction */
     disabledMember?: string;
@@ -374,12 +446,22 @@ export interface MultiSelectConfig<T = any> {
      * selected-items popover keeps using renderSelectedItemContentCallback).
      */
     renderBadgeCallback?: (item: T, context: BadgeContentRenderContext) => string | HTMLElement | null | undefined;
-    /** Custom renderer for selected item content in popover - return HTML string or HTMLElement */
-    renderSelectedItemContentCallback?: (item: T) => string | HTMLElement;
+    /**
+     * Custom renderer for selected item content in the selected-items popover — return HTML string
+     * or HTMLElement. Receives a {@link BadgeContentRenderContext} (2nd arg) since a popover item
+     * is rendered through the same badge path: `isInPopover` is `true`, plus the shared
+     * presentation fields. The second argument is additive; one-argument callbacks keep working.
+     */
+    renderSelectedItemContentCallback?: (item: T, context: BadgeContentRenderContext) => string | HTMLElement;
     /** Callback to add custom CSS classes to selected items in popover - return string or array of class names */
     getSelectedItemClassCallback?: (item: T) => string | string[];
-    /** Custom renderer for selected item display in single-select mode - return plain text */
-    renderSelectedContentCallback?: (item: T) => string;
+    /**
+     * Custom renderer for the selected item display in single-select mode — return plain text (it
+     * becomes the input value). Receives a {@link SelectedContentRenderContext} (2nd arg) carrying
+     * the shared presentation fields. The second argument is additive; one-argument callbacks keep
+     * working.
+     */
+    renderSelectedContentCallback?: (item: T, context: SelectedContentRenderContext) => string;
 
     // ========================================================================
     // FORM INTEGRATION & VALUE FORMATTING
@@ -703,6 +785,14 @@ export interface MultiSelectConfig<T = any> {
     onChange?: ((selectedOptions: T[]) => void) | null;
     /** Callback to format count badge text (for i18n/pluralization). When moreCount is provided, it's for the "+X more" badge in partial mode. */
     getCounterCallback?: ((count: number, moreCount?: number) => string) | null;
+    /**
+     * Formats the small count chip shared by the in-input counter (`show-counter`) and each group
+     * header's per-group count. Receives `selected` and `total`: for the in-input counter `total`
+     * is the whole option list; for a group header it's that group's member count. Return the label
+     * as plain text. Default `[selected]` (e.g. `[3]`). Set it to `` (s, t) => `${s}/${t}` `` for an
+     * "x / y" style. One callback drives both so they always read the same way.
+     */
+    getCountLabelCallback?: ((selected: number, total: number) => string) | null;
 
     // ========================================================================
     // TOOLTIP OPTIONS

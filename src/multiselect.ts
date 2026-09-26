@@ -24,7 +24,8 @@ import {
     toggleNodeCascade,
     projectSelection,
     type CascadeIndex,
-    type CascadeSelectPolicy
+    type CascadeSelectPolicy,
+    type NodeCheckState
 } from './tree/cascade';
 
 export class WebMultiSelect<T = any> {
@@ -292,6 +293,51 @@ export class WebMultiSelect<T = any> {
         });
     }
 
+    /** Sort key for `selectedOrder === 'member'` (member/callback pattern). */
+    private getItemSortKey(item: T): string | number {
+        return this.extractField<string | number>(item, {
+            tupleSkip: true,
+            member: this.options.selectedOrderMember,
+            callback: this.options.getSelectedOrderCallback,
+            fallback: ''
+        });
+    }
+
+    /**
+     * Selected options in the order they should be DISPLAYED (badges / partial "+N more" / popover).
+     * Never mutates state — always returns a fresh array. Display concern only: getValue()/form
+     * output/getSelected() keep as-selected (insertion) order. See `selectedOrder`.
+     */
+    private getOrderedSelectedOptions(): T[] {
+        const items = Array.from(this.selectedOptions.values());
+        const mode = this.options.selectedOrder ?? 'as-selected';
+        if (mode === 'as-selected' || items.length < 2) return items;
+
+        const sorted = items.slice();
+        switch (mode) {
+            case 'label-asc':
+                sorted.sort((a, b) => this.getItemBadgeDisplayValue(a).localeCompare(this.getItemBadgeDisplayValue(b)));
+                break;
+            case 'label-desc':
+                sorted.sort((a, b) => this.getItemBadgeDisplayValue(b).localeCompare(this.getItemBadgeDisplayValue(a)));
+                break;
+            case 'member':
+                sorted.sort((a, b) => {
+                    const ka = this.getItemSortKey(a);
+                    const kb = this.getItemSortKey(b);
+                    if (typeof ka === 'number' && typeof kb === 'number') return ka - kb;
+                    return String(ka).localeCompare(String(kb));
+                });
+                break;
+            case 'custom':
+                if (this.options.selectedOrderCompareCallback) {
+                    sorted.sort(this.options.selectedOrderCompareCallback);
+                }
+                break;
+        }
+        return sorted;
+    }
+
     private getItemIcon(item: T): string | undefined {
         return this.extractField<string | undefined>(item, {
             tupleSkip: true,
@@ -478,13 +524,15 @@ export class WebMultiSelect<T = any> {
 
     /**
      * Whether cascade checkbox mode is active: a multi-select tree with
-     * `checkbox-mode="cascade"`. Checking a node then toggles its whole subtree
-     * and branches show a tristate box.
+     * `checkbox-mode` NOT set to `independent`. Checking a node then toggles its
+     * whole subtree and branches show a tristate box. Cascade is the DEFAULT
+     * (unset → cascade); opt out per-instance with `checkbox-mode="independent"`.
+     * Only ever active in tree + multiple — no subtree to cascade otherwise.
      */
     private isCascadeMode(): boolean {
         return this.isTreeMode()
             && this.options.isMultipleEnabled !== false
-            && this.options.checkboxMode === 'cascade';
+            && this.options.checkboxMode !== 'independent';
     }
 
     private cascadePolicy(): CascadeSelectPolicy {
@@ -802,7 +850,10 @@ export class WebMultiSelect<T = any> {
         if (this.options.searchInputMode === 'readonly') {
             this.input.readOnly = true;
         } else if (this.options.searchInputMode === 'hidden') {
-            this.input.style.display = 'none';
+            // Hide with `visibility` (not `display`) so the input keeps its `flex: 1`
+            // box and still fills the row — otherwise the trailing toggle/counter
+            // collapse to the leading edge instead of staying at the trailing edge.
+            this.input.style.visibility = 'hidden';
         }
 
         // Chevron rendered via a CSS mask icon (see .ms__toggle in controls.css) for
@@ -926,6 +977,98 @@ export class WebMultiSelect<T = any> {
         });
     }
 
+    /**
+     * Whether the flat-group cascade checkbox is active: a multi-select, grouped,
+     * non-tree list with `group-select-mode="cascade"`. When on, each group header
+     * gets a tristate checkbox that toggles all of that group's visible members.
+     * Tree mode has its own `checkbox-mode` cascade, so this stays flat-only.
+     */
+    private isGroupCascadeActive(): boolean {
+        return !this.isTreeMode()
+            && this.options.isMultipleEnabled !== false
+            && !!this.options.isGroupsAllowed
+            && this.options.groupSelectMode === 'cascade'
+            && this.hasGroups();
+    }
+
+    /**
+     * Tristate check-state of a group from its members: `checked` if every
+     * non-disabled member is selected, `unchecked` if none are, else
+     * `indeterminate`. Disabled members are excluded from the denominator so a
+     * group with a stuck-disabled member can still read fully checked. An empty
+     * (or all-disabled) group reads `unchecked`.
+     */
+    private groupCheckState(members: T[]): NodeCheckState {
+        return this.groupSelectionInfo(members).checkState;
+    }
+
+    /**
+     * Selection roll-up for a flat group's (visible) members: which are selected, how many, and
+     * the tristate check-state. `selectedCount` counts every selected member (including a
+     * disabled-but-selected one) — it's the "N behind the group title". `checkState` excludes
+     * disabled members from its denominator (mirrors the select-all), so a group with a stuck
+     * disabled member can still read fully `checked`. Shared by the header count, the tristate
+     * checkbox, and the `renderGroupLabelContentCallback` context.
+     */
+    private groupSelectionInfo(members: T[]): {
+        members: T[];
+        selectedMembers: T[];
+        selectedCount: number;
+        memberCount: number;
+        selectableCount: number;
+        checkState: NodeCheckState;
+    } {
+        let selectableCount = 0;
+        let selectedSelectable = 0;
+        const selectedMembers: T[] = [];
+        for (const opt of members) {
+            const disabled = this.getItemDisabled(opt);
+            const isSelected = this.selectedValues.has(String(this.getItemValue(opt)));
+            if (!disabled) selectableCount++;
+            if (isSelected) {
+                selectedMembers.push(opt);
+                if (!disabled) selectedSelectable++;
+            }
+        }
+        const checkState: NodeCheckState =
+            selectableCount === 0 || selectedSelectable === 0
+                ? 'unchecked'
+                : selectedSelectable === selectableCount ? 'checked' : 'indeterminate';
+        return {
+            members,
+            selectedMembers,
+            selectedCount: selectedMembers.length,
+            memberCount: members.length,
+            selectableCount,
+            checkState
+        };
+    }
+
+    /**
+     * Formats the small count chip shared by the in-input counter and the per-group header count.
+     * Default `[selected]` (matches the historical in-input `[N]`); a `getCountLabelCallback` can
+     * switch both to e.g. `selected/total`.
+     */
+    private formatCountLabel(selected: number, total: number): string {
+        if (this.options.getCountLabelCallback) return this.options.getCountLabelCallback(selected, total);
+        return `[${selected}]`;
+    }
+
+    /** Trailing count chip for a group header — any grouped list (rendered only when >0 selected). */
+    private groupCountHtml(selectedCount: number, total: number): string {
+        if (selectedCount <= 0) return '';
+        const label = this.formatCountLabel(selectedCount, total);
+        return `<span class="ms__group-count" aria-label="${selectedCount} selected">${this.escapeHtml(label)}</span>`;
+    }
+
+    /** Markup for a group-header tristate checkbox, mirroring the option/tree checkbox. */
+    private groupCheckboxHtml(state: NodeCheckState): string {
+        const indeterminate = state === 'indeterminate';
+        const cls = indeterminate ? 'ms__checkbox ms__checkbox--indeterminate' : 'ms__checkbox';
+        const aria = indeterminate ? ' aria-checked="mixed"' : '';
+        return `<input type="checkbox" class="${cls}" ${state === 'checked' ? 'checked' : ''}${aria}>`;
+    }
+
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
         // Clean up any existing action button tooltips before re-rendering
         this.destroyAllActionButtonTooltips();
@@ -996,28 +1139,61 @@ export class WebMultiSelect<T = any> {
                 // every group's Nth item appear focused at once.
                 const indexOf = new Map<T, number>();
                 this.filteredOptions.forEach((opt, i) => indexOf.set(opt, i));
+                const groupCascade = this.isGroupCascadeActive();
                 Object.keys(groups).forEach(groupName => {
                     html += '<div class="ms__group">';
                     if (groupName !== '__ungrouped__') {
                         // `data-group` anchors the label for scrollToGroup() (public API).
                         const groupAttr = ` data-group="${this.escapeHtml(groupName)}"`;
+                        const selectAttr = groupCascade ? ' data-group-select="cascade"' : '';
+                        // One roll-up per header powers the tristate checkbox (cascade only), the
+                        // per-group selected-count chip (ANY grouped list), AND the callback context —
+                        // so they can never disagree.
+                        const info = this.groupSelectionInfo(groups[groupName]);
+                        // Cascade mode: a tristate select-all checkbox + a marker/class the click
+                        // handler routes on. The checkbox precedes the label content.
+                        const checkbox = groupCascade ? this.groupCheckboxHtml(info.checkState) : '';
+                        // The header goes flex when it carries a checkbox (--selectable) or a count
+                        // chip (--has-count) so the chip can park at the trailing edge.
+                        const baseLabelClass = groupCascade ? 'ms__group-label ms__group-label--selectable' : 'ms__group-label';
                         // Check if custom group label callback is provided
                         if (this.options.renderGroupLabelContentCallback) {
-                            const customContent = this.options.renderGroupLabelContentCallback(groupName);
+                            // Custom label owns its content — it gets the selection via context and
+                            // renders its own count (see BU03). We still inject the checkbox chrome.
+                            const context = {
+                                ...presentationContext(this.presentationMode),
+                                groupName,
+                                members: info.members,
+                                selectedMembers: info.selectedMembers,
+                                selectedCount: info.selectedCount,
+                                memberCount: info.memberCount,
+                                selectableCount: info.selectableCount,
+                                checkState: info.checkState
+                            };
+                            const customContent = this.options.renderGroupLabelContentCallback(groupName, context);
                             if (customContent instanceof HTMLElement) {
                                 // HTMLElement - wrap in group-label div
                                 const wrapper = document.createElement('div');
-                                wrapper.className = 'ms__group-label';
+                                wrapper.className = baseLabelClass;
                                 wrapper.dataset.group = groupName;
+                                if (groupCascade) {
+                                    wrapper.dataset.groupSelect = 'cascade';
+                                    const tpl = document.createElement('template');
+                                    tpl.innerHTML = checkbox;
+                                    if (tpl.content.firstChild) wrapper.appendChild(tpl.content.firstChild);
+                                }
                                 wrapper.appendChild(customContent);
                                 html += wrapper.outerHTML;
                             } else {
                                 // String (HTML or plain text)
-                                html += `<div class="ms__group-label"${groupAttr}>${customContent}</div>`;
+                                html += `<div class="${baseLabelClass}"${groupAttr}${selectAttr}>${checkbox}${customContent}</div>`;
                             }
                         } else {
-                            // Default rendering
-                            html += `<div class="ms__group-label"${groupAttr}>${groupName}</div>`;
+                            // Default rendering: title + a trailing count of how many of the group's
+                            // members are currently selected (any grouped list, cascade or not).
+                            const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount);
+                            const labelClass = countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
+                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${groupName}${countHtml}</div>`;
                         }
                     }
                     groups[groupName].forEach(option => {
@@ -1599,7 +1775,7 @@ export class WebMultiSelect<T = any> {
         // Clean up existing tooltips before re-rendering
         this.destroyAllBadgeTooltips();
 
-        const selectedOptions = Array.from(this.selectedOptions.values());
+        const selectedOptions = this.getOrderedSelectedOptions();
         const count = this.selectedValues.size;
 
         if (!this.options.isMultipleEnabled) {
@@ -1610,7 +1786,10 @@ export class WebMultiSelect<T = any> {
             if (selectedOptions[0]) {
                 // Check if custom render callback is provided
                 if (this.options.renderSelectedContentCallback) {
-                    selectedLabel = this.options.renderSelectedContentCallback(selectedOptions[0]);
+                    selectedLabel = this.options.renderSelectedContentCallback(
+                        selectedOptions[0],
+                        presentationContext(this.presentationMode)
+                    );
                 } else {
                     selectedLabel = this.getItemDisplayValue(selectedOptions[0]);
                 }
@@ -1647,7 +1826,7 @@ export class WebMultiSelect<T = any> {
             // balloon it. Under rolled-up this equals `count`, so nothing changes.
             const counterItems = this.counterSelection();
             const counterCount = counterItems.length;
-            this.counter.textContent = `[${counterCount}]`;
+            this.counter.textContent = this.formatCountLabel(counterCount, this.allOptions.length);
             this.counter.title = this.buildCounterTooltip(counterItems);
             this.counter.style.display = counterCount > 0 ? '' : 'none';
         } else {
@@ -2289,6 +2468,24 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
+        // Flat-group cascade: the header carries a tristate select-all checkbox.
+        // Toggle the whole group's members. Routed before the .ms__option branch
+        // (a group header is not an option row).
+        const groupLabel = (e.target as HTMLElement).closest('.ms__group-label[data-group-select="cascade"]') as HTMLElement | null;
+        if (groupLabel && groupLabel.dataset.group) {
+            e.preventDefault();
+            interactionLogger.debug(`[${this.instanceId}] Group header cascade toggle:`, groupLabel.dataset.group);
+            this.toggleGroup(groupLabel.dataset.group);
+            // Restore search focus for continued keyboard use (floating only; see
+            // the option path below for the fullscreen rationale).
+            if (this.#isOpen && this.presentationMode !== 'fullscreen') {
+                this.input.focus();
+            } else if (this.presentationMode === 'fullscreen') {
+                this.fullscreenSearchInput?.blur();
+            }
+            return;
+        }
+
         const option = (e.target as HTMLElement).closest('.ms__option') as HTMLElement;
         if (option && !option.classList.contains('ms__option--disabled')) {
             e.preventDefault();
@@ -2340,26 +2537,23 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
-        const showSelectedBtn = (e.target as HTMLElement).closest('[data-action="show-selected"]');
-        if (showSelectedBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleSelectedPopover();
-            return;
-        }
-
-        // Match the built-in pill's remove button OR a consumer-defined control in a
-        // renderBadgeCallback badge (`[data-action="remove"]`).
+        // Remove buttons must be matched BEFORE `show-selected`: the "+N more" (and count/compact)
+        // badges carry `data-action="show-selected"` on the pill itself, and their X
+        // (`.ms__badge-remove`) is a DESCENDANT of it — so checking `show-selected` first would
+        // let a `closest()` walk from the X match the parent and open the popover instead of
+        // removing. Matching the remove button first lets the X do its job; a click on the pill
+        // body (not the X) still falls through to the `show-selected` branch below.
         const removeBtn = (e.target as HTMLElement).closest('.ms__badge-remove, [data-action="remove"]') as HTMLElement;
         if (removeBtn) {
             e.preventDefault();
             e.stopPropagation();
 
-            // Handle remove-hidden action (remove all hidden items in partial mode)
+            // Handle remove-hidden action (remove all hidden items in partial mode). "Hidden" =
+            // the items sorted AFTER the visible slice, so it honours `selectedOrder`.
             if (removeBtn.dataset.action === 'remove-hidden') {
                 interactionLogger.debug(`[${this.instanceId}] Remove hidden items button clicked`);
                 const maxVisible = this.options.badgesMaxVisible || 3;
-                const selectedOptions = Array.from(this.selectedOptions.values());
+                const selectedOptions = this.getOrderedSelectedOptions();
                 const hiddenOptions = selectedOptions.slice(maxVisible);
 
                 // Deselect all hidden options (respecting the deselect veto per item)
@@ -2379,12 +2573,11 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
-        // Handle clicking the "+X more" badge itself (not the remove button)
-        const moreBadge = (e.target as HTMLElement).closest('.ms__badge--more');
-        if (moreBadge && !(e.target as HTMLElement).closest('.ms__badge-remove')) {
+        // Pill body (count / compact / "+N more" badges) opens the selected-items popover.
+        const showSelectedBtn = (e.target as HTMLElement).closest('[data-action="show-selected"]');
+        if (showSelectedBtn) {
             e.preventDefault();
             e.stopPropagation();
-            interactionLogger.debug(`[${this.instanceId}] '+X more' badge clicked, showing popover`);
             this.toggleSelectedPopover();
             return;
         }
@@ -2964,6 +3157,43 @@ export class WebMultiSelect<T = any> {
         this.selectedValues.clear();
         this.selectedOptions.clear();
         this.commit({ removed });
+    }
+
+    /**
+     * Flat-group cascade toggle: check or uncheck every (visible) member of a group
+     * in one shot. If the group is fully checked → deselect all its members; else →
+     * select all its non-disabled members. Operates on the currently-filtered
+     * members (same scope as Select-All) and, like Select-All / Clear-All,
+     * batch-mutates then fires a single `commit` — so one render and one `change`
+     * event, and it deliberately bypasses the per-item beforeSelect/beforeDeselect
+     * veto. The group name itself is never added to the selection.
+     */
+    private toggleGroup(groupName: string): void {
+        const members = this.groupOptions(this.filteredOptions)[groupName];
+        if (!members || members.length === 0) return;
+
+        if (this.groupCheckState(members) === 'checked') {
+            const removed: T[] = [];
+            for (const option of members) {
+                const valueKey = String(this.getItemValue(option));
+                if (this.selectedValues.delete(valueKey)) {
+                    this.selectedOptions.delete(valueKey);
+                    removed.push(option);
+                }
+            }
+            this.commit({ removed });
+        } else {
+            const added: T[] = [];
+            for (const option of members) {
+                if (this.getItemDisabled(option)) continue;
+                const valueKey = String(this.getItemValue(option));
+                if (this.selectedValues.has(valueKey)) continue;
+                this.selectedValues.add(valueKey);
+                this.selectedOptions.set(valueKey, option);
+                added.push(option);
+            }
+            this.commit({ added });
+        }
     }
 
     /**
@@ -4008,7 +4238,7 @@ export class WebMultiSelect<T = any> {
     }
 
     private renderSelectedPopover(): void {
-        const selectedOptions = Array.from(this.selectedOptions.values());
+        const selectedOptions = this.getOrderedSelectedOptions();
         const count = this.selectedValues.size;
 
         // Use virtual scroll for large selections (same threshold as the dropdown)
@@ -4152,7 +4382,7 @@ export class WebMultiSelect<T = any> {
         let badgeContent: string;
         const popoverCallback = ctx.isInPopover ? this.options.renderSelectedItemContentCallback : undefined;
         if (popoverCallback) {
-            badgeContent = this.toHtml(popoverCallback(option));
+            badgeContent = this.toHtml(popoverCallback(option, renderCtx));
         } else if (this.options.renderBadgeContentCallback) {
             badgeContent = this.toHtml(this.options.renderBadgeContentCallback(option, renderCtx));
         } else {
@@ -4407,7 +4637,9 @@ export class WebMultiSelect<T = any> {
         // Search input display mode
         if ('searchInputMode' in partial) {
             this.input.readOnly = this.options.searchInputMode === 'readonly';
-            this.input.style.display = this.options.searchInputMode === 'hidden' ? 'none' : '';
+            // Hide via `visibility` (not `display`) so the input keeps its flex space
+            // and the trailing toggle stays at the trailing edge (see reinit path).
+            this.input.style.visibility = this.options.searchInputMode === 'hidden' ? 'hidden' : '';
         }
 
         // Hint text (element exists; just refresh content)

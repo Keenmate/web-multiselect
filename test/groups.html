@@ -27,6 +27,36 @@
         <web-multiselect id="custom-label" value-member="value" display-value-member="label" group-member="group"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">group-select-mode="cascade" — tristate select-all per group</div>
+        <web-multiselect id="group-cascade" value-member="value" display-value-member="label" group-member="group" group-select-mode="cascade"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">group-select-mode="none" — inert headers (explicit default)</div>
+        <web-multiselect id="group-none" value-member="value" display-value-member="label" group-member="group" group-select-mode="none"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">cascade + custom label renderer</div>
+        <web-multiselect id="group-cascade-custom" value-member="value" display-value-member="label" group-member="group" group-select-mode="cascade"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">cascade + a disabled member (excluded from check-all)</div>
+        <web-multiselect id="group-cascade-disabled" value-member="value" display-value-member="label" group-member="group" disabled-member="disabled" group-select-mode="cascade"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">cascade ignored on single-select (multiple="false")</div>
+        <web-multiselect id="group-cascade-single" multiple="false" value-member="value" display-value-member="label" group-member="group" group-select-mode="cascade"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">getCountLabelCallback = "x/y" (drives in-input counter + group count)</div>
+        <web-multiselect id="group-count-callback" show-counter value-member="value" display-value-member="label" group-member="group"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -39,13 +69,33 @@
             { value: 'v3', label: 'Kale',   group: 'Vegetables' }
         ];
 
+        // Same shape, but one Fruits member is disabled — for the "disabled member is
+        // excluded from the group check-all denominator" case.
+        const itemsWithDisabled = items.map(it =>
+            it.value === 'a3' ? { ...it, disabled: true } : { ...it }
+        );
+
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['grouped', 'flat', 'custom-label']) {
+            for (const id of ['grouped', 'flat', 'custom-label', 'group-cascade', 'group-none', 'group-cascade-custom', 'group-cascade-single', 'group-count-callback']) {
                 document.getElementById(id).options = items;
             }
+            document.getElementById('group-cascade-disabled').options = itemsWithDisabled;
 
-            const custom = document.getElementById('custom-label');
-            custom.renderGroupLabelContentCallback = (name) => `<strong class="js-custom-label">[${name.toUpperCase()}]</strong>`;
+            // Shared count formatter: "selected/total" — used by both the in-input counter and
+            // each group header's count chip.
+            document.getElementById('group-count-callback').getCountLabelCallback = (s, t) => `${s}/${t}`;
+
+            // Non-cascade custom label: single-arg (proves the old signature still works).
+            document.getElementById('custom-label').renderGroupLabelContentCallback =
+                (name) => `<strong class="js-custom-label">[${name.toUpperCase()}]</strong>`;
+            // Cascade custom label: reads the 2nd-arg context to render its own count, and
+            // surfaces `isFullscreen` (data-fs) so the mobile spec can prove the presentation
+            // context reaches the callback inside the fullscreen overlay.
+            document.getElementById('group-cascade-custom').renderGroupLabelContentCallback =
+                (name, ctx) => `<strong class="js-custom-label" data-fs="${ctx.isFullscreen}">[${name.toUpperCase()}]</strong>` +
+                    (ctx && ctx.selectedCount > 0
+                        ? `<span class="js-custom-count">${ctx.selectedCount}/${ctx.selectableCount}</span>`
+                        : '');
         });
     </script>
 </body>

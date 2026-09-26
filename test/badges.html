@@ -67,6 +67,37 @@
         <web-multiselect id="threshold-partial" badges-threshold="2" badges-threshold-mode="partial" badges-max-visible="2" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <!-- selected-order fixtures (dataset `priced`: Mango/30, Apricot/10, Plum/20) -->
+    <div class="fixture">
+        <div class="fixture-label">selected-order="as-selected" (default)</div>
+        <web-multiselect id="order-as-selected" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">selected-order="label-asc"</div>
+        <web-multiselect id="order-label-asc" selected-order="label-asc" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">selected-order="label-desc"</div>
+        <web-multiselect id="order-label-desc" selected-order="label-desc" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">selected-order="member" selected-order-member="price"</div>
+        <web-multiselect id="order-member" selected-order="member" selected-order-member="price" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">selected-order="custom" (price DESC via callback)</div>
+        <web-multiselect id="order-custom" selected-order="custom" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">selected-order="member" + partial (max 1) — "+N more" hides the higher-priced items</div>
+        <web-multiselect id="order-partial-member" badges-display-mode="partial" badges-max-visible="1" selected-order="member" selected-order-member="price" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -79,6 +110,14 @@
             { value: 'fig',        label: 'Fig' }
         ];
 
+        // Insertion order deliberately != alpha order != price order, so each
+        // selected-order mode produces a distinct badge sequence.
+        const priced = [
+            { value: 'm', label: 'Mango',   price: 30 },
+            { value: 'a', label: 'Apricot', price: 10 },
+            { value: 'p', label: 'Plum',    price: 20 }
+        ];
+
         customElements.whenDefined('web-multiselect').then(() => {
             for (const id of [
                 'mode-badges', 'mode-count', 'mode-compact', 'mode-partial', 'mode-none',
@@ -87,6 +126,16 @@
             ]) {
                 document.getElementById(id).options = fruits;
             }
+
+            for (const id of [
+                'order-as-selected', 'order-label-asc', 'order-label-desc',
+                'order-member', 'order-custom', 'order-partial-member'
+            ]) {
+                document.getElementById(id).options = priced;
+            }
+            // custom = price DESC
+            document.getElementById('order-custom').selectedOrderCompareCallback =
+                (a, b) => b.price - a.price;
         });
     </script>
 </body>

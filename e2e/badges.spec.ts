@@ -178,3 +178,73 @@ test.describe('badge interaction', () => {
         await expect(p.locator('.ms__selected-popover')).toBeVisible();
     });
 });
+
+test.describe('selected-order', () => {
+    // Read the visible badge labels in DOM order (named badges only, not the "+N more").
+    async function badgeLabels(p: Locator): Promise<string[]> {
+        return p.locator('.ms__badges > .ms__badge:not([data-action]) .ms__badge-text').allInnerTexts();
+    }
+
+    // Select in DATA order so "as-selected" == insertion order: Mango, Apricot, Plum.
+    async function selectAllPriced(p: Locator): Promise<void> {
+        await select(p, 'm', 'a', 'p');
+    }
+
+    test('"as-selected" (default) keeps insertion order', async ({ page }) => {
+        const p = picker(page, 'order-as-selected');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        expect(await badgeLabels(p)).toEqual(['Mango', 'Apricot', 'Plum']);
+    });
+
+    test('"label-asc" sorts badges A→Z by label', async ({ page }) => {
+        const p = picker(page, 'order-label-asc');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        expect(await badgeLabels(p)).toEqual(['Apricot', 'Mango', 'Plum']);
+    });
+
+    test('"label-desc" sorts badges Z→A by label', async ({ page }) => {
+        const p = picker(page, 'order-label-desc');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        expect(await badgeLabels(p)).toEqual(['Plum', 'Mango', 'Apricot']);
+    });
+
+    test('"member" sorts numerically by the sort-key property (price asc)', async ({ page }) => {
+        const p = picker(page, 'order-member');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        expect(await badgeLabels(p)).toEqual(['Apricot', 'Plum', 'Mango']); // 10, 20, 30
+    });
+
+    test('"custom" uses the comparator callback (price desc)', async ({ page }) => {
+        const p = picker(page, 'order-custom');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        expect(await badgeLabels(p)).toEqual(['Mango', 'Plum', 'Apricot']); // 30, 20, 10
+    });
+
+    test('ordering does NOT reorder the emitted value (getValue keeps as-selected)', async ({ page }) => {
+        const p = picker(page, 'order-label-asc');
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+        // Badges are Apricot, Mango, Plum — but getValue stays insertion order.
+        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['m', 'a', 'p']);
+    });
+
+    test('partial "+N more" hides the items sorted AFTER the visible slice, and its X removes exactly those', async ({ page }) => {
+        const p = picker(page, 'order-partial-member'); // max-visible=1, price asc
+        await selectAllPriced(p);
+        await closeDropdown(page, p);
+
+        // Sorted price-asc: Apricot(10), Plum(20), Mango(30). Visible = [Apricot].
+        expect(await badgeLabels(p)).toEqual(['Apricot']);
+        const moreBadge = p.locator('.ms__badge--more');
+        await expect(moreBadge).toContainText(/2/); // +2 more (Plum, Mango)
+
+        // The X on the more-badge removes the two hidden (higher-priced) items only.
+        await moreBadge.locator('.ms__badge-remove').click();
+        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['a']);
+    });
+});

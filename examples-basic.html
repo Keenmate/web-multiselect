@@ -13,247 +13,171 @@
         <header>
             <a href="index.html" class="back-link">← Back to Examples</a>
             <h1>Basic Usage</h1>
-            <p class="subtitle">The essentials — basic multi-select and single-select, keyboard-only navigation, rich option content, search hints, declarative &lt;option&gt; markup, search modes, and RTL.</p>
+            <p class="subtitle">The essentials, each as ONE live picker you configure with control switches — selection &amp; input mode, content &amp; display, groups, the scroll-to API, and search.</p>
         </header>
 
-        <!-- Basic Example -->
+        <!-- ============================================================= -->
+        <!-- BU01 · Selection & input mode                                  -->
+        <!-- ============================================================= -->
         <div class="card">
-            <h2>BU01 · Basic MultiSelect</h2>
-            <p>Simple multiselect with basic options</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Select Technologies</label>
-                    <web-multiselect
-                        id="basic-select"
-                        value-member="value"
-                        display-value-member="label"
-                        search-placeholder="Search technologies...">
-                    </web-multiselect>
-                    <small class="form-text">Select multiple programming languages</small>
-                </div>
+            <h2>BU01 · Selection &amp; Input Mode</h2>
+            <p>
+                One picker, many behaviors. Flip between multi- and single-select, add the inline
+                clear (✕) and the count badge, change the search-input mode (a <code>readonly</code>
+                or <code>hidden</code> search gives keyboard-only navigation), toggle
+                <code>close-on-select</code>, and switch text direction (LTR / RTL).
+            </p>
 
-                <div class="form-group">
-                    <label>Select Countries</label>
-                    <web-multiselect
-                        id="countries-select"
-                        value-member="value"
-                        display-value-member="label"
-                        search-placeholder="Search countries...">
-                    </web-multiselect>
-                    <small class="form-text">Start typing to filter options</small>
-                </div>
+            <div class="controls">
+                <label><input type="checkbox" id="sel-multiple" checked> <code>multiple</code></label>
+                <label><input type="checkbox" id="sel-clear"> <code>show-clear</code> (✕)</label>
+                <label><input type="checkbox" id="sel-counter"> <code>show-counter</code></label>
+                <label><input type="checkbox" id="sel-close"> <code>close-on-select</code></label>
+            </div>
+            <div class="controls">
+                <span><code>search-input-mode</code>:</span>
+                <label><input type="radio" name="sel-sim" value="normal" checked> normal</label>
+                <label><input type="radio" name="sel-sim" value="readonly"> readonly</label>
+                <label><input type="radio" name="sel-sim" value="hidden"> hidden</label>
+            </div>
+            <div class="controls">
+                <span><code>dir</code>:</span>
+                <label><input type="radio" name="sel-dir" value="ltr" checked> ltr</label>
+                <label><input type="radio" name="sel-dir" value="rtl"> rtl</label>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-selection"
+                    value-member="value"
+                    display-value-member="label"
+                    icon-member="icon"
+                    search-placeholder="Search…">
+                </web-multiselect>
             </div>
         </div>
 
-        <!-- Clear button -->
+        <!-- ============================================================= -->
+        <!-- BU02 · Content & display                                        -->
+        <!-- ============================================================= -->
         <div class="card">
-            <h2>BU01b · Inline Clear (✕) Button</h2>
-            <p>Add <code>show-clear</code> for an inline ✕ inside the input that wipes the whole
-            selection. It appears only while something is selected and refocuses the input after clearing.</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Multi-select with clear</label>
-                    <web-multiselect
-                        id="clear-multi"
-                        show-clear
-                        show-counter
-                        value-member="value"
-                        display-value-member="label"
-                        search-placeholder="Search technologies...">
-                    </web-multiselect>
-                    <small class="form-text">With <code>show-counter</code> too — the <code>[N]</code> counter, the ✕, and the chevron all sit at the input's trailing edge</small>
-                </div>
+            <h2>BU02 · Content &amp; Display</h2>
+            <p>
+                Icons and subtitles on the option rows, plus how the current selection is shown in
+                the control: the <code>badges-display-mode</code> and where badges sit
+                (<code>badges-position</code>).
+            </p>
 
-                <div class="form-group">
-                    <label>Single-select with clear</label>
-                    <web-multiselect
-                        id="clear-single"
-                        show-clear
-                        multiple="false"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="Select language...">
-                    </web-multiselect>
-                    <small class="form-text">The ✕ resets the field to empty</small>
-                </div>
+            <div class="controls">
+                <label><input type="checkbox" id="disp-icons" checked> icons</label>
+                <label><input type="checkbox" id="disp-subtitles" checked> subtitles</label>
+            </div>
+            <div class="controls">
+                <span><code>badges-display-mode</code>:</span>
+                <label><input type="radio" name="disp-mode" value="badges" checked> badges</label>
+                <label><input type="radio" name="disp-mode" value="count"> count</label>
+                <label><input type="radio" name="disp-mode" value="compact"> compact</label>
+                <label><input type="radio" name="disp-mode" value="partial"> partial</label>
+                <label><input type="radio" name="disp-mode" value="none"> none</label>
+                <label id="disp-maxvisible-wrap" style="margin-inline-start:1rem; display:none"><code>badges-max-visible</code>:
+                    <input type="number" id="disp-maxvisible" min="1" max="10" value="3" style="width:3.5rem">
+                </label>
+            </div>
+            <div class="controls">
+                <span><code>badges-position</code>:</span>
+                <label><input type="radio" name="disp-pos" value="bottom" checked> bottom</label>
+                <label><input type="radio" name="disp-pos" value="top"> top</label>
+                <label><input type="radio" name="disp-pos" value="left"> left</label>
+                <label><input type="radio" name="disp-pos" value="right"> right</label>
+            </div>
+            <div class="controls">
+                <span><code>selected-order</code>:</span>
+                <label><input type="radio" name="disp-order" value="as-selected" checked> as-selected</label>
+                <label><input type="radio" name="disp-order" value="label-asc"> label A→Z</label>
+                <label><input type="radio" name="disp-order" value="label-desc"> label Z→A</label>
+                <label><input type="radio" name="disp-order" value="member"> member (year)</label>
+                <label><input type="radio" name="disp-order" value="custom"> custom (year ↓)</label>
+                <span class="muted" style="margin-inline-start:0.5rem">selected badges reorder; the value stays as-picked</span>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-display"
+                    value-member="value"
+                    display-value-member="label"
+                    icon-member="icon"
+                    subtitle-member="subtitle"
+                    search-placeholder="Search frameworks…">
+                </web-multiselect>
             </div>
         </div>
 
-        <!-- Single Select Mode -->
+        <!-- ============================================================= -->
+        <!-- BU03 · Groups                                                   -->
+        <!-- ============================================================= -->
         <div class="card">
-            <h2>BU02 · Single-Select Mode</h2>
-            <p>Only one item can be selected at a time. Use <code>multiple="false"</code></p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Select Programming Language</label>
-                    <web-multiselect
-                        id="single-select"
-                        multiple="false"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="Select language...">
-                    </web-multiselect>
-                    <small class="form-text">Only one language can be selected</small>
-                </div>
+            <h2>BU03 · Groups</h2>
+            <p>
+                Group options under headers with a <code>group</code> member. Each group header
+                shows a <strong>count of that group's selected items</strong> (in any mode — open the
+                dropdown to see it). Turn on <strong>per-group select-all</strong>
+                (<code>group-select-mode="cascade"</code>) to also put a tristate checkbox on each
+                header that toggles the whole group — the group name is never itself a value.
+                Turning on <strong>custom labels</strong> renders the header via
+                <code>renderGroupLabelContentCallback</code>, whose 2nd arg carries the per-group
+                selection — here it writes <code>GROUP — N remaining</code>
+                (<code>selectableCount − selectedCount</code>).
+            </p>
+
+            <div class="controls">
+                <span><code>group-select-mode</code>:</span>
+                <label><input type="radio" name="grp-mode" value="none" checked> none</label>
+                <label><input type="radio" name="grp-mode" value="cascade"> cascade</label>
+                <label style="margin-inline-start:1rem"><input type="checkbox" id="grp-custom"> custom labels (<code>renderGroupLabelContentCallback</code>)</label>
             </div>
+            <div class="controls">
+                <span><code>getCountLabelCallback</code>:</span>
+                <label><input type="radio" name="grp-count" value="bracket" checked> <code>[x]</code> (default)</label>
+                <label><input type="radio" name="grp-count" value="ratio"> <code>x/y</code></label>
+                <span class="muted" style="margin-inline-start:0.5rem">drives the in-input counter <em>and</em> each group's count</span>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-groups"
+                    value-member="value"
+                    display-value-member="label"
+                    icon-member="icon"
+                    group-member="group"
+                    show-counter
+                    search-placeholder="Search…">
+                </web-multiselect>
+            </div>
+
+            <details class="mt-1">
+                <summary>Declarative alternative (no JS)</summary>
+<pre><code>&lt;web-multiselect group-member="group"&gt;
+  &lt;optgroup label="Frontend"&gt;
+    &lt;option value="js"&gt;JavaScript&lt;/option&gt;
+    &lt;option value="ts"&gt;TypeScript&lt;/option&gt;
+  &lt;/optgroup&gt;
+  &lt;optgroup label="Backend"&gt;
+    &lt;option value="python" selected&gt;Python&lt;/option&gt;
+  &lt;/optgroup&gt;
+&lt;/web-multiselect&gt;</code></pre>
+            </details>
         </div>
 
-        <!-- Single-Select Keyboard Navigation Only -->
+        <!-- ============================================================= -->
+        <!-- BU04 · Scroll-to API                                            -->
+        <!-- ============================================================= -->
         <div class="card">
-            <h2>BU03 · Single-Select: Keyboard Navigation Only</h2>
-            <p>No search - use arrow keys, PageUp/PageDown, Home/End to navigate. Press Enter to select.</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Select Country (No Search)</label>
-                    <web-multiselect
-                        id="keyboard-nav-select"
-                        multiple="false"
-                        enable-search="false"
-                        search-input-mode="readonly"
-                        value-member="value"
-                        display-value-member="label"
-                        search-placeholder="Use arrow keys to navigate...">
-                    </web-multiselect>
-                    <small class="form-text">
-                        Try: ↑/↓ arrows, PageUp/Down (10 items), Home/End, Enter to select
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Rich Content -->
-        <div class="card">
-            <h2>BU04 · Rich Content with Icons</h2>
-            <p>Options with icons, subtitles, and multiline content</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Select Frameworks</label>
-                    <web-multiselect
-                        id="frameworks-select"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        subtitle-member="subtitle"
-                        search-placeholder="Search frameworks...">
-                    </web-multiselect>
-                    <small class="form-text">Options with icons and descriptions</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search Hint -->
-        <div class="card">
-            <h2>BU05 · Search Hint</h2>
-            <p>Display helpful text above the input to guide users</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>With Search Hint</label>
-                    <web-multiselect
-                        id="hint-select"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-hint="💡 Start typing to filter options"
-                        search-placeholder="Search cities...">
-                    </web-multiselect>
-                    <small class="form-text">Open the dropdown to see the hint above the input</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Declarative Usage (No JavaScript Required) -->
-        <div class="card">
-            <h2>BU06 · Declarative Usage (No JavaScript)</h2>
-            <p>Use standard HTML <code>&lt;option&gt;</code> elements - no JavaScript needed for simple cases!</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Simple Choice</label>
-                    <web-multiselect
-                        multiple="false"
-                        search-placeholder="Select your answer..."
-                        value-member="value"
-                        display-value-member="label">
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                        <option value="maybe" selected>Maybe / I don't know</option>
-                    </web-multiselect>
-                    <small class="form-text">No JavaScript required - pure HTML!</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Multiple Fruits</label>
-                    <web-multiselect
-                        search-placeholder="Select fruits..."
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon">
-                        <option value="apple" data-icon="🍎">Apple</option>
-                        <option value="banana" data-icon="🍌" selected>Banana</option>
-                        <option value="orange" data-icon="🍊">Orange</option>
-                        <option value="grape" data-icon="🍇" selected>Grape</option>
-                        <option value="strawberry" data-icon="🍓">Strawberry</option>
-                    </web-multiselect>
-                    <small class="form-text">Icons via <code>data-icon</code> attribute</small>
-                </div>
-            </div>
-
-            <div class="grid" style="margin-top: 1.5rem;">
-                <div class="form-group">
-                    <label>Grouped Options</label>
-                    <web-multiselect
-                        search-placeholder="Select programming languages..."
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        group-member="group">
-                        <optgroup label="Frontend">
-                            <option value="js" data-icon="🟨">JavaScript</option>
-                            <option value="ts" data-icon="🔷">TypeScript</option>
-                            <option value="html" data-icon="📄">HTML</option>
-                        </optgroup>
-                        <optgroup label="Backend">
-                            <option value="python" data-icon="🐍" selected>Python</option>
-                            <option value="java" data-icon="☕">Java</option>
-                            <option value="go" data-icon="🐹">Go</option>
-                        </optgroup>
-                    </web-multiselect>
-                    <small class="form-text">Use <code>&lt;optgroup&gt;</code> for grouping</small>
-                </div>
-
-                <div class="form-group">
-                    <label>With Subtitles</label>
-                    <web-multiselect
-                        search-placeholder="Select framework..."
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        subtitle-member="subtitle">
-                        <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
-                        <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
-                        <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
-                    </web-multiselect>
-                    <small class="form-text">Use <code>data-subtitle</code> for descriptions</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Custom Group Labels</label>
-                    <web-multiselect id="custom-groups-classic"></web-multiselect>
-                    <small class="form-text">Using <code>renderGroupLabelContentCallback</code> to customize group headers</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Scroll-to API -->
-        <div class="card">
-            <h2>BU06b · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
+            <h2>BU04 · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
             <p>
                 Imperative commands that bring an option or group into view. Pair with <code>open()</code>
-                for an “open + jump” gesture (deep-linking to a member, revealing the active row on open).
-                They work in floating, mobile fullscreen, virtual-scroll and tree modes and return
-                <code>false</code> when the target isn't in the current filtered list. A companion
-                <code>clearSearch()</code> reveals an option a search had filtered out so you can then
+                for an "open + jump" gesture. They work in floating, mobile fullscreen, virtual-scroll
+                and tree modes, and return <code>false</code> when the target isn't in the current
+                filtered list. <code>clearSearch()</code> reveals a filtered-out option so you can then
                 scroll to it.
             </p>
             <div class="grid">
@@ -308,187 +232,68 @@ el.scrollToValue('jp');</code></pre>
             </details>
         </div>
 
-        <!-- Search Modes -->
+        <!-- ============================================================= -->
+        <!-- BU05 · Search                                                   -->
+        <!-- ============================================================= -->
         <div class="card">
-            <h2>BU07 · Search Modes: Filter vs Navigate</h2>
-            <p>Choose between <strong>filter</strong> mode (hide non-matches) or <strong>navigate</strong> mode (jump to matches while keeping all visible)</p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Filter Mode (Default)</label>
-                    <web-multiselect
-                        id="filter-mode-example"
-                        search-mode="filter"
-                        value-member="id"
-                        display-value-member="name"
-                        icon-member="flag"
-                        search-placeholder="Type to filter countries...">
-                    </web-multiselect>
-                    <small class="form-text">Hides non-matching options (standard behavior)</small>
-                </div>
+            <h2>BU05 · Search</h2>
+            <p>
+                <strong>Filter</strong> mode hides non-matches; <strong>navigate</strong> mode keeps
+                every option visible and jumps focus between matches (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> +
+                <kbd>↑</kbd>/<kbd>↓</kbd>). Add a search hint, require a minimum number of characters
+                before searching, and debounce the query.
+            </p>
 
-                <div class="form-group">
-                    <label>Navigate Mode</label>
-                    <web-multiselect
-                        id="navigate-mode-example"
-                        search-mode="navigate"
-                        value-member="id"
-                        display-value-member="name"
-                        icon-member="flag"
-                        search-hint="Ctrl/Cmd + ↓ / ↑ to jump between matches · Enter to select · Esc to clear"
-                        search-placeholder="Type to jump to country...">
-                    </web-multiselect>
-                    <small class="form-text">Keeps all options visible, jumps to matches (highlighted with left border)</small>
-                </div>
+            <div class="controls">
+                <span><code>search-mode</code>:</span>
+                <label><input type="radio" name="srch-mode" value="filter" checked> filter</label>
+                <label><input type="radio" name="srch-mode" value="navigate"> navigate</label>
+                <label style="margin-inline-start:1rem"><input type="checkbox" id="srch-hint"> search hint</label>
+            </div>
+            <div class="controls">
+                <label><code>min-search-length</code>:
+                    <select id="srch-min">
+                        <option value="0" selected>0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </label>
+                <label><code>search-debounce</code> (ms):
+                    <select id="srch-deb">
+                        <option value="0" selected>0</option>
+                        <option value="150">150</option>
+                        <option value="300">300</option>
+                        <option value="600">600</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-search"
+                    search-mode="filter"
+                    value-member="id"
+                    display-value-member="name"
+                    icon-member="flag"
+                    search-placeholder="Type to search countries…">
+                </web-multiselect>
             </div>
             <div class="note">
                 <p><strong>When to use each mode:</strong></p>
                 <ul>
-                    <li><strong>Filter Mode</strong>: Large lists where you want to narrow down options (e.g., product catalogs, user lists)</li>
-                    <li><strong>Navigate Mode</strong>: Quick selection from known lists (e.g., country/state selectors)</li>
+                    <li><strong>Filter</strong>: large lists you want to narrow down (product catalogs, user lists).</li>
+                    <li><strong>Navigate</strong>: quick selection from a known list (country / state selectors).</li>
                 </ul>
-                <p><strong>Navigate-mode keyboard shortcuts:</strong></p>
-                <ul>
-                    <li><kbd>type</kbd> — first match becomes focused; all matches keep a left-border highlight</li>
-                    <li><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>↓</kbd> — jump to next match</li>
-                    <li><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>↑</kbd> — jump to previous match</li>
-                    <li><kbd>↑</kbd> / <kbd>↓</kbd> — move focus one option at a time</li>
-                    <li><kbd>Home</kbd> / <kbd>End</kbd> — jump to first / last option</li>
-                    <li><kbd>PageUp</kbd> / <kbd>PageDown</kbd> — move 10 options at a time</li>
-                    <li><kbd>Enter</kbd> — toggle selection of the focused option</li>
-                    <li><kbd>Esc</kbd> — clear the search (or close the dropdown if search is empty)</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- RTL Support -->
-        <div class="card">
-            <h2>BU08 · RTL (Right-to-Left) Support</h2>
-            <p>Full support for RTL languages (Arabic, Hebrew, Persian, etc.) with automatic detection from <code>dir="rtl"</code></p>
-            <div class="grid">
-                <div class="form-group">
-                    <label>Basic RTL Example</label>
-                    <web-multiselect
-                        id="rtl-basic"
-                        dir="rtl"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="...بحث">
-                    </web-multiselect>
-                    <small class="form-text">Toggle on left, text right-aligned, badges flow right-to-left</small>
-                </div>
-
-                <div class="form-group">
-                    <label>RTL with Arabic Text</label>
-                    <web-multiselect
-                        id="rtl-arabic"
-                        dir="rtl"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="البحث عن التقنيات...">
-                    </web-multiselect>
-                    <small class="form-text">Real Arabic technology terms</small>
-                </div>
-
-                <div class="form-group">
-                    <label>RTL Count Mode</label>
-                    <web-multiselect
-                        id="rtl-count"
-                        dir="rtl"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        badges-display-mode="count"
-                        show-counter="true"
-                        search-placeholder="...بحث">
-                    </web-multiselect>
-                    <small class="form-text">Count badge on left side in RTL mode</small>
-                </div>
-
-                <div class="form-group">
-                    <label>LTR vs RTL Comparison</label>
-                    <div style="display: flex; gap: 1rem; flex-direction: column;">
-                        <div>
-                            <small style="display: block; margin-bottom: 0.25rem;">LTR (Left-to-Right)</small>
-                            <web-multiselect
-                                id="rtl-comparison-ltr"
-                                value-member="value"
-                                display-value-member="label"
-                                icon-member="icon"
-                                search-placeholder="Search...">
-                            </web-multiselect>
-                        </div>
-                        <div>
-                            <small style="display: block; margin-bottom: 0.25rem;">RTL (Right-to-Left)</small>
-                            <web-multiselect
-                                id="rtl-comparison-rtl"
-                                dir="rtl"
-                                value-member="value"
-                                display-value-member="label"
-                                icon-member="icon"
-                                search-placeholder="...بحث">
-                            </web-multiselect>
-                        </div>
-                    </div>
-                    <small class="form-text">Notice toggle position, text alignment, and badge layout differences</small>
-                </div>
-
-                <div class="form-group">
-                    <label>RTL + Badges Position: Right</label>
-                    <web-multiselect
-                        id="rtl-badges-right"
-                        dir="rtl"
-                        badges-position="right"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="...بحث">
-                    </web-multiselect>
-                    <small class="form-text">Badges inline on left (visually) with proper margin</small>
-                </div>
-
-                <div class="form-group">
-                    <label>RTL + Badges Position: Left</label>
-                    <web-multiselect
-                        id="rtl-badges-left"
-                        dir="rtl"
-                        badges-position="left"
-                        value-member="value"
-                        display-value-member="label"
-                        icon-member="icon"
-                        search-placeholder="...بحث">
-                    </web-multiselect>
-                    <small class="form-text">Badges inline on right (visually) with proper margin</small>
-                </div>
             </div>
         </div>
 
     </div>
 
     <script type="module">
-        const technologies = [
-            { value: 'js', label: 'JavaScript' },
-            { value: 'ts', label: 'TypeScript' },
-            { value: 'python', label: 'Python' },
-            { value: 'java', label: 'Java' },
-            { value: 'csharp', label: 'C#' },
-            { value: 'php', label: 'PHP' },
-            { value: 'ruby', label: 'Ruby' },
-            { value: 'go', label: 'Go' }
-        ];
+        import { persistControls } from './examples-controls-store.js';
 
-        const countries = [
-            { value: 'us', label: 'United States' },
-            { value: 'uk', label: 'United Kingdom' },
-            { value: 'de', label: 'Germany' },
-            { value: 'fr', label: 'France' },
-            { value: 'es', label: 'Spain' },
-            { value: 'it', label: 'Italy' },
-            { value: 'jp', label: 'Japan' },
-            { value: 'cn', label: 'China' }
-        ];
-
+        // ── Datasets ─────────────────────────────────────────────────────
         const languages = [
             { value: 'js', label: 'JavaScript', icon: '🟨' },
             { value: 'ts', label: 'TypeScript', icon: '🔷' },
@@ -501,33 +306,11 @@ el.scrollToValue('jp');</code></pre>
         ];
 
         const frameworks = [
-            { value: 'react', label: 'React', icon: '⚛️', subtitle: 'A JavaScript library for building user interfaces' },
-            { value: 'vue', label: 'Vue.js', icon: '🖖', subtitle: 'The Progressive JavaScript Framework' },
-            { value: 'angular', label: 'Angular', icon: '🅰️', subtitle: 'Platform for building web applications' },
-            { value: 'svelte', label: 'Svelte', icon: '🔥', subtitle: 'Cybernetically enhanced web apps' },
-            { value: 'solid', label: 'Solid', icon: '💎', subtitle: 'Simple and performant reactivity' }
-        ];
-
-        const categories = [
-            { value: 'cat1', label: 'Category 1' },
-            { value: 'cat2', label: 'Category 2' },
-            { value: 'cat3', label: 'Category 3' },
-            { value: 'cat4', label: 'Category 4' },
-            { value: 'cat5', label: 'Category 5' },
-            { value: 'cat6', label: 'Category 6' }
-        ];
-
-        const cities = [
-            { value: 'nyc', label: 'New York', icon: '🗽' },
-            { value: 'lon', label: 'London', icon: '🇬🇧' },
-            { value: 'par', label: 'Paris', icon: '🇫🇷' },
-            { value: 'tok', label: 'Tokyo', icon: '🇯🇵' },
-            { value: 'syd', label: 'Sydney', icon: '🇦🇺' },
-            { value: 'ber', label: 'Berlin', icon: '🇩🇪' },
-            { value: 'rom', label: 'Rome', icon: '🇮🇹' },
-            { value: 'bar', label: 'Barcelona', icon: '🇪🇸' },
-            { value: 'ams', label: 'Amsterdam', icon: '🇳🇱' },
-            { value: 'dub', label: 'Dubai', icon: '🇦🇪' }
+            { value: 'react', label: 'React', icon: '⚛️', year: 2013, subtitle: 'A JavaScript library for building user interfaces' },
+            { value: 'vue', label: 'Vue.js', icon: '🖖', year: 2014, subtitle: 'The Progressive JavaScript Framework' },
+            { value: 'angular', label: 'Angular', icon: '🅰️', year: 2016, subtitle: 'Platform for building web applications' },
+            { value: 'svelte', label: 'Svelte', icon: '🔥', year: 2016, subtitle: 'Cybernetically enhanced web apps' },
+            { value: 'solid', label: 'Solid', icon: '💎', year: 2018, subtitle: 'Simple and performant reactivity' }
         ];
 
         const groupedTechnologies = [
@@ -545,186 +328,126 @@ el.scrollToValue('jp');</code></pre>
         ];
 
         const allCountries = [
-            { value: 'af', label: 'Afghanistan' },
-            { value: 'al', label: 'Albania' },
-            { value: 'dz', label: 'Algeria' },
-            { value: 'ar', label: 'Argentina' },
-            { value: 'am', label: 'Armenia' },
-            { value: 'au', label: 'Australia' },
-            { value: 'at', label: 'Austria' },
-            { value: 'az', label: 'Azerbaijan' },
-            { value: 'bh', label: 'Bahrain' },
-            { value: 'bd', label: 'Bangladesh' },
-            { value: 'by', label: 'Belarus' },
-            { value: 'be', label: 'Belgium' },
-            { value: 'bz', label: 'Belize' },
-            { value: 'bo', label: 'Bolivia' },
-            { value: 'br', label: 'Brazil' },
-            { value: 'bg', label: 'Bulgaria' },
-            { value: 'kh', label: 'Cambodia' },
-            { value: 'cm', label: 'Cameroon' },
-            { value: 'ca', label: 'Canada' },
-            { value: 'cl', label: 'Chile' },
-            { value: 'cn', label: 'China' },
-            { value: 'co', label: 'Colombia' },
-            { value: 'cr', label: 'Costa Rica' },
-            { value: 'hr', label: 'Croatia' },
-            { value: 'cu', label: 'Cuba' },
-            { value: 'cy', label: 'Cyprus' },
-            { value: 'cz', label: 'Czech Republic' },
-            { value: 'dk', label: 'Denmark' },
-            { value: 'ec', label: 'Ecuador' },
-            { value: 'eg', label: 'Egypt' },
-            { value: 'sv', label: 'El Salvador' },
-            { value: 'ee', label: 'Estonia' },
-            { value: 'et', label: 'Ethiopia' },
-            { value: 'fi', label: 'Finland' },
-            { value: 'fr', label: 'France' },
-            { value: 'ge', label: 'Georgia' },
-            { value: 'de', label: 'Germany' },
-            { value: 'gh', label: 'Ghana' },
-            { value: 'gr', label: 'Greece' },
-            { value: 'gt', label: 'Guatemala' },
-            { value: 'hn', label: 'Honduras' },
-            { value: 'hk', label: 'Hong Kong' },
-            { value: 'hu', label: 'Hungary' },
-            { value: 'is', label: 'Iceland' },
-            { value: 'in', label: 'India' },
-            { value: 'id', label: 'Indonesia' },
-            { value: 'ir', label: 'Iran' },
-            { value: 'iq', label: 'Iraq' },
-            { value: 'ie', label: 'Ireland' },
-            { value: 'il', label: 'Israel' },
-            { value: 'it', label: 'Italy' },
-            { value: 'jm', label: 'Jamaica' },
-            { value: 'jp', label: 'Japan' },
-            { value: 'jo', label: 'Jordan' },
-            { value: 'kz', label: 'Kazakhstan' },
-            { value: 'ke', label: 'Kenya' },
-            { value: 'kw', label: 'Kuwait' },
-            { value: 'lv', label: 'Latvia' },
-            { value: 'lb', label: 'Lebanon' },
-            { value: 'lt', label: 'Lithuania' },
-            { value: 'lu', label: 'Luxembourg' },
-            { value: 'my', label: 'Malaysia' },
-            { value: 'mt', label: 'Malta' },
-            { value: 'mx', label: 'Mexico' },
-            { value: 'ma', label: 'Morocco' },
-            { value: 'np', label: 'Nepal' },
-            { value: 'nl', label: 'Netherlands' },
-            { value: 'nz', label: 'New Zealand' },
-            { value: 'ng', label: 'Nigeria' },
-            { value: 'no', label: 'Norway' },
-            { value: 'om', label: 'Oman' },
-            { value: 'pk', label: 'Pakistan' },
-            { value: 'pa', label: 'Panama' },
-            { value: 'py', label: 'Paraguay' },
-            { value: 'pe', label: 'Peru' },
-            { value: 'ph', label: 'Philippines' },
-            { value: 'pl', label: 'Poland' },
-            { value: 'pt', label: 'Portugal' },
-            { value: 'qa', label: 'Qatar' },
-            { value: 'ro', label: 'Romania' },
-            { value: 'ru', label: 'Russia' },
-            { value: 'sa', label: 'Saudi Arabia' },
-            { value: 'rs', label: 'Serbia' },
-            { value: 'sg', label: 'Singapore' },
-            { value: 'sk', label: 'Slovakia' },
-            { value: 'si', label: 'Slovenia' },
-            { value: 'za', label: 'South Africa' },
-            { value: 'kr', label: 'South Korea' },
-            { value: 'es', label: 'Spain' },
-            { value: 'lk', label: 'Sri Lanka' },
-            { value: 'se', label: 'Sweden' },
-            { value: 'ch', label: 'Switzerland' },
-            { value: 'tw', label: 'Taiwan' },
-            { value: 'th', label: 'Thailand' },
-            { value: 'tr', label: 'Turkey' },
-            { value: 'ua', label: 'Ukraine' },
-            { value: 'ae', label: 'United Arab Emirates' },
-            { value: 'uk', label: 'United Kingdom' },
-            { value: 'us', label: 'United States' },
-            { value: 'uy', label: 'Uruguay' },
-            { value: 've', label: 'Venezuela' },
-            { value: 'vn', label: 'Vietnam' }
+            'Afghanistan|af','Albania|al','Algeria|dz','Argentina|ar','Armenia|am','Australia|au','Austria|at',
+            'Azerbaijan|az','Bahrain|bh','Bangladesh|bd','Belarus|by','Belgium|be','Belize|bz','Bolivia|bo',
+            'Brazil|br','Bulgaria|bg','Cambodia|kh','Cameroon|cm','Canada|ca','Chile|cl','China|cn','Colombia|co',
+            'Costa Rica|cr','Croatia|hr','Cuba|cu','Cyprus|cy','Czech Republic|cz','Denmark|dk','Ecuador|ec',
+            'Egypt|eg','El Salvador|sv','Estonia|ee','Ethiopia|et','Finland|fi','France|fr','Georgia|ge',
+            'Germany|de','Ghana|gh','Greece|gr','Guatemala|gt','Honduras|hn','Hong Kong|hk','Hungary|hu',
+            'Iceland|is','India|in','Indonesia|id','Iran|ir','Iraq|iq','Ireland|ie','Israel|il','Italy|it',
+            'Jamaica|jm','Japan|jp','Jordan|jo','Kazakhstan|kz','Kenya|ke','Kuwait|kw','Latvia|lv','Lebanon|lb',
+            'Lithuania|lt','Luxembourg|lu','Malaysia|my','Malta|mt','Mexico|mx','Morocco|ma','Nepal|np',
+            'Netherlands|nl','New Zealand|nz','Nigeria|ng','Norway|no','Oman|om','Pakistan|pk','Panama|pa',
+            'Paraguay|py','Peru|pe','Philippines|ph','Poland|pl','Portugal|pt','Qatar|qa','Romania|ro',
+            'Russia|ru','Saudi Arabia|sa','Serbia|rs','Singapore|sg','Slovakia|sk','Slovenia|si',
+            'South Africa|za','South Korea|kr','Spain|es','Sri Lanka|lk','Sweden|se','Switzerland|ch',
+            'Taiwan|tw','Thailand|th','Turkey|tr','Ukraine|ua','United Arab Emirates|ae','United Kingdom|uk',
+            'United States|us','Uruguay|uy','Venezuela|ve','Vietnam|vn'
+        ].map(s => { const [label, value] = s.split('|'); return { value, label }; });
+
+        const countriesWithFlags = [
+            { id: 1, name: 'Canada', flag: '🇨🇦' }, { id: 2, name: 'United States', flag: '🇺🇸' },
+            { id: 3, name: 'Mexico', flag: '🇲🇽' }, { id: 4, name: 'United Kingdom', flag: '🇬🇧' },
+            { id: 5, name: 'France', flag: '🇫🇷' }, { id: 6, name: 'Germany', flag: '🇩🇪' },
+            { id: 7, name: 'Italy', flag: '🇮🇹' }, { id: 8, name: 'Spain', flag: '🇪🇸' },
+            { id: 9, name: 'Japan', flag: '🇯🇵' }, { id: 10, name: 'China', flag: '🇨🇳' },
+            { id: 11, name: 'India', flag: '🇮🇳' }, { id: 12, name: 'Brazil', flag: '🇧🇷' },
+            { id: 13, name: 'Argentina', flag: '🇦🇷' }, { id: 14, name: 'Australia', flag: '🇦🇺' },
+            { id: 15, name: 'New Zealand', flag: '🇳🇿' }, { id: 16, name: 'South Africa', flag: '🇿🇦' },
+            { id: 17, name: 'Egypt', flag: '🇪🇬' }, { id: 18, name: 'Nigeria', flag: '🇳🇬' },
+            { id: 19, name: 'Russia', flag: '🇷🇺' }, { id: 20, name: 'Poland', flag: '🇵🇱' },
+            { id: 21, name: 'Sweden', flag: '🇸🇪' }, { id: 22, name: 'Norway', flag: '🇳🇴' },
+            { id: 23, name: 'Denmark', flag: '🇩🇰' }, { id: 24, name: 'Finland', flag: '🇫🇮' },
+            { id: 25, name: 'Netherlands', flag: '🇳🇱' }
         ];
+
+        // Emoji-prefixed group labels for the "custom labels" toggle on BU03. The 2nd arg is the
+        // GroupLabelRenderContext — under cascade it carries the per-group selection, so a custom
+        // header can write whatever it likes: here "N remaining" (= selectableCount − selectedCount).
+        const groupLabelRenderer = (name, ctx) => {
+            const emojis = { frontend: '🎨', backend: '🔧', database: '🗄️' };
+            const remaining = ctx ? ctx.selectableCount - ctx.selectedCount : 0;
+            const suffix = !ctx ? ''
+                : remaining > 0
+                    ? ` <span style="opacity:.65; font-weight:400">— ${remaining} remaining</span>`
+                    : ` <span style="opacity:.65; font-weight:400">— all selected</span>`;
+            return `<strong>${emojis[name] || '📦'} ${name.toUpperCase()}</strong>${suffix}`;
+        };
+
+        // Toggle a boolean (presence) attribute.
+        const boolAttr = (el, name, on) => on ? el.setAttribute(name, '') : el.removeAttribute(name);
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Basic select
-            const basicSelect = document.getElementById('basic-select');
-            if (basicSelect) {
-                basicSelect.options = technologies;
-                // Set selected values after options are loaded
-                basicSelect.setSelected(['js', 'ts']);
-            }
+            // ── BU01 · Selection & input mode ────────────────────────────
+            const exSel = document.getElementById('ex-selection');
+            exSel.options = languages;
+            exSel.setSelected(['js', 'ts']);
 
-            // Countries select
-            const countriesSelect = document.getElementById('countries-select');
-            if (countriesSelect) {
-                countriesSelect.options = countries;
-            }
+            document.getElementById('sel-multiple').addEventListener('change', (e) =>
+                e.target.checked ? exSel.removeAttribute('multiple') : exSel.setAttribute('multiple', 'false'));
+            document.getElementById('sel-clear').addEventListener('change', (e) =>
+                boolAttr(exSel, 'show-clear', e.target.checked));
+            document.getElementById('sel-counter').addEventListener('change', (e) =>
+                boolAttr(exSel, 'show-counter', e.target.checked));
+            document.getElementById('sel-close').addEventListener('change', (e) =>
+                e.target.checked ? exSel.setAttribute('close-on-select', 'true') : exSel.removeAttribute('close-on-select'));
+            document.querySelectorAll('input[name="sel-sim"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exSel.setAttribute('search-input-mode', e.target.value); }));
+            document.querySelectorAll('input[name="sel-dir"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exSel.setAttribute('dir', e.target.value); }));
 
-            // Clear button (multi + single)
-            const clearMulti = document.getElementById('clear-multi');
-            if (clearMulti) {
-                clearMulti.options = technologies;
-                clearMulti.setSelected(['js', 'ts']);
-            }
-            const clearSingle = document.getElementById('clear-single');
-            if (clearSingle) {
-                clearSingle.options = languages;
-            }
+            // ── BU02 · Content & display ─────────────────────────────────
+            const exDisp = document.getElementById('ex-display');
+            exDisp.options = frameworks;
+            exDisp.setSelected(['react', 'vue', 'svelte']);
 
-            // Single select
-            const singleSelect = document.getElementById('single-select');
-            if (singleSelect) {
-                singleSelect.options = languages;
-                singleSelect.setSelected(['python']);
-            }
+            document.getElementById('disp-icons').addEventListener('change', (e) =>
+                e.target.checked ? exDisp.setAttribute('icon-member', 'icon') : exDisp.removeAttribute('icon-member'));
+            document.getElementById('disp-subtitles').addEventListener('change', (e) =>
+                e.target.checked ? exDisp.setAttribute('subtitle-member', 'subtitle') : exDisp.removeAttribute('subtitle-member'));
+            const maxVisibleWrap = document.getElementById('disp-maxvisible-wrap');
+            document.querySelectorAll('input[name="disp-mode"]').forEach((r) =>
+                r.addEventListener('change', (e) => {
+                    if (!e.target.checked) return;
+                    exDisp.setAttribute('badges-display-mode', e.target.value);
+                    // badges-max-visible only applies to partial mode — show it only then.
+                    maxVisibleWrap.style.display = e.target.value === 'partial' ? '' : 'none';
+                }));
+            document.querySelectorAll('input[name="disp-pos"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exDisp.setAttribute('badges-position', e.target.value); }));
+            document.getElementById('disp-maxvisible').addEventListener('input', (e) => {
+                const n = parseInt(e.target.value, 10);
+                if (n >= 1) exDisp.setAttribute('badges-max-visible', String(n));
+            });
+            // 'custom' mode uses a comparator; install it once (ignored unless selected-order="custom").
+            exDisp.selectedOrderCompareCallback = (a, b) => b.year - a.year; // newest first
+            document.querySelectorAll('input[name="disp-order"]').forEach((r) =>
+                r.addEventListener('change', (e) => {
+                    if (!e.target.checked) return;
+                    exDisp.setAttribute('selected-order', e.target.value);
+                    // 'member' mode needs a sort-key member; the frameworks carry `year`.
+                    if (e.target.value === 'member') exDisp.setAttribute('selected-order-member', 'year');
+                }));
 
-            // Keyboard navigation select (no search, 100+ options)
-            const keyboardNavSelect = document.getElementById('keyboard-nav-select');
-            if (keyboardNavSelect) {
-                keyboardNavSelect.options = allCountries;
-                keyboardNavSelect.setSelected(['us']);
-            }
+            // ── BU03 · Groups ────────────────────────────────────────────
+            const exGroups = document.getElementById('ex-groups');
+            exGroups.options = groupedTechnologies;
+            exGroups.setSelected(['react', 'nodejs']);
 
-            // Frameworks select
-            const frameworksSelect = document.getElementById('frameworks-select');
-            if (frameworksSelect) {
-                frameworksSelect.options = frameworks;
-            }
+            document.querySelectorAll('input[name="grp-mode"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exGroups.setAttribute('group-select-mode', e.target.value); }));
+            document.getElementById('grp-custom').addEventListener('change', (e) =>
+                exGroups.renderGroupLabelContentCallback = e.target.checked ? groupLabelRenderer : null);
+            // One formatter for the in-input counter AND each group-header count.
+            document.querySelectorAll('input[name="grp-count"]').forEach((r) =>
+                r.addEventListener('change', (e) => {
+                    if (!e.target.checked) return;
+                    exGroups.getCountLabelCallback = e.target.value === 'ratio'
+                        ? (s, t) => `${s}/${t}`
+                        : null; // null → default `[x]`
+                }));
 
-            // Hint select
-            const hintSelect = document.getElementById('hint-select');
-            if (hintSelect) {
-                hintSelect.options = cities;
-            }
-
-            // Custom group labels
-            const customGroupsClassic = document.getElementById('custom-groups-classic');
-            if (customGroupsClassic) {
-                customGroupsClassic.options = groupedTechnologies;
-                customGroupsClassic.setAttribute('value-member', 'value');
-                customGroupsClassic.setAttribute('display-value-member', 'label');
-                customGroupsClassic.setAttribute('icon-member', 'icon');
-                customGroupsClassic.setAttribute('group-member', 'group');
-
-                // Custom group label rendering
-                customGroupsClassic.renderGroupLabelContentCallback = (groupName) => {
-                    // Capitalize and add emoji based on group
-                    const emojis = {
-                        'frontend': '🎨',
-                        'backend': '🔧',
-                        'database': '🗄️'
-                    };
-                    const emoji = emojis[groupName] || '📦';
-                    return `<strong>${emoji} ${groupName.toUpperCase()}</strong>`;
-                };
-
-                customGroupsClassic.setSelected(['react', 'nodejs']);
-            }
-
-            // Scroll-to API (BU06b)
+            // ── BU04 · Scroll-to API ─────────────────────────────────────
             const scrollGrouped = document.getElementById('scroll-grouped');
             const scrollVirtual = document.getElementById('scroll-virtual');
             const scrollLogEl = document.getElementById('scroll-log');
@@ -740,8 +463,6 @@ el.scrollToValue('jp');</code></pre>
             if (scrollGrouped) scrollGrouped.options = groupedTechnologies;
             if (scrollVirtual) scrollVirtual.options = allCountries;
 
-            // Inspect the (open) shadow DOM and report which option rows are actually in view —
-            // so we can SEE where a scrollTo* call landed. Runs after a tick so the scroll settles.
             const describeViewport = (el, targetValue) => {
                 const container = el.shadowRoot && el.shadowRoot.querySelector('.ms__options');
                 if (!container) { scrollLog('   ↳ (dropdown not open / no list)'); return; }
@@ -757,15 +478,13 @@ el.scrollToValue('jp');</code></pre>
                 let targetNote = '';
                 if (targetValue != null) {
                     const hit = visible.find((o) => o.dataset.value === String(targetValue));
-                    targetNote = hit
-                        ? ` · target "${label(hit)}" VISIBLE`
-                        : ` · target "${targetValue}" NOT in view`;
+                    targetNote = hit ? ` · target "${label(hit)}" VISIBLE` : ` · target "${targetValue}" NOT in view`;
                 }
                 scrollLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows "${first}" … "${last}" (${visible.length} rows)${targetNote}`);
             };
 
             const runScroll = (el, spec) => {
-                el.open(); // scrollTo* defers internally, so open()+scroll in one gesture works
+                el.open();
                 if (spec === 'clear') { el.clearSearch(); scrollLog('clearSearch() — search reset, full list restored'); return; }
                 const [kind, arg] = spec.split(':');
                 let ok, target = null;
@@ -776,138 +495,31 @@ el.scrollToValue('jp');</code></pre>
                     : kind === 'group' ? `scrollToGroup('${arg}')`
                     : `scrollToValue('${arg}')`;
                 scrollLog(`▶ ${call} → ${ok}`);
-                // Give the (possibly deferred) scroll a moment, then report where we landed.
                 setTimeout(() => describeViewport(el, target), 90);
             };
-            // These buttons live OUTSIDE the component, yet clicking one repeatedly to
-            // re-drive the already-open dropdown stays open: open()/scrollTo* arm the
-            // component's one-tick outside-click guard, so no stopPropagation is needed.
             document.querySelectorAll('[data-scroll-grouped]').forEach((btn) =>
                 btn.addEventListener('click', () => runScroll(scrollGrouped, btn.dataset.scrollGrouped)));
             document.querySelectorAll('[data-scroll-virtual]').forEach((btn) =>
                 btn.addEventListener('click', () => runScroll(scrollVirtual, btn.dataset.scrollVirtual)));
-            // RTL Support - Basic RTL
-            const rtlBasicSelect = document.getElementById('rtl-basic');
-            if (rtlBasicSelect) {
-                rtlBasicSelect.options = languages;
-                rtlBasicSelect.setSelected(['js', 'ts', 'python']);
-            }
 
-            // RTL Support - Arabic
-            const rtlArabicSelect = document.getElementById('rtl-arabic');
-            if (rtlArabicSelect) {
-                rtlArabicSelect.options = [
-                    { value: 'js', label: 'جافا سكريبت', icon: '🟨' },
-                    { value: 'ts', label: 'تايب سكريبت', icon: '🔷' },
-                    { value: 'python', label: 'بايثون', icon: '🐍' },
-                    { value: 'java', label: 'جافا', icon: '☕' },
-                    { value: 'react', label: 'ري أكت', icon: '⚛️' },
-                    { value: 'vue', label: 'فيو', icon: '💚' }
-                ];
-                rtlArabicSelect.setSelected(['js', 'react']);
-            }
+            // ── BU05 · Search ────────────────────────────────────────────
+            const exSearch = document.getElementById('ex-search');
+            exSearch.options = countriesWithFlags;
 
-            // RTL Support - Count Mode
-            const rtlCountSelect = document.getElementById('rtl-count');
-            if (rtlCountSelect) {
-                rtlCountSelect.options = languages;
-                rtlCountSelect.setSelected(['js', 'ts', 'python', 'java']);
-                // Custom RTL count callback (Arabic style)
-                rtlCountSelect.getCounterCallback = (count) => {
-                    return `${count} محدد`; // "selected" in Arabic
-                };
-            }
+            document.querySelectorAll('input[name="srch-mode"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exSearch.setAttribute('search-mode', e.target.value); }));
+            document.getElementById('srch-hint').addEventListener('change', (e) =>
+                e.target.checked
+                    ? exSearch.setAttribute('search-hint', 'Ctrl/Cmd + ↓ / ↑ to jump · Enter to select · Esc to clear')
+                    : exSearch.removeAttribute('search-hint'));
+            document.getElementById('srch-min').addEventListener('change', (e) =>
+                exSearch.setAttribute('min-search-length', e.target.value));
+            document.getElementById('srch-deb').addEventListener('change', (e) =>
+                exSearch.setAttribute('search-debounce', e.target.value));
 
-            // RTL Support - Comparison LTR
-            const rtlComparisonLTR = document.getElementById('rtl-comparison-ltr');
-            if (rtlComparisonLTR) {
-                rtlComparisonLTR.options = languages;
-                rtlComparisonLTR.setSelected(['js', 'ts']);
-            }
-
-            // RTL Support - Comparison RTL
-            const rtlComparisonRTL = document.getElementById('rtl-comparison-rtl');
-            if (rtlComparisonRTL) {
-                rtlComparisonRTL.options = languages;
-                rtlComparisonRTL.setSelected(['js', 'ts']);
-            }
-
-            // RTL Support - Badges Position Right (BUG TEST)
-            const rtlBadgesRight = document.getElementById('rtl-badges-right');
-            if (rtlBadgesRight) {
-                rtlBadgesRight.options = languages;
-                rtlBadgesRight.setSelected(['js', 'ts', 'python']);
-            }
-
-            // RTL Support - Badges Position Left (BUG TEST)
-            const rtlBadgesLeft = document.getElementById('rtl-badges-left');
-            if (rtlBadgesLeft) {
-                rtlBadgesLeft.options = languages;
-                rtlBadgesLeft.setSelected(['js', 'ts', 'python']);
-            }
-            // Search Modes: Filter vs Navigate
-            const countriesWithFlags = [
-                { id: 1, name: 'Canada', flag: '🇨🇦' },
-                { id: 2, name: 'United States', flag: '🇺🇸' },
-                { id: 3, name: 'Mexico', flag: '🇲🇽' },
-                { id: 4, name: 'United Kingdom', flag: '🇬🇧' },
-                { id: 5, name: 'France', flag: '🇫🇷' },
-                { id: 6, name: 'Germany', flag: '🇩🇪' },
-                { id: 7, name: 'Italy', flag: '🇮🇹' },
-                { id: 8, name: 'Spain', flag: '🇪🇸' },
-                { id: 9, name: 'Japan', flag: '🇯🇵' },
-                { id: 10, name: 'China', flag: '🇨🇳' },
-                { id: 11, name: 'India', flag: '🇮🇳' },
-                { id: 12, name: 'Brazil', flag: '🇧🇷' },
-                { id: 13, name: 'Argentina', flag: '🇦🇷' },
-                { id: 14, name: 'Australia', flag: '🇦🇺' },
-                { id: 15, name: 'New Zealand', flag: '🇳🇿' },
-                { id: 16, name: 'South Africa', flag: '🇿🇦' },
-                { id: 17, name: 'Egypt', flag: '🇪🇬' },
-                { id: 18, name: 'Nigeria', flag: '🇳🇬' },
-                { id: 19, name: 'Russia', flag: '🇷🇺' },
-                { id: 20, name: 'Poland', flag: '🇵🇱' },
-                { id: 21, name: 'Sweden', flag: '🇸🇪' },
-                { id: 22, name: 'Norway', flag: '🇳🇴' },
-                { id: 23, name: 'Denmark', flag: '🇩🇰' },
-                { id: 24, name: 'Finland', flag: '🇫🇮' },
-                { id: 25, name: 'Netherlands', flag: '🇳🇱' },
-                { id: 26, name: 'Belgium', flag: '🇧🇪' },
-                { id: 27, name: 'Switzerland', flag: '🇨🇭' },
-                { id: 28, name: 'Austria', flag: '🇦🇹' },
-                { id: 29, name: 'Portugal', flag: '🇵🇹' },
-                { id: 30, name: 'Greece', flag: '🇬🇷' },
-                { id: 31, name: 'Turkey', flag: '🇹🇷' },
-                { id: 32, name: 'South Korea', flag: '🇰🇷' },
-                { id: 33, name: 'Thailand', flag: '🇹🇭' },
-                { id: 34, name: 'Vietnam', flag: '🇻🇳' },
-                { id: 35, name: 'Indonesia', flag: '🇮🇩' },
-                { id: 36, name: 'Philippines', flag: '🇵🇭' },
-                { id: 37, name: 'Singapore', flag: '🇸🇬' },
-                { id: 38, name: 'Malaysia', flag: '🇲🇾' },
-                { id: 39, name: 'Pakistan', flag: '🇵🇰' },
-                { id: 40, name: 'Bangladesh', flag: '🇧🇩' },
-                { id: 41, name: 'Colombia', flag: '🇨🇴' },
-                { id: 42, name: 'Chile', flag: '🇨🇱' },
-                { id: 43, name: 'Peru', flag: '🇵🇪' },
-                { id: 44, name: 'Venezuela', flag: '🇻🇪' },
-                { id: 45, name: 'Saudi Arabia', flag: '🇸🇦' },
-                { id: 46, name: 'United Arab Emirates', flag: '🇦🇪' },
-                { id: 47, name: 'Israel', flag: '🇮🇱' },
-                { id: 48, name: 'Iran', flag: '🇮🇷' },
-                { id: 49, name: 'Iraq', flag: '🇮🇶' },
-                { id: 50, name: 'Ukraine', flag: '🇺🇦' }
-            ];
-
-            const filterModeExample = document.getElementById('filter-mode-example');
-            if (filterModeExample) {
-                filterModeExample.options = countriesWithFlags;
-            }
-
-            const navigateModeExample = document.getElementById('navigate-mode-example');
-            if (navigateModeExample) {
-                navigateModeExample.options = countriesWithFlags;
-            }
+            // Persist all control switches to localStorage and restore them on
+            // reload — re-applies to every picker via the listeners wired above.
+            persistControls('basic');
         });
     </script>
 

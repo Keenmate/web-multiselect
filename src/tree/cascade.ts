@@ -2,7 +2,7 @@
  * cascade — checkbox cascade selection + tristate math for tree mode.
  *
  * Two orthogonal concepts the multiselect exposes:
- *   - `checkbox-mode`: independent (default) vs cascade. Cascade means checking a
+ *   - `checkbox-mode`: cascade (default) vs independent. Cascade means checking a
  *     branch checks its whole subtree, and a branch shows a tristate box.
  *   - `cascade-select-policy`: which VALUES a cascade selection emits (badges /
  *     form / change event). svelte-treeview has the first but not the second.

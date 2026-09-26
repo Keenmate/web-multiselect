@@ -1882,5 +1882,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
     <script type="module" src="/src/index.ts"></script>
     <script type="module" src="examples-copy-link.js"></script>
     <script type="module" src="examples-chapter-nav.js"></script>
+    <script type="module">
+        import { persistControls } from './examples-controls-store.js';
+        window.addEventListener('load', () => persistControls('theming'));
+    </script>
 </body>
 </html>

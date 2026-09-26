@@ -39,6 +39,18 @@
             icon-member="icon" subtitle-member="subtitle"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">renderSelectedContentCallback (single-select; gets context)</div>
+        <web-multiselect id="sel-content" multiple="false"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">renderSelectedItemContentCallback (popover; gets context)</div>
+        <web-multiselect id="sel-item" badges-display-mode="count"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -49,7 +61,7 @@
         ];
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['opt-content', 'badge-content', 'badge-class', 'custom-styles', 'icon-subtitle']) {
+            for (const id of ['opt-content', 'badge-content', 'badge-class', 'custom-styles', 'icon-subtitle', 'sel-content', 'sel-item']) {
                 document.getElementById(id).options = items;
             }
 
@@ -64,6 +76,14 @@
 
             document.getElementById('custom-styles').customStylesCallback = () =>
                 `.ms__option { outline: 2px dashed magenta; }`;
+
+            // Single-select: 2nd arg carries the presentation context — encode it into the label.
+            document.getElementById('sel-content').renderSelectedContentCallback = (item, ctx) =>
+                `${item.label}·${ctx.presentation}`;
+
+            // Popover item: 2nd arg is a BadgeContentRenderContext — surface isInPopover.
+            document.getElementById('sel-item').renderSelectedItemContentCallback = (item, ctx) =>
+                `<span class="js-sel-item" data-pop="${ctx.isInPopover}">${item.label}</span>`;
         });
     </script>
 </body>

@@ -163,6 +163,8 @@
   /* Group Semantic Variables */
   --ms-group-border-color: var(--ms-border-color);
   --ms-group-label-color: var(--ms-text-color-3);
+  /* The per-group selected-count chip (.ms__group-count) reuses the in-input count badge's
+     --ms-counter-* variables — no bespoke tokens, so theming the counter themes both. */
 
   /* Option Semantic Variables */
   --ms-option-text-color: var(--ms-text-color-1);

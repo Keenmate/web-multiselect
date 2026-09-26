@@ -606,5 +606,9 @@ el.collapseBadgesBelow = null;</code></pre>
     <script type="module" src="/src/index.ts"></script>
     <script type="module" src="examples-copy-link.js"></script>
     <script type="module" src="examples-chapter-nav.js"></script>
+    <script type="module">
+        import { persistControls } from './examples-controls-store.js';
+        window.addEventListener('load', () => persistControls('responsive'));
+    </script>
 </body>
 </html>

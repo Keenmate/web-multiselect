@@ -39,3 +39,42 @@ test('renderGroupLabelContentCallback overrides label content', async ({ page })
     await expect(p.locator('.js-custom-label')).toHaveCount(2);
     await expect(p.locator('.js-custom-label').first()).toContainText('[FRUITS]');
 });
+
+test('per-group selected-count chip shows in a plain (non-cascade) grouped list', async ({ page }) => {
+    const p = picker(page, 'grouped'); // no group-select-mode → inert headers, no checkbox
+    await openDropdown(p);
+
+    const fruits = p.locator('.ms__group-label[data-group="Fruits"]');
+    const fruitsCount = fruits.locator('.ms__group-count');
+
+    // No checkbox (not cascade) and no chip yet (nothing selected).
+    await expect(fruits.locator('.ms__checkbox')).toHaveCount(0);
+    await expect(fruitsCount).toHaveCount(0);
+
+    await p.locator('.ms__option[data-value="a1"]').click();
+    await expect(fruitsCount).toHaveText('[1]');
+
+    await p.locator('.ms__option[data-value="a2"]').click();
+    await expect(fruitsCount).toHaveText('[2]');
+
+    // Still no checkbox — the count is decoupled from cascade.
+    await expect(fruits.locator('.ms__checkbox')).toHaveCount(0);
+
+    // Deselecting back to zero removes the chip.
+    await p.locator('.ms__option[data-value="a1"]').click();
+    await p.locator('.ms__option[data-value="a2"]').click();
+    await expect(fruitsCount).toHaveCount(0);
+});
+
+test('getCountLabelCallback formats both the in-input counter and the group count (x/y)', async ({ page }) => {
+    const p = picker(page, 'group-count-callback'); // getCountLabelCallback = (s,t) => `${s}/${t}`
+    await openDropdown(p);
+
+    await p.locator('.ms__option[data-value="a1"]').click(); // Apple  (Fruits)
+    await p.locator('.ms__option[data-value="a2"]').click(); // Banana (Fruits)
+
+    // Group count: 2 of 3 Fruits — the group's total is its member count.
+    await expect(p.locator('.ms__group-label[data-group="Fruits"] .ms__group-count')).toHaveText('2/3');
+    // In-input counter: 2 of 6 total options — same formatter, whole-list total.
+    await expect(p.locator('.ms__counter')).toHaveText('2/6');
+});

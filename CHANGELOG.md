@@ -5,6 +5,124 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-25
+
+### Added
+
+- **`selected-order` — configurable ordering of the SELECTED items in the display.** Controls
+  the sequence in which chosen items appear in badges, in partial mode (i.e. which items sit
+  behind the "+N more" badge), and in the selected-items popover: `as-selected` (default, the
+  order picked), `label-asc` / `label-desc` (by badge label, locale-aware), `member` (by the new
+  `selected-order-member` property — or `getSelectedOrderCallback` — with numeric keys sorted
+  numerically), and `custom` (via `selectedOrderCompareCallback((a,b)=>number)`). **Display only:**
+  `getValue()`, the form output, and `getSelected()` always keep as-selected (insertion) order,
+  and the options dropdown is never reordered. Because the ordering is applied in one shared place,
+  the partial-mode "+N more" split — and its X button — always act on the items sorted *after* the
+  visible slice.
+
+- **`getCountLabelCallback` — one formatter for the in-input counter *and* the group count.**
+  A new callback `(selected, total) => string` formats the small count chip in both places, so
+  they always read the same way. Default is `[selected]` (e.g. `[3]`) — the in-input counter's
+  historical format, now shared by the per-group chip too (previously the group chip was a bare
+  `3`). Pass `` (s, t) => `${s}/${t}` `` for an "x / y of total" style — `total` is the whole
+  option list for the in-input counter and the group's member count for a group header.
+
+- **Per-group selected count in group headers + selection context for custom labels.**
+  Every group header now shows a **count of that group's selected members** — in *any* grouped
+  list, not just cascade (a `.ms__group-count` chip, hidden at zero, right-aligned via the
+  `.ms__group-label--has-count` flex modifier, with a rem-scaled `min-width` so single digits stay
+  balanced). The chip reuses the in-input count badge's look and `--ms-counter-*` variables rather
+  than inventing its own, so it matches the counter and themes with it. And
+  `renderGroupLabelContentCallback` now receives a **second argument** — a
+  `GroupLabelRenderContext` with `{ groupName, members, selectedMembers, selectedCount,
+  memberCount, selectableCount, checkState }` plus the shared presentation fields
+  (`presentation` / `isFullscreen` / `isModal`, so it extends `PresentationContext` like the
+  option/badge render contexts) — so a custom header can render its own count/logic
+  (the built-in count is drawn only for the default, no-callback header). The second arg is
+  additive; existing one-argument callbacks keep working. The context render-type interfaces
+  (`GroupLabelRenderContext`, `OptionContentRenderContext`, `BadgeContentRenderContext`,
+  `SelectedContentRenderContext`) are now exported from the package entry.
+
+- **All render callbacks now receive a context that carries the presentation.** Previously only
+  `renderOptionContentCallback` / `renderBadgeContentCallback` / `renderBadgeCallback` got the
+  shared `PresentationContext` (`presentation` / `isFullscreen` / `isModal`); the selected-item
+  and group callbacks got only the item/name. Now `renderSelectedItemContentCallback` (2nd arg: a
+  `BadgeContentRenderContext`, `isInPopover=true`), `renderSelectedContentCallback` (2nd arg: a
+  `SelectedContentRenderContext`), and `renderGroupLabelContentCallback` (above) all receive a
+  context too — so any custom renderer can branch on `isFullscreen` to render leaner in the phone
+  overlay. All additive: existing one-argument callbacks are unaffected.
+
+- **`group-select-mode="cascade"` — select-all-per-group in flat grouped lists.** A new
+  attribute puts a **tristate checkbox** on each group header in a flat (non-tree),
+  multi-select, grouped list: clicking it checks/unchecks all of that group's currently
+  visible members, and a partially-selected group reads indeterminate. The group name
+  itself is never a selected value — `getValue()` / badges / form carry member values only,
+  and a header toggle fires a single `change`. Default is `none` (headers stay inert, as
+  before). No effect in tree mode (use `checkbox-mode`) or single-select. Honors disabled
+  members (excluded from the check-all) and coexists with `renderGroupLabelContentCallback`.
+
+### Changed
+
+- **Tree `checkbox-mode` now defaults to `cascade` (was `independent`).** In a
+  multi-select tree, checking a branch now checks its whole subtree and branches show a
+  tristate box — what most tree-select UIs do, and what people expect when a tree shows
+  checkboxes. Previously each node toggled on its own. **This is a behavior change for
+  existing tree consumers**: the emitted selection (`getValue()` / badges / form /
+  `change`) now follows `cascade-select-policy` (default `rolled-up`: a fully-selected
+  subtree collapses to its root value). To keep the old behavior, set
+  `checkbox-mode="independent"` explicitly. No effect on flat lists or single-select —
+  cascade only ever activates in tree + multiple (there is no subtree to cascade into
+  otherwise).
+
+- **Renamed the internal `data-ready` attribute to `data-placeholder-ready`.** The
+  component sets this on the host one frame after upgrade; the only rule that reads it
+  fades the search-input placeholder in (`:host([data-placeholder-ready]) .ms__input::placeholder`).
+  The old name read as a synonym of the `is-ready` build/defer gate (2.1.0) despite doing an
+  unrelated, placeholder-only job — the new name says exactly what it governs. Behaviour is
+  unchanged. Only relevant if you targeted the undocumented `[data-ready]` attribute in your own
+  CSS (you almost certainly didn't) — retarget it to `[data-placeholder-ready]`. `is-ready` /
+  `isReady` / the `ready` event are untouched.
+
+### Fixed
+
+- **Changing an attribute no longer wipes the current selection.** `badges-display-mode`
+  and `badges-position` were `reinit`-on-change (a full picker rebuild) even though they're
+  purely cosmetic — they're now applied in place (`update`), so the selection (and the DOM)
+  survives. And for changes that genuinely rebuild (e.g. `search-input-mode`, `search-mode`),
+  the rebuild now **preserves the user's runtime selection** instead of re-seeding from the
+  original `initial-values`. An explicit `initial-values` change still wins, and a
+  first-build/empty selection still falls back to the configured initial values (declarative
+  `initial-values` keeps working when options arrive later).
+
+- **`search-input-mode="hidden"` no longer collapses the input row.** The hidden search
+  field was removed with `display: none`, which dropped its `flex: 1` spacer so the trailing
+  toggle/counter jumped to the leading edge of the control. It's now hidden with
+  `visibility: hidden`, keeping the field's flex box — the toggle stays at the trailing edge
+  and the control keeps its normal width.
+
+- **The "+N more" badge's X now removes the hidden items (it silently opened the popover).**
+  In partial mode the "+N more" pill carries `data-action="show-selected"` and its X
+  (`.ms__badge-remove`, `data-action="remove-hidden"`) is a descendant — but the click handler
+  matched `show-selected` before the remove button, so a `closest()` walk from the X hit the
+  parent and opened the selected-items popover instead of removing. The remove-button branch now
+  runs first (as `clear-count` already did), so the X removes exactly the items behind "+N more"
+  while a click on the pill body still opens the popover.
+
+### Internal — examples
+
+- **`examples-basic.html` rebuilt as controls-driven cards.** The 11 static BU cards collapsed
+  into ~5 live examples, each one picker plus a `.controls` switch panel — Selection & input
+  (multiple / clear / search-input-mode / close-on-select / dir), Content & display (icons /
+  subtitles / badges-display-mode / badges-position / `badges-max-visible` shown only in
+  partial mode / all five `selected-order` modes incl. a `custom` comparator), Groups
+  (group-select-mode with the per-group selected count; custom labels demo the
+  `renderGroupLabelContentCallback` context by drawing their own `selected/selectable` count),
+  the Scroll-to API, and Search.
+- **New `examples-controls-store.js` helper — `persistControls(namespace)`.** Persists the
+  control switches on a controls-driven example page to `localStorage` and restores them on
+  reload (re-applying to the pickers). Wired into `examples-basic`, `-data-api`, `-responsive`,
+  `-theming`, and `-tree`. (Examples are dev-only; not in the published package.)
+
 ## [2.1.0] - 2026-09-21 [PUBLISHED]
 
 ### Added

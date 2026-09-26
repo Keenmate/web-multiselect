@@ -49,6 +49,10 @@ export type {
   SearchInputMode,
   SearchMode,
   ValueFormat,
+  OptionContentRenderContext,
+  BadgeContentRenderContext,
+  GroupLabelRenderContext,
+  SelectedContentRenderContext,
 } from './types';
 
 // Export logging utilities for runtime control

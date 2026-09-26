@@ -881,5 +881,9 @@ web-multiselect {
     </script>
     <script type="module" src="examples-copy-link.js"></script>
     <script type="module" src="examples-chapter-nav.js"></script>
+    <script type="module">
+        import { persistControls } from './examples-controls-store.js';
+        window.addEventListener('load', () => persistControls('tree'));
+    </script>
 </body>
 </html>

@@ -60,3 +60,26 @@ test('icon-member and subtitle-member render in option content', async ({ page }
     await expect(firstOption).toContainText(/🍎/);
     await expect(firstOption).toContainText(/red fruit/);
 });
+
+test('renderSelectedContentCallback receives the presentation context (2nd arg)', async ({ page }) => {
+    const p = picker(page, 'sel-content'); // single-select
+    await select(p, 'apple');
+    await page.mouse.click(0, 0); // close so the label lands in the input
+
+    // Callback rendered `${label}·${ctx.presentation}` → proves the context arrived.
+    await expect(p.locator('.ms__input')).toHaveValue('Apple·floating');
+});
+
+test('renderSelectedItemContentCallback receives a popover context (isInPopover=true)', async ({ page }) => {
+    const p = picker(page, 'sel-item'); // count mode → popover on the count badge
+    await select(p, 'apple');
+    await page.mouse.click(0, 0);
+
+    // Open the selected-items popover from the count badge.
+    await p.locator('.ms__badge[data-action="show-selected"]').click();
+    await expect(p.locator('.ms__selected-popover')).toBeVisible();
+
+    const item = p.locator('.ms__selected-popover .js-sel-item').first();
+    await expect(item).toHaveText('Apple');
+    await expect(item).toHaveAttribute('data-pop', 'true');
+});
