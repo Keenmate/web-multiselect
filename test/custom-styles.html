@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — custom-styles attribute</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>custom-styles attribute</h1>
+    <p>Targeted by <code>e2e/custom-styles.spec.ts</code>. The `custom-styles` attribute is the
+       declarative twin of `customStylesCallback` — raw CSS injected into the shadow root's style slot.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">custom-styles attribute sets --ms-border-color (red)</div>
+        <web-multiselect id="cs-attr" value-member="value" display-value-member="label"
+            custom-styles=":host { --ms-border-color: rgb(255, 0, 0); }"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">callback wins over the attribute (green beats red)</div>
+        <web-multiselect id="cs-precedence" value-member="value" display-value-member="label"
+            custom-styles=":host { --ms-border-color: rgb(255, 0, 0); }"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">plain — the spec drives custom-styles at runtime</div>
+        <web-multiselect id="cs-reactive" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = [
+            { value: 'apple',  label: 'Apple' },
+            { value: 'banana', label: 'Banana' }
+        ];
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['cs-attr', 'cs-precedence', 'cs-reactive']) {
+                document.getElementById(id).options = items;
+            }
+            // The callback must win when both are set (attribute is the static fallback).
+            document.getElementById('cs-precedence').customStylesCallback =
+                () => ':host { --ms-border-color: rgb(0, 128, 0); }';
+        });
+    </script>
+</body>
+</html>

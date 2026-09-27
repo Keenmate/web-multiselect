@@ -431,6 +431,50 @@ panel.addEventListener('click', (e) =&gt; {
                 <small class="form-text">Larger checkboxes (1.5x scale) for better visibility and accessibility</small>
             </div>
         </div>
+
+        <div class="card">
+            <h2>CR09 · Declarative Styling — the <code>custom-styles</code> attribute (no JS)</h2>
+            <p>
+                Every card above reaches into the Shadow DOM via <code>customStylesCallback</code> (a JS
+                function). The <code>custom-styles</code> attribute is the declarative twin: set a raw CSS
+                string right on the element and it's injected verbatim into the same replaceable style slot —
+                no script at all. Perfect for static HTML or server-rendered markup. When both are present,
+                <code>customStylesCallback</code> wins (the attribute is the static fallback).
+            </p>
+
+            <div class="form-group">
+                <label>Pick a couple — styled entirely by the attribute</label>
+                <web-multiselect id="cr-custom-styles"
+                    custom-styles="
+                        .ms__badge { background: #6d28d9; border-radius: 999px; }
+                        .ms__badge .ms__badge-text,
+                        .ms__badge .ms__badge-remove { background: transparent; color: #fff; border-color: transparent; }
+                        .ms__option { border-radius: 8px; }">
+                    <option value="react" data-icon="⚛️" selected>React</option>
+                    <option value="vue" data-icon="🖖">Vue.js</option>
+                    <option value="svelte" data-icon="🔥" selected>Svelte</option>
+                    <option value="solid" data-icon="💎">Solid</option>
+                </web-multiselect>
+                <small class="form-text">
+                    Purple pill badges + rounded option rows — all from the inline <code>custom-styles</code>
+                    string. This whole card has zero JavaScript (options are declarative <code>&lt;option&gt;</code>
+                    children too).
+                </small>
+            </div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>&lt;web-multiselect
+    custom-styles="
+        .ms__badge { background: #6d28d9; border-radius: 999px; }
+        .ms__badge .ms__badge-text,
+        .ms__badge .ms__badge-remove { background: transparent; color: #fff; }
+        .ms__option { border-radius: 8px; }"&gt;
+  &lt;option value="react" data-icon="⚛️" selected&gt;React&lt;/option&gt;
+  &lt;option value="svelte" data-icon="🔥" selected&gt;Svelte&lt;/option&gt;
+&lt;/web-multiselect&gt;</code></pre>
+            </details>
+        </div>
     </div>
 
     <style>

@@ -13,7 +13,7 @@
         <header>
             <a href="index.html" class="back-link">← Back to Examples</a>
             <h1>Basic Usage</h1>
-            <p class="subtitle">The essentials, each as ONE live picker you configure with control switches — selection &amp; input mode, content &amp; display, groups, the scroll-to API, and search.</p>
+            <p class="subtitle">The essentials, each as ONE live picker you configure with control switches — selection &amp; input mode, content &amp; display, groups, the scroll-to API, and search — plus a declarative, no-JavaScript setup.</p>
         </header>
 
         <!-- ============================================================= -->
@@ -154,25 +154,102 @@
                 </web-multiselect>
             </div>
 
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- BU04 · Declarative usage (no JS) — see the full card below      -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>BU04 · Declarative Usage (No JavaScript)</h2>
+            <p>
+                For simple cases you don't need any script at all — put plain
+                <code>&lt;option&gt;</code> / <code>&lt;optgroup&gt;</code> children inside the element
+                and the component parses them once from the light DOM. It reads each option's
+                <code>value</code>, its text, the <code>selected</code> attribute, and
+                <code>data-icon</code> / <code>data-subtitle</code>. Single-select is
+                <code>multiple="false"</code>. Even custom styling stays script-free — the
+                <code>custom-styles</code> attribute injects raw CSS into the shadow DOM (the
+                declarative twin of <code>customStylesCallback</code>).
+            </p>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label>Simple choice (single-select)</label>
+                    <web-multiselect id="decl-single" multiple="false" search-placeholder="Select your answer…">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="maybe" selected>Maybe / I don't know</option>
+                    </web-multiselect>
+                    <small class="form-text">No JavaScript — pure HTML. <code>selected</code> pre-picks an option.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Multiple fruits (icons + <code>custom-styles</code>)</label>
+                    <web-multiselect id="decl-fruits" search-placeholder="Select fruits…"
+                        custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }">
+                        <option value="apple" data-icon="🍎">Apple</option>
+                        <option value="banana" data-icon="🍌" selected>Banana</option>
+                        <option value="orange" data-icon="🍊">Orange</option>
+                        <option value="grape" data-icon="🍇" selected>Grape</option>
+                        <option value="strawberry" data-icon="🍓">Strawberry</option>
+                    </web-multiselect>
+                    <small class="form-text">Row icons from <code>data-icon</code>; the pill-shaped badges are pure <code>custom-styles</code> — no JS.</small>
+                </div>
+            </div>
+
+            <div class="grid mt-1">
+                <div class="form-group">
+                    <label>Grouped options (<code>&lt;optgroup&gt;</code>)</label>
+                    <web-multiselect id="decl-grouped" search-placeholder="Select languages…">
+                        <optgroup label="Frontend">
+                            <option value="js" data-icon="🟨">JavaScript</option>
+                            <option value="ts" data-icon="🔷">TypeScript</option>
+                            <option value="html" data-icon="📄">HTML</option>
+                        </optgroup>
+                        <optgroup label="Backend">
+                            <option value="python" data-icon="🐍" selected>Python</option>
+                            <option value="java" data-icon="☕">Java</option>
+                            <option value="go" data-icon="🐹">Go</option>
+                        </optgroup>
+                    </web-multiselect>
+                    <small class="form-text">The <code>&lt;optgroup&gt;</code> <code>label</code> becomes the group header.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>With subtitles (<code>data-subtitle</code>)</label>
+                    <web-multiselect id="decl-subtitles" search-placeholder="Select framework…">
+                        <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
+                        <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
+                        <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
+                    </web-multiselect>
+                    <small class="form-text">Second-line descriptions come from <code>data-subtitle</code>.</small>
+                </div>
+            </div>
+
             <details class="mt-1">
-                <summary>Declarative alternative (no JS)</summary>
-<pre><code>&lt;web-multiselect group-member="group"&gt;
+                <summary>Show code</summary>
+<pre><code>&lt;!-- Single-select, one option pre-picked --&gt;
+&lt;web-multiselect multiple="false"&gt;
+  &lt;option value="yes"&gt;Yes&lt;/option&gt;
+  &lt;option value="maybe" selected&gt;Maybe&lt;/option&gt;
+&lt;/web-multiselect&gt;
+
+&lt;!-- Grouped, with icons + subtitles + no-JS styling --&gt;
+&lt;web-multiselect custom-styles=".ms__badge { border-radius: 999px; }"&gt;
   &lt;optgroup label="Frontend"&gt;
-    &lt;option value="js"&gt;JavaScript&lt;/option&gt;
-    &lt;option value="ts"&gt;TypeScript&lt;/option&gt;
-  &lt;/optgroup&gt;
-  &lt;optgroup label="Backend"&gt;
-    &lt;option value="python" selected&gt;Python&lt;/option&gt;
+    &lt;option value="js" data-icon="🟨"&gt;JavaScript&lt;/option&gt;
+    &lt;option value="react" data-icon="⚛️"
+            data-subtitle="A JS library for building UIs"&gt;React&lt;/option&gt;
   &lt;/optgroup&gt;
 &lt;/web-multiselect&gt;</code></pre>
             </details>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU04 · Scroll-to API                                            -->
+        <!-- BU05 · Scroll-to API                                            -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU04 · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
+            <h2>BU05 · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
             <p>
                 Imperative commands that bring an option or group into view. Pair with <code>open()</code>
                 for an "open + jump" gesture. They work in floating, mobile fullscreen, virtual-scroll
@@ -233,10 +310,10 @@ el.scrollToValue('jp');</code></pre>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU05 · Search                                                   -->
+        <!-- BU06 · Search                                                   -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU05 · Search</h2>
+            <h2>BU06 · Search</h2>
             <p>
                 <strong>Filter</strong> mode hides non-matches; <strong>navigate</strong> mode keeps
                 every option visible and jumps focus between matches (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> +
@@ -364,14 +441,20 @@ el.scrollToValue('jp');</code></pre>
         // Emoji-prefixed group labels for the "custom labels" toggle on BU03. The 2nd arg is the
         // GroupLabelRenderContext — under cascade it carries the per-group selection, so a custom
         // header can write whatever it likes: here "N remaining" (= selectableCount − selectedCount).
+        // The suffix is left un-dimmed (same weight/color as the group name) so the whole label
+        // reads dark and legible — a faded suffix is harder to scan. The context also carries the
+        // presentation (isFullscreen) and is re-invoked when it changes: on the phone fullscreen
+        // overlay the base rem scales UP for touch, so we render a notch smaller (font-size:0.8em)
+        // to keep "NAME — N remaining" on one line.
         const groupLabelRenderer = (name, ctx) => {
             const emojis = { frontend: '🎨', backend: '🔧', database: '🗄️' };
             const remaining = ctx ? ctx.selectableCount - ctx.selectedCount : 0;
             const suffix = !ctx ? ''
                 : remaining > 0
-                    ? ` <span style="opacity:.65; font-weight:400">— ${remaining} remaining</span>`
-                    : ` <span style="opacity:.65; font-weight:400">— all selected</span>`;
-            return `<strong>${emojis[name] || '📦'} ${name.toUpperCase()}</strong>${suffix}`;
+                    ? ` — ${remaining} remaining`
+                    : ' — all selected';
+            const scale = ctx && ctx.isFullscreen ? ' style="font-size:0.8em"' : '';
+            return `<span class="js-custom-label"${scale}><strong>${emojis[name] || '📦'} ${name.toUpperCase()}</strong>${suffix}</span>`;
         };
 
         // Toggle a boolean (presence) attribute.

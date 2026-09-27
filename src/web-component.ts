@@ -84,6 +84,7 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'loadingMessage',          attribute: 'loading-message',             converter: toText({ default: 'Loading...' }),     on: 'update', description: 'Message shown while options are loading.' },
   { configKey: 'removeButtonTooltipText', attribute: 'remove-button-tooltip-text',  converter: toText({ isNullable: true }),            on: 'update', description: 'Tooltip text for a badge remove (×) button.' },
   { configKey: 'formFieldId',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
+  { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `customStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `customStylesCallback` takes precedence when both are set.' },
 
   // ── CSS-var sugar (mirrored to a host style prop in reinit()/update()) ────
   { configKey: 'dropdownWidth',           attribute: 'dropdown-width',              converter: toText({ isNullable: true }),            on: 'update', description: 'Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable.' },
@@ -271,7 +272,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, debug panel, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender']);
+const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -394,7 +395,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /** Cosmetic change: mirror CSS vars / custom styles / debug, patch the picker in place. */
   protected override update(partial: Record<string, unknown>): void {
     this.#mirrorCssVars(partial);
-    if ('customStylesCallback' in partial) this.#applyCustomStyles();
+    if ('customStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
     if ('showDebugInfo' in partial) this.#syncDebugPanel();
 
     // Everything else goes to the live picker as an in-place patch; null clears
@@ -702,9 +703,13 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   #applyCustomStyles(): void {
     const slot = this.#customStyles;
     if (!slot) return;
+    // The JS callback wins when both are set; the `custom-styles` attribute is the
+    // static fallback (raw CSS string). Neither → clear the slot.
     const callback = this.config.customStylesCallback as (() => string | null | undefined) | null | undefined;
+    const staticCss = (this.config.customStyles as string | null | undefined) ?? null;
     if (typeof callback !== 'function') {
-      slot.clear();
+      slot.set(staticCss);
+      if (import.meta.env?.DEV && staticCss) this.#checkCustomStyleVars(staticCss);
       return;
     }
     try {
@@ -713,7 +718,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
       if (import.meta.env?.DEV && css) this.#checkCustomStyleVars(css);
     } catch (e) {
       dataLogger.warn('[MultiSelectElement] customStylesCallback threw', e);
-      slot.clear();
+      // Callback blew up — fall back to the static attribute CSS if present.
+      slot.set(staticCss);
     }
   }
 

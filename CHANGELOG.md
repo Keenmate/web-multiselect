@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`custom-styles` attribute — a declarative, no-JavaScript alternative to `customStylesCallback`.**
+  Set raw CSS directly on the element (`<web-multiselect custom-styles=".ms__badge { font-weight: bold; }">`)
+  and it's injected verbatim — selectors and all — into the same replaceable style slot at the top of the
+  shadow root that the callback uses. This lets consumers who can't reach into script (static HTML,
+  server-rendered markup, no-build pages) style shadow-DOM internals and their own custom-rendered
+  content. `customStylesCallback` still wins when both are set (the attribute is the static fallback);
+  the value is reactive (changing/removing the attribute re-applies or clears the slot) and flows through
+  the same dev-mode `--ms-*` lint. Exposed as the `customStyles` property too. Covered by
+  `e2e/custom-styles.spec.ts` (injection, callback precedence, runtime set/clear, property), and
+  demonstrated no-JS on the Custom Rendering page (**CR09**) and in the Basic Usage declarative card.
+
+- **BU04 · Declarative Usage (No JavaScript) — new Basic Usage example.** A pure-HTML card on
+  `examples-basic.html` (placed right after BU03 Groups; the former Scroll-to/Search cards shift to
+  BU05/BU06) showing the component parse inline `<option>` / `<optgroup>` children from the light DOM
+  (single-select via `multiple="false"`, icons via `data-icon`, subtitles via `data-subtitle`, groups
+  via `<optgroup label>`, pre-selection via `selected`) with zero script — the member defaults
+  (`DECLARATIVE_MEMBER_DEFAULTS`) wire `data-*` up automatically. One picker also carries a
+  `custom-styles` attribute (pill-shaped badges) to show styling stays script-free too. Ports the
+  equivalent example from the Elixir wrapper's demo site. Demo-only.
+
+### Changed
+
+- **BU03 (Groups) demo — more legible custom group labels, presentation-aware.** The
+  `renderGroupLabelContentCallback` example dropped the `opacity:.65; font-weight:400` fade on the
+  `— N remaining` / `— all selected` suffix, so the whole header renders at the group name's full
+  weight/color and is easier to scan (the emoji prefix stays). It now also branches on the render
+  context's `isFullscreen` to render a notch smaller (`font-size:0.8em`) in the phone fullscreen
+  overlay — where the base rem scales up for touch — keeping `NAME — N remaining` on one line. A
+  live demonstration that a custom header can adapt to the presentation via `GroupLabelRenderContext`
+  (which extends `PresentationContext`), reactively (the callback is re-invoked when the presentation
+  changes). Demo-only; no component behavior change.
+
 ## [2.2.0-rc01] - 2026-09-26 [PUBLISHED]
 
 ### Added
@@ -155,6 +191,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   point. One-shot opens, keyboard/typing opens, and server-driven commands are unchanged
   (no trailing click arrives before the guard clears next tick). Consumers that added a
   `stopPropagation()` workaround on their external controls can drop it.
+
+- **Example pages — demo action buttons no longer sit flush against content.** The
+  form-integration demo's `<form>` panel and its `.form-actions` footer, plus the spacing for
+  trailing demo action buttons (`.demo-area > button`, e.g. "Show Selected Data"), moved from
+  page-local `<style>` blocks into `examples-shared.css`. The styling is now shared (and reusable
+  by embedders that consume the sheet) and the buttons keep a consistent gap from the field/output
+  above instead of butting up against it. Demo pages only.
 
 ## [2.0.1] - 2026-09-20 [PUBLISHED]
 

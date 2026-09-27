@@ -327,6 +327,13 @@ export interface MultiSelectConfig<T = any> {
     getBadgeClassCallback?: (item: T) => string | string[];
     /** Callback to inject custom CSS into Shadow DOM - return CSS string for styling custom classes */
     customStylesCallback?: () => string;
+    /**
+     * Static CSS string injected into the Shadow DOM (attribute alternative to
+     * `customStylesCallback`, via the `custom-styles` attribute). The value is a
+     * raw stylesheet — selectors and all — dropped verbatim into the same
+     * replaceable style slot. `customStylesCallback` wins when both are set.
+     */
+    customStyles?: string;
 
     /** Member property name for search value extraction */
     searchValueMember?: string;
