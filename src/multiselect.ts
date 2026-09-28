@@ -2271,6 +2271,9 @@ export class WebMultiSelect<T = any> {
             // Auto-focus first option if search is enabled and there are results
             this.focusedIndex = (this.options.isSearchEnabled && this.filteredOptions.length > 0) ? 0 : -1;
             this.renderDropdown();
+            // Results just replaced an empty/loading panel — its height changed, so
+            // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
+            this.repositionDropdown();
             dataLogger.debug(`[${this.instanceId}] Loaded ${searchResults.length} results`);
         } catch (error) {
             // Aborted requests are expected — a newer request owns the state now, so bail quietly.
@@ -2288,6 +2291,9 @@ export class WebMultiSelect<T = any> {
             }
             this.matchingIndices.clear();
             this.renderDropdown();
+            // The error branch may have swapped in the full option list (keepOptionsOnSearch),
+            // which likewise changes the panel height — re-evaluate placement.
+            this.repositionDropdown();
         } finally {
             // Release the controller only if it's still the active one (a newer request may
             // have already replaced it).
@@ -3553,6 +3559,28 @@ export class WebMultiSelect<T = any> {
         );
     }
 
+    /**
+     * Re-anchor an already-open floating dropdown from scratch so a frozen placement
+     * is re-evaluated against the panel's CURRENT height.
+     *
+     * Why it's needed: an async `searchCallback` opens the panel while it's still
+     * empty / showing the loader — short, so it fits below the input and (with the
+     * default `lock-placement`) freezes to `bottom`. When results arrive the panel
+     * grows to full height, but the frozen placement pins it below the input, so it
+     * overflows the viewport bottom instead of flipping above into the free space.
+     * `renderDropdown()` only rewrites the inner HTML; it never re-anchors. Tearing
+     * down and recreating the anchor re-runs core's flip-on-first-compute against the
+     * new height (picking the side that fits), then re-freezes — so `lock-placement`
+     * still holds for the common case (panels that open already-populated, e.g. local
+     * filtering, never hit this path). No-op unless a floating dropdown is open.
+     */
+    private repositionDropdown(): void {
+        if (!this.#isOpen || this.presentationMode === 'fullscreen') return;
+        if (this.dropdownCleanup) { this.dropdownCleanup(); this.dropdownCleanup = null; }
+        this.dropdownPlacement = null;
+        this.positionDropdown();
+    }
+
     private positionDropdown(): void {
         // The fullscreen overlay is CSS-positioned (fixed, inset:0) — never anchored.
         if (this.presentationMode === 'fullscreen') return;
@@ -4127,7 +4155,13 @@ export class WebMultiSelect<T = any> {
         const initialValues = this.element.dataset.initialValues;
         if (initialValues) {
             try {
-                const values = JSON.parse(initialValues);
+                const parsed = JSON.parse(initialValues);
+                // A single-select can only hold one value. When seeding more than one
+                // (declarative `initial-values="a,b,c"`, or a reinit that preserved a
+                // multi-selection while `multiple` flipped to false), keep only the
+                // first — otherwise the extra values stay in selectedValues and their
+                // rows render with the stale selected highlight.
+                const values = this.options.isMultipleEnabled === false ? parsed.slice(0, 1) : parsed;
                 values.forEach((value: string | number) => {
                     this.selectedValues.add(String(value));
                 });

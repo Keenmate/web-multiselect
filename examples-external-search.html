@@ -15,8 +15,9 @@
             <p class="subtitle">Plug a real search engine into <code>searchCallback</code> — the library stays dependency-free</p>
         </header>
 
+        <!-- Demo A: why + wire-up + flat accent folding -->
         <section class="example-section">
-            <h2>ES01 · Why</h2>
+            <h2>ES01 · Fuzzy &amp; Accent-Insensitive (flat list)</h2>
             <p class="description">
                 The component's built-in search is a plain case-insensitive <strong>substring</strong> match
                 (<code>String.includes</code>) — deliberately lean, since that covers most multiselects. When you
@@ -35,17 +36,13 @@ const ix = new FlexIndexer();
 ix.build(options, (o) =&gt; `${o.label} ${o.code}`);   // index the options (batched)
 el.options = options;
 el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole search</pre></div>
-        </section>
-
-        <!-- Demo A: flat + accent folding -->
-        <section class="example-section">
-            <h2>ES02 · Fuzzy &amp; Accent-Insensitive (flat list)</h2>
             <p class="description">
-                A flat list of cities with accented names. FlexSearch's <code>Charset.Normalize</code> folds accents
-                and <code>tokenize: "full"</code> matches partial tokens anywhere, with results in relevance order.
-                Try <code>zurich</code> → <em>Zürich</em>, <code>sao</code> → <em>São Paulo</em>,
-                <code>krak</code> → <em>Kraków</em>, <code>muenchen</code>/<code>munch</code> → <em>München</em>.
-                The built-in substring search would miss all of these.
+                The demo below is a flat list of cities with accented names. FlexSearch's
+                <code>Charset.Normalize</code> folds accents and <code>tokenize: "full"</code> matches partial tokens
+                anywhere, with results in relevance order. Try <code>zurich</code> → <em>Zürich</em>,
+                <code>sao</code> → <em>São Paulo</em>, <code>krak</code> → <em>Kraków</em>,
+                <code>muenchen</code>/<code>munch</code> → <em>München</em>. The built-in substring search would miss
+                all of these.
             </p>
             <div class="demo-area">
                 <label class="demo-label">Search accent-free — it still matches:</label>
@@ -55,7 +52,7 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
 
         <!-- Demo B: ISCO tree + external index -->
         <section class="example-section">
-            <h2>ES03 · External Search on a Tree (full ISCO-08)</h2>
+            <h2>ES02 · External Search on a Tree (full ISCO-08)</h2>
             <p class="description">
                 External search now composes with <strong>tree mode</strong>: <code>searchCallback</code> returns the
                 matching nodes from the FlexSearch index and the component rebuilds the hierarchy from them, keeping
@@ -75,6 +72,30 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
                 Source: <em>International Standard Classification of Occupations, ISCO-08</em>
                 (© International Labour Organization) — demo data.
             </p>
+        </section>
+
+        <!-- Demo C: async search with NO seeded options — results come only from the callback.
+             This is the client-side analogue of the wrapper's server-search route, and the exact
+             condition where placement matters: the panel opens empty (short) and grows once results
+             land, so a placement frozen while empty must re-evaluate. -->
+        <section class="example-section">
+            <h2>ES03 · Async Search — results only from the callback</h2>
+            <p class="description">
+                The two demos above seed <code>options</code> up front and use <code>searchCallback</code> only to
+                rank and filter them. Here <strong>nothing is seeded</strong>: the picker opens empty and every
+                result arrives from an async <code>searchCallback</code> with a simulated ~200&nbsp;ms round-trip — as
+                if it were a server or a remote index (the client-side twin of the LiveView wrapper's server-search
+                route). It's also the condition where <strong>dropdown placement matters most</strong>: the panel
+                opens short and grows when results land, so if it's near the bottom of the viewport it must flip above
+                instead of overflowing. Try <code>beam</code>, <code>jvm</code>, <code>functional</code>,
+                <code>systems</code>, or just <code>rust</code>.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label">Type to search — results stream in from the callback:</label>
+                <web-multiselect id="async-langs" multiple="true" enable-search="true"
+                    placeholder="Search languages…"
+                    search-placeholder="Try beam, jvm, functional, rust…"></web-multiselect>
+            </div>
         </section>
     </div>
 
@@ -163,6 +184,60 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
                 iscoEl.options = isco;
                 // Return matches from the index; the component adds ancestors + renders the tree.
                 iscoEl.searchCallback = (term) => iscoIx.search(term, 80);
+            } catch (err) {
+                fail(section, err);
+            }
+        })();
+
+        // --- Demo C: async search, results ONLY from the callback (no seed) ----
+        // Mirrors the wrapper's server-search conditions: no options are seeded, so
+        // the panel opens empty/short and grows when the debounced async callback
+        // resolves. The setTimeout simulates a ~200ms server / remote-index round-trip.
+        (async () => {
+            const section = document.querySelector('#async-langs')?.closest('.example-section');
+            try {
+                const languages = [
+                    ['elixir', 'Elixir', 'functional · BEAM'], ['erlang', 'Erlang', 'functional · BEAM'],
+                    ['gleam', 'Gleam', 'functional · BEAM'], ['rust', 'Rust', 'systems · ownership'],
+                    ['go', 'Go', 'systems · goroutines'], ['zig', 'Zig', 'systems · comptime'],
+                    ['c', 'C', 'systems · procedural'], ['cpp', 'C++', 'systems · multi-paradigm'],
+                    ['csharp', 'C#', 'OOP · .NET'], ['fsharp', 'F#', 'functional · .NET'],
+                    ['java', 'Java', 'OOP · JVM'], ['kotlin', 'Kotlin', 'OOP · JVM'],
+                    ['scala', 'Scala', 'functional · JVM'], ['clojure', 'Clojure', 'functional · JVM'],
+                    ['groovy', 'Groovy', 'scripting · JVM'], ['python', 'Python', 'scripting · dynamic'],
+                    ['ruby', 'Ruby', 'scripting · dynamic'], ['perl', 'Perl', 'scripting · dynamic'],
+                    ['php', 'PHP', 'scripting · web'], ['javascript', 'JavaScript', 'scripting · web'],
+                    ['typescript', 'TypeScript', 'typed · web'], ['dart', 'Dart', 'typed · Flutter'],
+                    ['swift', 'Swift', 'typed · Apple'], ['objectivec', 'Objective-C', 'OOP · Apple'],
+                    ['haskell', 'Haskell', 'functional · lazy'], ['ocaml', 'OCaml', 'functional · ML'],
+                    ['reason', 'ReasonML', 'functional · ML'], ['elm', 'Elm', 'functional · web'],
+                    ['purescript', 'PureScript', 'functional · web'], ['lisp', 'Common Lisp', 'functional · macros'],
+                    ['scheme', 'Scheme', 'functional · minimal'], ['racket', 'Racket', 'functional · Lisp'],
+                    ['julia', 'Julia', 'numeric · JIT'], ['r', 'R', 'statistics · vectors'],
+                    ['matlab', 'MATLAB', 'numeric · matrices'], ['fortran', 'Fortran', 'numeric · legacy'],
+                    ['cobol', 'COBOL', 'business · legacy'], ['nim', 'Nim', 'systems · Python-ish'],
+                    ['crystal', 'Crystal', 'systems · Ruby-ish'], ['lua', 'Lua', 'scripting · embeddable']
+                ].map(([value, label, subtitle]) => ({ value, label, subtitle }));
+
+                await ready;
+                const el = document.querySelector('#async-langs');
+                el.valueMember = 'value';
+                el.displayValueMember = 'label';
+                // Render the paradigm as the option's second line. The member-name
+                // defaults ('subtitle', 'label', …) only auto-apply to declarative
+                // <option> markup — with JS-object options you must name the member,
+                // so set it explicitly. (The KEEN wrapper defaults subtitle-member for
+                // every picker, which is why its rows show the subtitle; match that here.)
+                el.subtitleMember = 'subtitle';
+                // Deliberately NO el.options — every row comes from the callback.
+                const fold = (s) => String(s || '').toLowerCase();
+                el.searchCallback = (term) => new Promise((resolve) => {
+                    const t = fold(term).trim();
+                    setTimeout(() => {
+                        if (!t) { resolve([]); return; }
+                        resolve(languages.filter((l) => fold(l.label).includes(t) || fold(l.subtitle).includes(t)));
+                    }, 200);
+                });
             } catch (err) {
                 fail(section, err);
             }

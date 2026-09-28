@@ -10,7 +10,7 @@
 
     <!-- Page-specific styles -->
     <style>
-        /* Section 10 only: dim a .controls group when its inputs are disabled. */
+        /* TR02 only: dim a .controls group when its inputs are disabled. */
         .controls[data-disabled="true"] { opacity: 0.45; }
     </style>
 </head>
@@ -22,20 +22,29 @@
             <p class="subtitle">Render options as an always-expanded hierarchy, indented by depth</p>
         </header>
 
-        <!-- Example 1: Basic tree -->
+        <!-- ============================================================= -->
+        <!-- TR01 · The tree model — path-member + custom separator          -->
+        <!-- ============================================================= -->
         <section class="example-section">
-            <h2>TR01 · Basic Tree</h2>
+            <h2>TR01 · The Tree Model</h2>
             <p class="description">
                 Give each option a materialized dot-path (<code>"1"</code>, <code>"1.1"</code>,
                 <code>"1.1.1"</code>, …) and set <code>path-member</code>. Tree mode auto-enables:
                 the component derives parent and depth from the path and renders the options
                 depth-first, indented by level. The model is a trimmed lift of
-                <code>@keenmate/web-treeview</code>'s <code>ltree</code>.
+                <code>@keenmate/web-treeview</code>'s <code>ltree</code>. When your paths use a
+                different separator (e.g. <code>1/1/2</code>), set <code>tree-path-separator</code>.
             </p>
 
-            <div class="demo-area">
-                <label class="demo-label">Open the dropdown — every node is expanded:</label>
-                <web-multiselect id="tree-basic" multiple="true"></web-multiselect>
+            <div class="card-grid" style="--grid-min: 240px; --grid-gap: 1.5rem;">
+                <div>
+                    <label class="demo-label">Dot-path (<code>path-member="path"</code>) — every node expanded:</label>
+                    <web-multiselect id="tree-basic" multiple="true"></web-multiselect>
+                </div>
+                <div>
+                    <label class="demo-label">Slash-path (<code>tree-path-separator="/"</code>):</label>
+                    <web-multiselect id="tree-slash" multiple="true" tree-path-separator="/"></web-multiselect>
+                </div>
             </div>
 
             <div class="code-block"><pre>el.options = [
@@ -44,7 +53,10 @@
   { value: 'apple', label: 'Apple', path: '1.1.1' },
   { value: 'veg',   label: 'Vegetables', path: '2' }
 ];
-el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;</pre></div>
+el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;
+
+// Different separator? Tell the component:
+// &lt;web-multiselect path-member="path" tree-path-separator="/"&gt;</pre></div>
 
             <div class="note">
                 <div class="note-title">No collapse:</div>
@@ -54,79 +66,74 @@ el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;</pre></d
             </div>
         </section>
 
-        <!-- Example 2: Single-select and checkboxes -->
+        <!-- ============================================================= -->
+        <!-- TR02 · Selection, checkboxes & cascade                          -->
+        <!--   merges old TR02 (single/multi/checks) + TR10 (cascade panel)  -->
+        <!--   + TR06 (leaves-only) + TR11 (action buttons)                  -->
+        <!-- ============================================================= -->
         <section class="example-section">
-            <h2>TR02 · Single-Select &amp; Checkboxes</h2>
+            <h2>TR02 · Selection, Checkboxes &amp; Cascade</h2>
             <p class="description">
-                Every node — branch or leaf — is a normal, selectable option. Selection, single/multi
-                mode, and checkboxes all behave exactly as they do for a flat list.
+                Every node — branch or leaf — is a normal, selectable option; selection, single/multi
+                mode, and checkboxes all behave exactly as they do for a flat list. Two orthogonal
+                knobs govern how <em>branches</em> behave: <code>checkbox-mode</code> controls
+                <em>how checking a branch behaves</em>; <code>cascade-select-policy</code> controls
+                <em>which values the selection emits</em> (badges / form / <code>change</code>). Flip
+                everything below on one live picker, then check <strong>Fruit</strong> and try
+                <strong>removing a badge</strong> — watch how the emitted value changes.
             </p>
+            <ul class="description">
+                <li><code>checkbox-mode="independent"</code> — each node toggles on its own; checking a
+                    branch selects <strong>only that node</strong>. Removing a badge removes exactly that node.</li>
+                <li><code>checkbox-mode="cascade"</code> — checking a branch checks its <strong>whole
+                    subtree</strong>; a partial branch shows a <strong>tristate</strong> (dash) box. Removing
+                    a branch badge clears its <strong>whole subtree</strong>.</li>
+            </ul>
+            <ul class="description">
+                <li><code>rolled-up</code> — <strong>minimal cover</strong>: a fully-selected subtree
+                    collapses to its root; a partial branch emits its individually-checked descendants.</li>
+                <li><code>leaves</code> — only the checked leaf nodes.</li>
+                <li><code>all</code> — every fully-checked node (branches + leaves), like
+                    <code>@keenmate/web-treeview</code>.</li>
+            </ul>
 
-            <div class="card-grid" style="--grid-min: 240px; --grid-gap: 1.5rem;">
-                <div>
-                    <label class="demo-label">Single-select (<code>multiple="false"</code>):</label>
-                    <web-multiselect id="tree-single" multiple="false"></web-multiselect>
+            <div class="demo-area">
+                <div class="controls">
+                    <label><input type="checkbox" id="sel-multiple" checked> <code>multiple</code></label>
+                    <label><input type="checkbox" id="sel-checks" checked> <code>show-checkboxes</code></label>
                 </div>
-                <div>
-                    <label class="demo-label">With checkboxes (<code>show-checkboxes="true"</code>):</label>
-                    <web-multiselect id="tree-checks" multiple="true" show-checkboxes="true"></web-multiselect>
+                <div class="controls" id="mode-group">
+                    <strong><code>checkbox-mode</code>:</strong>
+                    <label><input type="radio" name="cb-mode" value="independent" checked>
+                        <code>independent</code></label>
+                    <label><input type="radio" name="cb-mode" value="cascade">
+                        <code>cascade</code></label>
+                </div>
+                <div class="controls" id="policy-group" data-disabled="true">
+                    <strong><code>cascade-select-policy</code>:</strong>
+                    <label><input type="radio" name="cb-policy" value="rolled-up" checked disabled>
+                        <code>rolled-up</code></label>
+                    <label><input type="radio" name="cb-policy" value="leaves" disabled>
+                        <code>leaves</code></label>
+                    <label><input type="radio" name="cb-policy" value="all" disabled>
+                        <code>all</code></label>
+                </div>
+
+                <label class="demo-label">Check "Fruit", then remove a badge:</label>
+                <web-multiselect id="tree-select" multiple="true" show-checkboxes="true"></web-multiselect>
+
+                <div class="output">
+                    <div class="output-label">Emitted <code>getValue()</code>:</div>
+                    <pre id="casc-emitted">[]</pre>
                 </div>
             </div>
-        </section>
 
-        <!-- Example 3: Ancestor-preserving search -->
-        <section class="example-section">
-            <h2>TR03 · Ancestor-Preserving Search</h2>
-            <p class="description">
-                Typing filters the hierarchy to the <strong>matching nodes plus their ancestors</strong>,
-                so the indentation of the results still makes sense.
-            </p>
+            <div class="code-block"><pre>const el = document.querySelector('web-multiselect');
+el.checkboxMode = 'cascade';            // independent | cascade
+el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
+// Both are live: flip them any time and the current selection re-projects.</pre></div>
 
-            <div class="demo-area">
-                <label class="demo-label">Open the list and type <code>kale</code> — you get Vegetables → Leafy → Kale:</label>
-                <web-multiselect id="tree-search" multiple="true"></web-multiselect>
-            </div>
-        </section>
-
-        <!-- Example 4: Custom separator -->
-        <section class="example-section">
-            <h2>TR04 · Custom Path Separator</h2>
-            <p class="description">
-                When your paths use a different separator (e.g. <code>1/1/2</code>), set
-                <code>tree-path-separator</code>.
-            </p>
-
-            <div class="demo-area">
-                <label class="demo-label"><code>tree-path-separator="/"</code>:</label>
-                <web-multiselect id="tree-slash" multiple="true" tree-path-separator="/"></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>&lt;web-multiselect path-member="path" tree-path-separator="/"&gt;&lt;/web-multiselect&gt;</pre></div>
-        </section>
-
-        <!-- Example 5: Full breadcrumb on badges -->
-        <section class="example-section">
-            <h2>TR05 · Full Breadcrumb on Badges</h2>
-            <p class="description">
-                A <strong>full title</strong> is a fully-qualified label that ships with the data
-                (never computed here). Set <code>full-title-member</code> (or
-                <code>getFullTitleCallback</code>) and turn on <code>show-badge-full-title</code>, and
-                badges render <em>Fruit / Pome fruit / Apple</em> instead of just <em>Apple</em> —
-                disambiguating leaves that share a name across branches. An explicit
-                <code>getBadgeDisplayCallback</code> still wins.
-            </p>
-
-            <div class="demo-area">
-                <label class="demo-label">Two items are pre-selected — see the breadcrumb badges:</label>
-                <web-multiselect id="tree-fulltitle" multiple="true" show-badge-full-title="true"></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>&lt;web-multiselect path-member="path" full-title-member="fullTitle" show-badge-full-title="true"&gt;</pre></div>
-        </section>
-
-        <!-- Example 6: Leaves-only selectability -->
-        <section class="example-section">
-            <h2>TR06 · Selectable Leaves Only</h2>
+            <h3 class="subsection">Selectable leaves only</h3>
             <p class="description">
                 A node can be marked <strong>non-selectable</strong> — set
                 <code>is-selectable-member</code> (a data flag) or
@@ -137,22 +144,94 @@ el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;</pre></d
                 arrows, and can't be toggled or picked by Select&nbsp;All. The classic use is a
                 tree where only the leaves are real choices and the branches are pure structure.
             </p>
-
             <div class="demo-area">
                 <label class="demo-label">Branches are labels only — try clicking one, then a leaf:</label>
                 <web-multiselect id="tree-leaves" multiple="true" show-checkboxes="true"></web-multiselect>
             </div>
-
             <div class="code-block"><pre>// Only leaves are selectable — the callback sees the derived hasChildren.
 el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
 
 // …or drive it from the data:
 // &lt;web-multiselect path-member="path" is-selectable-member="selectable"&gt;</pre></div>
+
+            <h3 class="subsection">Action buttons</h3>
+            <p class="description">
+                Action buttons work with tree mode. The built-in <code>select-all</code> /
+                <code>clear-all</code> honour selectability (non-selectable branches are skipped), and
+                in <strong>cascade</strong> mode <strong>Select All emits the same rolled-up shape a
+                click would</strong> — here selecting everything collapses to just the two roots
+                (<em>Fruit</em>, <em>Vegetables</em>), not one badge per node. Add custom actions with an
+                <code>onClick(ms)</code> that receives the picker instance.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label">Cascade tree — Select All / Clear All + a custom "All fruit" action:</label>
+                <web-multiselect id="tree-actions" multiple="true" show-checkboxes="true"
+                    checkbox-mode="cascade" actions-position="top"></web-multiselect>
+            </div>
+            <div class="code-block"><pre>el.actionButtons = [
+  { action: 'select-all', text: 'Select All' },
+  { action: 'clear-all',  text: 'Clear All' },
+  // custom action — receives the picker instance. setSelected is silent by default;
+  // { notify: true } announces the result as a single `change` (so the server hears it).
+  { action: 'custom', text: 'All fruit', onClick: (ms) =&gt; ms.setSelected(['fruit'], { notify: true }) }
+];</pre></div>
         </section>
 
-        <!-- Example 7: Styling the indentation -->
+        <!-- ============================================================= -->
+        <!-- TR03 · Search — filter vs navigate                              -->
+        <!--   merges old TR03 (filter) + TR15 (navigate) into one toggle    -->
+        <!-- ============================================================= -->
         <section class="example-section">
-            <h2>TR07 · Styling the Indentation</h2>
+            <h2>TR03 · Search — Filter vs Navigate</h2>
+            <p class="description">
+                Two search behaviors on one picker. <strong>Filter</strong> (the default) narrows the
+                hierarchy to the <strong>matching nodes plus their ancestors</strong>, so the
+                indentation of the results still makes sense. <strong>Navigate</strong>
+                (<code>search-mode="navigate"</code>) keeps the <strong>whole tree on screen</strong>
+                and typing <em>jumps focus</em> between matching nodes instead of hiding anything —
+                handy on a tree, where filtering can hide the structure you were reading. Matched rows
+                keep a highlight; step through them with <kbd>Ctrl</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> on
+                desktop. In the <strong>fullscreen overlay</strong> (touch, or the preview toggle below)
+                a <code>N of M</code> count with prev/next buttons appears under the search box.
+            </p>
+            <p class="description">
+                This picker also sets <code>show-search-mode-toggle</code>, which adds a
+                <strong>built-in mode switch</strong> to the fullscreen search bar: the leading icon
+                (magnifier = navigate, funnel = filter) flips the mode <em>in place</em> on tap — no reopen.
+                Enable fullscreen preview, then tap the icon to switch without touching the host-page radios.
+            </p>
+            <div class="controls">
+                <span>Search mode:</span>
+                <label><input type="radio" name="tree-nav-mode" value="filter" checked> <code>filter</code></label>
+                <label><input type="radio" name="tree-nav-mode" value="navigate"> <code>navigate</code></label>
+            </div>
+            <label class="toggle-label">
+                <input type="checkbox" id="tree-nav-fs-preview"> Preview as fullscreen (desktop)
+            </label>
+            <div class="demo-area">
+                <label class="demo-label">In <code>filter</code> type <code>kale</code> (get Vegetables → Leafy → Kale); switch to <code>navigate</code> and type <code>a</code> to jump between matches:</label>
+                <web-multiselect id="tree-search" multiple="true" show-search-mode-toggle></web-multiselect>
+            </div>
+
+            <div class="code-block"><pre>&lt;!-- default: filter — hierarchy narrows to matches + their ancestors --&gt;
+&lt;web-multiselect path-member="path"&gt;&lt;/web-multiselect&gt;
+
+&lt;!-- navigate — keep the whole tree on screen; jump focus between matches --&gt;
+&lt;web-multiselect path-member="path" search-mode="navigate"&gt;&lt;/web-multiselect&gt;
+
+&lt;!-- add a built-in filter&lt;-&gt;navigate toggle to the fullscreen search bar --&gt;
+&lt;web-multiselect path-member="path" search-mode="navigate" show-search-mode-toggle&gt;&lt;/web-multiselect&gt;
+
+/* Fullscreen (phones) adds a count + prev/next match navigator automatically;
+   desktop steps with Ctrl+ArrowUp / Ctrl+ArrowDown. */</pre></div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TR04 · Styling rows                                             -->
+        <!--   merges old TR07 (indent) + TR08 (height) + TR12 (render)      -->
+        <!-- ============================================================= -->
+        <section class="example-section">
+            <h2>TR04 · Styling Rows</h2>
             <p class="description">
                 Each row is indented via an inline <code>--ms-tree-depth</code> custom property
                 (0 at the top level). Tune the step with <code>--ms-tree-indent</code> and the
@@ -176,11 +255,8 @@ el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
   --ms-tree-indent: 1.25rem;      /* per-level step */
   --ms-tree-base-indent: 0.75rem; /* first-level inline-start padding */
 }</pre></div>
-        </section>
 
-        <!-- Example 8: Row height & long labels -->
-        <section class="example-section">
-            <h2>TR08 · Row Height &amp; Long Labels</h2>
+            <h3 class="subsection">Row height &amp; long labels</h3>
             <p class="description">
                 Deep indentation eats horizontal space, so long labels matter. By default a title
                 <strong>wraps</strong> to multiple lines (rows grow). Set a consistent row height with
@@ -212,11 +288,150 @@ el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
   --ms-option-title-overflow: hidden;
   --ms-option-title-text-overflow: ellipsis;
 }</pre></div>
+
+            <h3 class="subsection">Custom node rendering</h3>
+            <p class="description">
+                <code>renderOptionContentCallback</code> works on tree rows too — it replaces the
+                <strong>inner content</strong> of a node (icon / title / subtitle), while the component
+                still draws the tree <em>chrome</em> around it: the checkbox, depth indentation, and the
+                branch/leaf/selected/indeterminate state classes. In tree mode the callback's
+                <code>context</code> carries <strong>tree metadata</strong> so you can branch on it
+                without re-deriving anything from your data:
+            </p>
+            <ul class="description">
+                <li><code>isTreeNode</code> — <code>true</code> on tree rows (<code>false</code> for flat options).</li>
+                <li><code>isBranch</code> / <code>isLeaf</code> — has children, or not.</li>
+                <li><code>childCount</code> — number of direct children (0 for a leaf).</li>
+                <li><code>level</code> / <code>depth</code> — 1-based level and 0-based indent depth (<code>--ms-tree-depth</code>).</li>
+                <li><code>path</code> — the node's materialized path (<code>"1.1.2"</code>).</li>
+                <li><code>isSelectable</code> — <code>false</code> for structure-only branches.</li>
+                <li><code>isIndeterminate</code> — cascade tristate (a partially-checked branch).</li>
+            </ul>
+            <div class="demo-area">
+                <label class="demo-label">Branches are tinted and bold with a child count; leaves sit on white — the whole picker scaled compact via <code>--ms-rem</code>:</label>
+                <web-multiselect id="tree-render" multiple="true" show-checkboxes="true" checkbox-mode="cascade"
+                    style="--ms-rem: 8px; --ms-tree-indent: 1rem;"></web-multiselect>
+            </div>
+            <p class="description">
+                Two mechanisms working together. The <strong>content</strong> comes from
+                <code>renderOptionContentCallback</code> (here just the label plus a muted
+                <code>ctx.childCount</code>). The <strong>full-row background per node type</strong> comes
+                from the branch/leaf theming hooks via <code>customStylesCallback</code> — the render
+                callback only fills the content area (after the checkbox), so a background belongs on the
+                <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code> row classes.
+            </p>
+            <div class="code-block"><pre>// 1) Content — compact label + child count. Style via a CSS class, not inline styles.
+el.renderOptionContentCallback = (item, ctx) =&gt; ctx.isBranch
+  ? `&lt;span&gt;&lt;strong&gt;${item.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${ctx.childCount}&lt;/small&gt;&lt;/span&gt;`
+  : `&lt;span&gt;${item.label}&lt;/span&gt;`;
+
+// 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
+//    branch/leaf theming hooks, plus the .node-count class used above.
+el.customStylesCallback = () =&gt; `
+  .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
+  .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
+  .node-count { opacity: .55; font-weight: 400; }
+`;
+
+// Compact: scale the whole picker down with --ms-rem (default 10px → 8px = 80%):
+// &lt;web-multiselect style="--ms-rem: 8px; --ms-tree-indent: 1rem;"&gt;</pre></div>
         </section>
 
-        <!-- Example 9: Real data — full ISCO-08 classification -->
+        <!-- ============================================================= -->
+        <!-- TR05 · Breadcrumbs & selection display                          -->
+        <!--   merges old TR05 (full-title) + TR13 (count/popover) + TR14    -->
+        <!-- ============================================================= -->
         <section class="example-section">
-            <h2>TR09 · Real Data — Full ISCO-08 Classification</h2>
+            <h2>TR05 · Breadcrumbs &amp; Selection Display</h2>
+            <p class="description">
+                A <strong>full title</strong> is a fully-qualified label that ships with the data
+                (never computed here). Set <code>full-title-member</code> (or
+                <code>getFullTitleCallback</code>) and turn on <code>show-badge-full-title</code>, and
+                badges render <em>Fruit / Pome fruit / Apple</em> instead of just <em>Apple</em> —
+                disambiguating leaves that share a name across branches. An explicit
+                <code>getBadgeDisplayCallback</code> still wins.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label">Two items are pre-selected — see the breadcrumb badges:</label>
+                <web-multiselect id="tree-fulltitle" multiple="true" show-badge-full-title="true"></web-multiselect>
+            </div>
+            <div class="code-block"><pre>&lt;web-multiselect path-member="path" full-title-member="fullTitle" show-badge-full-title="true"&gt;</pre></div>
+
+            <h3 class="subsection">No badges — selections in a popover</h3>
+            <p class="description">
+                For a deep tree, a wall of badges gets noisy fast. Set
+                <code>badges-display-mode="count"</code> and the component drops the individual badges
+                for a single <strong>“N selected”</strong> chip. Click it to open the
+                <strong>selected-items popover</strong> — the full list, each with its own remove button —
+                without touching the options dropdown. The popover reuses badge rendering, so a
+                <code>full-title-member</code> + <code>getBadgeDisplayCallback</code> gives each row its
+                <strong>breadcrumb</strong>, which is what makes leaves that share a name distinguishable.
+            </p>
+            <div class="note">
+                <div class="note-title">Want <em>zero</em> chrome instead?</div>
+                Use <code>badges-display-mode="none"</code> together with <code>show-counter="true"</code>:
+                no badges and no “N selected” text — just a compact <code>[N]</code> counter next to the
+                toggle that opens the same popover.
+            </div>
+            <div class="demo-area">
+                <label class="demo-label">Three leaves are pre-selected — click <strong>“N selected”</strong> or the <code>[N]</code> counter chip to open the popover:</label>
+                <web-multiselect id="tree-count" multiple="true" show-checkboxes="true"
+                    badges-display-mode="count" show-counter="true" checkbox-mode="cascade"></web-multiselect>
+            </div>
+            <div class="code-block"><pre>&lt;web-multiselect badges-display-mode="count" show-counter="true"&gt;&lt;/web-multiselect&gt;
+
+// Breadcrumb per popover row (popover reuses badge rendering):
+el.fullTitleMember = 'fullTitle';
+el.getBadgeDisplayCallback = (item) =&gt; item.fullTitle || item.label;
+
+// show-counter adds a compact [N] chip next to the toggle — independent of the
+// display mode, it opens the same selected-items popover. Drop the "N selected"
+// text entirely with badges-display-mode="none" to leave only the [N] chip.</pre></div>
+
+            <h3 class="subsection">Independent panel widths</h3>
+            <p class="description">
+                The control, the options dropdown, and the selected-items popover are three
+                separate panels — and they can each have their own width. Here the input is a
+                narrow <strong>15rem</strong>, the tree dropdown opens to a roomy
+                <strong>60rem</strong> (deep breadcrumbs need the space), and the “badges”
+                popover sits at <strong>30rem</strong>. Both panel widths are just CSS variables
+                (<code>--ms-dropdown-width</code>, <code>--ms-selected-popover-width</code>); the
+                <code>dropdown-width</code> / <code>selected-popover-width</code> attributes are
+                sugar that set those variables on the element.
+            </p>
+            <div class="note">
+                <div class="note-title">Theme once, override locally:</div>
+                Set the variables at app/theme level — <code>web-multiselect { --ms-dropdown-width: 60rem }</code>
+                — and every picker follows; the attributes then override a single instance. Defaults:
+                the dropdown tracks the input width, the popover is an intrinsic 32rem.
+            </div>
+            <div class="demo-area">
+                <label class="demo-label">15rem input · 60rem tree dropdown · 30rem badges popover — open the dropdown, pick a few, then click <strong>“N selected”</strong>:</label>
+                <web-multiselect id="tree-widths" multiple="true" show-checkboxes="true"
+                    checkbox-mode="cascade" badges-display-mode="count" show-counter="true"
+                    dropdown-width="60rem" selected-popover-width="30rem"
+                    style="width: 15rem;"></web-multiselect>
+            </div>
+            <div class="code-block"><pre>&lt;!-- Per-instance: attributes set the CSS variables on this element --&gt;
+&lt;web-multiselect
+    style="width: 15rem;"             // the control (input)
+    dropdown-width="60rem"            // → --ms-dropdown-width
+    selected-popover-width="30rem"&gt;  // → --ms-selected-popover-width
+&lt;/web-multiselect&gt;
+
+/* Or theme every picker at once — the same variables, at app level: */
+web-multiselect {
+    --ms-dropdown-width: 60rem;
+    --ms-selected-popover-width: 30rem;
+}</pre></div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TR06 · Real data (ISCO-08) + scroll-to API                      -->
+        <!--   merges old TR09 (ISCO showcase) + TR09b (scroll-to)           -->
+        <!-- ============================================================= -->
+        <section class="example-section">
+            <h2>TR06 · Real Data — ISCO-08 &amp; Scroll-to API</h2>
             <p class="description">
                 Everything at once on real data: the whole
                 <strong>International Standard Classification of Occupations</strong> (ISCO-08) —
@@ -258,11 +473,8 @@ el.getBadgeTooltipCallback = (item) =&gt; item.fullTitle || item.label;</pre></d
                 Source: <em>International Standard Classification of Occupations, ISCO-08</em>
                 (© International Labour Organization) — demo data.
             </p>
-        </section>
 
-        <!-- Example 9b: Scroll-to API in a tree -->
-        <section class="example-section">
-            <h2>TR09b · Scroll-to API in a tree</h2>
+            <h3 class="subsection">Scroll-to API in a tree</h3>
             <p class="description">
                 The tree is <strong>always fully expanded</strong>, so <code>scrollToValue</code> reaches
                 any node by its value (here the ISCO code) — and it works with virtual scroll (the row
@@ -298,265 +510,6 @@ el.scrollToGroup('x');           // → false in tree mode
 // If a search filtered the node out, reveal it first:
 el.clearSearch();
 el.scrollToValue('2211');</pre></div>
-        </section>
-
-        <!-- Example 10: Cascade checkbox mode + value policy -->
-        <section class="example-section">
-            <h2>TR10 · Cascade Checkboxes &amp; Value Policy</h2>
-            <p class="description">
-                Two orthogonal knobs. <code>checkbox-mode</code> controls <em>how checking a branch
-                behaves</em>; <code>cascade-select-policy</code> controls <em>which values the selection
-                emits</em> (badges / form / <code>change</code>). Flip them below on a single live picker,
-                then check <strong>Fruit</strong> and try <strong>removing a badge</strong> — watch how the
-                emitted value changes in each mode.
-            </p>
-            <ul class="description">
-                <li><code>checkbox-mode="independent"</code> <em>(default)</em> — each node toggles on its
-                    own; checking a branch selects <strong>only that node</strong>. Removing a badge removes
-                    exactly that one node.</li>
-                <li><code>checkbox-mode="cascade"</code> — checking a branch checks its <strong>whole
-                    subtree</strong>; a partial branch shows a <strong>tristate</strong> (dash) box. Removing
-                    a branch badge clears its <strong>whole subtree</strong>.</li>
-            </ul>
-            <ul class="description">
-                <li><code>rolled-up</code> <em>(default)</em> — <strong>minimal cover</strong>: a fully-selected
-                    subtree collapses to its root; a partial branch emits its individually-checked descendants.</li>
-                <li><code>leaves</code> — only the checked leaf nodes.</li>
-                <li><code>all</code> — every fully-checked node (branches + leaves), like
-                    <code>@keenmate/web-treeview</code>.</li>
-            </ul>
-
-            <div class="demo-area">
-                <div class="controls" id="mode-group">
-                    <strong><code>checkbox-mode</code>:</strong>
-                    <label><input type="radio" name="cb-mode" value="independent" checked>
-                        <code>independent</code></label>
-                    <label><input type="radio" name="cb-mode" value="cascade">
-                        <code>cascade</code></label>
-                </div>
-                <div class="controls" id="policy-group" data-disabled="true">
-                    <strong><code>cascade-select-policy</code>:</strong>
-                    <label><input type="radio" name="cb-policy" value="rolled-up" checked disabled>
-                        <code>rolled-up</code></label>
-                    <label><input type="radio" name="cb-policy" value="leaves" disabled>
-                        <code>leaves</code></label>
-                    <label><input type="radio" name="cb-policy" value="all" disabled>
-                        <code>all</code></label>
-                </div>
-
-                <label class="demo-label">Check "Fruit", then remove a badge:</label>
-                <web-multiselect id="tree-casc-live" multiple="true" show-checkboxes="true"></web-multiselect>
-
-                <div class="output">
-                    <div class="output-label">Emitted <code>getValue()</code>:</div>
-                    <pre id="casc-emitted">[]</pre>
-                </div>
-            </div>
-
-            <div class="code-block"><pre>const el = document.querySelector('web-multiselect');
-el.checkboxMode = 'cascade';            // independent (default) | cascade
-el.cascadeSelectPolicy = 'rolled-up';   // rolled-up (default) | leaves | all
-// Both are live: flip them any time and the current selection re-projects.</pre></div>
-        </section>
-
-        <!-- Example 11: Action buttons + tree -->
-        <section class="example-section">
-            <h2>TR11 · Action Buttons</h2>
-            <p class="description">
-                Action buttons work with tree mode. The built-in <code>select-all</code> /
-                <code>clear-all</code> honour selectability (non-selectable branches are skipped), and
-                in <strong>cascade</strong> mode <strong>Select All emits the same rolled-up shape a
-                click would</strong> — here selecting everything collapses to just the two roots
-                (<em>Fruit</em>, <em>Vegetables</em>), not one badge per node. Add custom actions with an
-                <code>onClick(ms)</code> that receives the picker instance.
-            </p>
-
-            <div class="demo-area">
-                <label class="demo-label">Cascade tree — Select All / Clear All + a custom "All fruit" action:</label>
-                <web-multiselect id="tree-actions" multiple="true" show-checkboxes="true"
-                    checkbox-mode="cascade" actions-position="top"></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>el.actionButtons = [
-  { action: 'select-all', text: 'Select All' },
-  { action: 'clear-all',  text: 'Clear All' },
-  // custom action — receives the picker instance. setSelected is silent by default;
-  // { notify: true } announces the result as a single `change` (so the server hears it).
-  { action: 'custom', text: 'All fruit', onClick: (ms) =&gt; ms.setSelected(['fruit'], { notify: true }) }
-];</pre></div>
-        </section>
-
-        <!-- Example 12: Custom node rendering via renderOptionContentCallback -->
-        <section class="example-section">
-            <h2>TR12 · Custom Node Rendering</h2>
-            <p class="description">
-                <code>renderOptionContentCallback</code> works on tree rows too — it replaces the
-                <strong>inner content</strong> of a node (icon / title / subtitle), while the component
-                still draws the tree <em>chrome</em> around it: the checkbox, depth indentation, and the
-                branch/leaf/selected/indeterminate state classes. In tree mode the callback's
-                <code>context</code> carries <strong>tree metadata</strong> so you can branch on it
-                without re-deriving anything from your data:
-            </p>
-            <ul class="description">
-                <li><code>isTreeNode</code> — <code>true</code> on tree rows (<code>false</code> for flat options).</li>
-                <li><code>isBranch</code> / <code>isLeaf</code> — has children, or not.</li>
-                <li><code>childCount</code> — number of direct children (0 for a leaf).</li>
-                <li><code>level</code> / <code>depth</code> — 1-based level and 0-based indent depth (<code>--ms-tree-depth</code>).</li>
-                <li><code>path</code> — the node's materialized path (<code>"1.1.2"</code>).</li>
-                <li><code>isSelectable</code> — <code>false</code> for structure-only branches.</li>
-                <li><code>isIndeterminate</code> — cascade tristate (a partially-checked branch).</li>
-            </ul>
-
-            <div class="demo-area">
-                <label class="demo-label">Branches are tinted and bold with a child count; leaves sit on white — the whole picker scaled compact via <code>--ms-rem</code>:</label>
-                <web-multiselect id="tree-render" multiple="true" show-checkboxes="true" checkbox-mode="cascade"
-                    style="--ms-rem: 8px; --ms-tree-indent: 1rem;"></web-multiselect>
-            </div>
-
-            <p class="description">
-                Two mechanisms working together. The <strong>content</strong> comes from
-                <code>renderOptionContentCallback</code> (here just the label plus a muted
-                <code>ctx.childCount</code>). The <strong>full-row background per node type</strong> comes
-                from the branch/leaf theming hooks via <code>customStylesCallback</code> — the render
-                callback only fills the content area (after the checkbox), so a background belongs on the
-                <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code> row classes.
-            </p>
-
-            <div class="code-block"><pre>// 1) Content — compact label + child count. Style via a CSS class, not inline styles.
-el.renderOptionContentCallback = (item, ctx) =&gt; ctx.isBranch
-  ? `&lt;span&gt;&lt;strong&gt;${item.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${ctx.childCount}&lt;/small&gt;&lt;/span&gt;`
-  : `&lt;span&gt;${item.label}&lt;/span&gt;`;
-
-// 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
-//    branch/leaf theming hooks, plus the .node-count class used above.
-el.customStylesCallback = () =&gt; `
-  .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
-  .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
-  .node-count { opacity: .55; font-weight: 400; }
-`;
-
-// Compact: scale the whole picker down with --ms-rem (default 10px → 8px = 80%):
-// &lt;web-multiselect style="--ms-rem: 8px; --ms-tree-indent: 1rem;"&gt;</pre></div>
-        </section>
-
-        <!-- Example 13: No inline badges — selections live in a popover -->
-        <section class="example-section">
-            <h2>TR13 · No Badges — Selections in a Popover</h2>
-            <p class="description">
-                For a deep tree, a wall of badges gets noisy fast. Set
-                <code>badges-display-mode="count"</code> and the component drops the individual badges
-                for a single <strong>“N selected”</strong> chip. Click it to open the
-                <strong>selected-items popover</strong> — the full list, each with its own remove button —
-                without touching the options dropdown. The popover reuses badge rendering, so a
-                <code>full-title-member</code> + <code>getBadgeDisplayCallback</code> gives each row its
-                <strong>breadcrumb</strong>, which is what makes leaves that share a name distinguishable.
-            </p>
-            <div class="note">
-                <div class="note-title">Want <em>zero</em> chrome instead?</div>
-                Use <code>badges-display-mode="none"</code> together with <code>show-counter="true"</code>:
-                no badges and no “N selected” text — just a compact <code>[N]</code> counter next to the
-                toggle that opens the same popover.
-            </div>
-
-            <div class="demo-area">
-                <label class="demo-label">Three leaves are pre-selected — click <strong>“N selected”</strong> or the <code>[N]</code> counter chip to open the popover:</label>
-                <web-multiselect id="tree-count" multiple="true" show-checkboxes="true"
-                    badges-display-mode="count" show-counter="true" checkbox-mode="cascade"></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>&lt;web-multiselect badges-display-mode="count" show-counter="true"&gt;&lt;/web-multiselect&gt;
-
-// Breadcrumb per popover row (popover reuses badge rendering):
-el.fullTitleMember = 'fullTitle';
-el.getBadgeDisplayCallback = (item) =&gt; item.fullTitle || item.label;
-
-// show-counter adds a compact [N] chip next to the toggle — independent of the
-// display mode, it opens the same selected-items popover. Drop the "N selected"
-// text entirely with badges-display-mode="none" to leave only the [N] chip.</pre></div>
-        </section>
-
-        <!-- Example 14: three independently-sized panels -->
-        <section class="example-section">
-            <h2>TR14 · Independent Panel Widths</h2>
-            <p class="description">
-                The control, the options dropdown, and the selected-items popover are three
-                separate panels — and they can each have their own width. Here the input is a
-                narrow <strong>15rem</strong>, the tree dropdown opens to a roomy
-                <strong>60rem</strong> (deep breadcrumbs need the space), and the “badges”
-                popover sits at <strong>30rem</strong>. Both panel widths are just CSS variables
-                (<code>--ms-dropdown-width</code>, <code>--ms-selected-popover-width</code>); the
-                <code>dropdown-width</code> / <code>selected-popover-width</code> attributes are
-                sugar that set those variables on the element.
-            </p>
-            <div class="note">
-                <div class="note-title">Theme once, override locally:</div>
-                Set the variables at app/theme level — <code>web-multiselect { --ms-dropdown-width: 60rem }</code>
-                — and every picker follows; the attributes then override a single instance. Defaults:
-                the dropdown tracks the input width, the popover is an intrinsic 32rem.
-            </div>
-
-            <div class="demo-area">
-                <label class="demo-label">15rem input · 60rem tree dropdown · 30rem badges popover — open the dropdown, pick a few, then click <strong>“N selected”</strong>:</label>
-                <web-multiselect id="tree-widths" multiple="true" show-checkboxes="true"
-                    checkbox-mode="cascade" badges-display-mode="count" show-counter="true"
-                    dropdown-width="60rem" selected-popover-width="30rem"
-                    style="width: 15rem;"></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>&lt;!-- Per-instance: attributes set the CSS variables on this element --&gt;
-&lt;web-multiselect
-    style="width: 15rem;"             // the control (input)
-    dropdown-width="60rem"            // → --ms-dropdown-width
-    selected-popover-width="30rem"&gt;  // → --ms-selected-popover-width
-&lt;/web-multiselect&gt;
-
-/* Or theme every picker at once — the same variables, at app level: */
-web-multiselect {
-    --ms-dropdown-width: 60rem;
-    --ms-selected-popover-width: 30rem;
-}</pre></div>
-        </section>
-
-        <!-- Example 15: Navigate mode on a tree (with fullscreen preview) -->
-        <section class="example-section">
-            <h2>TR15 · Navigate Mode — Jump Between Matches</h2>
-            <p class="description">
-                Section 3 shows the default <strong>filter</strong> search (the hierarchy narrows to matches
-                plus their ancestors). <code>search-mode="navigate"</code> is the alternative: the
-                <strong>whole tree stays visible</strong> and typing <em>jumps focus</em> between matching
-                nodes instead of hiding anything — handy on a tree, where filtering can hide the structure you
-                were reading. Matched rows keep a highlight; step through them with
-                <kbd>Ctrl</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> on desktop. In the <strong>fullscreen overlay</strong>
-                (touch, or the preview toggle below) a <code>N of M</code> count with prev/next buttons appears
-                under the search box, since touch has no keyboard shortcut.
-            </p>
-            <p class="description">
-                This picker also sets <code>show-search-mode-toggle</code>, which adds a
-                <strong>built-in mode switch</strong> to the fullscreen search bar: the leading icon
-                (magnifier = navigate, funnel = filter) flips the mode <em>in place</em> on tap — no reopen.
-                Enable fullscreen preview, then tap the icon to switch without touching the host-page radios.
-            </p>
-            <div class="controls">
-                <span>Search mode:</span>
-                <label><input type="radio" name="tree-nav-mode" value="filter"> <code>filter</code></label>
-                <label><input type="radio" name="tree-nav-mode" value="navigate" checked> <code>navigate</code></label>
-            </div>
-            <label class="toggle-label">
-                <input type="checkbox" id="tree-nav-fs-preview"> Preview as fullscreen (desktop)
-            </label>
-            <div class="demo-area">
-                <label class="demo-label">Open the tree and type <code>a</code> — in navigate mode every node stays put and focus jumps between the matches:</label>
-                <web-multiselect id="tree-navigate" multiple="true" search-mode="navigate" show-search-mode-toggle></web-multiselect>
-            </div>
-
-            <div class="code-block"><pre>&lt;!-- keep the whole tree on screen; jump focus between matches --&gt;
-&lt;web-multiselect path-member="path" search-mode="navigate"&gt;&lt;/web-multiselect&gt;
-
-&lt;!-- add a built-in filter&lt;-&gt;navigate toggle to the fullscreen search bar --&gt;
-&lt;web-multiselect path-member="path" search-mode="navigate" show-search-mode-toggle&gt;&lt;/web-multiselect&gt;
-
-/* Fullscreen (phones) adds a count + prev/next match navigator automatically;
-   desktop steps with Ctrl+ArrowUp / Ctrl+ArrowDown. */</pre></div>
         </section>
     </div>
 
@@ -637,22 +590,169 @@ web-multiselect {
         });
 
         customElements.whenDefined('web-multiselect').then(() => {
-            // Dot-path examples.
-            for (const id of ['tree-basic', 'tree-single', 'tree-checks', 'tree-search', 'tree-wide', 'tree-bold']) {
+            // ---- TR01 · The tree model — dot-path + slash-path -----------------
+            for (const id of ['tree-basic']) {
                 const el = document.querySelector('#' + id);
                 el.valueMember = 'value';
                 el.displayValueMember = 'label';
                 el.pathMember = 'path';
                 el.options = categories;
             }
-
-            // Custom separator example.
             const slash = document.querySelector('#tree-slash');
             slash.valueMember = 'value';
             slash.displayValueMember = 'label';
             slash.pathMember = 'path';
             slash.options = slashCategories;
 
+            // ---- TR02 · Selection, checkboxes & cascade ------------------------
+            // One live picker: multiple / show-checkboxes / checkbox-mode /
+            // cascade-select-policy all flip live, and the current selection re-projects.
+            const sel = document.querySelector('#tree-select');
+            sel.valueMember = 'value';
+            sel.displayValueMember = 'label';
+            sel.pathMember = 'path';
+            sel.options = categories;
+
+            const emittedOut = document.querySelector('#casc-emitted');
+            const selMultiple = document.querySelector('#sel-multiple');
+            const selChecks = document.querySelector('#sel-checks');
+            const modeGroup = document.querySelector('#mode-group');
+            const policyGroup = document.querySelector('#policy-group');
+            const showEmitted = () => { emittedOut.textContent = JSON.stringify(sel.getValue()); };
+            sel.addEventListener('change', showEmitted);
+
+            // Enable each control only where it has an effect, following the chain:
+            //   show-checkboxes → only multi-select renders checkboxes
+            //   checkbox-mode   → only when checkboxes are shown
+            //   cascade policy  → only in cascade mode
+            const setGroupEnabled = (group, on) => {
+                group.dataset.disabled = String(!on);
+                group.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
+            };
+            const syncEnablement = () => {
+                const multipleOn = selMultiple.checked;
+                const checksOn = multipleOn && selChecks.checked;
+                const cascadeOn = checksOn && document.querySelector('input[name="cb-mode"][value="cascade"]').checked;
+                selChecks.disabled = !multipleOn;
+                selChecks.closest('label').style.opacity = multipleOn ? '' : '0.45';
+                setGroupEnabled(modeGroup, checksOn);
+                setGroupEnabled(policyGroup, cascadeOn);
+            };
+
+            // multiple: default on → removeAttribute; off → multiple="false".
+            selMultiple.addEventListener('change', (e) => {
+                e.target.checked ? sel.removeAttribute('multiple') : sel.setAttribute('multiple', 'false');
+                syncEnablement();
+                showEmitted();
+            });
+            // show-checkboxes: write the explicit value — the attribute defaults to true
+            // when ABSENT, so removing it wouldn't hide them.
+            selChecks.addEventListener('change', (e) => {
+                sel.setAttribute('show-checkboxes', String(e.target.checked));
+                syncEnablement();
+            });
+            document.querySelectorAll('input[name="cb-mode"]').forEach((r) => {
+                r.addEventListener('change', () => {
+                    if (!r.checked) return;
+                    sel.checkboxMode = r.value; // 'independent' | 'cascade'
+                    syncEnablement();
+                    showEmitted();
+                });
+            });
+            document.querySelectorAll('input[name="cb-policy"]').forEach((r) => {
+                r.addEventListener('change', () => {
+                    if (r.checked) sel.cascadeSelectPolicy = r.value;
+                    showEmitted();
+                });
+            });
+
+            // Initial state: multiple + checkboxes on, mode independent → policy disabled.
+            syncEnablement();
+
+            // Leaves-only selectability: branches become pure structure (no checkbox,
+            // skipped by focus) while staying visually normal — not greyed out.
+            const leaves = document.querySelector('#tree-leaves');
+            leaves.valueMember = 'value';
+            leaves.displayValueMember = 'label';
+            leaves.pathMember = 'path';
+            leaves.getIsSelectableCallback = (node) => !node.hasChildren;
+            leaves.options = categories;
+
+            // Action buttons + cascade tree. Built-in select-all/clear-all plus a custom
+            // action; Select All is cascade-aware, so it emits the rolled-up roots.
+            const actions = document.querySelector('#tree-actions');
+            actions.valueMember = 'value';
+            actions.displayValueMember = 'label';
+            actions.pathMember = 'path';
+            actions.options = categories;
+            actions.actionButtons = [
+                { action: 'select-all', text: 'Select All' },
+                { action: 'clear-all', text: 'Clear All' },
+                // setSelected is silent by default; { notify: true } fires one aggregate
+                // `change` so a deliberate button press reaches the same listeners a pick does.
+                { action: 'custom', text: 'All fruit', onClick: (ms) => ms.setSelected(['fruit'], { notify: true }) }
+            ];
+
+            // ---- TR03 · Search — filter vs navigate ----------------------------
+            // One picker; a radio group flips search-mode live, a checkbox previews the
+            // fullscreen overlay (where the N-of-M match navigator shows) on desktop.
+            const treeSearch = document.querySelector('#tree-search');
+            treeSearch.valueMember = 'value';
+            treeSearch.displayValueMember = 'label';
+            treeSearch.pathMember = 'path';
+            treeSearch.options = categories;
+            document.querySelectorAll('input[name="tree-nav-mode"]').forEach((r) => {
+                r.addEventListener('change', () => {
+                    if (r.checked) treeSearch.setAttribute('search-mode', r.value);
+                });
+            });
+            document.querySelector('#tree-nav-fs-preview').addEventListener('change', (e) => {
+                treeSearch.setAttribute('mobile-presentation', e.target.checked ? 'fullscreen' : 'auto');
+            });
+
+            // ---- TR04 · Styling rows -------------------------------------------
+            // Indentation (wide + bold branch labels).
+            for (const id of ['tree-wide', 'tree-bold']) {
+                const el = document.querySelector('#' + id);
+                el.valueMember = 'value';
+                el.displayValueMember = 'label';
+                el.pathMember = 'path';
+                el.options = categories;
+            }
+            const bold = document.querySelector('#tree-bold');
+            bold.customStylesCallback = () => `
+                .ms__option--tree-branch .ms__option-title { font-weight: 600; }
+                .ms__option--tree-leaf   .ms__option-title { font-weight: 400; }
+            `;
+
+            // Row-height + long-label handling — give these deliberately long labels.
+            for (const id of ['tree-truncate', 'tree-tall']) {
+                const el = document.querySelector('#' + id);
+                el.valueMember = 'value';
+                el.displayValueMember = 'label';
+                el.pathMember = 'path';
+                el.options = categories.map(c => ({ ...c, label: `${c.label} — a deliberately long category label that may need truncation or a taller row` }));
+            }
+
+            // Custom node rendering. Content via the render callback (compact: label +
+            // muted child count from ctx); full-row background per node type via the
+            // branch/leaf theming hooks (customStylesCallback), since the render callback
+            // only fills the content area after the checkbox.
+            const render = document.querySelector('#tree-render');
+            render.valueMember = 'value';
+            render.displayValueMember = 'label';
+            render.pathMember = 'path';
+            render.options = categories;
+            render.renderOptionContentCallback = (item, ctx) => ctx.isBranch
+                ? `<span><strong>${item.label}</strong> <small class="node-count">${ctx.childCount}</small></span>`
+                : `<span>${item.label}</span>`;
+            render.customStylesCallback = () => `
+                .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }
+                .ms__option--tree-leaf   { background: #fff; }
+                .node-count { opacity: .55; font-weight: 400; }
+            `;
+
+            // ---- TR05 · Breadcrumbs & selection display ------------------------
             // Full breadcrumb on badges (two items pre-selected).
             const ft = document.querySelector('#tree-fulltitle');
             ft.valueMember = 'value';
@@ -662,8 +762,32 @@ web-multiselect {
             ft.options = withFullTitles;
             ft.setSelected(['apple', 'kale']);
 
-            // Real data — the full ISCO-08 occupation classification (619 groups),
-            // fetched as JSON. Leaves-only (unit groups) selectable; breadcrumb badges.
+            // No inline badges — count mode + selected-items popover. The popover reuses
+            // badge rendering, so a full-title breadcrumb per row makes the list readable.
+            const count = document.querySelector('#tree-count');
+            count.valueMember = 'value';
+            count.displayValueMember = 'label';
+            count.pathMember = 'path';
+            count.fullTitleMember = 'fullTitle';
+            count.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
+            count.options = withFullTitles;
+            count.setSelected(['apple', 'peach', 'kale']);
+
+            // Three independently-sized panels: narrow input, wide dropdown, medium popover.
+            // Widths come from the attributes on the element; here we just supply data +
+            // breadcrumb rows so the wide dropdown / popover have something rich to show.
+            const widths = document.querySelector('#tree-widths');
+            widths.valueMember = 'value';
+            widths.displayValueMember = 'label';
+            widths.pathMember = 'path';
+            widths.fullTitleMember = 'fullTitle';
+            widths.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
+            widths.options = withFullTitles;
+
+            // ---- TR06 · Real data (ISCO-08) + scroll-to API --------------------
+            // The full ISCO-08 occupation classification (619 groups), fetched as JSON.
+            // Leaves-only (unit groups) selectable; breadcrumb badges. The scroll-to demo
+            // reuses the same data.
             fetch('./examples-data/isco08.json')
                 .then(r => r.json())
                 .then(isco => {
@@ -686,7 +810,7 @@ web-multiselect {
                     el.getBadgeTooltipCallback = (item) => item.fullTitle || item.label;
                     el.options = isco;
 
-                    // --- TR09b · Scroll-to API in a tree (reuses the ISCO data) ---
+                    // --- Scroll-to API in a tree (reuses the ISCO data) ---
                     const treeScroll = document.querySelector('#tree-scroll');
                     const trLogEl = document.querySelector('#tr-scroll-log');
                     if (treeScroll && trLogEl) {
@@ -749,134 +873,6 @@ web-multiselect {
                         });
                     }
                 });
-
-            // Leaves-only selectability: branches become pure structure (no checkbox,
-            // skipped by focus) while staying visually normal — not greyed out.
-            const leaves = document.querySelector('#tree-leaves');
-            leaves.valueMember = 'value';
-            leaves.displayValueMember = 'label';
-            leaves.pathMember = 'path';
-            leaves.getIsSelectableCallback = (node) => !node.hasChildren;
-            leaves.options = categories;
-
-            // Row-height + long-label handling — give these deliberately long labels.
-            for (const id of ['tree-truncate', 'tree-tall']) {
-                const el = document.querySelector('#' + id);
-                el.valueMember = 'value';
-                el.displayValueMember = 'label';
-                el.pathMember = 'path';
-                el.options = categories.map(c => ({ ...c, label: `${c.label} — long label that may need truncation or a taller row` }));
-            }
-
-            // Cascade checkbox mode — one live picker driven by a control panel.
-            // checkbox-mode and cascade-select-policy are both applied live, so the
-            // current selection re-projects the instant a radio flips.
-            const casc = document.querySelector('#tree-casc-live');
-            casc.valueMember = 'value';
-            casc.displayValueMember = 'label';
-            casc.pathMember = 'path';
-            casc.options = categories;
-
-            const emittedOut = document.querySelector('#casc-emitted');
-            const policyGroup = document.querySelector('#policy-group');
-            const showEmitted = () => { emittedOut.textContent = JSON.stringify(casc.getValue()); };
-            casc.addEventListener('change', showEmitted);
-
-            document.querySelectorAll('input[name="cb-mode"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    const cascade = r.value === 'cascade' && r.checked;
-                    casc.checkboxMode = cascade ? 'cascade' : 'independent';
-                    // Policy only applies in cascade mode — enable/disable the group to match.
-                    policyGroup.dataset.disabled = String(!cascade);
-                    policyGroup.querySelectorAll('input').forEach((p) => { p.disabled = !cascade; });
-                    showEmitted();
-                });
-            });
-            document.querySelectorAll('input[name="cb-policy"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    if (r.checked) casc.cascadeSelectPolicy = r.value;
-                    showEmitted();
-                });
-            });
-
-            // Action buttons + cascade tree. Built-in select-all/clear-all plus a custom
-            // action; Select All is cascade-aware, so it emits the rolled-up roots.
-            const actions = document.querySelector('#tree-actions');
-            actions.valueMember = 'value';
-            actions.displayValueMember = 'label';
-            actions.pathMember = 'path';
-            actions.options = categories;
-            actions.actionButtons = [
-                { action: 'select-all', text: 'Select All' },
-                { action: 'clear-all', text: 'Clear All' },
-                // setSelected is silent by default; { notify: true } fires one aggregate
-                // `change` so a deliberate button press reaches the same listeners a pick does.
-                { action: 'custom', text: 'All fruit', onClick: (ms) => ms.setSelected(['fruit'], { notify: true }) }
-            ];
-
-            // Custom node rendering. Content via the render callback (compact: label +
-            // muted child count from ctx); full-row background per node type via the
-            // branch/leaf theming hooks (customStylesCallback), since the render callback
-            // only fills the content area after the checkbox.
-            const render = document.querySelector('#tree-render');
-            render.valueMember = 'value';
-            render.displayValueMember = 'label';
-            render.pathMember = 'path';
-            render.options = categories;
-            render.renderOptionContentCallback = (item, ctx) => ctx.isBranch
-                ? `<span><strong>${item.label}</strong> <small class="node-count">${ctx.childCount}</small></span>`
-                : `<span>${item.label}</span>`;
-            render.customStylesCallback = () => `
-                .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }
-                .ms__option--tree-leaf   { background: #fff; }
-                .node-count { opacity: .55; font-weight: 400; }
-            `;
-
-            // No inline badges — count mode + selected-items popover. The popover reuses
-            // badge rendering, so a full-title breadcrumb per row makes the list readable.
-            const count = document.querySelector('#tree-count');
-            count.valueMember = 'value';
-            count.displayValueMember = 'label';
-            count.pathMember = 'path';
-            count.fullTitleMember = 'fullTitle';
-            count.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
-            count.options = withFullTitles;
-            count.setSelected(['apple', 'peach', 'kale']);
-
-            // Three independently-sized panels: narrow input, wide dropdown, medium popover.
-            // Widths come from the attributes on the element; here we just supply data +
-            // breadcrumb rows so the wide dropdown / popover have something rich to show.
-            const widths = document.querySelector('#tree-widths');
-            widths.valueMember = 'value';
-            widths.displayValueMember = 'label';
-            widths.pathMember = 'path';
-            widths.fullTitleMember = 'fullTitle';
-            widths.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
-            widths.options = withFullTitles;
-
-            // Navigate mode on a tree — whole tree stays visible, focus jumps between
-            // matches. A radio group flips search-mode live; a checkbox previews the
-            // fullscreen overlay (where the N-of-M match navigator shows) on desktop.
-            const treeNav = document.querySelector('#tree-navigate');
-            treeNav.valueMember = 'value';
-            treeNav.displayValueMember = 'label';
-            treeNav.pathMember = 'path';
-            treeNav.options = categories;
-            document.querySelectorAll('input[name="tree-nav-mode"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    if (r.checked) treeNav.setAttribute('search-mode', r.value);
-                });
-            });
-            document.querySelector('#tree-nav-fs-preview').addEventListener('change', (e) => {
-                treeNav.setAttribute('mobile-presentation', e.target.checked ? 'fullscreen' : 'auto');
-            });
-
-            // Bold the branch (parent) rows via a shadow-DOM stylesheet.
-            const bold = document.querySelector('#tree-bold');
-            bold.customStylesCallback = () => `
-                .ms__option--tree-branch .ms__option-title { font-weight: 600; }
-                .ms__option--tree-leaf   .ms__option-title { font-weight: 400; }
-            `;
         });
     </script>
     <script type="module" src="examples-copy-link.js"></script>

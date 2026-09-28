@@ -48,8 +48,8 @@
         </header>
 
         <div class="card">
-            <h2>VS01 · Large Dataset Performance</h2>
-            <p>This demo tests the component with 15,000 randomly generated options to evaluate performance under heavy load.</p>
+            <h2>VS01 · Large Dataset — Performance &amp; Scroll-to API</h2>
+            <p>This demo tests the component with 15,000 randomly generated options to evaluate performance under heavy load — and lets you jump anywhere in that list with the scroll-to API.</p>
 
             <div class="card-grid stats">
                 <div class="stat">
@@ -111,6 +111,35 @@
             </div>
             -->
 
+            <h3 class="subsection">Scroll-to API</h3>
+            <p>
+                In virtual mode <code>scrollToIndex</code> / <code>scrollToValue</code> scroll by
+                fixed-height <strong>index math</strong> — the target row need not be rendered, so
+                jumping to item #14,999 in this 15,000-row list is instant. Pair with <code>open()</code>
+                for an "open + jump" gesture. Default alignment is <code>start</code> (target at the top);
+                pass <code>{ block: 'center' }</code> to center it. The buttons below drive the same picker.
+            </p>
+            <div class="form-group mt-1">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button type="button" data-vs="index:0">⇱ index 0</button>
+                    <button type="button" data-vs="index:7500">index 7500</button>
+                    <button type="button" data-vs="index:14999">index 14999 (last)</button>
+                    <button type="button" data-vs="value:12345">value 12345</button>
+                    <button type="button" data-vs="center:7500">index 7500 · block "center"</button>
+                    <button type="button" data-vs="clear">clearSearch()</button>
+                </div>
+                <span class="form-text">The log shows the resulting <code>scrollTop</code> and which rows landed in view.</span>
+            </div>
+            <div id="vs-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>el.open();
+el.scrollToIndex(14999);              // instant — row 14,999 isn't rendered yet
+el.scrollToValue(12345);             // resolves value → index
+el.scrollToIndex(7500, { block: 'center' });</code></pre>
+            </details>
+
             <div class="note warning">
                 <div class="note-title">💡 Performance Tips</div>
                 <ul>
@@ -147,48 +176,6 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2>VS03 · Scroll-to API with virtual scroll</h2>
-            <p>
-                In virtual mode <code>scrollToIndex</code> / <code>scrollToValue</code> scroll by
-                fixed-height <strong>index math</strong> — the target row need not be rendered, so
-                jumping to item #14,999 in a 15,000-row list is instant. Pair with <code>open()</code>
-                for an "open + jump" gesture. Default alignment is <code>start</code> (target at the top);
-                pass <code>{ block: 'center' }</code> to center it.
-            </p>
-            <div class="form-group mt-1">
-                <label for="scroll-virtual-large">15,000 options</label>
-                <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
-                    <div style="flex:1 1 260px; min-width:260px;">
-                        <web-multiselect
-                            id="scroll-virtual-large"
-                            value-member="value"
-                            display-value-member="label"
-                            enable-virtual-scroll="true"
-                            virtual-scroll-threshold="100"
-                            search-placeholder="Search or use the buttons..."></web-multiselect>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:210px;">
-                        <button type="button" data-vs="index:0">⇱ index 0</button>
-                        <button type="button" data-vs="index:7500">index 7500</button>
-                        <button type="button" data-vs="index:14999">index 14999 (last)</button>
-                        <button type="button" data-vs="value:12345">value 12345</button>
-                        <button type="button" data-vs="center:7500">index 7500 · block "center"</button>
-                        <button type="button" data-vs="clear">clearSearch()</button>
-                    </div>
-                </div>
-                <span class="form-text">The log shows the resulting <code>scrollTop</code> and which rows landed in view.</span>
-            </div>
-            <div id="vs-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>el.open();
-el.scrollToIndex(14999);              // instant — row 14,999 isn't rendered yet
-el.scrollToValue(12345);             // resolves value → index
-el.scrollToIndex(7500, { block: 'center' });</code></pre>
-            </details>
-        </div>
     </div>
 
     <script type="module">
@@ -388,8 +375,8 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 });
             }
 
-            // --- VS03 · Scroll-to API with virtual scroll ------------
-            const vsLarge = document.getElementById('scroll-virtual-large');
+            // --- Scroll-to API (drives the same #performance-test 15k picker) ------------
+            const vsLarge = document.getElementById('performance-test');
             const vsLogEl = document.getElementById('vs-scroll-log');
             const vsLog = (msg) => {
                 if (!vsLogEl) return;
@@ -422,7 +409,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 vsLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows ${lbl(first)} … ${lbl(last)} (${visible.length} rows)${note}`);
             };
             if (vsLarge) {
-                vsLarge.options = largeDataset.map((item) => ({ value: item.id, label: item.name }));
+                // Options are already seeded on #performance-test in the filter-mode block above.
                 document.querySelectorAll('[data-vs]').forEach((btn) => {
                     btn.addEventListener('click', (e) => {
                         // stopPropagation: keep this outside-the-component click from bubbling to the

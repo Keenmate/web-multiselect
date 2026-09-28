@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.0-rc02] - 2026-09-28 [PUBLISHED]
 
 ### Added
 
@@ -40,6 +40,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   live demonstration that a custom header can adapt to the presentation via `GroupLabelRenderContext`
   (which extends `PresentationContext`), reactively (the callback is re-invoked when the presentation
   changes). Demo-only; no component behavior change.
+
+### Fixed
+
+- **Per-group count chip now scales with the header in the phone fullscreen overlay.**
+  The chip pinned `--ms-counter-font-size` (baked at `:host` against the base `--ms-rem`,
+  so it doesn't scale), while the fullscreen overlay re-declares a larger
+  `--ms-group-label-font-size` and the row inherits a taller line-height — leaving the
+  count as small text in an oversized, distorted box. The chip now *inherits* the
+  group-label font-size (colours / weight / radius still borrow the in-input counter),
+  so it scales with the header in the overlay and its box height matches the header text
+  line, preserving the no-layout-shift behaviour.
+
+- **Single-select no longer keeps a stale multi-selection when seeded with more than one value.**
+  `parseInitialSelection()` added *every* seeded value to `selectedValues` unconditionally, so a
+  single-select (`multiple="false"`) could hold — and highlight — several rows at once. This surfaced
+  two ways: a declarative `initial-values="a,b,c"` on a single-select, and (more visibly) flipping
+  `multiple` from `true`→`false` at runtime while items were selected — the reinit preserves the live
+  selection and reseeds it into the fresh single-select picker, leaving the extra options rendered with
+  the selected highlight even though only one is really the value. The picker now trims the seed to the
+  first value when `isMultipleEnabled` is false, so exactly one row stays selected.
+
+- **Async `searchCallback` dropdown no longer overflows the viewport when it opens near the bottom
+  of the screen.** With an async search that seeds no options, the panel is anchored while it's still
+  empty / showing the loader — short, so it fits below the input and (with the default `lock-placement`)
+  freezes its placement to `bottom`. When the results resolved, the panel grew to full height but stayed
+  pinned below the input, running off the bottom edge instead of flipping above into the free space —
+  `renderDropdown()` rewrote the list but never re-anchored. `performAsyncSearch()` now calls a new
+  `repositionDropdown()` after the results (and the keep-options error) render, which tears down and
+  recreates the Floating-UI anchor so core's flip-on-first-compute re-evaluates against the panel's real
+  height, then re-freezes. Scoped to the async path only, so `lock-placement` is unaffected for the
+  common case (locally-filtered dropdowns open already-populated and never take this path).
 
 ## [2.2.0-rc01] - 2026-09-26 [PUBLISHED]
 
