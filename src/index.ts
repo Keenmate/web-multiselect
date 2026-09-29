@@ -53,6 +53,10 @@ export type {
   BadgeContentRenderContext,
   GroupLabelRenderContext,
   SelectedContentRenderContext,
+  ActionButton,
+  ActionContext,
+  MultiSelectController,
+  MultiSelectKeyboardController,
 } from './types';
 
 // Export logging utilities for runtime control

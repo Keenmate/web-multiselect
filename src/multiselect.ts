@@ -12,7 +12,7 @@ import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, des
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
 import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
-import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions } from './types';
+import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext } from './types';
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import { VirtualScroll } from './virtual-scroll';
 import { createLTree, type LTree } from './tree/ltree';
@@ -261,8 +261,8 @@ export class WebMultiSelect<T = any> {
      * Badge display falls back to the regular display value rather than '[N/A]', so consumers can override badge
      * text independently. Doesn't fit the extractField shape (no tuple/member layer of its own).
      */
-    private getItemBadgeDisplayValue(item: T): string {
-        if (this.options.getBadgeDisplayCallback) return this.options.getBadgeDisplayCallback(item);
+    private getItemBadgeDisplayValue(item: T, context?: BadgeContentRenderContext): string {
+        if (this.options.getBadgeDisplayCallback) return this.options.getBadgeDisplayCallback(item, context);
         if (this.options.isBadgeFullTitleShown) {
             const fullTitle = this.getItemFullTitle(item);
             if (fullTitle) return fullTitle;
@@ -1430,7 +1430,9 @@ export class WebMultiSelect<T = any> {
         // data-button-index so click/tooltip lookups still resolve to the right config entry.
         const rows = new Map<number, string[]>();
         buttons.forEach((button, buttonIndex) => {
-            const isVisible = button.getIsVisibleCallback ? button.getIsVisibleCallback(this) : (button.isVisible ?? true);
+            // Typed context (state + controller), additive 2nd arg to every action callback.
+            const ctx = this.buildActionContext(button);
+            const isVisible = button.getIsVisibleCallback ? button.getIsVisibleCallback(this, ctx) : (button.isVisible ?? true);
             if (!isVisible) return;
 
             // Precedence: explicit dynamic callback > explicit static isDisabled > built-in default
@@ -1438,7 +1440,7 @@ export class WebMultiSelect<T = any> {
             // hasn't said otherwise).
             let isDisabled: boolean;
             if (button.getIsDisabledCallback) {
-                isDisabled = button.getIsDisabledCallback(this);
+                isDisabled = button.getIsDisabledCallback(this, ctx);
             } else if (button.isDisabled !== undefined) {
                 isDisabled = button.isDisabled;
             } else {
@@ -1446,11 +1448,11 @@ export class WebMultiSelect<T = any> {
             }
             const disabledAttr = isDisabled ? ' disabled' : '';
 
-            const text = button.getTextCallback ? button.getTextCallback(this) : button.text;
+            const text = button.getTextCallback ? button.getTextCallback(this, ctx) : button.text;
 
             let cssClass = '';
             if (button.getClassCallback) {
-                const extra = this.classSuffix(button.getClassCallback(this));
+                const extra = this.classSuffix(button.getClassCallback(this, ctx));
                 if (extra) cssClass = ` ${extra}`;
             } else if (button.cssClass) {
                 cssClass = ` ${button.cssClass}`;
@@ -2473,7 +2475,7 @@ export class WebMultiSelect<T = any> {
                 const buttonIndex = parseInt(actionBtn.dataset.buttonIndex || '-1');
                 const button = this.options.actionButtons?.[buttonIndex];
                 if (button?.onClick) {
-                    button.onClick(this);
+                    button.onClick(this, this.buildActionContext(button));
                 }
             }
             return;
@@ -2720,6 +2722,21 @@ export class WebMultiSelect<T = any> {
     private getKeyboardController(): MultiSelectKeyboardController<T> {
         if (this.keyboardController) return this.keyboardController;
         this.keyboardController = {
+            // ── shared MultiSelectController surface (also used by ActionContext) ──
+            getSelected: () => this.getSelected(),
+            getValue: () => this.getValue(),
+            getOptions: () => this.allOptions,
+            setSelected: (values, opts) => this.setSelected(values, opts),
+            selectAll: () => this.selectAll(),
+            clearAll: () => this.clearAll(),
+            toggle: () => this.toggle(),
+            search: (term: string) => this.search(term),
+            scrollToValue: (value: string | number) => { this.scrollToValue(value); },
+            scrollToGroup: (group: string) => { this.scrollToGroup(group); },
+            scrollToIndex: (index: number) => { this.scrollToIndex(index); },
+            showMessage: (content, opts) => this.showMessage(content, opts),
+            hideMessage: () => this.hideMessage(),
+            // ── keyboard-navigation surface ──
             focusNext: () => this.focusNext(),
             focusPrevious: () => this.focusPrevious(),
             focusFirst: () => this.focusFirst(),
@@ -2757,6 +2774,37 @@ export class WebMultiSelect<T = any> {
             clearSearch: () => this.clearSearch(),
         };
         return this.keyboardController;
+    }
+
+    /**
+     * The host custom element — `this.element` is the internal `.ms` mount (inside the shadow
+     * root), so the host is its root node's `host` when shadowed, else the mount itself. Used as
+     * the {@link ActionContext} escape hatch (and where a wrapper hangs a server bridge).
+     */
+    private hostEl(): HTMLElement {
+        const root = this.element.getRootNode();
+        return (root instanceof ShadowRoot ? (root.host as HTMLElement) : this.element);
+    }
+
+    /**
+     * Build the {@link ActionContext} passed (as the additive 2nd arg) to every action-button
+     * callback and the `onClick` event: a snapshot of live state plus the shared controller.
+     */
+    private buildActionContext(button: ActionButton<T>): ActionContext<T> {
+        const selectedOptions = this.getSelected();
+        return {
+            button,
+            selectedValues: selectedOptions.map(o => this.getItemValue(o)),
+            selectedOptions,
+            options: this.allOptions,
+            selectedCount: selectedOptions.length,
+            optionCount: this.allOptions.length,
+            isOpen: this.isOpen,
+            searchTerm: this.searchTerm,
+            controller: this.getKeyboardController(),
+            element: this.hostEl() as HTMLElement & Record<string, any>,
+            ...presentationContext(this.presentationMode),
+        };
     }
 
     /** Clear the search box (both the main input and the fullscreen search) and reset the visible
@@ -4382,6 +4430,19 @@ export class WebMultiSelect<T = any> {
     }
 
     /**
+     * Build the {@link BadgeContentRenderContext} handed to the sibling `get*` callbacks
+     * (badge display / class / tooltip), so they see the same context the `render*` badge
+     * callbacks get: `displayMode`, `isInPopover`, plus the shared presentation fields.
+     */
+    private badgeRenderContext(isInPopover: boolean): BadgeContentRenderContext {
+        return {
+            displayMode: this.options.badgesDisplayMode ?? 'badges',
+            isInPopover,
+            ...presentationContext(this.presentationMode),
+        };
+    }
+
+    /**
      * Render a removable badge for a selected option (used by the badges/partial display modes
      * and by the selected-items popover).
      *
@@ -4410,7 +4471,7 @@ export class WebMultiSelect<T = any> {
                 const classCb = this.options.getBadgeClassCallback;
                 let wrapperClasses = 'ms__badge ms__badge--custom';
                 if (classCb) {
-                    const extra = this.classSuffix(classCb(option));
+                    const extra = this.classSuffix(classCb(option, renderCtx));
                     if (extra) wrapperClasses += ' ' + extra;
                 }
                 return `<div class="${wrapperClasses}" data-value="${value}">${customHtml}</div>`;
@@ -4425,7 +4486,7 @@ export class WebMultiSelect<T = any> {
         } else if (this.options.renderBadgeContentCallback) {
             badgeContent = this.toHtml(this.options.renderBadgeContentCallback(option, renderCtx));
         } else {
-            badgeContent = this.getItemBadgeDisplayValue(option);
+            badgeContent = this.getItemBadgeDisplayValue(option, renderCtx);
         }
 
         // Resolve classes
@@ -4434,11 +4495,11 @@ export class WebMultiSelect<T = any> {
             : this.options.getBadgeClassCallback;
         let badgeClasses = 'ms__badge';
         if (classCallback) {
-            const extra = this.classSuffix(classCallback(option));
+            const extra = this.classSuffix(classCallback(option, renderCtx));
             if (extra) badgeClasses += ' ' + extra;
         }
 
-        const removeLabel = this.getItemBadgeDisplayValue(option);
+        const removeLabel = this.getItemBadgeDisplayValue(option, renderCtx);
         return `
             <div class="${badgeClasses}">
                 <span class="ms__badge-text">${badgeContent}</span>
@@ -4785,16 +4846,16 @@ export class WebMultiSelect<T = any> {
     }
 
     /** Build the badge-text tooltip content (callback overrides; default = displayValue + optional subtitle on next line). */
-    private buildBadgeTooltipContent(option: T): string | HTMLElement {
-        if (this.options.getBadgeTooltipCallback) return this.options.getBadgeTooltipCallback(option);
-        const displayValue = this.getItemBadgeDisplayValue(option);
+    private buildBadgeTooltipContent(option: T, context?: BadgeContentRenderContext): string | HTMLElement {
+        if (this.options.getBadgeTooltipCallback) return this.options.getBadgeTooltipCallback(option, context);
+        const displayValue = this.getItemBadgeDisplayValue(option, context);
         const subtitle = this.getItemSubtitle(option);
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
     }
 
     /** Build the remove-button tooltip text (callback > format string with {0} > "Remove {name}"). */
-    private buildRemoveButtonTooltipText(itemName: string, option?: T): string {
-        if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(option);
+    private buildRemoveButtonTooltipText(itemName: string, option?: T, context?: BadgeContentRenderContext): string {
+        if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(option, context);
         if (this.options.removeButtonTooltipText) return this.options.removeButtonTooltipText.replace('{0}', itemName);
         return `Remove ${itemName}`;
     }
@@ -4803,6 +4864,9 @@ export class WebMultiSelect<T = any> {
         if (!this.options.isBadgeTooltipsEnabled) return;
 
         const isPopover = !!container;
+        // Same BadgeContentRenderContext the render* badge callbacks get, so the tooltip
+        // and display siblings stay in sync with how the badge itself was rendered.
+        const badgeCtx = this.badgeRenderContext(isPopover);
         const targetContainer = container || this.badgesContainer;
         // Prefix popover tooltips so they don't collide with the main badges container's tooltips
         // (which are keyed by raw option value).
@@ -4824,15 +4888,15 @@ export class WebMultiSelect<T = any> {
                 this.spawnTooltip({
                     id: textId,
                     trigger: badgeText,
-                    content: this.buildBadgeTooltipContent(option)
+                    content: this.buildBadgeTooltipContent(option, badgeCtx)
                 });
             }
 
-            const displayValue = this.getItemBadgeDisplayValue(option);
+            const displayValue = this.getItemBadgeDisplayValue(option, badgeCtx);
             this.spawnTooltip({
                 id: removeId,
                 trigger: removeBtn,
-                content: this.buildRemoveButtonTooltipText(displayValue, option),
+                content: this.buildRemoveButtonTooltipText(displayValue, option, badgeCtx),
                 // Keep parent badge tooltip from overlapping the remove-button tooltip.
                 onBeforeShow: () => this.tooltips.get(textId)?.hide()
             });
@@ -4855,8 +4919,8 @@ export class WebMultiSelect<T = any> {
     }
 
     /** Build the option tooltip content (callback overrides; default = displayValue + optional subtitle on next line). */
-    private buildOptionTooltipContent(option: T): string | HTMLElement {
-        if (this.options.getOptionTooltipCallback) return this.options.getOptionTooltipCallback(option);
+    private buildOptionTooltipContent(option: T, context?: OptionContentRenderContext): string | HTMLElement {
+        if (this.options.getOptionTooltipCallback) return this.options.getOptionTooltipCallback(option, context);
         const displayValue = this.getItemDisplayValue(option);
         const subtitle = this.getItemSubtitle(option);
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
@@ -4880,7 +4944,22 @@ export class WebMultiSelect<T = any> {
             const option = this.filteredOptions[index];
             if (!option) return;
 
-            const content = this.buildOptionTooltipContent(option);
+            // Same OptionContentRenderContext the row was rendered with — recomputed from the
+            // identical expressions renderOption uses (selection/focus/match/disabled), so a
+            // tooltip callback sees exactly the state its row shows. Flat shape (isTreeNode:false);
+            // tree-only fields are left unset, matching the non-tree render path.
+            const value = this.getItemValue(option);
+            const context: OptionContentRenderContext = {
+                index,
+                isSelected: this.selectedValues.has(String(value)),
+                isFocused: index === this.focusedIndex,
+                isMatched: this.matchingIndices.has(index),
+                isDisabled: this.getItemDisabled(option),
+                ...presentationContext(this.presentationMode),
+                isTreeNode: false
+            };
+
+            const content = this.buildOptionTooltipContent(option, context);
             if (!content) return;
             this.spawnTooltip({
                 id: `option-${index}`,
@@ -5103,7 +5182,7 @@ export class WebMultiSelect<T = any> {
             if (!actionConfig) return;
 
             const tooltipText = actionConfig.getTooltipCallback
-                ? actionConfig.getTooltipCallback(this)
+                ? actionConfig.getTooltipCallback(this, this.buildActionContext(actionConfig))
                 : actionConfig.tooltip;
             if (!tooltipText) return;
 

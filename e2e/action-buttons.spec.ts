@@ -81,6 +81,38 @@ test.describe('layout modifiers', () => {
     });
 });
 
+test.describe('action context (additive 2nd arg)', () => {
+    test('callbacks receive a typed context with live state + a working controller', async ({ page }) => {
+        const p = picker(page, 'ctx');
+        await openDropdown(p);
+
+        // getTextCallback reads ctx.selectedCount / ctx.optionCount for the label.
+        await expect(p.locator('.ms__action-btn[data-action="select-all"]')).toHaveText('Selected 0/8');
+
+        // onClick receives the same context; it snapshots the shape and drives the
+        // picker via ctx.controller.setSelected(..., { notify: true }).
+        await p.locator('.ms__action-btn.js-ctx').click();
+
+        const seen = await page.evaluate(() => (window as any).__ctxSeen);
+        expect(seen).toMatchObject({
+            selectedCount: 0,
+            optionCount: 8,
+            isOpen: true,
+            searchTerm: '',
+            buttonAction: 'custom',
+            hasController: true,
+            elementIsHost: true,
+        });
+        expect(typeof seen.presentation).toBe('string');
+
+        // The controller mutation applied (notify:true → aggregate change).
+        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['item-0', 'item-1']);
+
+        // ...and the dynamic label re-computed from the new selection count.
+        await expect(p.locator('.ms__action-btn[data-action="select-all"]')).toHaveText('Selected 2/8');
+    });
+});
+
 test.describe('per-item callbacks fire on bulk operations', () => {
     test('select-all fires onSelect once per newly-selected item', async ({ page }) => {
         const p = picker(page, 'tracker');

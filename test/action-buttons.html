@@ -42,6 +42,11 @@
         <web-multiselect id="tracker" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">action context (additive 2nd arg)</div>
+        <web-multiselect id="ctx" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -51,7 +56,7 @@
         }));
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['builtins', 'custom', 'dynamic', 'sticky', 'wrap', 'tracker']) {
+            for (const id of ['builtins', 'custom', 'dynamic', 'sticky', 'wrap', 'tracker', 'ctx']) {
                 document.getElementById(id).options = items;
             }
 
@@ -119,6 +124,37 @@
             tracker.actionButtons = [
                 { action: 'select-all', text: 'Select all' },
                 { action: 'clear-all',  text: 'Clear all'  }
+            ];
+
+            // Action context — callbacks read the additive 2nd arg (state + controller).
+            window.__ctxSeen = null;
+            const ctxEl = document.getElementById('ctx');
+            ctxEl.actionButtons = [
+                {
+                    action: 'select-all',
+                    // Dynamic text driven entirely by the 2nd-arg context's live counts.
+                    text: 'Select all',
+                    getTextCallback: (_ms, ctx) => `Selected ${ctx.selectedCount}/${ctx.optionCount}`
+                },
+                {
+                    action: 'custom',
+                    text: 'Ctx',
+                    cssClass: 'js-ctx',
+                    onClick: (_ms, ctx) => {
+                        // Snapshot the context shape, then drive the picker through the controller.
+                        window.__ctxSeen = {
+                            selectedCount: ctx.selectedCount,
+                            optionCount: ctx.optionCount,
+                            isOpen: ctx.isOpen,
+                            presentation: ctx.presentation,
+                            searchTerm: ctx.searchTerm,
+                            buttonAction: ctx.button?.action,
+                            hasController: typeof ctx.controller?.setSelected === 'function',
+                            elementIsHost: ctx.element === ctxEl
+                        };
+                        ctx.controller.setSelected(['item-0', 'item-1'], { notify: true });
+                    }
+                }
             ];
         });
     </script>
