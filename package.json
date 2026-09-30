@@ -47,7 +47,7 @@
     "check:vars": "node scripts/check-variable-manifest.mjs",
     "check:vars:strict": "node scripts/check-variable-manifest.mjs --strict",
     "analyze": "cem analyze",
-    "build": "npm run clean:dist && npm run check:vars && npm run analyze && vite build",
+    "build": "npm run clean:dist && npm run check:vars:strict && npm run analyze && vite build",
     "build:types": "tsc",
     "build:full": "npm run build",
     "preview": "vite preview",

@@ -3,408 +3,2457 @@
   "component": "@keenmate/web-multiselect",
   "prefix": "ms",
   "baseVariables": [
-    { "name": "base-accent-color", "required": true, "usage": "Primary accent for selections, badges, focus states" },
-    { "name": "base-accent-color-hover", "required": false, "usage": "Accent hover state" },
-    { "name": "base-accent-color-active", "required": false, "usage": "Accent active/pressed state" },
-    { "name": "base-accent-color-light", "required": false, "usage": "Light accent for badge backgrounds" },
-    { "name": "base-accent-color-light-hover", "required": false, "usage": "Light accent hover state" },
-    { "name": "base-text-color-1", "required": true, "usage": "Primary text (input, options, badges)" },
-    { "name": "base-text-color-2", "required": false, "usage": "Secondary text" },
-    { "name": "base-text-color-3", "required": false, "usage": "Tertiary text (placeholders, hints, group labels)" },
-    { "name": "base-text-color-4", "required": false, "usage": "Quaternary text (placeholders)" },
-    { "name": "base-text-color-on-accent", "required": false, "usage": "Text on accent backgrounds (badges, checkboxes)" },
-    { "name": "base-main-bg", "required": true, "usage": "Primary background, hint background, actions background" },
-    { "name": "base-hover-bg", "required": false, "usage": "Hover background (drives --ms-primary-bg: option hover/focus, action-button hover, counter hover)" },
-    { "name": "base-active-bg", "required": false, "usage": "Active/pressed background (drives --ms-primary-bg-hover: selected-active, counter badge)" },
-    { "name": "base-disabled-bg", "required": false, "usage": "Disabled/readonly surface backgrounds" },
-    { "name": "base-border-color", "required": true, "usage": "Input, dropdown, action button borders" },
-    { "name": "base-border", "required": false, "usage": "Full border shorthand" },
-    { "name": "base-input-bg", "required": false, "usage": "Input field background" },
-    { "name": "base-input-color", "required": false, "usage": "Input text color" },
-    { "name": "base-input-border", "required": false, "usage": "Input border" },
-    { "name": "base-input-border-hover", "required": false, "usage": "Input border on hover" },
-    { "name": "base-input-border-focus", "required": false, "usage": "Input border when focused" },
-    { "name": "base-input-placeholder-color", "required": false, "usage": "Placeholder text color" },
-    { "name": "base-input-bg-disabled", "required": false, "usage": "Disabled input background" },
-    { "name": "base-dropdown-bg", "required": false, "usage": "Dropdown and popover backgrounds (primary; falls back to base-elevated-bg)" },
-    { "name": "base-elevated-bg", "required": false, "usage": "Elevated surface (fallback for dropdown and popover backgrounds)" },
-    { "name": "base-dropdown-border", "required": false, "usage": "Dropdown border" },
-    { "name": "base-dropdown-box-shadow", "required": false, "usage": "Dropdown shadow" },
-    { "name": "base-tooltip-bg", "required": false, "usage": "Tooltip background (primary; falls back to base-inverse-bg)" },
-    { "name": "base-inverse-bg", "required": false, "usage": "Inverse surface (fallback for tooltip background)" },
-    { "name": "base-tooltip-text-color", "required": false, "usage": "Tooltip text color" },
-    { "name": "base-font-family", "required": false, "usage": "All text in component" },
-    { "name": "base-font-size-2xs", "required": false, "usage": "Smallest text (multiplier)" },
-    { "name": "base-font-size-xs", "required": false, "usage": "Extra small text, badges (multiplier)" },
-    { "name": "base-font-size-sm", "required": false, "usage": "Small text, options (multiplier)" },
-    { "name": "base-font-size-base", "required": false, "usage": "Base text size (multiplier)" },
-    { "name": "base-font-size-lg", "required": false, "usage": "Large text (multiplier)" },
-    { "name": "base-font-size-xl", "required": false, "usage": "Extra large text (multiplier)" },
-    { "name": "base-font-weight-normal", "required": false, "usage": "Normal text weight" },
-    { "name": "base-font-weight-medium", "required": false, "usage": "Medium text weight" },
-    { "name": "base-font-weight-semibold", "required": false, "usage": "Semibold text (badges, labels)" },
-    { "name": "base-line-height-tight", "required": false, "usage": "Tight line height" },
-    { "name": "base-line-height-normal", "required": false, "usage": "Normal line height" },
-    { "name": "base-line-height-relaxed", "required": false, "usage": "Relaxed line height" },
-    { "name": "base-border-radius-sm", "required": false, "usage": "Small radius (badges, buttons)" },
-    { "name": "base-border-radius-md", "required": false, "usage": "Medium radius (input)" },
-    { "name": "base-border-radius-lg", "required": false, "usage": "Large radius (dropdown)" },
-    { "name": "base-input-size-md-height", "required": false, "usage": "Medium input height multiplier (consumed by --ms-input-height)" },
-    { "name": "base-rem", "required": false, "usage": "Global sizing unit — drives --ms-rem (falls back to 10px); scales the whole component" },
-    { "name": "base-ease-standard", "required": false, "usage": "Standard easing curve (drives --ms-easing-snappy)" },
-    { "name": "base-checkbox-border-color", "required": false, "usage": "Option checkbox border color" },
-    { "name": "base-input-clear-color", "required": false, "usage": "Inline field-clear (✕) icon color" },
-    { "name": "base-input-clear-bg-hover", "required": false, "usage": "Inline field-clear (✕) hover background" },
-    { "name": "base-icon-chevron", "required": false, "usage": "Shared chevron glyph (toggle indicator + fullscreen pager); inline Lucide SVG fallback" },
-    { "name": "base-icon-clear", "required": false, "usage": "Inline field-clear (✕) glyph; falls back to --ms-icon-remove" },
-    { "name": "base-icon-remove", "required": false, "usage": "Badge-remove glyph; falls back to base-icon-close then inline Lucide SVG" },
-    { "name": "base-icon-close", "required": false, "usage": "Generic close glyph (fallback for badge-remove)" },
-    { "name": "base-icon-search", "required": false, "usage": "Search glyph; inline Lucide SVG fallback" },
-    { "name": "base-icon-filter", "required": false, "usage": "Funnel/filter glyph (fullscreen search-mode toggle); chained by --ms-icon-filter; inline Lucide SVG fallback" },
-    { "name": "base-icon-plus", "required": false, "usage": "Plus glyph for the \"add new\" empty-state prompt; chained by --ms-icon-add-new; falls back to base-icon-add then inline Lucide SVG" },
-    { "name": "base-icon-add", "required": false, "usage": "Alternate add glyph (fallback for base-icon-plus in the \"add new\" prompt)" },
-    { "name": "base-icon-check", "required": false, "usage": "Checkbox/option checkmark glyph; chained by --ms-icon-check; inline Lucide SVG fallback" },
-    { "name": "base-icon-check-size", "required": false, "usage": "mask-size for the checkbox glyph inside its box (shared with pure-admin's .pa-checkbox); default 68%. Chained by --ms-icon-check-size. Also sizes the indeterminate dash (shares the mask box)" },
-    { "name": "base-icon-indeterminate", "required": false, "usage": "Tri-state (partial) checkbox dash glyph; chained by --ms-icon-indeterminate; inline Lucide SVG fallback" },
-    { "name": "base-danger-bg", "required": false, "usage": "Error message background" },
-    { "name": "base-danger-color", "required": false, "usage": "Error message text color" },
-    { "name": "base-warning-bg", "required": false, "usage": "Warning message background" },
-    { "name": "base-warning-color", "required": false, "usage": "Warning message text color" },
-    { "name": "base-success-bg", "required": false, "usage": "Success message background" },
-    { "name": "base-success-color", "required": false, "usage": "Success message text color" }
+    {
+      "name": "base-accent-color",
+      "required": true,
+      "usage": "Primary accent for selections, badges, focus states"
+    },
+    {
+      "name": "base-accent-color-hover",
+      "required": false,
+      "usage": "Accent hover state"
+    },
+    {
+      "name": "base-accent-color-active",
+      "required": false,
+      "usage": "Accent active/pressed state"
+    },
+    {
+      "name": "base-accent-color-light",
+      "required": false,
+      "usage": "Light accent for badge backgrounds"
+    },
+    {
+      "name": "base-accent-color-light-hover",
+      "required": false,
+      "usage": "Light accent hover state"
+    },
+    {
+      "name": "base-text-color-1",
+      "required": true,
+      "usage": "Primary text (input, options, badges)"
+    },
+    {
+      "name": "base-text-color-2",
+      "required": false,
+      "usage": "Secondary text"
+    },
+    {
+      "name": "base-text-color-3",
+      "required": false,
+      "usage": "Tertiary text (placeholders, hints, group labels)"
+    },
+    {
+      "name": "base-text-color-4",
+      "required": false,
+      "usage": "Quaternary text (placeholders)"
+    },
+    {
+      "name": "base-text-color-on-accent",
+      "required": false,
+      "usage": "Text on accent backgrounds (badges, checkboxes)"
+    },
+    {
+      "name": "base-main-bg",
+      "required": true,
+      "usage": "Primary background, hint background, actions background"
+    },
+    {
+      "name": "base-hover-bg",
+      "required": false,
+      "usage": "Hover background (drives --ms-primary-bg: option hover/focus, action-button hover, counter hover)"
+    },
+    {
+      "name": "base-active-bg",
+      "required": false,
+      "usage": "Active/pressed background (drives --ms-primary-bg-hover: selected-active, counter badge)"
+    },
+    {
+      "name": "base-disabled-bg",
+      "required": false,
+      "usage": "Disabled/readonly surface backgrounds"
+    },
+    {
+      "name": "base-border-color",
+      "required": true,
+      "usage": "Input, dropdown, action button borders"
+    },
+    {
+      "name": "base-border",
+      "required": false,
+      "usage": "Full border shorthand"
+    },
+    {
+      "name": "base-input-bg",
+      "required": false,
+      "usage": "Input field background"
+    },
+    {
+      "name": "base-input-color",
+      "required": false,
+      "usage": "Input text color"
+    },
+    {
+      "name": "base-input-border",
+      "required": false,
+      "usage": "Input border"
+    },
+    {
+      "name": "base-input-border-hover",
+      "required": false,
+      "usage": "Input border on hover"
+    },
+    {
+      "name": "base-input-border-focus",
+      "required": false,
+      "usage": "Input border when focused"
+    },
+    {
+      "name": "base-input-placeholder-color",
+      "required": false,
+      "usage": "Placeholder text color"
+    },
+    {
+      "name": "base-input-bg-disabled",
+      "required": false,
+      "usage": "Disabled input background"
+    },
+    {
+      "name": "base-dropdown-bg",
+      "required": false,
+      "usage": "Dropdown and popover backgrounds (primary; falls back to base-elevated-bg)"
+    },
+    {
+      "name": "base-elevated-bg",
+      "required": false,
+      "usage": "Elevated surface (fallback for dropdown and popover backgrounds)"
+    },
+    {
+      "name": "base-dropdown-border",
+      "required": false,
+      "usage": "Dropdown border"
+    },
+    {
+      "name": "base-dropdown-box-shadow",
+      "required": false,
+      "usage": "Dropdown shadow"
+    },
+    {
+      "name": "base-tooltip-bg",
+      "required": false,
+      "usage": "Tooltip background (primary; falls back to base-inverse-bg)"
+    },
+    {
+      "name": "base-inverse-bg",
+      "required": false,
+      "usage": "Inverse surface (fallback for tooltip background)"
+    },
+    {
+      "name": "base-tooltip-text-color",
+      "required": false,
+      "usage": "Tooltip text color"
+    },
+    {
+      "name": "base-font-family",
+      "required": false,
+      "usage": "All text in component"
+    },
+    {
+      "name": "base-font-size-2xs",
+      "required": false,
+      "usage": "Smallest text (multiplier)"
+    },
+    {
+      "name": "base-font-size-xs",
+      "required": false,
+      "usage": "Extra small text, badges (multiplier)"
+    },
+    {
+      "name": "base-font-size-sm",
+      "required": false,
+      "usage": "Small text, options (multiplier)"
+    },
+    {
+      "name": "base-font-size-base",
+      "required": false,
+      "usage": "Base text size (multiplier)"
+    },
+    {
+      "name": "base-font-size-lg",
+      "required": false,
+      "usage": "Large text (multiplier)"
+    },
+    {
+      "name": "base-font-size-xl",
+      "required": false,
+      "usage": "Extra large text (multiplier)"
+    },
+    {
+      "name": "base-font-weight-normal",
+      "required": false,
+      "usage": "Normal text weight"
+    },
+    {
+      "name": "base-font-weight-medium",
+      "required": false,
+      "usage": "Medium text weight"
+    },
+    {
+      "name": "base-font-weight-semibold",
+      "required": false,
+      "usage": "Semibold text (badges, labels)"
+    },
+    {
+      "name": "base-line-height-tight",
+      "required": false,
+      "usage": "Tight line height"
+    },
+    {
+      "name": "base-line-height-normal",
+      "required": false,
+      "usage": "Normal line height"
+    },
+    {
+      "name": "base-line-height-relaxed",
+      "required": false,
+      "usage": "Relaxed line height"
+    },
+    {
+      "name": "base-border-radius-sm",
+      "required": false,
+      "usage": "Small radius (badges, buttons)"
+    },
+    {
+      "name": "base-border-radius-md",
+      "required": false,
+      "usage": "Medium radius (input)"
+    },
+    {
+      "name": "base-border-radius-lg",
+      "required": false,
+      "usage": "Large radius (dropdown)"
+    },
+    {
+      "name": "base-input-size-md-height",
+      "required": false,
+      "usage": "Medium input height multiplier (consumed by --ms-input-height)"
+    },
+    {
+      "name": "base-rem",
+      "required": false,
+      "usage": "Global sizing unit — drives --ms-rem (falls back to 10px); scales the whole component"
+    },
+    {
+      "name": "base-ease-standard",
+      "required": false,
+      "usage": "Standard easing curve (drives --ms-easing-snappy)"
+    },
+    {
+      "name": "base-checkbox-border-color",
+      "required": false,
+      "usage": "Option checkbox border color"
+    },
+    {
+      "name": "base-input-clear-color",
+      "required": false,
+      "usage": "Inline field-clear (✕) icon color"
+    },
+    {
+      "name": "base-input-clear-bg-hover",
+      "required": false,
+      "usage": "Inline field-clear (✕) hover background"
+    },
+    {
+      "name": "base-icon-chevron",
+      "required": false,
+      "usage": "Shared chevron glyph (toggle indicator + fullscreen pager); inline Lucide SVG fallback"
+    },
+    {
+      "name": "base-icon-clear",
+      "required": false,
+      "usage": "Inline field-clear (✕) glyph; falls back to --ms-icon-remove"
+    },
+    {
+      "name": "base-icon-remove",
+      "required": false,
+      "usage": "Badge-remove glyph; falls back to base-icon-close then inline Lucide SVG"
+    },
+    {
+      "name": "base-icon-close",
+      "required": false,
+      "usage": "Generic close glyph (fallback for badge-remove)"
+    },
+    {
+      "name": "base-icon-search",
+      "required": false,
+      "usage": "Search glyph; inline Lucide SVG fallback"
+    },
+    {
+      "name": "base-icon-filter",
+      "required": false,
+      "usage": "Funnel/filter glyph (fullscreen search-mode toggle); chained by --ms-icon-filter; inline Lucide SVG fallback"
+    },
+    {
+      "name": "base-icon-plus",
+      "required": false,
+      "usage": "Plus glyph for the \"add new\" empty-state prompt; chained by --ms-icon-add-new; falls back to base-icon-add then inline Lucide SVG"
+    },
+    {
+      "name": "base-icon-add",
+      "required": false,
+      "usage": "Alternate add glyph (fallback for base-icon-plus in the \"add new\" prompt)"
+    },
+    {
+      "name": "base-icon-check",
+      "required": false,
+      "usage": "Checkbox/option checkmark glyph; chained by --ms-icon-check; inline Lucide SVG fallback"
+    },
+    {
+      "name": "base-icon-check-size",
+      "required": false,
+      "usage": "mask-size for the checkbox glyph inside its box (shared with pure-admin's .pa-checkbox); default 68%. Chained by --ms-icon-check-size. Also sizes the indeterminate dash (shares the mask box)"
+    },
+    {
+      "name": "base-icon-indeterminate",
+      "required": false,
+      "usage": "Tri-state (partial) checkbox dash glyph; chained by --ms-icon-indeterminate; inline Lucide SVG fallback"
+    },
+    {
+      "name": "base-danger-bg",
+      "required": false,
+      "usage": "Error message background"
+    },
+    {
+      "name": "base-danger-color",
+      "required": false,
+      "usage": "Error message text color"
+    },
+    {
+      "name": "base-warning-bg",
+      "required": false,
+      "usage": "Warning message background"
+    },
+    {
+      "name": "base-warning-color",
+      "required": false,
+      "usage": "Warning message text color"
+    },
+    {
+      "name": "base-success-bg",
+      "required": false,
+      "usage": "Success message background"
+    },
+    {
+      "name": "base-success-color",
+      "required": false,
+      "usage": "Success message text color"
+    }
   ],
   "componentVariables": [
-    { "name": "ms-rem", "category": "sizing", "usage": "Base sizing unit for proportional scaling (default: 10px)" },
-
-    { "name": "ms-accent-color", "category": "accent", "usage": "Primary accent color" },
-    { "name": "ms-accent-color-hover", "category": "accent", "usage": "Accent color on hover" },
-    { "name": "ms-accent-color-active", "category": "accent", "usage": "Accent color when pressed" },
-    { "name": "ms-accent-color-light", "category": "accent", "usage": "Light accent background" },
-    { "name": "ms-accent-color-light-hover", "category": "accent", "usage": "Light accent hover" },
-
-    { "name": "ms-text-color-1", "category": "text", "usage": "Primary text color" },
-    { "name": "ms-text-color-2", "category": "text", "usage": "Secondary text color" },
-    { "name": "ms-text-color-3", "category": "text", "usage": "Tertiary text color" },
-    { "name": "ms-text-color-4", "category": "text", "usage": "Quaternary text color" },
-    { "name": "ms-text-color-on-accent", "category": "text", "usage": "Text on accent backgrounds" },
-    { "name": "ms-text-primary", "category": "text", "usage": "Legacy alias for text-color-1" },
-    { "name": "ms-text-secondary", "category": "text", "usage": "Legacy alias for text-color-3" },
-
-    { "name": "ms-primary-bg", "category": "surface", "usage": "Hover/focus background (options, action buttons, counter); reads --base-hover-bg" },
-    { "name": "ms-primary-bg-hover", "category": "surface", "usage": "Active/stronger background (counter badge text); reads --base-active-bg" },
-
-    { "name": "ms-border-color", "category": "border", "usage": "Default border color" },
-    { "name": "ms-border", "category": "border", "usage": "Full border shorthand" },
-
-    { "name": "ms-input-bg", "category": "input", "usage": "Input field background" },
-    { "name": "ms-input-color", "category": "input", "usage": "Input text color" },
-    { "name": "ms-input-border", "category": "input", "usage": "Input border" },
-    { "name": "ms-input-border-hover", "category": "input", "usage": "Input border on hover" },
-    { "name": "ms-input-border-focus", "category": "input", "usage": "Input border when focused" },
-    { "name": "ms-input-placeholder-color", "category": "input", "usage": "Placeholder text color" },
-    { "name": "ms-input-bg-disabled", "category": "input", "usage": "Disabled input background" },
-    { "name": "ms-input-height", "category": "input", "usage": "Input height" },
-    { "name": "ms-input-font-size", "category": "input", "usage": "Input font size" },
-    { "name": "ms-input-border-width", "category": "input", "usage": "Input border width" },
-    { "name": "ms-input-border-radius", "category": "input", "usage": "Input border radius" },
-    { "name": "ms-input-text", "category": "input", "usage": "Input text color" },
-
-
-    { "name": "ms-toggle-color", "category": "toggle", "usage": "Toggle icon color" },
-    { "name": "ms-toggle-icon-color", "category": "toggle", "usage": "Toggle icon color (semantic)" },
-    { "name": "ms-toggle-icon-color-open", "category": "toggle", "usage": "Toggle icon color when open" },
-
-    { "name": "ms-counter-padding", "category": "counter", "usage": "Counter badge padding" },
-    { "name": "ms-counter-bg", "category": "counter", "usage": "Counter badge background" },
-    { "name": "ms-counter-color", "category": "counter", "usage": "Counter badge text color" },
-    { "name": "ms-counter-font-size", "category": "counter", "usage": "Counter badge font size" },
-    { "name": "ms-counter-font-weight", "category": "counter", "usage": "Counter badge font weight" },
-    { "name": "ms-counter-border-radius", "category": "counter", "usage": "Counter badge border radius" },
-    { "name": "ms-counter-bg-hover", "category": "counter", "usage": "Counter badge hover background" },
-    { "name": "ms-counter-badge-bg", "category": "counter", "usage": "Counter badge semantic background" },
-    { "name": "ms-counter-badge-bg-hover", "category": "counter", "usage": "Counter badge semantic hover" },
-    { "name": "ms-counter-badge-color", "category": "counter", "usage": "Counter badge semantic color" },
-
-    { "name": "ms-hint-padding", "category": "hint", "usage": "Floating hint padding" },
-    { "name": "ms-hint-border", "category": "hint", "usage": "Floating hint border" },
-    { "name": "ms-hint-border-radius", "category": "hint", "usage": "Floating hint border radius" },
-    { "name": "ms-hint-box-shadow", "category": "hint", "usage": "Floating hint shadow" },
-    { "name": "ms-hint-font-size", "category": "hint", "usage": "Floating hint font size" },
-    { "name": "ms-hint-bg", "category": "hint", "usage": "Floating hint background" },
-    { "name": "ms-hint-color", "category": "hint", "usage": "Floating hint text color" },
-    { "name": "ms-hint-border-color", "category": "hint", "usage": "Floating hint border color" },
-
-    { "name": "ms-dropdown-bg", "category": "dropdown", "usage": "Dropdown background" },
-    { "name": "ms-dropdown-text-color", "category": "dropdown", "usage": "Dropdown text color" },
-    { "name": "ms-dropdown-border", "category": "dropdown", "usage": "Dropdown border" },
-    { "name": "ms-dropdown-border-color", "category": "dropdown", "usage": "Dropdown border color" },
-    { "name": "ms-dropdown-border-radius", "category": "dropdown", "usage": "Dropdown border radius" },
-    { "name": "ms-dropdown-box-shadow", "category": "dropdown", "usage": "Dropdown shadow" },
-    { "name": "ms-dropdown-box-shadow-semantic", "category": "dropdown", "usage": "Dropdown semantic shadow" },
-    { "name": "ms-dropdown-width", "category": "dropdown", "usage": "Options dropdown width (defaults to the input width; also set via the dropdown-width attribute)" },
-    { "name": "ms-options-max-height", "category": "dropdown", "usage": "Options list max height" },
-    { "name": "ms-z-index-dropdown", "category": "dropdown", "usage": "Dropdown z-index" },
-    { "name": "ms-z-index-sticky", "category": "dropdown", "usage": "Sticky elements z-index" },
-
-    { "name": "ms-actions-gap", "category": "actions", "usage": "Actions row gap" },
-    { "name": "ms-actions-padding", "category": "actions", "usage": "Actions row padding" },
-    { "name": "ms-actions-border-bottom", "category": "actions", "usage": "Actions row border" },
-    { "name": "ms-actions-bg", "category": "actions", "usage": "Actions row background" },
-    { "name": "ms-actions-border-color", "category": "actions", "usage": "Actions row border color" },
-
-    { "name": "ms-action-btn-padding", "category": "action-button", "usage": "Action button padding" },
-    { "name": "ms-action-btn-font-size", "category": "action-button", "usage": "Action button font size" },
-    { "name": "ms-action-btn-border", "category": "action-button", "usage": "Action button border" },
-    { "name": "ms-action-btn-border-radius", "category": "action-button", "usage": "Action button border radius" },
-    { "name": "ms-action-btn-bg", "category": "action-button", "usage": "Action button background" },
-    { "name": "ms-action-btn-color", "category": "action-button", "usage": "Action button color" },
-    { "name": "ms-action-btn-bg-hover", "category": "action-button", "usage": "Action button hover background" },
-    { "name": "ms-action-btn-border-color-hover", "category": "action-button", "usage": "Action button hover border" },
-    { "name": "ms-action-button-bg", "category": "action-button", "usage": "Semantic action button background" },
-    { "name": "ms-action-button-bg-hover", "category": "action-button", "usage": "Semantic action button hover" },
-    { "name": "ms-action-button-border-color", "category": "action-button", "usage": "Semantic action button border" },
-    { "name": "ms-action-button-border-color-hover", "category": "action-button", "usage": "Semantic action button hover border" },
-    { "name": "ms-action-button-color", "category": "action-button", "usage": "Semantic action button color" },
-
-    { "name": "ms-options-padding", "category": "options", "usage": "Options container padding" },
-    { "name": "ms-group-border-top", "category": "group", "usage": "Group border top" },
-    { "name": "ms-group-margin-top", "category": "group", "usage": "Group margin top" },
-    { "name": "ms-group-padding-top", "category": "group", "usage": "Group padding top" },
-    { "name": "ms-group-border-color", "category": "group", "usage": "Group border color" },
-    { "name": "ms-group-label-padding", "category": "group", "usage": "Group label padding" },
-    { "name": "ms-group-label-font-size", "category": "group", "usage": "Group label font size" },
-    { "name": "ms-group-label-font-weight", "category": "group", "usage": "Group label font weight" },
-    { "name": "ms-group-label-color", "category": "group", "usage": "Group label color" },
-    { "name": "ms-group-label-transform", "category": "group", "usage": "Group label text transform" },
-    { "name": "ms-group-label-letter-spacing", "category": "group", "usage": "Group label letter spacing" },
-
-    { "name": "ms-option-gap", "category": "option", "usage": "Option content gap" },
-    { "name": "ms-option-padding", "category": "option", "usage": "Option padding" },
-    { "name": "ms-option-padding-h", "category": "option", "usage": "Option horizontal padding" },
-    { "name": "ms-option-color", "category": "option", "usage": "Option text color" },
-    { "name": "ms-option-bg", "category": "option", "usage": "Option background" },
-    { "name": "ms-option-bg-hover", "category": "option", "usage": "Option hover background" },
-    { "name": "ms-option-bg-focused", "category": "option", "usage": "Option focused background" },
-    { "name": "ms-option-outline-focused", "category": "option", "usage": "Option focus outline" },
-    { "name": "ms-option-focus-outline-offset", "category": "option", "usage": "Option focus outline offset" },
-    { "name": "ms-option-bg-matched", "category": "option", "usage": "Matched option background" },
-    { "name": "ms-option-border-matched", "category": "option", "usage": "Matched option border" },
-    { "name": "ms-option-bg-selected", "category": "option", "usage": "Selected option background" },
-    { "name": "ms-option-text-color", "category": "option", "usage": "Option text color (semantic)" },
-    { "name": "ms-option-color-hover", "category": "option", "usage": "Option hover color" },
-    { "name": "ms-option-color-focused", "category": "option", "usage": "Option focused color" },
-    { "name": "ms-option-outline-color-focused", "category": "option", "usage": "Option focus outline color" },
-    { "name": "ms-option-color-matched", "category": "option", "usage": "Matched option color" },
-    { "name": "ms-option-border-matched-color", "category": "option", "usage": "Matched option border color" },
-    { "name": "ms-option-bg-focused-hover", "category": "option", "usage": "Focused option hover background" },
-    { "name": "ms-option-bg-matched-hover", "category": "option", "usage": "Matched option hover background" },
-    { "name": "ms-option-bg-selected-focused", "category": "option", "usage": "Selected focused background" },
-    { "name": "ms-option-bg-selected-matched", "category": "option", "usage": "Selected matched background" },
-    { "name": "ms-option-disabled-bg", "category": "option", "usage": "Disabled option background" },
-    { "name": "ms-option-bg-disabled-selected", "category": "option", "usage": "Disabled selected background" },
-    { "name": "ms-disabled-opacity", "category": "option", "usage": "Disabled option opacity" },
-
-    { "name": "ms-option-content-gap", "category": "option-content", "usage": "Option content gap" },
-    { "name": "ms-option-icon-size", "category": "option-content", "usage": "Option icon size" },
-    { "name": "ms-option-icon-font-size", "category": "option-content", "usage": "Option icon font size" },
-    { "name": "ms-option-title-font-size", "category": "option-content", "usage": "Option title font size" },
-    { "name": "ms-option-title-color", "category": "option-content", "usage": "Option title color" },
-    { "name": "ms-option-subtitle-margin-top", "category": "option-content", "usage": "Option subtitle margin" },
-    { "name": "ms-option-subtitle-font-size", "category": "option-content", "usage": "Option subtitle font size" },
-    { "name": "ms-option-subtitle-line-height", "category": "option-content", "usage": "Option subtitle line height" },
-    { "name": "ms-option-subtitle-color", "category": "option-content", "usage": "Option subtitle color" },
-    { "name": "ms-option-mark-bg", "category": "option-content", "usage": "Search match highlight background" },
-    { "name": "ms-option-mark-color", "category": "option-content", "usage": "Search match highlight color" },
-    { "name": "ms-option-mark-font-weight", "category": "option-content", "usage": "Search match highlight weight" },
-
-    { "name": "ms-checkbox-margin-top", "category": "checkbox", "usage": "Checkbox margin top" },
-    { "name": "ms-checkbox-margin-right", "category": "checkbox", "usage": "Checkbox margin right" },
-    { "name": "ms-checkbox-margin-bottom", "category": "checkbox", "usage": "Checkbox margin bottom" },
-    { "name": "ms-checkbox-margin-left", "category": "checkbox", "usage": "Checkbox margin left" },
-    { "name": "ms-checkbox-size", "category": "checkbox", "usage": "Checkbox size" },
-    { "name": "ms-checkbox-scale", "category": "checkbox", "usage": "Checkbox scale" },
-    { "name": "ms-checkbox-align", "category": "checkbox", "usage": "Checkbox alignment" },
-    { "name": "ms-checkbox-bg", "category": "checkbox", "usage": "Checkbox background" },
-    { "name": "ms-checkbox-border", "category": "checkbox", "usage": "Checkbox border" },
-    { "name": "ms-checkbox-border-radius", "category": "checkbox", "usage": "Checkbox border radius" },
-    { "name": "ms-checkbox-checked-bg", "category": "checkbox", "usage": "Checked checkbox background" },
-    { "name": "ms-checkbox-checked-border", "category": "checkbox", "usage": "Checked checkbox border" },
-    { "name": "ms-checkbox-checkmark-color", "category": "checkbox", "usage": "Checkmark color" },
-    { "name": "ms-checkbox-hover-border-color", "category": "checkbox", "usage": "Checkbox hover border" },
-    { "name": "ms-checkbox-disabled-bg", "category": "checkbox", "usage": "Disabled checkbox background" },
-    { "name": "ms-checkbox-disabled-border", "category": "checkbox", "usage": "Disabled checkbox border" },
-    { "name": "ms-checkbox-checked-bg-hover", "category": "checkbox", "usage": "Checked checkbox hover background" },
-    { "name": "ms-checkbox-checked-border-color-hover", "category": "checkbox", "usage": "Checked checkbox hover border" },
-
-    { "name": "ms-state-min-height", "category": "empty", "usage": "Shared min-height for the empty and loading states so the dropdown doesn't resize when swapping between them" },
-    { "name": "ms-empty-padding", "category": "empty", "usage": "Empty state padding" },
-    { "name": "ms-empty-font-size", "category": "empty", "usage": "Empty state font size" },
-    { "name": "ms-empty-color", "category": "empty", "usage": "Empty state text color" },
-    { "name": "ms-loader-padding", "category": "loading", "usage": "Loader padding" },
-    { "name": "ms-loader-gap", "category": "loading", "usage": "Loader gap" },
-    { "name": "ms-loading-text-font-size", "category": "loading", "usage": "Loading text font size" },
-    { "name": "ms-loading-text-color", "category": "loading", "usage": "Loading text color" },
-    { "name": "ms-loading-color", "category": "loading", "usage": "Loading color (semantic)" },
-
-    { "name": "ms-badges-gap", "category": "badges", "usage": "Badges container gap" },
-    { "name": "ms-badges-margin-bottom", "category": "badges", "usage": "Badges margin bottom" },
-    { "name": "ms-badges-margin-top", "category": "badges", "usage": "Badges margin top" },
-    { "name": "ms-badges-margin-left", "category": "badges", "usage": "Badges margin left" },
-    { "name": "ms-badges-margin-right", "category": "badges", "usage": "Badges margin right" },
-    { "name": "ms-badge-gap", "category": "badge", "usage": "Badge internal gap" },
-    { "name": "ms-badge-height", "category": "badge", "usage": "Badge height" },
-    { "name": "ms-badge-font-size", "category": "badge", "usage": "Badge font size" },
-    { "name": "ms-badge-font-weight", "category": "badge", "usage": "Badge font weight" },
-    { "name": "ms-badge-border-radius", "category": "badge", "usage": "Badge border radius" },
-    { "name": "ms-badge-bg", "category": "badge", "usage": "Badge background" },
-    { "name": "ms-badge-bg-hover", "category": "badge", "usage": "Badge hover background" },
-    { "name": "ms-badge-bg-active", "category": "badge", "usage": "Badge active background" },
-    { "name": "ms-badge-text-padding", "category": "badge", "usage": "Badge text padding" },
-    { "name": "ms-badge-text-bg", "category": "badge", "usage": "Badge text background" },
-    { "name": "ms-badge-text-color", "category": "badge", "usage": "Badge text color" },
-    { "name": "ms-badge-text-border", "category": "badge", "usage": "Badge text border" },
-    { "name": "ms-badge-text-bg-hover", "category": "badge", "usage": "Badge text hover background" },
-    { "name": "ms-badge-text-color-hover", "category": "badge", "usage": "Badge text hover color" },
-    { "name": "ms-badge-remove-width", "category": "badge", "usage": "Badge remove button width" },
-    { "name": "ms-badge-remove-bg", "category": "badge", "usage": "Badge remove button background" },
-    { "name": "ms-badge-remove-color", "category": "badge", "usage": "Badge remove button color" },
-    { "name": "ms-badge-remove-border", "category": "badge", "usage": "Badge remove button border" },
-    { "name": "ms-badge-remove-font-size", "category": "badge", "usage": "Badge remove button font size (unused since 1.10.0 — kept for backward-compat)" },
-    { "name": "ms-badge-remove-icon-size", "category": "badge", "usage": "Badge remove X icon size (mask SVG)" },
-    { "name": "ms-badge-remove-bg-hover", "category": "badge", "usage": "Badge remove button hover background" },
-    { "name": "ms-badge-remove-box-shadow-focus", "category": "badge", "usage": "Badge remove button focus shadow" },
-    { "name": "ms-icon-remove", "category": "badge", "usage": "Remove icon as CSS url() to a mask-friendly SVG; color comes from currentColor" },
-    { "name": "ms-icon-filter", "category": "icon", "usage": "Funnel glyph (fullscreen search-mode toggle); chains to --base-icon-filter" },
-    { "name": "ms-icon-check", "category": "checkbox", "usage": "Checkmark glyph (mask) for a checked checkbox/option; chains to --base-icon-check" },
-    { "name": "ms-icon-indeterminate", "category": "checkbox", "usage": "Dash glyph (mask) for a tri-state/partial checkbox; chains to --base-icon-indeterminate" },
-    { "name": "ms-icon-check-size", "category": "checkbox", "usage": "mask-size for the checkmark/dash glyph inside the checkbox box; chains to --base-icon-check-size (default 68%, the same knob as pure-admin's .pa-checkbox)" },
-    { "name": "ms-badge-counter-bg", "category": "badge", "usage": "Counter badge background" },
-    { "name": "ms-badge-counter-border", "category": "badge", "usage": "Counter badge border" },
-    { "name": "ms-badge-counter-border-color", "category": "badge", "usage": "Counter badge border color" },
-    { "name": "ms-badge-counter-border-radius", "category": "badge", "usage": "Counter badge border radius" },
-    { "name": "ms-badge-counter-text-color", "category": "badge", "usage": "Counter badge text color" },
-    { "name": "ms-badge-counter-text-bg", "category": "badge", "usage": "Counter badge text background" },
-    { "name": "ms-badge-counter-remove-bg", "category": "badge", "usage": "Counter badge remove background" },
-    { "name": "ms-badge-counter-remove-color", "category": "badge", "usage": "Counter badge remove color" },
-    { "name": "ms-badge-counter-remove-bg-hover", "category": "badge", "usage": "Counter badge remove hover background" },
-    { "name": "ms-more-badge-bg", "category": "badge", "usage": "More badge background" },
-    { "name": "ms-more-badge-hover-bg", "category": "badge", "usage": "More badge hover background" },
-    { "name": "ms-more-badge-active-bg", "category": "badge", "usage": "More badge active background" },
-
-    { "name": "ms-count-display-margin-bottom", "category": "count", "usage": "Count display margin bottom" },
-    { "name": "ms-count-display-margin-top", "category": "count", "usage": "Count display margin top" },
-    { "name": "ms-count-display-margin-left", "category": "count", "usage": "Count display margin left" },
-    { "name": "ms-count-display-margin-right", "category": "count", "usage": "Count display margin right" },
-    { "name": "ms-counter-wrapper-bg", "category": "count", "usage": "Counter wrapper background" },
-    { "name": "ms-counter-wrapper-border", "category": "count", "usage": "Counter wrapper border" },
-    { "name": "ms-counter-wrapper-border-radius", "category": "count", "usage": "Counter wrapper border radius" },
-    { "name": "ms-counter-wrapper-padding", "category": "count", "usage": "Counter wrapper padding" },
-    { "name": "ms-counter-wrapper-gap", "category": "count", "usage": "Counter wrapper gap" },
-    { "name": "ms-counter-wrapper-bg-hover", "category": "count", "usage": "Counter wrapper hover background" },
-    { "name": "ms-counter-wrapper-border-color", "category": "count", "usage": "Counter wrapper border color" },
-    { "name": "ms-counter-wrapper-border-color-hover", "category": "count", "usage": "Counter wrapper hover border" },
-    { "name": "ms-count-text-bg", "category": "count", "usage": "Count text background" },
-    { "name": "ms-count-text-border", "category": "count", "usage": "Count text border" },
-    { "name": "ms-count-text-font-size", "category": "count", "usage": "Count text font size" },
-    { "name": "ms-count-text-color", "category": "count", "usage": "Count text color" },
-    { "name": "ms-count-clear-size", "category": "count", "usage": "Count clear button size" },
-    { "name": "ms-count-clear-bg", "category": "count", "usage": "Count clear button background" },
-    { "name": "ms-count-clear-color", "category": "count", "usage": "Count clear button color" },
-    { "name": "ms-count-clear-font-size", "category": "count", "usage": "Count clear button font size (unused since 1.10.0 — kept for backward-compat)" },
-    { "name": "ms-count-clear-icon-size", "category": "count", "usage": "Count clear X icon size (mask SVG)" },
-    { "name": "ms-count-clear-border-radius", "category": "count", "usage": "Count clear button border radius" },
-    { "name": "ms-count-clear-bg-hover", "category": "count", "usage": "Count clear button hover background" },
-    { "name": "ms-count-clear-color-hover", "category": "count", "usage": "Count clear button hover color" },
-    { "name": "ms-icon-clear", "category": "count", "usage": "Clear icon as CSS url() to a mask-friendly SVG; defaults to var(--ms-icon-remove)" },
-
-    { "name": "ms-tooltip-bg", "category": "tooltip", "usage": "Tooltip background" },
-    { "name": "ms-tooltip-text-color", "category": "tooltip", "usage": "Tooltip text color" },
-    { "name": "ms-tooltip-color", "category": "tooltip", "usage": "Tooltip color" },
-    { "name": "ms-tooltip-padding", "category": "tooltip", "usage": "Tooltip padding" },
-    { "name": "ms-tooltip-border-radius", "category": "tooltip", "usage": "Tooltip border radius" },
-    { "name": "ms-tooltip-font-size", "category": "tooltip", "usage": "Tooltip font size" },
-    { "name": "ms-tooltip-max-width", "category": "tooltip", "usage": "Tooltip max width" },
-    { "name": "ms-tooltip-shadow", "category": "tooltip", "usage": "Tooltip shadow" },
-    { "name": "ms-tooltip-z-index", "category": "tooltip", "usage": "Tooltip z-index" },
-
-    { "name": "ms-z-index-popover", "category": "popover", "usage": "Popover z-index" },
-    { "name": "ms-selected-popover-width", "category": "popover", "usage": "Selected popover width" },
-    { "name": "ms-selected-popover-max-height", "category": "popover", "usage": "Selected popover max height" },
-    { "name": "ms-selected-popover-border", "category": "popover", "usage": "Selected popover border" },
-    { "name": "ms-selected-popover-border-radius", "category": "popover", "usage": "Selected popover border radius" },
-    { "name": "ms-selected-popover-box-shadow", "category": "popover", "usage": "Selected popover shadow" },
-    { "name": "ms-selected-popover-bg", "category": "popover", "usage": "Selected popover background" },
-    { "name": "ms-selected-popover-border-color", "category": "popover", "usage": "Selected popover border color" },
-    { "name": "ms-selected-popover-header-padding", "category": "popover", "usage": "Popover header padding" },
-    { "name": "ms-selected-popover-header-bg", "category": "popover", "usage": "Popover header background" },
-    { "name": "ms-selected-popover-header-border-bottom", "category": "popover", "usage": "Popover header border" },
-    { "name": "ms-selected-popover-header-font-size", "category": "popover", "usage": "Popover header font size" },
-    { "name": "ms-selected-popover-header-font-weight", "category": "popover", "usage": "Popover header font weight" },
-    { "name": "ms-selected-popover-header-color", "category": "popover", "usage": "Popover header color" },
-    { "name": "ms-selected-popover-header-border-color", "category": "popover", "usage": "Popover header border color" },
-    { "name": "ms-popover-close-size", "category": "popover", "usage": "Popover close button size" },
-    { "name": "ms-selected-popover-close-bg", "category": "popover", "usage": "Popover close button background" },
-    { "name": "ms-selected-popover-close-color", "category": "popover", "usage": "Popover close button color" },
-    { "name": "ms-selected-popover-close-font-size", "category": "popover", "usage": "Popover close button font size (unused since 1.10.0 — kept for backward-compat)" },
-    { "name": "ms-selected-popover-close-icon-size", "category": "popover", "usage": "Popover close X icon size (mask SVG)" },
-    { "name": "ms-selected-popover-close-border-radius", "category": "popover", "usage": "Popover close button border radius" },
-    { "name": "ms-selected-popover-close-bg-hover", "category": "popover", "usage": "Popover close button hover background" },
-    { "name": "ms-selected-popover-close-color-hover", "category": "popover", "usage": "Popover close button hover color" },
-    { "name": "ms-selected-popover-body-gap", "category": "popover", "usage": "Popover body gap" },
-    { "name": "ms-selected-popover-body-padding", "category": "popover", "usage": "Popover body padding" },
-    { "name": "ms-selected-popover-body-max-height", "category": "popover", "usage": "Popover body max height" },
-
-    { "name": "ms-font-size-2xs", "category": "typography", "usage": "Extra extra small font size" },
-    { "name": "ms-font-size-xs", "category": "typography", "usage": "Extra small font size" },
-    { "name": "ms-font-size-sm", "category": "typography", "usage": "Small font size" },
-    { "name": "ms-font-size-base", "category": "typography", "usage": "Base font size" },
-    { "name": "ms-font-size-lg", "category": "typography", "usage": "Large font size" },
-    { "name": "ms-font-weight-normal", "category": "typography", "usage": "Normal font weight" },
-    { "name": "ms-font-weight-medium", "category": "typography", "usage": "Medium font weight" },
-    { "name": "ms-font-weight-semibold", "category": "typography", "usage": "Semibold font weight" },
-    { "name": "ms-line-height-none", "category": "typography", "usage": "No line height (1)" },
-    { "name": "ms-line-height-tight", "category": "typography", "usage": "Tight line height" },
-    { "name": "ms-line-height-normal", "category": "typography", "usage": "Normal line height" },
-    { "name": "ms-line-height-relaxed", "category": "typography", "usage": "Relaxed line height" },
-
-    { "name": "ms-border-radius-sm", "category": "radius", "usage": "Small border radius" },
-    { "name": "ms-border-radius-md", "category": "radius", "usage": "Medium border radius" },
-    { "name": "ms-border-radius-lg", "category": "radius", "usage": "Large border radius" },
-    { "name": "ms-border-radius", "category": "radius", "usage": "Default border radius" },
-
-    { "name": "ms-spacing-xs", "category": "spacing", "usage": "Extra small spacing" },
-    { "name": "ms-spacing-sm", "category": "spacing", "usage": "Small spacing" },
-    { "name": "ms-spacing-md", "category": "spacing", "usage": "Medium spacing" },
-    { "name": "ms-spacing-lg", "category": "spacing", "usage": "Large spacing" },
-
-    { "name": "ms-transition-fast", "category": "transition", "usage": "Fast transition duration" },
-    { "name": "ms-transition-normal", "category": "transition", "usage": "Normal transition duration" },
-    { "name": "ms-easing-snappy", "category": "transition", "usage": "Snappy easing function" },
-
-    { "name": "ms-placeholder-opacity", "category": "opacity", "usage": "Placeholder opacity" },
-    { "name": "ms-disabled-input-opacity", "category": "opacity", "usage": "Disabled input opacity" },
-
-    { "name": "ms-scrollbar-width", "category": "scrollbar", "usage": "Scrollbar width" },
-    { "name": "ms-scrollbar-track-bg", "category": "scrollbar", "usage": "Scrollbar track background" },
-    { "name": "ms-scrollbar-thumb-bg", "category": "scrollbar", "usage": "Scrollbar thumb background" },
-    { "name": "ms-scrollbar-thumb-bg-hover", "category": "scrollbar", "usage": "Scrollbar thumb hover background" },
-    { "name": "ms-scrollbar-thumb-border-radius", "category": "scrollbar", "usage": "Scrollbar thumb border radius" },
-
-    { "name": "ms-debug-bg", "category": "debug", "usage": "Debug panel background" },
-    { "name": "ms-debug-border-color", "category": "debug", "usage": "Debug panel border" },
-    { "name": "ms-debug-text-color", "category": "debug", "usage": "Debug panel text" },
-    { "name": "ms-debug-border-radius", "category": "debug", "usage": "Debug panel corner radius" },
-    { "name": "ms-debug-summary-color", "category": "debug", "usage": "Debug section heading color" },
-    { "name": "ms-debug-summary-bg-hover", "category": "debug", "usage": "Debug section heading hover background" },
-    { "name": "ms-debug-summary-outline-color", "category": "debug", "usage": "Debug section heading focus outline" },
-    { "name": "ms-debug-summary-border-radius", "category": "debug", "usage": "Debug section heading corner radius" },
-    { "name": "ms-debug-stats-bg", "category": "debug", "usage": "Debug stats nested panel background" },
-    { "name": "ms-debug-stats-border-radius", "category": "debug", "usage": "Debug stats nested panel corner radius" },
-    { "name": "ms-debug-bullet-color", "category": "debug", "usage": "Debug stat bullet marker color" },
-
-    { "name": "ms-transform-rotate-180", "category": "transform", "usage": "180 degree rotation" },
-    { "name": "ms-transform-scale-hover", "category": "transform", "usage": "Hover scale transform" },
-    { "name": "ms-transform-scale-active", "category": "transform", "usage": "Active scale transform" },
-    { "name": "ms-order-first", "category": "layout", "usage": "Order first (-1)" }
+    {
+      "name": "ms-rem",
+      "category": "sizing",
+      "usage": "Base sizing unit for proportional scaling (default: 10px)"
+    },
+    {
+      "name": "ms-accent-color",
+      "category": "accent",
+      "usage": "Primary accent color"
+    },
+    {
+      "name": "ms-accent-color-hover",
+      "category": "accent",
+      "usage": "Accent color on hover"
+    },
+    {
+      "name": "ms-accent-color-active",
+      "category": "accent",
+      "usage": "Accent color when pressed"
+    },
+    {
+      "name": "ms-accent-color-light",
+      "category": "accent",
+      "usage": "Light accent background"
+    },
+    {
+      "name": "ms-accent-color-light-hover",
+      "category": "accent",
+      "usage": "Light accent hover"
+    },
+    {
+      "name": "ms-text-color-1",
+      "category": "text",
+      "usage": "Primary text color"
+    },
+    {
+      "name": "ms-text-color-2",
+      "category": "text",
+      "usage": "Secondary text color"
+    },
+    {
+      "name": "ms-text-color-3",
+      "category": "text",
+      "usage": "Tertiary text color"
+    },
+    {
+      "name": "ms-text-color-4",
+      "category": "text",
+      "usage": "Quaternary text color"
+    },
+    {
+      "name": "ms-text-color-on-accent",
+      "category": "text",
+      "usage": "Text on accent backgrounds"
+    },
+    {
+      "name": "ms-text-primary",
+      "category": "text",
+      "usage": "Legacy alias for text-color-1"
+    },
+    {
+      "name": "ms-text-secondary",
+      "category": "text",
+      "usage": "Legacy alias for text-color-3"
+    },
+    {
+      "name": "ms-primary-bg",
+      "category": "surface",
+      "usage": "Hover/focus background (options, action buttons, counter); reads --base-hover-bg"
+    },
+    {
+      "name": "ms-primary-bg-hover",
+      "category": "surface",
+      "usage": "Active/stronger background (counter badge text); reads --base-active-bg"
+    },
+    {
+      "name": "ms-border-color",
+      "category": "border",
+      "usage": "Default border color"
+    },
+    {
+      "name": "ms-border",
+      "category": "border",
+      "usage": "Full border shorthand"
+    },
+    {
+      "name": "ms-input-bg",
+      "category": "input",
+      "usage": "Input field background"
+    },
+    {
+      "name": "ms-input-color",
+      "category": "input",
+      "usage": "Input text color"
+    },
+    {
+      "name": "ms-input-border",
+      "category": "input",
+      "usage": "Input border"
+    },
+    {
+      "name": "ms-input-border-hover",
+      "category": "input",
+      "usage": "Input border on hover"
+    },
+    {
+      "name": "ms-input-border-focus",
+      "category": "input",
+      "usage": "Input border when focused"
+    },
+    {
+      "name": "ms-input-placeholder-color",
+      "category": "input",
+      "usage": "Placeholder text color"
+    },
+    {
+      "name": "ms-input-bg-disabled",
+      "category": "input",
+      "usage": "Disabled input background"
+    },
+    {
+      "name": "ms-input-height",
+      "category": "input",
+      "usage": "Input height"
+    },
+    {
+      "name": "ms-input-font-size",
+      "category": "input",
+      "usage": "Input font size"
+    },
+    {
+      "name": "ms-input-border-width",
+      "category": "input",
+      "usage": "Input border width"
+    },
+    {
+      "name": "ms-input-border-radius",
+      "category": "input",
+      "usage": "Input border radius"
+    },
+    {
+      "name": "ms-input-text",
+      "category": "input",
+      "usage": "Input text color"
+    },
+    {
+      "name": "ms-toggle-color",
+      "category": "toggle",
+      "usage": "Toggle icon color"
+    },
+    {
+      "name": "ms-toggle-icon-color",
+      "category": "toggle",
+      "usage": "Toggle icon color (semantic)"
+    },
+    {
+      "name": "ms-toggle-icon-color-open",
+      "category": "toggle",
+      "usage": "Toggle icon color when open"
+    },
+    {
+      "name": "ms-counter-padding",
+      "category": "counter",
+      "usage": "Counter badge padding"
+    },
+    {
+      "name": "ms-counter-bg",
+      "category": "counter",
+      "usage": "Counter badge background"
+    },
+    {
+      "name": "ms-counter-color",
+      "category": "counter",
+      "usage": "Counter badge text color"
+    },
+    {
+      "name": "ms-counter-font-size",
+      "category": "counter",
+      "usage": "Counter badge font size"
+    },
+    {
+      "name": "ms-counter-font-weight",
+      "category": "counter",
+      "usage": "Counter badge font weight"
+    },
+    {
+      "name": "ms-counter-border-radius",
+      "category": "counter",
+      "usage": "Counter badge border radius"
+    },
+    {
+      "name": "ms-counter-bg-hover",
+      "category": "counter",
+      "usage": "Counter badge hover background"
+    },
+    {
+      "name": "ms-counter-badge-bg",
+      "category": "counter",
+      "usage": "Counter badge semantic background"
+    },
+    {
+      "name": "ms-counter-badge-bg-hover",
+      "category": "counter",
+      "usage": "Counter badge semantic hover"
+    },
+    {
+      "name": "ms-counter-badge-color",
+      "category": "counter",
+      "usage": "Counter badge semantic color"
+    },
+    {
+      "name": "ms-hint-padding",
+      "category": "hint",
+      "usage": "Floating hint padding"
+    },
+    {
+      "name": "ms-hint-border",
+      "category": "hint",
+      "usage": "Floating hint border"
+    },
+    {
+      "name": "ms-hint-border-radius",
+      "category": "hint",
+      "usage": "Floating hint border radius"
+    },
+    {
+      "name": "ms-hint-box-shadow",
+      "category": "hint",
+      "usage": "Floating hint shadow"
+    },
+    {
+      "name": "ms-hint-font-size",
+      "category": "hint",
+      "usage": "Floating hint font size"
+    },
+    {
+      "name": "ms-hint-bg",
+      "category": "hint",
+      "usage": "Floating hint background"
+    },
+    {
+      "name": "ms-hint-color",
+      "category": "hint",
+      "usage": "Floating hint text color"
+    },
+    {
+      "name": "ms-hint-border-color",
+      "category": "hint",
+      "usage": "Floating hint border color"
+    },
+    {
+      "name": "ms-dropdown-bg",
+      "category": "dropdown",
+      "usage": "Dropdown background"
+    },
+    {
+      "name": "ms-dropdown-text-color",
+      "category": "dropdown",
+      "usage": "Dropdown text color"
+    },
+    {
+      "name": "ms-dropdown-border",
+      "category": "dropdown",
+      "usage": "Dropdown border"
+    },
+    {
+      "name": "ms-dropdown-border-color",
+      "category": "dropdown",
+      "usage": "Dropdown border color"
+    },
+    {
+      "name": "ms-dropdown-border-radius",
+      "category": "dropdown",
+      "usage": "Dropdown border radius"
+    },
+    {
+      "name": "ms-dropdown-box-shadow",
+      "category": "dropdown",
+      "usage": "Dropdown shadow"
+    },
+    {
+      "name": "ms-dropdown-box-shadow-semantic",
+      "category": "dropdown",
+      "usage": "Dropdown semantic shadow"
+    },
+    {
+      "name": "ms-dropdown-width",
+      "category": "dropdown",
+      "usage": "Options dropdown width (defaults to the input width; also set via the dropdown-width attribute)"
+    },
+    {
+      "name": "ms-options-max-height",
+      "category": "dropdown",
+      "usage": "Options list max height"
+    },
+    {
+      "name": "ms-z-index-dropdown",
+      "category": "dropdown",
+      "usage": "Dropdown z-index"
+    },
+    {
+      "name": "ms-z-index-sticky",
+      "category": "dropdown",
+      "usage": "Sticky elements z-index"
+    },
+    {
+      "name": "ms-actions-gap",
+      "category": "actions",
+      "usage": "Actions row gap"
+    },
+    {
+      "name": "ms-actions-padding",
+      "category": "actions",
+      "usage": "Actions row padding"
+    },
+    {
+      "name": "ms-actions-border-bottom",
+      "category": "actions",
+      "usage": "Actions row border"
+    },
+    {
+      "name": "ms-actions-bg",
+      "category": "actions",
+      "usage": "Actions row background"
+    },
+    {
+      "name": "ms-actions-border-color",
+      "category": "actions",
+      "usage": "Actions row border color"
+    },
+    {
+      "name": "ms-action-btn-padding",
+      "category": "action-button",
+      "usage": "Action button padding"
+    },
+    {
+      "name": "ms-action-btn-font-size",
+      "category": "action-button",
+      "usage": "Action button font size"
+    },
+    {
+      "name": "ms-action-btn-border",
+      "category": "action-button",
+      "usage": "Action button border"
+    },
+    {
+      "name": "ms-action-btn-border-radius",
+      "category": "action-button",
+      "usage": "Action button border radius"
+    },
+    {
+      "name": "ms-action-btn-bg",
+      "category": "action-button",
+      "usage": "Action button background"
+    },
+    {
+      "name": "ms-action-btn-color",
+      "category": "action-button",
+      "usage": "Action button color"
+    },
+    {
+      "name": "ms-action-btn-bg-hover",
+      "category": "action-button",
+      "usage": "Action button hover background"
+    },
+    {
+      "name": "ms-action-btn-border-color-hover",
+      "category": "action-button",
+      "usage": "Action button hover border"
+    },
+    {
+      "name": "ms-action-button-bg",
+      "category": "action-button",
+      "usage": "Semantic action button background"
+    },
+    {
+      "name": "ms-action-button-bg-hover",
+      "category": "action-button",
+      "usage": "Semantic action button hover"
+    },
+    {
+      "name": "ms-action-button-border-color",
+      "category": "action-button",
+      "usage": "Semantic action button border"
+    },
+    {
+      "name": "ms-action-button-border-color-hover",
+      "category": "action-button",
+      "usage": "Semantic action button hover border"
+    },
+    {
+      "name": "ms-action-button-color",
+      "category": "action-button",
+      "usage": "Semantic action button color"
+    },
+    {
+      "name": "ms-options-padding",
+      "category": "options",
+      "usage": "Options container padding"
+    },
+    {
+      "name": "ms-group-border-top",
+      "category": "group",
+      "usage": "Group border top"
+    },
+    {
+      "name": "ms-group-margin-top",
+      "category": "group",
+      "usage": "Group margin top"
+    },
+    {
+      "name": "ms-group-padding-top",
+      "category": "group",
+      "usage": "Group padding top"
+    },
+    {
+      "name": "ms-group-border-color",
+      "category": "group",
+      "usage": "Group border color"
+    },
+    {
+      "name": "ms-group-label-padding",
+      "category": "group",
+      "usage": "Group label padding"
+    },
+    {
+      "name": "ms-group-label-font-size",
+      "category": "group",
+      "usage": "Group label font size"
+    },
+    {
+      "name": "ms-group-label-font-weight",
+      "category": "group",
+      "usage": "Group label font weight"
+    },
+    {
+      "name": "ms-group-label-color",
+      "category": "group",
+      "usage": "Group label color"
+    },
+    {
+      "name": "ms-group-label-transform",
+      "category": "group",
+      "usage": "Group label text transform"
+    },
+    {
+      "name": "ms-group-label-letter-spacing",
+      "category": "group",
+      "usage": "Group label letter spacing"
+    },
+    {
+      "name": "ms-option-gap",
+      "category": "option",
+      "usage": "Option content gap"
+    },
+    {
+      "name": "ms-option-padding",
+      "category": "option",
+      "usage": "Option padding"
+    },
+    {
+      "name": "ms-option-padding-h",
+      "category": "option",
+      "usage": "Option horizontal padding"
+    },
+    {
+      "name": "ms-option-color",
+      "category": "option",
+      "usage": "Option text color"
+    },
+    {
+      "name": "ms-option-bg",
+      "category": "option",
+      "usage": "Option background"
+    },
+    {
+      "name": "ms-option-bg-hover",
+      "category": "option",
+      "usage": "Option hover background"
+    },
+    {
+      "name": "ms-option-bg-focused",
+      "category": "option",
+      "usage": "Option focused background"
+    },
+    {
+      "name": "ms-option-outline-focused",
+      "category": "option",
+      "usage": "Option focus outline"
+    },
+    {
+      "name": "ms-option-focus-outline-offset",
+      "category": "option",
+      "usage": "Option focus outline offset"
+    },
+    {
+      "name": "ms-option-bg-matched",
+      "category": "option",
+      "usage": "Matched option background"
+    },
+    {
+      "name": "ms-option-border-matched",
+      "category": "option",
+      "usage": "Matched option border"
+    },
+    {
+      "name": "ms-option-bg-selected",
+      "category": "option",
+      "usage": "Selected option background"
+    },
+    {
+      "name": "ms-option-text-color",
+      "category": "option",
+      "usage": "Option text color (semantic)"
+    },
+    {
+      "name": "ms-option-color-hover",
+      "category": "option",
+      "usage": "Option hover color"
+    },
+    {
+      "name": "ms-option-color-focused",
+      "category": "option",
+      "usage": "Option focused color"
+    },
+    {
+      "name": "ms-option-outline-color-focused",
+      "category": "option",
+      "usage": "Option focus outline color"
+    },
+    {
+      "name": "ms-option-color-matched",
+      "category": "option",
+      "usage": "Matched option color"
+    },
+    {
+      "name": "ms-option-border-matched-color",
+      "category": "option",
+      "usage": "Matched option border color"
+    },
+    {
+      "name": "ms-option-bg-focused-hover",
+      "category": "option",
+      "usage": "Focused option hover background"
+    },
+    {
+      "name": "ms-option-bg-matched-hover",
+      "category": "option",
+      "usage": "Matched option hover background"
+    },
+    {
+      "name": "ms-option-bg-selected-focused",
+      "category": "option",
+      "usage": "Selected focused background"
+    },
+    {
+      "name": "ms-option-bg-selected-matched",
+      "category": "option",
+      "usage": "Selected matched background"
+    },
+    {
+      "name": "ms-option-disabled-bg",
+      "category": "option",
+      "usage": "Disabled option background"
+    },
+    {
+      "name": "ms-option-bg-disabled-selected",
+      "category": "option",
+      "usage": "Disabled selected background"
+    },
+    {
+      "name": "ms-disabled-opacity",
+      "category": "option",
+      "usage": "Disabled option opacity"
+    },
+    {
+      "name": "ms-option-content-gap",
+      "category": "option-content",
+      "usage": "Option content gap"
+    },
+    {
+      "name": "ms-option-icon-size",
+      "category": "option-content",
+      "usage": "Option icon size"
+    },
+    {
+      "name": "ms-option-icon-font-size",
+      "category": "option-content",
+      "usage": "Option icon font size"
+    },
+    {
+      "name": "ms-option-title-font-size",
+      "category": "option-content",
+      "usage": "Option title font size"
+    },
+    {
+      "name": "ms-option-title-color",
+      "category": "option-content",
+      "usage": "Option title color"
+    },
+    {
+      "name": "ms-option-subtitle-margin-top",
+      "category": "option-content",
+      "usage": "Option subtitle margin"
+    },
+    {
+      "name": "ms-option-subtitle-font-size",
+      "category": "option-content",
+      "usage": "Option subtitle font size"
+    },
+    {
+      "name": "ms-option-subtitle-line-height",
+      "category": "option-content",
+      "usage": "Option subtitle line height"
+    },
+    {
+      "name": "ms-option-subtitle-color",
+      "category": "option-content",
+      "usage": "Option subtitle color"
+    },
+    {
+      "name": "ms-option-mark-bg",
+      "category": "option-content",
+      "usage": "Search match highlight background"
+    },
+    {
+      "name": "ms-option-mark-color",
+      "category": "option-content",
+      "usage": "Search match highlight color"
+    },
+    {
+      "name": "ms-option-mark-font-weight",
+      "category": "option-content",
+      "usage": "Search match highlight weight"
+    },
+    {
+      "name": "ms-checkbox-margin-top",
+      "category": "checkbox",
+      "usage": "Checkbox margin top"
+    },
+    {
+      "name": "ms-checkbox-margin-right",
+      "category": "checkbox",
+      "usage": "Checkbox margin right"
+    },
+    {
+      "name": "ms-checkbox-margin-bottom",
+      "category": "checkbox",
+      "usage": "Checkbox margin bottom"
+    },
+    {
+      "name": "ms-checkbox-margin-left",
+      "category": "checkbox",
+      "usage": "Checkbox margin left"
+    },
+    {
+      "name": "ms-checkbox-size",
+      "category": "checkbox",
+      "usage": "Checkbox size"
+    },
+    {
+      "name": "ms-checkbox-scale",
+      "category": "checkbox",
+      "usage": "Checkbox scale"
+    },
+    {
+      "name": "ms-checkbox-align",
+      "category": "checkbox",
+      "usage": "Checkbox alignment"
+    },
+    {
+      "name": "ms-checkbox-bg",
+      "category": "checkbox",
+      "usage": "Checkbox background"
+    },
+    {
+      "name": "ms-checkbox-border",
+      "category": "checkbox",
+      "usage": "Checkbox border"
+    },
+    {
+      "name": "ms-checkbox-border-radius",
+      "category": "checkbox",
+      "usage": "Checkbox border radius"
+    },
+    {
+      "name": "ms-checkbox-checked-bg",
+      "category": "checkbox",
+      "usage": "Checked checkbox background"
+    },
+    {
+      "name": "ms-checkbox-checked-border",
+      "category": "checkbox",
+      "usage": "Checked checkbox border"
+    },
+    {
+      "name": "ms-checkbox-checkmark-color",
+      "category": "checkbox",
+      "usage": "Checkmark color"
+    },
+    {
+      "name": "ms-checkbox-hover-border-color",
+      "category": "checkbox",
+      "usage": "Checkbox hover border"
+    },
+    {
+      "name": "ms-checkbox-disabled-bg",
+      "category": "checkbox",
+      "usage": "Disabled checkbox background"
+    },
+    {
+      "name": "ms-checkbox-disabled-border",
+      "category": "checkbox",
+      "usage": "Disabled checkbox border"
+    },
+    {
+      "name": "ms-checkbox-checked-bg-hover",
+      "category": "checkbox",
+      "usage": "Checked checkbox hover background"
+    },
+    {
+      "name": "ms-checkbox-checked-border-color-hover",
+      "category": "checkbox",
+      "usage": "Checked checkbox hover border"
+    },
+    {
+      "name": "ms-state-min-height",
+      "category": "empty",
+      "usage": "Shared min-height for the empty and loading states so the dropdown doesn't resize when swapping between them"
+    },
+    {
+      "name": "ms-empty-padding",
+      "category": "empty",
+      "usage": "Empty state padding"
+    },
+    {
+      "name": "ms-empty-font-size",
+      "category": "empty",
+      "usage": "Empty state font size"
+    },
+    {
+      "name": "ms-empty-color",
+      "category": "empty",
+      "usage": "Empty state text color"
+    },
+    {
+      "name": "ms-loader-padding",
+      "category": "loading",
+      "usage": "Loader padding"
+    },
+    {
+      "name": "ms-loader-gap",
+      "category": "loading",
+      "usage": "Loader gap"
+    },
+    {
+      "name": "ms-loading-text-font-size",
+      "category": "loading",
+      "usage": "Loading text font size"
+    },
+    {
+      "name": "ms-loading-text-color",
+      "category": "loading",
+      "usage": "Loading text color"
+    },
+    {
+      "name": "ms-loading-color",
+      "category": "loading",
+      "usage": "Loading color (semantic)"
+    },
+    {
+      "name": "ms-badges-gap",
+      "category": "badges",
+      "usage": "Badges container gap"
+    },
+    {
+      "name": "ms-badges-margin-bottom",
+      "category": "badges",
+      "usage": "Badges margin bottom"
+    },
+    {
+      "name": "ms-badges-margin-top",
+      "category": "badges",
+      "usage": "Badges margin top"
+    },
+    {
+      "name": "ms-badges-margin-left",
+      "category": "badges",
+      "usage": "Badges margin left"
+    },
+    {
+      "name": "ms-badges-margin-right",
+      "category": "badges",
+      "usage": "Badges margin right"
+    },
+    {
+      "name": "ms-badge-gap",
+      "category": "badge",
+      "usage": "Badge internal gap"
+    },
+    {
+      "name": "ms-badge-height",
+      "category": "badge",
+      "usage": "Badge height"
+    },
+    {
+      "name": "ms-badge-font-size",
+      "category": "badge",
+      "usage": "Badge font size"
+    },
+    {
+      "name": "ms-badge-font-weight",
+      "category": "badge",
+      "usage": "Badge font weight"
+    },
+    {
+      "name": "ms-badge-border-radius",
+      "category": "badge",
+      "usage": "Badge border radius"
+    },
+    {
+      "name": "ms-badge-bg",
+      "category": "badge",
+      "usage": "Badge background"
+    },
+    {
+      "name": "ms-badge-bg-hover",
+      "category": "badge",
+      "usage": "Badge hover background"
+    },
+    {
+      "name": "ms-badge-bg-active",
+      "category": "badge",
+      "usage": "Badge active background"
+    },
+    {
+      "name": "ms-badge-text-padding",
+      "category": "badge",
+      "usage": "Badge text padding"
+    },
+    {
+      "name": "ms-badge-text-bg",
+      "category": "badge",
+      "usage": "Badge text background"
+    },
+    {
+      "name": "ms-badge-text-color",
+      "category": "badge",
+      "usage": "Badge text color"
+    },
+    {
+      "name": "ms-badge-text-border",
+      "category": "badge",
+      "usage": "Badge text border"
+    },
+    {
+      "name": "ms-badge-text-bg-hover",
+      "category": "badge",
+      "usage": "Badge text hover background"
+    },
+    {
+      "name": "ms-badge-text-color-hover",
+      "category": "badge",
+      "usage": "Badge text hover color"
+    },
+    {
+      "name": "ms-badge-remove-width",
+      "category": "badge",
+      "usage": "Badge remove button width"
+    },
+    {
+      "name": "ms-badge-remove-bg",
+      "category": "badge",
+      "usage": "Badge remove button background"
+    },
+    {
+      "name": "ms-badge-remove-color",
+      "category": "badge",
+      "usage": "Badge remove button color"
+    },
+    {
+      "name": "ms-badge-remove-border",
+      "category": "badge",
+      "usage": "Badge remove button border"
+    },
+    {
+      "name": "ms-badge-remove-font-size",
+      "category": "badge",
+      "usage": "Badge remove button font size (unused since 1.10.0 — kept for backward-compat)"
+    },
+    {
+      "name": "ms-badge-remove-icon-size",
+      "category": "badge",
+      "usage": "Badge remove X icon size (mask SVG)"
+    },
+    {
+      "name": "ms-badge-remove-bg-hover",
+      "category": "badge",
+      "usage": "Badge remove button hover background"
+    },
+    {
+      "name": "ms-badge-remove-box-shadow-focus",
+      "category": "badge",
+      "usage": "Badge remove button focus shadow"
+    },
+    {
+      "name": "ms-icon-remove",
+      "category": "badge",
+      "usage": "Remove icon as CSS url() to a mask-friendly SVG; color comes from currentColor"
+    },
+    {
+      "name": "ms-icon-filter",
+      "category": "icon",
+      "usage": "Funnel glyph (fullscreen search-mode toggle); chains to --base-icon-filter"
+    },
+    {
+      "name": "ms-icon-check",
+      "category": "checkbox",
+      "usage": "Checkmark glyph (mask) for a checked checkbox/option; chains to --base-icon-check"
+    },
+    {
+      "name": "ms-icon-indeterminate",
+      "category": "checkbox",
+      "usage": "Dash glyph (mask) for a tri-state/partial checkbox; chains to --base-icon-indeterminate"
+    },
+    {
+      "name": "ms-icon-check-size",
+      "category": "checkbox",
+      "usage": "mask-size for the checkmark/dash glyph inside the checkbox box; chains to --base-icon-check-size (default 68%, the same knob as pure-admin's .pa-checkbox)"
+    },
+    {
+      "name": "ms-badge-counter-bg",
+      "category": "badge",
+      "usage": "Counter badge background"
+    },
+    {
+      "name": "ms-badge-counter-border",
+      "category": "badge",
+      "usage": "Counter badge border"
+    },
+    {
+      "name": "ms-badge-counter-border-color",
+      "category": "badge",
+      "usage": "Counter badge border color"
+    },
+    {
+      "name": "ms-badge-counter-border-radius",
+      "category": "badge",
+      "usage": "Counter badge border radius"
+    },
+    {
+      "name": "ms-badge-counter-text-color",
+      "category": "badge",
+      "usage": "Counter badge text color"
+    },
+    {
+      "name": "ms-badge-counter-text-bg",
+      "category": "badge",
+      "usage": "Counter badge text background"
+    },
+    {
+      "name": "ms-badge-counter-remove-bg",
+      "category": "badge",
+      "usage": "Counter badge remove background"
+    },
+    {
+      "name": "ms-badge-counter-remove-color",
+      "category": "badge",
+      "usage": "Counter badge remove color"
+    },
+    {
+      "name": "ms-badge-counter-remove-bg-hover",
+      "category": "badge",
+      "usage": "Counter badge remove hover background"
+    },
+    {
+      "name": "ms-more-badge-bg",
+      "category": "badge",
+      "usage": "More badge background"
+    },
+    {
+      "name": "ms-more-badge-hover-bg",
+      "category": "badge",
+      "usage": "More badge hover background"
+    },
+    {
+      "name": "ms-more-badge-active-bg",
+      "category": "badge",
+      "usage": "More badge active background"
+    },
+    {
+      "name": "ms-count-display-margin-bottom",
+      "category": "count",
+      "usage": "Count display margin bottom"
+    },
+    {
+      "name": "ms-count-display-margin-top",
+      "category": "count",
+      "usage": "Count display margin top"
+    },
+    {
+      "name": "ms-count-display-margin-left",
+      "category": "count",
+      "usage": "Count display margin left"
+    },
+    {
+      "name": "ms-count-display-margin-right",
+      "category": "count",
+      "usage": "Count display margin right"
+    },
+    {
+      "name": "ms-counter-wrapper-bg",
+      "category": "count",
+      "usage": "Counter wrapper background"
+    },
+    {
+      "name": "ms-counter-wrapper-border",
+      "category": "count",
+      "usage": "Counter wrapper border"
+    },
+    {
+      "name": "ms-counter-wrapper-border-radius",
+      "category": "count",
+      "usage": "Counter wrapper border radius"
+    },
+    {
+      "name": "ms-counter-wrapper-padding",
+      "category": "count",
+      "usage": "Counter wrapper padding"
+    },
+    {
+      "name": "ms-counter-wrapper-gap",
+      "category": "count",
+      "usage": "Counter wrapper gap"
+    },
+    {
+      "name": "ms-counter-wrapper-bg-hover",
+      "category": "count",
+      "usage": "Counter wrapper hover background"
+    },
+    {
+      "name": "ms-counter-wrapper-border-color",
+      "category": "count",
+      "usage": "Counter wrapper border color"
+    },
+    {
+      "name": "ms-counter-wrapper-border-color-hover",
+      "category": "count",
+      "usage": "Counter wrapper hover border"
+    },
+    {
+      "name": "ms-count-text-bg",
+      "category": "count",
+      "usage": "Count text background"
+    },
+    {
+      "name": "ms-count-text-border",
+      "category": "count",
+      "usage": "Count text border"
+    },
+    {
+      "name": "ms-count-text-font-size",
+      "category": "count",
+      "usage": "Count text font size"
+    },
+    {
+      "name": "ms-count-text-color",
+      "category": "count",
+      "usage": "Count text color"
+    },
+    {
+      "name": "ms-count-clear-size",
+      "category": "count",
+      "usage": "Count clear button size"
+    },
+    {
+      "name": "ms-count-clear-bg",
+      "category": "count",
+      "usage": "Count clear button background"
+    },
+    {
+      "name": "ms-count-clear-color",
+      "category": "count",
+      "usage": "Count clear button color"
+    },
+    {
+      "name": "ms-count-clear-font-size",
+      "category": "count",
+      "usage": "Count clear button font size (unused since 1.10.0 — kept for backward-compat)"
+    },
+    {
+      "name": "ms-count-clear-icon-size",
+      "category": "count",
+      "usage": "Count clear X icon size (mask SVG)"
+    },
+    {
+      "name": "ms-count-clear-border-radius",
+      "category": "count",
+      "usage": "Count clear button border radius"
+    },
+    {
+      "name": "ms-count-clear-bg-hover",
+      "category": "count",
+      "usage": "Count clear button hover background"
+    },
+    {
+      "name": "ms-count-clear-color-hover",
+      "category": "count",
+      "usage": "Count clear button hover color"
+    },
+    {
+      "name": "ms-icon-clear",
+      "category": "count",
+      "usage": "Clear icon as CSS url() to a mask-friendly SVG; defaults to var(--ms-icon-remove)"
+    },
+    {
+      "name": "ms-tooltip-bg",
+      "category": "tooltip",
+      "usage": "Tooltip background"
+    },
+    {
+      "name": "ms-tooltip-text-color",
+      "category": "tooltip",
+      "usage": "Tooltip text color"
+    },
+    {
+      "name": "ms-tooltip-color",
+      "category": "tooltip",
+      "usage": "Tooltip color"
+    },
+    {
+      "name": "ms-tooltip-padding",
+      "category": "tooltip",
+      "usage": "Tooltip padding"
+    },
+    {
+      "name": "ms-tooltip-border-radius",
+      "category": "tooltip",
+      "usage": "Tooltip border radius"
+    },
+    {
+      "name": "ms-tooltip-font-size",
+      "category": "tooltip",
+      "usage": "Tooltip font size"
+    },
+    {
+      "name": "ms-tooltip-max-width",
+      "category": "tooltip",
+      "usage": "Tooltip max width"
+    },
+    {
+      "name": "ms-tooltip-shadow",
+      "category": "tooltip",
+      "usage": "Tooltip shadow"
+    },
+    {
+      "name": "ms-tooltip-z-index",
+      "category": "tooltip",
+      "usage": "Tooltip z-index"
+    },
+    {
+      "name": "ms-z-index-popover",
+      "category": "popover",
+      "usage": "Popover z-index"
+    },
+    {
+      "name": "ms-selected-popover-width",
+      "category": "popover",
+      "usage": "Selected popover width"
+    },
+    {
+      "name": "ms-selected-popover-max-height",
+      "category": "popover",
+      "usage": "Selected popover max height"
+    },
+    {
+      "name": "ms-selected-popover-border",
+      "category": "popover",
+      "usage": "Selected popover border"
+    },
+    {
+      "name": "ms-selected-popover-border-radius",
+      "category": "popover",
+      "usage": "Selected popover border radius"
+    },
+    {
+      "name": "ms-selected-popover-box-shadow",
+      "category": "popover",
+      "usage": "Selected popover shadow"
+    },
+    {
+      "name": "ms-selected-popover-bg",
+      "category": "popover",
+      "usage": "Selected popover background"
+    },
+    {
+      "name": "ms-selected-popover-border-color",
+      "category": "popover",
+      "usage": "Selected popover border color"
+    },
+    {
+      "name": "ms-selected-popover-header-padding",
+      "category": "popover",
+      "usage": "Popover header padding"
+    },
+    {
+      "name": "ms-selected-popover-header-bg",
+      "category": "popover",
+      "usage": "Popover header background"
+    },
+    {
+      "name": "ms-selected-popover-header-border-bottom",
+      "category": "popover",
+      "usage": "Popover header border"
+    },
+    {
+      "name": "ms-selected-popover-header-font-size",
+      "category": "popover",
+      "usage": "Popover header font size"
+    },
+    {
+      "name": "ms-selected-popover-header-font-weight",
+      "category": "popover",
+      "usage": "Popover header font weight"
+    },
+    {
+      "name": "ms-selected-popover-header-color",
+      "category": "popover",
+      "usage": "Popover header color"
+    },
+    {
+      "name": "ms-selected-popover-header-border-color",
+      "category": "popover",
+      "usage": "Popover header border color"
+    },
+    {
+      "name": "ms-popover-close-size",
+      "category": "popover",
+      "usage": "Popover close button size"
+    },
+    {
+      "name": "ms-selected-popover-close-bg",
+      "category": "popover",
+      "usage": "Popover close button background"
+    },
+    {
+      "name": "ms-selected-popover-close-color",
+      "category": "popover",
+      "usage": "Popover close button color"
+    },
+    {
+      "name": "ms-selected-popover-close-font-size",
+      "category": "popover",
+      "usage": "Popover close button font size (unused since 1.10.0 — kept for backward-compat)"
+    },
+    {
+      "name": "ms-selected-popover-close-icon-size",
+      "category": "popover",
+      "usage": "Popover close X icon size (mask SVG)"
+    },
+    {
+      "name": "ms-selected-popover-close-border-radius",
+      "category": "popover",
+      "usage": "Popover close button border radius"
+    },
+    {
+      "name": "ms-selected-popover-close-bg-hover",
+      "category": "popover",
+      "usage": "Popover close button hover background"
+    },
+    {
+      "name": "ms-selected-popover-close-color-hover",
+      "category": "popover",
+      "usage": "Popover close button hover color"
+    },
+    {
+      "name": "ms-selected-popover-body-gap",
+      "category": "popover",
+      "usage": "Popover body gap"
+    },
+    {
+      "name": "ms-selected-popover-body-padding",
+      "category": "popover",
+      "usage": "Popover body padding"
+    },
+    {
+      "name": "ms-selected-popover-body-max-height",
+      "category": "popover",
+      "usage": "Popover body max height"
+    },
+    {
+      "name": "ms-font-size-2xs",
+      "category": "typography",
+      "usage": "Extra extra small font size"
+    },
+    {
+      "name": "ms-font-size-xs",
+      "category": "typography",
+      "usage": "Extra small font size"
+    },
+    {
+      "name": "ms-font-size-sm",
+      "category": "typography",
+      "usage": "Small font size"
+    },
+    {
+      "name": "ms-font-size-base",
+      "category": "typography",
+      "usage": "Base font size"
+    },
+    {
+      "name": "ms-font-size-lg",
+      "category": "typography",
+      "usage": "Large font size"
+    },
+    {
+      "name": "ms-font-weight-normal",
+      "category": "typography",
+      "usage": "Normal font weight"
+    },
+    {
+      "name": "ms-font-weight-medium",
+      "category": "typography",
+      "usage": "Medium font weight"
+    },
+    {
+      "name": "ms-font-weight-semibold",
+      "category": "typography",
+      "usage": "Semibold font weight"
+    },
+    {
+      "name": "ms-line-height-none",
+      "category": "typography",
+      "usage": "No line height (1)"
+    },
+    {
+      "name": "ms-line-height-tight",
+      "category": "typography",
+      "usage": "Tight line height"
+    },
+    {
+      "name": "ms-line-height-normal",
+      "category": "typography",
+      "usage": "Normal line height"
+    },
+    {
+      "name": "ms-line-height-relaxed",
+      "category": "typography",
+      "usage": "Relaxed line height"
+    },
+    {
+      "name": "ms-border-radius-sm",
+      "category": "radius",
+      "usage": "Small border radius"
+    },
+    {
+      "name": "ms-border-radius-md",
+      "category": "radius",
+      "usage": "Medium border radius"
+    },
+    {
+      "name": "ms-border-radius-lg",
+      "category": "radius",
+      "usage": "Large border radius"
+    },
+    {
+      "name": "ms-border-radius",
+      "category": "radius",
+      "usage": "Default border radius"
+    },
+    {
+      "name": "ms-spacing-xs",
+      "category": "spacing",
+      "usage": "Extra small spacing"
+    },
+    {
+      "name": "ms-spacing-sm",
+      "category": "spacing",
+      "usage": "Small spacing"
+    },
+    {
+      "name": "ms-spacing-md",
+      "category": "spacing",
+      "usage": "Medium spacing"
+    },
+    {
+      "name": "ms-spacing-lg",
+      "category": "spacing",
+      "usage": "Large spacing"
+    },
+    {
+      "name": "ms-transition-fast",
+      "category": "transition",
+      "usage": "Fast transition duration"
+    },
+    {
+      "name": "ms-transition-normal",
+      "category": "transition",
+      "usage": "Normal transition duration"
+    },
+    {
+      "name": "ms-easing-snappy",
+      "category": "transition",
+      "usage": "Snappy easing function"
+    },
+    {
+      "name": "ms-placeholder-opacity",
+      "category": "opacity",
+      "usage": "Placeholder opacity"
+    },
+    {
+      "name": "ms-disabled-input-opacity",
+      "category": "opacity",
+      "usage": "Disabled input opacity"
+    },
+    {
+      "name": "ms-scrollbar-width",
+      "category": "scrollbar",
+      "usage": "Scrollbar width"
+    },
+    {
+      "name": "ms-scrollbar-track-bg",
+      "category": "scrollbar",
+      "usage": "Scrollbar track background"
+    },
+    {
+      "name": "ms-scrollbar-thumb-bg",
+      "category": "scrollbar",
+      "usage": "Scrollbar thumb background"
+    },
+    {
+      "name": "ms-scrollbar-thumb-bg-hover",
+      "category": "scrollbar",
+      "usage": "Scrollbar thumb hover background"
+    },
+    {
+      "name": "ms-scrollbar-thumb-border-radius",
+      "category": "scrollbar",
+      "usage": "Scrollbar thumb border radius"
+    },
+    {
+      "name": "ms-debug-bg",
+      "category": "debug",
+      "usage": "Debug panel background"
+    },
+    {
+      "name": "ms-debug-border-color",
+      "category": "debug",
+      "usage": "Debug panel border"
+    },
+    {
+      "name": "ms-debug-text-color",
+      "category": "debug",
+      "usage": "Debug panel text"
+    },
+    {
+      "name": "ms-debug-border-radius",
+      "category": "debug",
+      "usage": "Debug panel corner radius"
+    },
+    {
+      "name": "ms-debug-summary-color",
+      "category": "debug",
+      "usage": "Debug section heading color"
+    },
+    {
+      "name": "ms-debug-summary-bg-hover",
+      "category": "debug",
+      "usage": "Debug section heading hover background"
+    },
+    {
+      "name": "ms-debug-summary-outline-color",
+      "category": "debug",
+      "usage": "Debug section heading focus outline"
+    },
+    {
+      "name": "ms-debug-summary-border-radius",
+      "category": "debug",
+      "usage": "Debug section heading corner radius"
+    },
+    {
+      "name": "ms-debug-stats-bg",
+      "category": "debug",
+      "usage": "Debug stats nested panel background"
+    },
+    {
+      "name": "ms-debug-stats-border-radius",
+      "category": "debug",
+      "usage": "Debug stats nested panel corner radius"
+    },
+    {
+      "name": "ms-debug-bullet-color",
+      "category": "debug",
+      "usage": "Debug stat bullet marker color"
+    },
+    {
+      "name": "ms-transform-rotate-180",
+      "category": "transform",
+      "usage": "180 degree rotation"
+    },
+    {
+      "name": "ms-transform-scale-hover",
+      "category": "transform",
+      "usage": "Hover scale transform"
+    },
+    {
+      "name": "ms-transform-scale-active",
+      "category": "transform",
+      "usage": "Active scale transform"
+    },
+    {
+      "name": "ms-order-first",
+      "category": "layout",
+      "usage": "Order first (-1)"
+    },
+    {
+      "name": "ms-add-new-bg-hover",
+      "category": "add-new",
+      "usage": "Background of the \"add new\" row on hover"
+    },
+    {
+      "name": "ms-add-new-color",
+      "category": "add-new",
+      "usage": "Text/icon color of the \"add new\" row"
+    },
+    {
+      "name": "ms-add-new-color-hover",
+      "category": "add-new",
+      "usage": "Text/icon color of the \"add new\" row on hover"
+    },
+    {
+      "name": "ms-add-new-font-size",
+      "category": "add-new",
+      "usage": "Font size of the \"add new\" row"
+    },
+    {
+      "name": "ms-add-new-gap",
+      "category": "add-new",
+      "usage": "Gap between icon and label in the \"add new\" row"
+    },
+    {
+      "name": "ms-add-new-icon-size",
+      "category": "add-new",
+      "usage": "Icon size in the \"add new\" row"
+    },
+    {
+      "name": "ms-add-new-padding",
+      "category": "add-new",
+      "usage": "Padding of the \"add new\" row"
+    },
+    {
+      "name": "ms-badge-counter-remove-color-hover",
+      "category": "badge",
+      "usage": "Counter badge remove (✕) color on hover"
+    },
+    {
+      "name": "ms-badge-counter-text-bg-hover",
+      "category": "badge",
+      "usage": "Counter badge text background on hover"
+    },
+    {
+      "name": "ms-badge-counter-text-color-hover",
+      "category": "badge",
+      "usage": "Counter badge text color on hover"
+    },
+    {
+      "name": "ms-checkbox-border-color",
+      "category": "checkbox",
+      "usage": "Option checkbox border color"
+    },
+    {
+      "name": "ms-checkbox-border-width",
+      "category": "checkbox",
+      "usage": "Option checkbox border width"
+    },
+    {
+      "name": "ms-checkbox-checkmark-thickness",
+      "category": "checkbox",
+      "usage": "Option checkbox checkmark stroke thickness"
+    },
+    {
+      "name": "ms-dropdown-inner-border-radius",
+      "category": "dropdown",
+      "usage": "Inner radius clipping the dropdown's scroll area"
+    },
+    {
+      "name": "ms-fullscreen-bg",
+      "category": "fullscreen",
+      "usage": "Fullscreen overlay background"
+    },
+    {
+      "name": "ms-fullscreen-close-bg",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button background"
+    },
+    {
+      "name": "ms-fullscreen-close-bg-hover",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button background on hover"
+    },
+    {
+      "name": "ms-fullscreen-close-border",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button border"
+    },
+    {
+      "name": "ms-fullscreen-close-border-radius",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button border radius"
+    },
+    {
+      "name": "ms-fullscreen-close-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button icon color"
+    },
+    {
+      "name": "ms-fullscreen-close-edge-nudge",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button inset from the header edge"
+    },
+    {
+      "name": "ms-fullscreen-close-icon-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button icon size"
+    },
+    {
+      "name": "ms-fullscreen-close-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen close button box size"
+    },
+    {
+      "name": "ms-fullscreen-header-bg",
+      "category": "fullscreen",
+      "usage": "Fullscreen header background"
+    },
+    {
+      "name": "ms-fullscreen-header-border",
+      "category": "fullscreen",
+      "usage": "Fullscreen header bottom border"
+    },
+    {
+      "name": "ms-fullscreen-header-gap",
+      "category": "fullscreen",
+      "usage": "Gap between items in the fullscreen header"
+    },
+    {
+      "name": "ms-fullscreen-header-min-height",
+      "category": "fullscreen",
+      "usage": "Minimum height of the fullscreen header"
+    },
+    {
+      "name": "ms-fullscreen-header-padding",
+      "category": "fullscreen",
+      "usage": "Fullscreen header padding (shorthand)"
+    },
+    {
+      "name": "ms-fullscreen-header-padding-h",
+      "category": "fullscreen",
+      "usage": "Fullscreen header horizontal padding"
+    },
+    {
+      "name": "ms-fullscreen-header-padding-v",
+      "category": "fullscreen",
+      "usage": "Fullscreen header vertical padding"
+    },
+    {
+      "name": "ms-fullscreen-info-bg-hover",
+      "category": "fullscreen",
+      "usage": "Fullscreen info button background on hover"
+    },
+    {
+      "name": "ms-fullscreen-info-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen info button icon color"
+    },
+    {
+      "name": "ms-fullscreen-info-icon-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen info button icon size"
+    },
+    {
+      "name": "ms-fullscreen-info-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen info button box size"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-bg",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle background"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-bg-hover",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle background on hover"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle icon color"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-gap",
+      "category": "fullscreen",
+      "usage": "Gap around the fullscreen search-mode toggle"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-icon",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle icon (url)"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-icon-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle icon size"
+    },
+    {
+      "name": "ms-fullscreen-mode-toggle-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen search-mode toggle box size"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-bg",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button background"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-bg-hover",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button background on hover"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button icon color"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-icon",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button icon (url)"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-icon-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button icon size"
+    },
+    {
+      "name": "ms-fullscreen-nav-btn-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator step button box size"
+    },
+    {
+      "name": "ms-fullscreen-nav-count-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator \"N of M\" count color"
+    },
+    {
+      "name": "ms-fullscreen-nav-count-font-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen match-navigator count font size"
+    },
+    {
+      "name": "ms-fullscreen-nav-gap",
+      "category": "fullscreen",
+      "usage": "Gap between fullscreen match-navigator controls"
+    },
+    {
+      "name": "ms-fullscreen-nav-padding-top",
+      "category": "fullscreen",
+      "usage": "Top padding of the fullscreen match-navigator row"
+    },
+    {
+      "name": "ms-fullscreen-rem",
+      "category": "fullscreen",
+      "usage": "Base sizing unit for the phone fullscreen overlay (default: 12px)"
+    },
+    {
+      "name": "ms-fullscreen-search-border",
+      "category": "fullscreen",
+      "usage": "Fullscreen search field border"
+    },
+    {
+      "name": "ms-fullscreen-search-border-radius",
+      "category": "fullscreen",
+      "usage": "Fullscreen search field border radius"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-bg-hover",
+      "category": "fullscreen",
+      "usage": "Fullscreen search clear button background on hover"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen search clear button icon color"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-gutter",
+      "category": "fullscreen",
+      "usage": "Trailing gutter reserving space for the fullscreen search clear button"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-icon-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen search clear button icon size"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-inset",
+      "category": "fullscreen",
+      "usage": "Fullscreen search clear button inset from the field edge"
+    },
+    {
+      "name": "ms-fullscreen-search-clear-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen search clear button box size"
+    },
+    {
+      "name": "ms-fullscreen-search-font-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen search field font size"
+    },
+    {
+      "name": "ms-fullscreen-search-padding",
+      "category": "fullscreen",
+      "usage": "Fullscreen search field padding"
+    },
+    {
+      "name": "ms-fullscreen-text-color",
+      "category": "fullscreen",
+      "usage": "Fullscreen overlay text color"
+    },
+    {
+      "name": "ms-fullscreen-title-font-size",
+      "category": "fullscreen",
+      "usage": "Fullscreen header title font size"
+    },
+    {
+      "name": "ms-fullscreen-title-font-weight",
+      "category": "fullscreen",
+      "usage": "Fullscreen header title font weight"
+    },
+    {
+      "name": "ms-fullscreen-tree-base-indent",
+      "category": "fullscreen",
+      "usage": "Base indent for tree options in the fullscreen overlay"
+    },
+    {
+      "name": "ms-fullscreen-tree-indent",
+      "category": "fullscreen",
+      "usage": "Per-level indent for tree options in the fullscreen overlay"
+    },
+    {
+      "name": "ms-icon-add-new",
+      "category": "icon",
+      "usage": "Icon for the \"add new\" row (url)"
+    },
+    {
+      "name": "ms-icon-chevron",
+      "category": "icon",
+      "usage": "Chevron icon used by tree / navigation controls (url)"
+    },
+    {
+      "name": "ms-icon-info",
+      "category": "icon",
+      "usage": "Info icon (url)"
+    },
+    {
+      "name": "ms-icon-search",
+      "category": "icon",
+      "usage": "Search icon (url)"
+    },
+    {
+      "name": "ms-icon-search-clear",
+      "category": "icon",
+      "usage": "Search clear (✕) icon (url)"
+    },
+    {
+      "name": "ms-inline-align",
+      "category": "layout",
+      "usage": "Vertical alignment of items within the input row"
+    },
+    {
+      "name": "ms-input-clear-bg-hover",
+      "category": "input",
+      "usage": "Input clear button background on hover"
+    },
+    {
+      "name": "ms-input-clear-border-radius",
+      "category": "input",
+      "usage": "Input clear button border radius"
+    },
+    {
+      "name": "ms-input-clear-color",
+      "category": "input",
+      "usage": "Input clear button icon color"
+    },
+    {
+      "name": "ms-input-clear-icon-size",
+      "category": "input",
+      "usage": "Input clear button icon size"
+    },
+    {
+      "name": "ms-input-clear-size",
+      "category": "input",
+      "usage": "Input clear button box size"
+    },
+    {
+      "name": "ms-input-gap",
+      "category": "input",
+      "usage": "Gap between items inside the input row"
+    },
+    {
+      "name": "ms-input-padding-h",
+      "category": "input",
+      "usage": "Input horizontal padding"
+    },
+    {
+      "name": "ms-message-bg",
+      "category": "message",
+      "usage": "Message toast background (defaults to the info variant)"
+    },
+    {
+      "name": "ms-message-border",
+      "category": "message",
+      "usage": "Message toast border"
+    },
+    {
+      "name": "ms-message-border-radius",
+      "category": "message",
+      "usage": "Message toast border radius"
+    },
+    {
+      "name": "ms-message-color",
+      "category": "message",
+      "usage": "Message toast text color (defaults to the info variant)"
+    },
+    {
+      "name": "ms-message-error-bg",
+      "category": "message",
+      "usage": "Error message toast background"
+    },
+    {
+      "name": "ms-message-error-color",
+      "category": "message",
+      "usage": "Error message toast text color"
+    },
+    {
+      "name": "ms-message-font-size",
+      "category": "message",
+      "usage": "Message toast font size"
+    },
+    {
+      "name": "ms-message-font-weight",
+      "category": "message",
+      "usage": "Message toast font weight"
+    },
+    {
+      "name": "ms-message-fullscreen-offset",
+      "category": "message",
+      "usage": "Message toast top offset in the fullscreen overlay"
+    },
+    {
+      "name": "ms-message-info-bg",
+      "category": "message",
+      "usage": "Info message toast background"
+    },
+    {
+      "name": "ms-message-info-color",
+      "category": "message",
+      "usage": "Info message toast text color"
+    },
+    {
+      "name": "ms-message-max-width",
+      "category": "message",
+      "usage": "Message toast maximum width"
+    },
+    {
+      "name": "ms-message-padding",
+      "category": "message",
+      "usage": "Message toast padding"
+    },
+    {
+      "name": "ms-message-shadow",
+      "category": "message",
+      "usage": "Message toast drop shadow"
+    },
+    {
+      "name": "ms-message-success-bg",
+      "category": "message",
+      "usage": "Success message toast background"
+    },
+    {
+      "name": "ms-message-success-color",
+      "category": "message",
+      "usage": "Success message toast text color"
+    },
+    {
+      "name": "ms-message-warning-bg",
+      "category": "message",
+      "usage": "Warning message toast background"
+    },
+    {
+      "name": "ms-message-warning-color",
+      "category": "message",
+      "usage": "Warning message toast text color"
+    },
+    {
+      "name": "ms-message-z-index",
+      "category": "message",
+      "usage": "z-index of the message toast"
+    },
+    {
+      "name": "ms-option-min-height",
+      "category": "option",
+      "usage": "Minimum height of a dropdown option row"
+    },
+    {
+      "name": "ms-option-title-overflow",
+      "category": "option",
+      "usage": "Overflow handling of the option title"
+    },
+    {
+      "name": "ms-option-title-text-overflow",
+      "category": "option",
+      "usage": "Text-overflow of the option title (e.g. ellipsis)"
+    },
+    {
+      "name": "ms-option-title-white-space",
+      "category": "option",
+      "usage": "White-space of the option title (set normal to allow wrapping)"
+    },
+    {
+      "name": "ms-option-tooltip-bg",
+      "category": "tooltip",
+      "usage": "Option tooltip background"
+    },
+    {
+      "name": "ms-option-tooltip-border-radius",
+      "category": "tooltip",
+      "usage": "Option tooltip border radius"
+    },
+    {
+      "name": "ms-option-tooltip-font-size",
+      "category": "tooltip",
+      "usage": "Option tooltip font size"
+    },
+    {
+      "name": "ms-option-tooltip-max-width",
+      "category": "tooltip",
+      "usage": "Option tooltip maximum width"
+    },
+    {
+      "name": "ms-option-tooltip-padding",
+      "category": "tooltip",
+      "usage": "Option tooltip padding"
+    },
+    {
+      "name": "ms-option-tooltip-shadow",
+      "category": "tooltip",
+      "usage": "Option tooltip drop shadow"
+    },
+    {
+      "name": "ms-option-tooltip-text-color",
+      "category": "tooltip",
+      "usage": "Option tooltip text color"
+    },
+    {
+      "name": "ms-option-tooltip-z-index",
+      "category": "tooltip",
+      "usage": "z-index of the option tooltip"
+    },
+    {
+      "name": "ms-toggle-icon-size",
+      "category": "toggle",
+      "usage": "Dropdown toggle chevron icon size"
+    },
+    {
+      "name": "ms-toggle-rotate-closed",
+      "category": "toggle",
+      "usage": "Toggle chevron rotation when closed (default 90deg; orients the right-pointing base glyph)"
+    },
+    {
+      "name": "ms-toggle-rotate-open",
+      "category": "toggle",
+      "usage": "Toggle chevron rotation when open (default -90deg; set 0deg to opt out for a pre-oriented glyph)"
+    },
+    {
+      "name": "ms-tree-base-indent",
+      "category": "tree",
+      "usage": "Base indent for tree options in the floating dropdown"
+    },
+    {
+      "name": "ms-tree-indent",
+      "category": "tree",
+      "usage": "Per-level indent for tree options in the floating dropdown"
+    },
+    {
+      "name": "ms-z-index-fullscreen",
+      "category": "layout",
+      "usage": "z-index of the fullscreen overlay"
+    },
+    {
+      "name": "ms-z-index-fullscreen-tooltip",
+      "category": "layout",
+      "usage": "z-index of tooltips / messages above the fullscreen overlay"
+    }
   ]
 }
