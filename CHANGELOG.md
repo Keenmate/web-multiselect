@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-09-30 [PUBLISHED]
+
+_First stable of the 2.2 line — includes everything from 2.2.0-rc01 and 2.2.0-rc02
+(below), plus the callback-context standardization landed for the final release._
+
+### Added
+
+- **Standardized callback context — a typed second argument across the action-button
+  and display `get*` callbacks.** Two convergence steps toward one consistent contract,
+  both fully additive (every existing one-argument callback keeps working):
+  - The display "get" siblings now receive the **same render context their `render*`
+    twin already gets**: `getBadgeDisplayCallback` / `getBadgeClassCallback` /
+    `getBadgeTooltipCallback` / `getRemoveButtonTooltipCallback` get a
+    `BadgeContentRenderContext`; `getSelectedItemClassCallback` gets one too (with
+    `isInPopover`); `getOptionTooltipCallback` gets an `OptionContentRenderContext`
+    (recomputed at the attach site from the same expressions `renderOption` uses).
+  - The **action-button callbacks** get a typed context instead of the untyped picker
+    instance: a new `ActionContext<T>` (extends `PresentationContext`; carries component
+    state, the host element, and a controller) is passed as the additive second argument
+    to `getIsVisible` / `getIsDisabled` / `getText` / `getClass` / `getTooltip` and to
+    the `onClick` handler — built once and reused. It's backed by a new shared
+    `MultiSelectController<T>` imperative facade (`MultiSelectKeyboardController` now
+    extends it; `setSearch` kept as a deprecated alias of `search`). `ActionContext`,
+    `MultiSelectController`, `MultiSelectKeyboardController`, and `ActionButton` are now
+    exported from the package entry.
+
+### Internal — examples
+
+- **`examples-tooltips.html` and `examples-action-buttons.html` rebuilt as controls-driven
+  chapters.** Both pages now follow the same one-picker-per-chapter + `.controls` panel
+  pattern as basic/tree/theming/data-api/responsive, persisted via `examples-controls-store`.
+  Tooltips collapsed from 8 static sections into TT01 Option Tooltips / TT02 Independent
+  Styling / TT03 Badge Tooltips / TT04 Summary; action-buttons from 14 into AB01–AB07
+  (Built-in & Static, Dynamic Callbacks, Custom Actions, Icon Buttons, Positioning/Rows/Align,
+  Device-Adaptive, Summary). Examples are dev-only; not in the published package.
+
 ## [2.2.0-rc02] - 2026-09-28 [PUBLISHED]
 
 ### Added
