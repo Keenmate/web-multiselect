@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-07 [PUBLISHED]
+
+### Added
+
+- **`--ms-checkbox-scale` — option-checkbox box scale wired to the shared
+  `--base-checkbox-scale` contract.** `--ms-checkbox-scale` now defaults to
+  `var(--base-checkbox-scale, 1)`, so a single theme-level knob sizes the
+  checkbox consistently across every Keenmate component and PureAdmin rather
+  than each component inventing its own. Set `--base-checkbox-scale` once on an
+  ancestor to scale them all, or override `--ms-checkbox-scale` per instance.
+- **`--ms-checkbox-border-width-scaled`** — the checkbox border width multiplied
+  by the scale, reused by every checkbox border shorthand (default / checked /
+  disabled) so the border stays proportional when the box is scaled.
+
+### Changed
+
+- **The option checkbox is now sized via `calc`, not a CSS `transform`.** The box
+  width/height, border width, and corner radius are each multiplied by
+  `--ms-checkbox-scale` through `calc`, and the box uses `box-sizing: border-box`
+  so the declared size is the rendered outer size. Previously a `transform: scale()`
+  promoted the box to its own compositing layer, which pixel-snapped the masked
+  `::after` check/dash off-centre (inconsistently, row to row); sizing the box
+  directly keeps the glyph crisp and centred at any scale. Default rendering
+  (`scale: 1`) is unchanged.
+
+### Internal
+
+- e2e coverage for checkbox scale: baseline box geometry plus a `scale: 2`
+  assertion that box/border/radius grow proportionally and the box carries no
+  `transform` (regression guard for the compositing-layer bug above).
+
 ## [2.2.0] - 2026-09-30 [PUBLISHED]
 
 _First stable of the 2.2 line — includes everything from 2.2.0-rc01 and 2.2.0-rc02
