@@ -612,7 +612,11 @@
   --ms-checkbox-margin-bottom: 0;
   --ms-checkbox-margin-left: 0;
   --ms-checkbox-size: calc(1.6 * var(--ms-rem));
-  --ms-checkbox-scale: 1;
+  /* Box scale — the shared --base-checkbox-scale contract (base-css-variables).
+     Applied to the box's width/height, border-width AND radius via calc (NOT a
+     CSS transform): calc keeps all three proportional without a compositing
+     layer, so the masked check/dash stays crisp + centered at any scale. */
+  --ms-checkbox-scale: var(--base-checkbox-scale, 1);
   --ms-checkbox-align: center;
 
   /* Checkbox Styling */
@@ -621,16 +625,20 @@
      the box reads as a real, clickable control. Tune weight/colour with these two. */
   --ms-checkbox-border-width: 1px;
   --ms-checkbox-border-color: var(--base-checkbox-border-color, #8f8f8f);
-  --ms-checkbox-border: var(--ms-checkbox-border-width) solid var(--ms-checkbox-border-color);
-  --ms-checkbox-border-radius: calc(0.3 * var(--ms-rem));
+  /* Scaled width/radius — proportional to --ms-checkbox-scale so the border and
+     corners grow with the box (calc, no transform). Reused by every state
+     shorthand below so checked/disabled don't reset to an unscaled 1px. */
+  --ms-checkbox-border-width-scaled: calc(var(--ms-checkbox-border-width) * var(--ms-checkbox-scale, 1));
+  --ms-checkbox-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-checkbox-border-color);
+  --ms-checkbox-border-radius: calc(0.3 * var(--ms-rem) * var(--ms-checkbox-scale, 1));
   /* Checkmark stroke width — bump for a bolder tick. */
   --ms-checkbox-checkmark-thickness: 2.5px;
   --ms-checkbox-checked-bg: var(--ms-accent-color);
-  --ms-checkbox-checked-border: var(--ms-checkbox-border-width) solid var(--ms-accent-color);
+  --ms-checkbox-checked-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-accent-color);
   --ms-checkbox-checkmark-color: var(--ms-text-color-on-accent);
   --ms-checkbox-hover-border-color: var(--ms-accent-color);
   --ms-checkbox-disabled-bg: var(--ms-primary-bg);
-  --ms-checkbox-disabled-border: var(--ms-checkbox-border-width) solid var(--ms-border-color);
+  --ms-checkbox-disabled-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-border-color);
 
   /* Checkbox State Combinations */
   --ms-checkbox-checked-bg-hover: var(--ms-accent-color-hover);

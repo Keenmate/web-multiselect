@@ -254,6 +254,11 @@
       "usage": "Option checkbox border color"
     },
     {
+      "name": "base-checkbox-scale",
+      "required": false,
+      "usage": "Checkbox box scale (default 1). Applied to the box via calc (NOT a CSS transform) so the masked check/dash stays crisp. See base-css-variables 'Checkbox render method'."
+    },
+    {
       "name": "base-input-clear-color",
       "required": false,
       "usage": "Inline field-clear (✕) icon color"
@@ -1013,7 +1018,7 @@
     {
       "name": "ms-checkbox-scale",
       "category": "checkbox",
-      "usage": "Checkbox scale"
+      "usage": "Checkbox box scale (chains --base-checkbox-scale; multiplies box width/height via calc, no transform — keeps the masked glyph crisp)"
     },
     {
       "name": "ms-checkbox-align",
@@ -1924,6 +1929,11 @@
       "name": "ms-checkbox-border-width",
       "category": "checkbox",
       "usage": "Option checkbox border width"
+    },
+    {
+      "name": "ms-checkbox-border-width-scaled",
+      "category": "checkbox",
+      "usage": "Checkbox border width multiplied by --ms-checkbox-scale (keeps the border proportional when the box is scaled; used by every checkbox border shorthand)"
     },
     {
       "name": "ms-checkbox-checkmark-thickness",

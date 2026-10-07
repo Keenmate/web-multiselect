@@ -271,16 +271,24 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  /* Declared size IS the rendered outer size (the native <input> already defaults to
+     this, pinned so it's deterministic + matches svelte-treeview's span). Shared
+     --base-checkbox-scale render contract — scaled border grows inward. */
+  box-sizing: border-box;
   flex-shrink: 0;
   position: relative;
   margin-top: var(--ms-checkbox-margin-top);
   margin-inline-end: var(--ms-checkbox-margin-right);
   margin-bottom: var(--ms-checkbox-margin-bottom);
   margin-inline-start: var(--ms-checkbox-margin-left);
-  width: var(--ms-checkbox-size);
-  height: var(--ms-checkbox-size);
-  transform: scale(var(--ms-checkbox-scale));
-  transform-origin: top left;
+  /* Box scaled via calc (shared --base-checkbox-scale contract) — NOT a CSS
+     transform. A transform promotes the box to its own compositing layer, which
+     pixel-snaps the fractionally-positioned ::after mask and shifts the tick/dash
+     off-centre (inconsistently, row to row). Sizing the box directly keeps the
+     mark crisp; the border-width and radius scale proportionally too via calc in
+     the --ms-checkbox-border* vars. See base-css-variables → "Checkbox render method". */
+  width: calc(var(--ms-checkbox-size) * var(--ms-checkbox-scale));
+  height: calc(var(--ms-checkbox-size) * var(--ms-checkbox-scale));
   cursor: pointer;
 
   /* Custom checkbox appearance */
