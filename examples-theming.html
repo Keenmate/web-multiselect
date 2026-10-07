@@ -1336,9 +1336,68 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             </div>
         </section>
 
+        <!-- Checkbox scale — shared --base-checkbox-scale contract -->
+        <section class="example-section" style="margin-bottom: 3rem;">
+            <h2>TH17 · Checkbox scale — the shared <code>--base-checkbox-scale</code> contract</h2>
+            <p>
+                The option checkbox has its own scale knob, <code>--ms-checkbox-scale</code>, which defaults to
+                <code>var(--base-checkbox-scale, 1)</code>. Set <strong><code>--base-checkbox-scale</code> once on an
+                ancestor</strong> and every Keenmate component underneath (this picker, and Pure Admin's own controls)
+                sizes its checkboxes to match — no per-component wiring. The box grows via <code>calc</code>
+                (width/height, border width <em>and</em> corner radius all scale together, with the masked check/dash
+                staying crisp), not a <code>transform</code>. Open each dropdown to compare.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
+                <!-- Default, for comparison -->
+                <div class="form-group">
+                    <label>Default (<code>scale: 1</code>)</label>
+                    <web-multiselect id="cbscale-default" multiple="true" show-checkboxes="true"
+                        placeholder="Open to see default checkboxes..."></web-multiselect>
+                </div>
+
+                <!-- One ancestor knob scales BOTH pickers inside it -->
+                <div style="--base-checkbox-scale: 1.6; display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label>Inside <code>--base-checkbox-scale: 1.6</code> (picker A)</label>
+                        <web-multiselect id="cbscale-shared-a" multiple="true" show-checkboxes="true"
+                            placeholder="Shared knob on the wrapper..."></web-multiselect>
+                    </div>
+                    <div class="form-group">
+                        <label>Inside the same wrapper (picker B)</label>
+                        <web-multiselect id="cbscale-shared-b" multiple="true" show-checkboxes="true"
+                            placeholder="...scales both at once..."></web-multiselect>
+                    </div>
+                </div>
+
+                <!-- Per-instance override wins over the inherited base -->
+                <div class="form-group">
+                    <label>Per-instance <code>--ms-checkbox-scale: 2</code></label>
+                    <web-multiselect id="cbscale-instance" multiple="true" show-checkboxes="true"
+                        style="--ms-checkbox-scale: 2;"
+                        placeholder="One-off override..."></web-multiselect>
+                </div>
+            </div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>&lt;!-- 1. Shared contract: set it ONCE on an ancestor; every component inside follows --&gt;
+&lt;div style="--base-checkbox-scale: 1.6"&gt;
+    &lt;web-multiselect show-checkboxes&gt;&lt;/web-multiselect&gt;
+    &lt;web-multiselect show-checkboxes&gt;&lt;/web-multiselect&gt;   &lt;!-- both scale together --&gt;
+&lt;/div&gt;
+
+&lt;!-- 2. Per-instance override (wins over the inherited --base-checkbox-scale) --&gt;
+&lt;web-multiselect show-checkboxes style="--ms-checkbox-scale: 2"&gt;&lt;/web-multiselect&gt;
+
+/* Scales the box, border width and radius together — via calc, not transform,
+   so the check/dash stays crisp and centred at any scale. Default is 1. */</code></pre>
+            </details>
+        </section>
+
         <!-- Key CSS Variables -->
         <section class="example-section">
-            <h2>TH17 · Key CSS Variables</h2>
+            <h2>TH18 · Key CSS Variables</h2>
             <p>Important variables for sizing and typography:</p>
 
             <table class="reference-table">
@@ -1385,7 +1444,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 
         <!-- Typography Variables Reference -->
         <section class="example-section">
-            <h2>TH18 · Typography Variables</h2>
+            <h2>TH19 · Typography Variables</h2>
             <p>All typography variables with their theme-designer integration:</p>
 
             <table class="reference-table">
