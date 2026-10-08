@@ -57,6 +57,7 @@ export type {
   ActionContext,
   MultiSelectController,
   MultiSelectKeyboardController,
+  MultiSelectLabels,
 } from './types';
 
 // Export logging utilities for runtime control

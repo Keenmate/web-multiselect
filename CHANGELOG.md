@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0-rc01] - 2026-10-08 [PUBLISHED]
+
+### Added
+
+- **`labels` property — an i18n map for the component's ARIA labels and short UI
+  strings.** Previously those strings were hardcoded English — mostly
+  screen-reader labels a non-English user would still hear in English. Pass a
+  partial `MultiSelectLabels` map (property-only); any unset key falls back to
+  its English default, and the `{item}` / `{count}` placeholders are
+  interpolated. Covers `close`, `clearSelection`, `clearAllSelections`,
+  `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`,
+  `groupSelectedLabel`, `andMore`, `prevMatch`, and `nextMatch`. `MultiSelectLabels`
+  is exported from the package entry.
+- **`selected-popover-title` attribute / `selectedPopoverTitle` property —
+  translatable header for the selected-items popover.** The header was a
+  hardcoded "Selected Items (N)"; it's now configurable, with a `{count}`
+  placeholder so translators control both the wording and the count placement.
+  Default: `Selected Items ({count})`.
+
+### Internal
+
+- **Builder playground (`examples-builder.html`) + index card.** A live
+  `<web-multiselect>` driven by a Visual-Studio-style grouped property grid
+  (every attribute, with Floating-UI info tooltips explaining each), a
+  paste-your-own JSON data box, and a generated-markup readout. Attribute-only
+  controls that need a JS companion (`allow-add-new` → `addNewCallback`,
+  `selected-order="custom"` → `selectedOrderCompareCallback`) wire a demo
+  callback and flag the dependency in the generated markup.
+- New e2e specs: `labels`, `selected-popover-title`, `builder`.
+
 ## [2.4.0] - 2026-10-08 [PUBLISHED]
 
 ### Added

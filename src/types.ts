@@ -65,6 +65,38 @@ export interface MessageOptions {
 }
 
 /**
+ * User-facing ARIA labels and short UI strings, for internationalization. Pass a partial map
+ * via the `labels` config / property; any unset key falls back to its English default. Two
+ * placeholders are interpolated where noted: `{item}` (an item's display label) and `{count}`
+ * (a number). These are mostly accessibility (screen-reader) strings — visible text like the
+ * placeholder, empty/loading messages, counter, and popover title have their own options.
+ */
+export interface MultiSelectLabels {
+    /** Popover / fullscreen close button. Default: `Close`. */
+    close?: string;
+    /** Inline ✕ clear-all button (`show-clear`). Default: `Clear selection`. */
+    clearSelection?: string;
+    /** Count-mode clear (×) button. Default: `Clear all selections`. */
+    clearAllSelections?: string;
+    /** Fullscreen search clear (✕). Default: `Clear search`. */
+    clearSearch?: string;
+    /** Option info affordance that reveals a clipped label. Default: `Show full label`. */
+    showFullLabel?: string;
+    /** Badge remove (×). `{item}` → the item's label. Default: `Remove {item}`. */
+    removeItem?: string;
+    /** "+N more" badge remove (×). `{count}` → hidden count. Default: `Remove {count} hidden items`. */
+    removeHiddenItems?: string;
+    /** Group-header selected-count chip aria-label. `{count}` → selected count. Default: `{count} selected`. */
+    groupSelectedLabel?: string;
+    /** Counter tooltip overflow tail (beyond 12 items). `{count}` → remaining count. Default: `…and {count} more`. */
+    andMore?: string;
+    /** Fullscreen navigate-mode "previous match" button. Default: `Previous match`. */
+    prevMatch?: string;
+    /** Fullscreen navigate-mode "next match" button. Default: `Next match`. */
+    nextMatch?: string;
+}
+
+/**
  * Layout mode for action buttons container
  * - 'nowrap': Buttons stay in single row (default)
  * - 'wrap': Buttons wrap to multiple rows when needed
@@ -743,6 +775,12 @@ export interface MultiSelectConfig<T = any> {
     emptyMessage?: string;
     /** Message shown while loading async data */
     loadingMessage?: string;
+    /** Header text of the selected-items popover. Translatable; `{count}` is replaced with the
+     *  selection count. Default: "Selected Items ({count})". */
+    selectedPopoverTitle?: string;
+    /** ARIA labels / short UI strings for i18n (see {@link MultiSelectLabels}). Partial; unset
+     *  keys fall back to their English defaults. */
+    labels?: MultiSelectLabels;
     /**
      * How the search input behaves. Default: `normal`.
      *

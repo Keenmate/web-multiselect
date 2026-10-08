@@ -12,7 +12,23 @@ import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, des
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
 import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
-import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
+
+/** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
+ *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
+const DEFAULT_LABELS: Required<MultiSelectLabels> = {
+    close: 'Close',
+    clearSelection: 'Clear selection',
+    clearAllSelections: 'Clear all selections',
+    clearSearch: 'Clear search',
+    showFullLabel: 'Show full label',
+    removeItem: 'Remove {item}',
+    removeHiddenItems: 'Remove {count} hidden items',
+    groupSelectedLabel: '{count} selected',
+    andMore: '…and {count} more',
+    prevMatch: 'Previous match',
+    nextMatch: 'Next match',
+};
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import { VirtualScroll } from './virtual-scroll';
 import { createLTree, type LTree } from './tree/ltree';
@@ -625,7 +641,7 @@ export class WebMultiSelect<T = any> {
     private buildCounterTooltip(items: T[]): string {
         const MAX = 12;
         const labels = items.slice(0, MAX).map(o => this.getItemBadgeDisplayValue(o));
-        if (items.length > MAX) labels.push(`…and ${items.length - MAX} more`);
+        if (items.length > MAX) labels.push(this.resolveLabel('andMore', { count: items.length - MAX }));
         return labels.join('\n');
     }
 
@@ -889,7 +905,7 @@ export class WebMultiSelect<T = any> {
         this.clearButton.type = 'button';
         this.clearButton.className = 'ms__input-clear';
         this.clearButton.tabIndex = -1;
-        this.clearButton.setAttribute('aria-label', 'Clear selection');
+        this.clearButton.setAttribute('aria-label', this.resolveLabel('clearSelection'));
         this.clearButton.style.display = 'none';
         this.clearButton.addEventListener('mousedown', (e) => e.preventDefault());
         this.clearButton.addEventListener('click', (e) => {
@@ -1058,7 +1074,7 @@ export class WebMultiSelect<T = any> {
     private groupCountHtml(selectedCount: number, total: number): string {
         if (selectedCount <= 0) return '';
         const label = this.formatCountLabel(selectedCount, total);
-        return `<span class="ms__group-count" aria-label="${selectedCount} selected">${this.escapeHtml(label)}</span>`;
+        return `<span class="ms__group-count" aria-label="${this.escapeHtml(this.resolveLabel('groupSelectedLabel', { count: selectedCount }))}">${this.escapeHtml(label)}</span>`;
     }
 
     /**
@@ -1550,7 +1566,7 @@ export class WebMultiSelect<T = any> {
      */
     private renderOptionInfoButton(): string {
         if (this.presentationMode !== 'fullscreen') return '';
-        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="Show full label"></button>`;
+        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${this.escapeHtml(this.resolveLabel('showFullLabel'))}"></button>`;
     }
 
     /**
@@ -1873,7 +1889,7 @@ export class WebMultiSelect<T = any> {
                 moreBadgeHtml = `
                     <div class="ms__badge ms__badge--counter ms__badge--more" data-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="remove-hidden" aria-label="Remove ${remainingCount} hidden items"></button>
+                        <button type="button" class="ms__badge-remove" data-action="remove-hidden" aria-label="${this.escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
                     </div>
                 `;
             }
@@ -1899,7 +1915,7 @@ export class WebMultiSelect<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge" data-action="show-selected">
                         <span class="ms__badge-text">${compactText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="Clear all selections"></button>
+                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -1913,7 +1929,7 @@ export class WebMultiSelect<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge ms__badge--counter" data-action="show-selected">
                         <span class="ms__badge-text">${countText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="Clear all selections"></button>
+                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -3988,7 +4004,7 @@ export class WebMultiSelect<T = any> {
                 const clear = document.createElement('button');
                 clear.type = 'button';
                 clear.className = 'ms__fullscreen-search-clear';
-                clear.setAttribute('aria-label', 'Clear search');
+                clear.setAttribute('aria-label', this.resolveLabel('clearSearch'));
                 // Use mousedown+preventDefault so the tap doesn't blur/steal focus from
                 // the search field, then run the clear on click and restore focus.
                 clear.addEventListener('mousedown', (e) => e.preventDefault());
@@ -4003,7 +4019,7 @@ export class WebMultiSelect<T = any> {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'ms__fullscreen-close';
-        close.setAttribute('aria-label', 'Close');
+        close.setAttribute('aria-label', this.resolveLabel('close'));
         // The ✕ glyph is drawn via CSS (::before mask icon), shared with the popover
         // close so both overlays have the same close button.
         close.addEventListener('click', () => this.close());
@@ -4044,13 +4060,13 @@ export class WebMultiSelect<T = any> {
         const prev = document.createElement('button');
         prev.type = 'button';
         prev.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--prev';
-        prev.setAttribute('aria-label', 'Previous match');
+        prev.setAttribute('aria-label', this.resolveLabel('prevMatch'));
         prev.addEventListener('click', () => this.focusPreviousMatch());
 
         const next = document.createElement('button');
         next.type = 'button';
         next.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--next';
-        next.setAttribute('aria-label', 'Next match');
+        next.setAttribute('aria-label', this.resolveLabel('nextMatch'));
         next.addEventListener('click', () => this.focusNextMatch());
 
         controls.appendChild(prev);
@@ -4359,8 +4375,8 @@ export class WebMultiSelect<T = any> {
         // Standard rendering for small selections
         this.selectedPopover.innerHTML = `
             <div class="ms__selected-popover-header">
-                <span>Selected Items (${count})</span>
-                <button type="button" class="ms__selected-popover-close" aria-label="Close"></button>
+                <span>${this.escapeHtml(this.selectedPopoverTitleText(count))}</span>
+                <button type="button" class="ms__selected-popover-close" aria-label="${this.escapeHtml(this.resolveLabel('close'))}"></button>
             </div>
             <div class="ms__selected-popover-body">
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
@@ -4369,6 +4385,26 @@ export class WebMultiSelect<T = any> {
 
         // Attach tooltips to popover badges
         this.attachBadgeTooltips(this.selectedPopover);
+    }
+
+    /** Resolve an i18n label: the consumer's `labels[key]` if set, else the English default,
+     *  with any `{item}`/`{count}` placeholders interpolated. Returns raw text (not escaped) —
+     *  escape at the call site when it goes into innerHTML; `setAttribute` contexts need none. */
+    private resolveLabel(key: keyof MultiSelectLabels, vars?: Record<string, string | number>): string {
+        let text = this.options.labels?.[key] ?? DEFAULT_LABELS[key];
+        if (vars) {
+            for (const [name, value] of Object.entries(vars)) {
+                text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
+            }
+        }
+        return text;
+    }
+
+    /** The selected-items popover header text, translatable via `selectedPopoverTitle`. The
+     *  `{count}` placeholder is replaced with the current selection count. */
+    private selectedPopoverTitleText(count: number): string {
+        const template = this.options.selectedPopoverTitle ?? 'Selected Items ({count})';
+        return template.replace(/\{count\}/g, String(count));
     }
 
     private renderSelectedPopoverVirtual(selectedOptions: T[], count: number): void {
@@ -4383,8 +4419,8 @@ export class WebMultiSelect<T = any> {
                 : 'height: 18rem;';
             const html = `
                 <div class="ms__selected-popover-header">
-                    <span>Selected Items (${count})</span>
-                    <button type="button" class="ms__selected-popover-close" aria-label="Close"></button>
+                    <span>${this.escapeHtml(this.selectedPopoverTitleText(count))}</span>
+                    <button type="button" class="ms__selected-popover-close" aria-label="${this.escapeHtml(this.resolveLabel('close'))}"></button>
                 </div>
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
@@ -4394,7 +4430,7 @@ export class WebMultiSelect<T = any> {
             // Just update the count in header
             const header = this.selectedPopover.querySelector('.ms__selected-popover-header span');
             if (header) {
-                header.textContent = `Selected Items (${count})`;
+                header.textContent = this.selectedPopoverTitleText(count);
             }
         }
 
@@ -4524,7 +4560,7 @@ export class WebMultiSelect<T = any> {
         return `
             <div class="${badgeClasses}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${value}" aria-label="Remove ${removeLabel}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${value}" aria-label="${this.escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
             </div>
         `;
     }

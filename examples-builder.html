@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Builder — MultiSelect</title>
+    <link rel="stylesheet" href="examples-shared.css">
+    <style>
+        /* Two-pane builder: live preview (left, sticky) + property grid (right, scroll). */
+        .builder {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .builder { grid-template-columns: 1fr; }
+            .builder__preview { position: static !important; }
+        }
+
+        .builder__preview { position: sticky; top: 1rem; }
+
+        .preview-stage {
+            padding: 1.5rem;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #fff;
+            margin-bottom: 1rem;
+        }
+        .preview-stage web-multiselect { display: block; max-width: 100%; }
+
+        .builder__data textarea,
+        .builder__labels textarea {
+            width: 100%;
+            min-height: 8.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .data-status { font-size: 0.8rem; margin-top: 0.4rem; min-height: 1.1rem; }
+        .data-status--ok  { color: #16a34a; }
+        .data-status--err { color: #dc2626; }
+
+        /* Generated markup */
+        .markup-out { margin-top: 1rem; }
+        .markup-out pre {
+            margin: 0;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ── Property grid (Visual-Studio style) ───────────────────────────── */
+        .props { display: flex; flex-direction: column; gap: 0.6rem; }
+
+        .prop-group {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+        }
+        .prop-group > summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 0.6rem 0.9rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1e293b;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+        .prop-group > summary::-webkit-details-marker { display: none; }
+        .prop-group > summary::before {
+            content: "▸";
+            font-size: 0.75rem;
+            color: #64748b;
+            transition: transform 0.15s ease;
+        }
+        .prop-group[open] > summary::before { transform: rotate(90deg); }
+        .prop-group > summary .grp-count { margin-left: auto; font-weight: 400; font-size: 0.75rem; color: #94a3b8; }
+
+        .prop-row {
+            display: grid;
+            grid-template-columns: minmax(0, 42%) minmax(0, 1fr) 1rem;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.9rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        .prop-row label {
+            font-size: 0.8rem;
+            color: #334155;
+            font-family: 'Courier New', monospace;
+        }
+        .prop-row label .def { color: #94a3b8; font-size: 0.72rem; }
+        .prop-row input[type="text"],
+        .prop-row input[type="number"],
+        .prop-row select {
+            width: 100%;
+            padding: 0.3rem 0.45rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        .prop-row input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: #667eea; justify-self: start; }
+        .prop-row.dirty label { color: #4f46e5; font-weight: 600; }
+
+        .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+        /* Per-property info affordance + Floating-UI tooltip */
+        .prop-info {
+            justify-self: center;
+            width: 1rem; height: 1rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: #e2e8f0; color: #475569;
+            font: 700 0.7rem/1 system-ui, sans-serif;
+            cursor: help; user-select: none; flex: none;
+        }
+        .prop-info:hover, .prop-info:focus-visible { background: #667eea; color: #fff; outline: none; }
+
+        .builder-tip {
+            position: absolute; top: 0; left: 0;
+            z-index: 9999;
+            width: max-content; max-width: 260px;
+            background: #0f172a; color: #e2e8f0;
+            padding: 0.5rem 0.65rem; border-radius: 7px;
+            font-size: 0.78rem; line-height: 1.45;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            opacity: 0; transition: opacity 0.12s ease;
+        }
+        .builder-tip[data-show] { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-link">← Back to Examples</a>
+            <h1>Builder</h1>
+            <p class="subtitle">A live playground: tweak every attribute from the property panel on the right, paste your own data, and copy the generated markup. Changed properties are highlighted.</p>
+        </header>
+
+        <div class="toolbar">
+            <button id="reset-btn" class="secondary">Reset all</button>
+            <button id="copy-markup">Copy markup</button>
+        </div>
+
+        <div class="builder">
+            <!-- LEFT: live component + data + generated markup -->
+            <div class="builder__preview">
+                <div class="preview-stage">
+                    <web-multiselect id="demo"
+                        value-member="value"
+                        display-value-member="label"
+                        group-member="group"
+                        icon-member="icon"
+                        subtitle-member="subtitle"
+                        full-title-member="fullTitle"
+                        disabled-member="disabled"></web-multiselect>
+                </div>
+
+                <div class="builder__data">
+                    <label class="demo-label" for="data-input">Options data (JSON array) — paste your own:</label>
+                    <textarea id="data-input" spellcheck="false"></textarea>
+                    <div class="data-status" id="data-status"></div>
+                </div>
+
+                <div class="markup-out">
+                    <div class="output-label">Generated markup:</div>
+                    <pre id="markup"></pre>
+                </div>
+            </div>
+
+            <!-- RIGHT: property grid -->
+            <div class="props" id="props"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+        import { computePosition, offset, flip, shift } from '@floating-ui/dom';
+
+        const el = document.getElementById('demo');
+
+        // ── Floating-UI tooltip (one shared element, reused by every info icon) ──
+        const tip = document.createElement('div');
+        tip.className = 'builder-tip';
+        tip.setAttribute('role', 'tooltip');
+        document.body.appendChild(tip);
+
+        function showTip(target, text) {
+            tip.textContent = text;
+            tip.setAttribute('data-show', '');
+            computePosition(target, tip, {
+                placement: 'top',
+                middleware: [offset(8), flip({ fallbackPlacements: ['bottom', 'left', 'right'] }), shift({ padding: 8 })]
+            }).then(({ x, y }) => {
+                tip.style.left = `${x}px`;
+                tip.style.top = `${y}px`;
+            });
+        }
+        function hideTip() { tip.removeAttribute('data-show'); }
+
+        function attachTip(target, text) {
+            target.addEventListener('mouseenter', () => showTip(target, text));
+            target.addEventListener('mouseleave', hideTip);
+            target.addEventListener('focus', () => showTip(target, text));
+            target.addEventListener('blur', hideTip);
+        }
+
+        // One-line explanation per attribute (keyed by attribute name).
+        const DESCRIPTIONS = {
+            'value-member': "Property on each option holding its value — the key emitted by getValue().",
+            'display-value-member': "Property holding the option's display label.",
+            'search-value-member': "Property searched against (falls back to the display label).",
+            'group-member': "Property used to group options under headers.",
+            'icon-member': "Property holding an option icon (text, emoji, or HTML).",
+            'subtitle-member': "Property holding a secondary line shown under the label.",
+            'full-title-member': "Property holding a longer title — used by show-badge-full-title, tooltips, and the clipped-label reveal.",
+            'disabled-member': "Property that marks an option as disabled (non-selectable).",
+            'multiple': "Allow selecting multiple options. Off = single-select (a pick replaces the previous).",
+            'enable-search': "Show the search / filter input in the dropdown.",
+            'show-checkboxes': "Show a checkbox on each option.",
+            'allow-groups': "Render group headers when a group-member is set.",
+            'close-on-select': "Close the dropdown immediately after each selection.",
+            'allow-add-new': "Let the user create a new option from the typed search text.",
+            'prune-missing-selection': "When options are replaced, drop a selected value whose option is gone (default keeps it).",
+            'show-clear': "Show an inline ✕ in the input that clears the whole selection.",
+            'show-counter': "Show a small [N] selected-count badge inside the input.",
+            'badges-display-mode': "How selected items appear: badges, count, compact, partial (+N more), or none.",
+            'badges-position': "Where the badges block sits relative to the input.",
+            'badges-threshold-mode': "Whether the threshold counts items (count) or collapses to +N more (partial).",
+            'badges-threshold': "Number of selections before count / partial collapsing kicks in.",
+            'badges-max-visible': "Max badges shown before the rest go behind +N more (partial mode).",
+            'show-badge-full-title': "Use the full-title text on badges instead of the short label.",
+            'search-mode': "filter hides non-matches; navigate keeps all options and jumps to matches.",
+            'search-input-mode': "Search field: editable (normal), read-only, or hidden.",
+            'search-placeholder': "Placeholder text for the search input.",
+            'search-hint': "Small hint text shown beneath the search input.",
+            'min-search-length': "Minimum characters typed before searching / async lookup fires.",
+            'search-debounce': "Delay in ms before a search runs after typing stops.",
+            'show-search-mode-toggle': "Show a toggle to switch filter / navigate at runtime.",
+            'enable-selected-popover': "Allow the selected-items popover to open from the count / compact / +N more badge.",
+            'selected-popover-title': "Header text of the selected-items popover. {count} = current selection count.",
+            'selected-order': "Order selected items are displayed in (badges / popover). Display-only. 'member' needs selected-order-member; 'custom' needs a JS comparator (wired here for the demo).",
+            'selected-order-member': "Property used as the sort key when selected-order=\"member\" (e.g. label).",
+            'select-placeholder': "Placeholder shown on the control when nothing is selected.",
+            'empty-message': "Message shown when a search yields no matches.",
+            'loading-message': "Message shown while async options load.",
+            'no-data-placeholder': "Text shown when there are no options at all.",
+            'add-new-text': "Template for the add-new prompt. {value} = the typed text.",
+            '--ms-rem': "Global scale unit (default 10px) — everything sizes off it. Try 8px or 12px.",
+            'max-height': "Max dropdown list height before it scrolls (any CSS length).",
+            'dropdown-min-width': "Minimum dropdown panel width (any CSS length).",
+            'dropdown-max-width': "Maximum dropdown panel width (any CSS length).",
+            'option-height': "Fixed option row height in px (required for virtual scrolling).",
+            'enable-virtual-scroll': "Force windowed rendering on regardless of the threshold.",
+            'virtual-scroll-threshold': "Option count above which virtual scrolling turns on.",
+            'virtual-scroll-buffer': "Extra rows rendered above / below the viewport for smooth scrolling.",
+            'enable-badge-tooltips': "Show hover tooltips on selected badges.",
+            'enable-option-tooltips': "Show hover tooltips on dropdown options.",
+            'mobile-presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
+            'fullscreen-autofocus': "Auto-focus the search field when the fullscreen overlay opens.",
+        };
+
+        // ── Demo data (groups + icons + a disabled row so toggles visibly bite) ──
+        const DEMO_DATA = [
+            { value: 'js',       label: 'JavaScript', group: 'Frontend', icon: '🟨', subtitle: 'ECMAScript',          fullTitle: 'JavaScript — ECMAScript 2023',               keywords: 'js ecmascript browser node' },
+            { value: 'ts',       label: 'TypeScript', group: 'Frontend', icon: '🔷', subtitle: 'Typed JavaScript',    fullTitle: 'TypeScript 5 — typed superset of JS',        keywords: 'ts typed microsoft' },
+            { value: 'react',    label: 'React',      group: 'Frontend',             subtitle: 'UI library',          fullTitle: 'React — a UI library by Meta',               keywords: 'react jsx meta spa' },
+            { value: 'vue',      label: 'Vue',        group: 'Frontend',             subtitle: 'Progressive framework', fullTitle: 'Vue.js — the progressive framework',       keywords: 'vue sfc composition' },
+            { value: 'node',     label: 'Node.js',    group: 'Backend',  icon: '🟩', subtitle: 'JS runtime',          fullTitle: 'Node.js — server-side JavaScript runtime',   keywords: 'node server v8' },
+            { value: 'python',   label: 'Python',     group: 'Backend',  icon: '🐍', subtitle: 'Batteries included',  fullTitle: 'Python 3 — general-purpose language',        keywords: 'python django flask' },
+            { value: 'go',       label: 'Go',         group: 'Backend',              subtitle: 'Compiled & concurrent', fullTitle: 'Go — compiled, concurrent language by Google', keywords: 'go golang goroutine' },
+            { value: 'rust',     label: 'Rust',       group: 'Backend',              subtitle: 'Memory-safe systems', fullTitle: 'Rust — memory-safe systems programming',     keywords: 'rust cargo borrow' },
+            { value: 'postgres', label: 'PostgreSQL', group: 'Database',             subtitle: 'Relational',          fullTitle: 'PostgreSQL — advanced relational database',  keywords: 'postgres sql relational' },
+            { value: 'mysql',    label: 'MySQL',      group: 'Database', disabled: true, subtitle: 'Relational (disabled)', fullTitle: 'MySQL — popular relational database',   keywords: 'mysql sql' },
+            { value: 'redis',    label: 'Redis',      group: 'Database',             subtitle: 'In-memory store',     fullTitle: 'Redis — in-memory key-value store',          keywords: 'redis cache kv' },
+            { value: 'mongo',    label: 'MongoDB',    group: 'Database',             subtitle: 'Document store',      fullTitle: 'MongoDB — document database',                keywords: 'mongo nosql document' }
+        ];
+
+        // ── Property metadata — grouped like a VS property grid ──────────────
+        // type: 'bool' | 'enum' | 'text' | 'int' | 'cssvar' | 'json'
+        const GROUPS = [
+            { name: 'Data (members)', props: [
+                { attr: 'value-member', type: 'text', def: '', val: 'value' },
+                { attr: 'display-value-member', type: 'text', def: '', val: 'label' },
+                { attr: 'search-value-member', type: 'text', def: '' },
+                { attr: 'group-member', type: 'text', def: '', val: 'group' },
+                { attr: 'icon-member', type: 'text', def: '', val: 'icon' },
+                { attr: 'subtitle-member', type: 'text', def: '', val: 'subtitle' },
+                { attr: 'full-title-member', type: 'text', def: '', val: 'fullTitle' },
+                { attr: 'disabled-member', type: 'text', def: '', val: 'disabled' },
+            ]},
+            { name: 'Behavior', props: [
+                { attr: 'multiple', type: 'bool', def: true },
+                { attr: 'enable-search', type: 'bool', def: true },
+                { attr: 'show-checkboxes', type: 'bool', def: true },
+                { attr: 'allow-groups', type: 'bool', def: true },
+                { attr: 'close-on-select', type: 'bool', def: false },
+                { attr: 'allow-add-new', type: 'bool', def: false },
+                { attr: 'prune-missing-selection', type: 'bool', def: false },
+                { attr: 'show-clear', type: 'bool', def: false },
+                { attr: 'show-counter', type: 'bool', def: false },
+            ]},
+            { name: 'Badges', props: [
+                { attr: 'badges-display-mode', type: 'enum', opts: ['badges','count','compact','partial','none'], def: 'badges' },
+                { attr: 'badges-position', type: 'enum', opts: ['top','bottom','left','right'], def: 'bottom' },
+                { attr: 'badges-threshold-mode', type: 'enum', opts: ['count','partial'], def: 'count' },
+                { attr: 'badges-threshold', type: 'int', def: '' },
+                { attr: 'badges-max-visible', type: 'int', def: '' },
+                { attr: 'show-badge-full-title', type: 'bool', def: false },
+            ]},
+            { name: 'Search', props: [
+                { attr: 'search-mode', type: 'enum', opts: ['filter','navigate'], def: 'filter' },
+                { attr: 'search-input-mode', type: 'enum', opts: ['normal','readonly','hidden'], def: 'normal' },
+                { attr: 'search-placeholder', type: 'text', def: '' },
+                { attr: 'search-hint', type: 'text', def: '' },
+                { attr: 'min-search-length', type: 'int', def: '0' },
+                { attr: 'search-debounce', type: 'int', def: '0' },
+                { attr: 'show-search-mode-toggle', type: 'bool', def: false },
+            ]},
+            { name: 'Selected & popover', props: [
+                { attr: 'enable-selected-popover', type: 'bool', def: true },
+                { attr: 'selected-popover-title', type: 'text', def: 'Selected Items ({count})' },
+                { attr: 'selected-order', type: 'enum', opts: ['as-selected','label-asc','label-desc','member','custom'], def: 'as-selected' },
+                { attr: 'selected-order-member', type: 'text', def: '', ph: 'e.g. label (for order="member")' },
+            ]},
+            { name: 'Text / placeholders', props: [
+                { attr: 'select-placeholder', type: 'text', def: 'Pick an option...' },
+                { attr: 'empty-message', type: 'text', def: 'No results found' },
+                { attr: 'loading-message', type: 'text', def: 'Loading...' },
+                { attr: 'no-data-placeholder', type: 'text', def: '' },
+                { attr: 'add-new-text', type: 'text', def: '' },
+            ]},
+            { name: 'Sizing', props: [
+                { attr: '--ms-rem', type: 'cssvar', def: '', ph: 'e.g. 8px / 12px' },
+                { attr: 'max-height', type: 'text', def: '20rem' },
+                { attr: 'dropdown-min-width', type: 'text', def: '' },
+                { attr: 'dropdown-max-width', type: 'text', def: '' },
+                { attr: 'option-height', type: 'int', def: '50' },
+            ]},
+            { name: 'Virtual scroll', props: [
+                { attr: 'enable-virtual-scroll', type: 'bool', def: false },
+                { attr: 'virtual-scroll-threshold', type: 'int', def: '100' },
+                { attr: 'virtual-scroll-buffer', type: 'int', def: '10' },
+            ]},
+            { name: 'Tooltips', props: [
+                { attr: 'enable-badge-tooltips', type: 'bool', def: false },
+                { attr: 'enable-option-tooltips', type: 'bool', def: false },
+            ]},
+            { name: 'Mobile', props: [
+                { attr: 'mobile-presentation', type: 'enum', opts: ['auto','floating','fullscreen'], def: 'auto' },
+                { attr: 'fullscreen-autofocus', type: 'bool', def: false },
+            ]},
+        ];
+
+        // ── Render the property grid ─────────────────────────────────────────
+        const propsEl = document.getElementById('props');
+        const controls = []; // { attr, type, def, input, row }
+
+        for (const group of GROUPS) {
+            const details = document.createElement('details');
+            details.className = 'prop-group';
+            details.open = ['Data (members)', 'Behavior', 'Badges'].includes(group.name);
+
+            const summary = document.createElement('summary');
+            summary.innerHTML = `${group.name}<span class="grp-count">${group.props.length}</span>`;
+            details.appendChild(summary);
+
+            for (const p of group.props) {
+                const row = document.createElement('div');
+                row.className = 'prop-row';
+
+                const label = document.createElement('label');
+                const defHint = p.type === 'bool' ? '' : (p.def ? ` <span class="def">(${p.def})</span>` : '');
+                label.innerHTML = `${p.attr}${defHint}`;
+                row.appendChild(label);
+
+                let input;
+                if (p.type === 'bool') {
+                    input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.checked = !!p.def;
+                } else if (p.type === 'enum') {
+                    input = document.createElement('select');
+                    for (const o of p.opts) {
+                        const opt = document.createElement('option');
+                        opt.value = o; opt.textContent = o;
+                        input.appendChild(opt);
+                    }
+                    input.value = p.def;
+                } else {
+                    input = document.createElement('input');
+                    input.type = p.type === 'int' ? 'number' : 'text';
+                    input.value = p.val ?? '';
+                    if (p.ph) input.placeholder = p.ph;
+                }
+                label.htmlFor = input.id = `ctl-${p.attr}`;
+
+                // The control's starting value — used to flag "changed from initial".
+                const init = p.type === 'bool' ? !!p.def
+                    : p.type === 'enum' ? p.def
+                    : p.type === 'cssvar' ? ''
+                    : (p.val ?? '');
+                const rec = { ...p, input, row, init };
+                input.addEventListener('input', () => applyControl(rec));
+                input.addEventListener('change', () => applyControl(rec));
+                controls.push(rec);
+
+                row.appendChild(input);
+
+                // Info affordance — always the trailing column, same spot on every row.
+                const desc = DESCRIPTIONS[p.attr];
+                if (desc) {
+                    const info = document.createElement('span');
+                    info.className = 'prop-info';
+                    info.textContent = 'i';
+                    info.tabIndex = 0;
+                    info.setAttribute('role', 'img');
+                    info.setAttribute('aria-label', `${p.attr}: ${desc}`);
+                    attachTip(info, desc);
+                    row.appendChild(info);
+                } else {
+                    row.appendChild(document.createElement('span')); // keep the grid column aligned
+                }
+                details.appendChild(row);
+            }
+            propsEl.appendChild(details);
+        }
+
+        // ── Apply one control to the live element ────────────────────────────
+        function applyControl(rec) {
+            const { attr, type, input, init } = rec;
+            if (type === 'bool') {
+                // Set explicitly ("true"/"false") so it works regardless of the attribute's default.
+                el.setAttribute(attr, input.checked ? 'true' : 'false');
+                rec.row.classList.toggle('dirty', input.checked !== init);
+            } else if (type === 'cssvar') {
+                const v = input.value.trim();
+                if (v) el.style.setProperty(attr, v); else el.style.removeProperty(attr);
+                rec.row.classList.toggle('dirty', v !== init);
+            } else {
+                const v = input.value.trim();
+                if (v === '') el.removeAttribute(attr); else el.setAttribute(attr, v);
+                rec.row.classList.toggle('dirty', v !== init);
+            }
+            renderMarkup();
+        }
+
+        // ── Data box ─────────────────────────────────────────────────────────
+        const dataInput = document.getElementById('data-input');
+        const dataStatus = document.getElementById('data-status');
+
+        function applyData() {
+            const text = dataInput.value.trim();
+            if (!text) { el.options = []; setStatus('Empty — no options.', false); renderMarkup(); return; }
+            try {
+                const parsed = JSON.parse(text);
+                if (!Array.isArray(parsed)) throw new Error('Top level must be a JSON array');
+                el.options = parsed;
+                setStatus(`✓ ${parsed.length} option(s) applied`, false);
+            } catch (e) {
+                setStatus('✗ ' + e.message, true);
+            }
+            renderMarkup();
+        }
+        function setStatus(msg, isErr) {
+            dataStatus.textContent = msg;
+            dataStatus.className = 'data-status ' + (isErr ? 'data-status--err' : 'data-status--ok');
+        }
+        let dataTimer;
+        dataInput.addEventListener('input', () => { clearTimeout(dataTimer); dataTimer = setTimeout(applyData, 400); });
+
+        // ── Generated markup ─────────────────────────────────────────────────
+        const markupEl = document.getElementById('markup');
+        const RUNTIME_ATTRS = new Set(['id', 'is-ready', 'data-ready', 'class', 'style']);
+        function renderMarkup() {
+            const attrs = el.getAttributeNames()
+                .filter(n => !RUNTIME_ATTRS.has(n))
+                .sort()
+                .map(n => `    ${n}="${el.getAttribute(n).replace(/"/g, '&quot;')}"`);
+            const rem = el.style.getPropertyValue('--ms-rem');
+            const styleLine = rem ? `    style="--ms-rem: ${rem.trim()};"` : '';
+            const lines = [...attrs, styleLine].filter(Boolean);
+            const notes = ['<!-- options assigned in JS: el.options = [...] -->'];
+            if (el.getAttribute('allow-add-new') === 'true') {
+                notes.push('<!-- add-new needs a JS callback (or an `add` handler) to create the option: -->');
+                notes.push('<!-- el.addNewCallback = (value) => ({ value, label: value }); -->');
+            }
+            if (el.getAttribute('selected-order') === 'custom') {
+                notes.push('<!-- selected-order="custom" needs a JS comparator: -->');
+                notes.push('<!-- el.selectedOrderCompareCallback = (a, b) => a.label.localeCompare(b.label); -->');
+            }
+            markupEl.textContent =
+                `<web-multiselect\n${lines.join('\n')}>\n</web-multiselect>\n\n` +
+                notes.join('\n');
+        }
+
+        // ── Toolbar ──────────────────────────────────────────────────────────
+        document.getElementById('reset-btn').addEventListener('click', () => location.reload());
+        document.getElementById('copy-markup').addEventListener('click', async (e) => {
+            try { await navigator.clipboard.writeText(markupEl.textContent); e.target.textContent = 'Copied!'; setTimeout(() => e.target.textContent = 'Copy markup', 1200); }
+            catch { /* clipboard blocked — ignore */ }
+        });
+
+        // ── Boot ─────────────────────────────────────────────────────────────
+        customElements.whenDefined('web-multiselect').then(() => {
+            // `allow-add-new` only shows the prompt; creation is delegated. A callback (or an
+            // `add` event handler) is what actually materializes the option. It's a JS callback,
+            // not an attribute, so wire a simple one here — otherwise clicking "+ Add …" is a no-op.
+            el.addNewCallback = (value) => ({ value, label: value });
+
+            // `selected-order="custom"` has no attribute to express the order — it needs a JS
+            // comparator. Wire a demo one (shortest label first, then alphabetical) so picking
+            // "custom" visibly reorders the badges/popover instead of doing nothing.
+            el.selectedOrderCompareCallback = (a, b) =>
+                (String(a.label).length - String(b.label).length) || String(a.label).localeCompare(String(b.label));
+
+            dataInput.value = JSON.stringify(DEMO_DATA, null, 2);
+            applyData();
+            renderMarkup();
+        });
+    </script>
+
+    <script type="module" src="examples-copy-link.js"></script>
+    <script type="module" src="examples-chapter-nav.js"></script>
+</body>
+</html>
