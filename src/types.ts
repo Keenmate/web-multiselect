@@ -597,6 +597,16 @@ export interface MultiSelectConfig<T = any> {
     /** Close dropdown after selecting an option (internal: isCloseOnSelect) */
     isCloseOnSelect?: boolean;
     /**
+     * When the option set is replaced (assigning `options` / `data-options`), drop any selected
+     * value whose option is no longer present. Default `false` — selections are KEPT even if
+     * their option leaves the list, which is the safe default for search/paged lists where an
+     * item can drop out of the current page yet remain a valid pick. Turn on when the list
+     * replacement means the domain itself changed (e.g. an item was deleted server-side) and a
+     * value with no matching option should stop being reported by `getValue()` (internal:
+     * isPruneMissingSelectionEnabled).
+     */
+    isPruneMissingSelectionEnabled?: boolean;
+    /**
      * In the phone fullscreen overlay, auto-focus the search field when it opens — which
      * pops the soft keyboard immediately. Default `false`: the sheet opens showing the list
      * (keyboard closed), and the keyboard appears only when the user taps the search. Set

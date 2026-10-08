@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — in-place options update & refresh()</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>in-place options update &amp; refresh()</h1>
+    <p>Targeted by <code>e2e/options-update.spec.ts</code>.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">#churn — re-assigns a fresh options array on every change (the reports repro)</div>
+        <web-multiselect id="churn" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">#dm — disabled-member="disabled" (in-place field mutation + refresh())</div>
+        <web-multiselect id="dm" value-member="value" display-value-member="label" disabled-member="disabled"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">#cb — getDisabledCallback reading window.disabledIds (callback-state + refresh())</div>
+        <web-multiselect id="cb" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">#vs — enable-virtual-scroll, threshold 50 (threshold crossing + 5000-option perf)</div>
+        <web-multiselect id="vs" enable-virtual-scroll="true" virtual-scroll-threshold="50" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">#prune — prune-missing-selection (drops a selection whose option left the list)</div>
+        <web-multiselect id="prune" prune-missing-selection value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        // Deterministic item factory — `makeItems(5, 'x')` => x-0..x-4 with labels "X 000..".
+        window.makeItems = (n, prefix = 'item') => Array.from({ length: n }, (_, i) => ({
+            value: `${prefix}-${i}`,
+            label: `${prefix.toUpperCase()} ${String(i).padStart(3, '0')}`
+        }));
+
+        // External state the #cb callback reads — tests mutate it then call el.refresh().
+        window.disabledIds = new Set();
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            const base = window.makeItems(8, 'fruit');
+
+            // #churn: mirror a Lit-style parent that hands a brand-new array identity on
+            // every render. Here the trigger is the component's own `change` event, so each
+            // pick reassigns options — which, before the fix, reinitialised and closed the
+            // dropdown. New objects too (not just a new array) to exercise reconcile.
+            const churn = document.getElementById('churn');
+            churn.options = base;
+            churn.addEventListener('change', () => {
+                churn.options = churn.options.map(o => ({ ...o }));
+            });
+
+            // #dm: a couple seeded disabled, rest enabled — tests flip flags in place.
+            document.getElementById('dm').options = [
+                { value: 'apple',  label: 'Apple' },
+                { value: 'banana', label: 'Banana' },
+                { value: 'cherry', label: 'Cherry' },
+                { value: 'date',   label: 'Date' }
+            ];
+
+            // #cb: disabled derived purely from external state (no `disabled` field on data).
+            const cb = document.getElementById('cb');
+            cb.getDisabledCallback = (item) => window.disabledIds.has(item.value);
+            cb.options = window.makeItems(6, 'opt');
+
+            // #vs: start SMALL (below threshold → normal render); tests grow it in place.
+            document.getElementById('vs').options = window.makeItems(10, 'row');
+
+            // #prune: same fruit seed as #churn — tests select one then remove it from the list.
+            document.getElementById('prune').options = window.makeItems(8, 'fruit');
+        });
+    </script>
+</body>
+</html>

@@ -779,6 +779,88 @@ el.addEventListener('change', (e) =&gt; this.pushEvent('changed', e.detail));
 el.ready();                       // build once, flash-free
 // (or, driven from the server: patch the attribute off — remove `defer`)</pre></div>
         </section>
+
+        <!-- Example 10: In-place options update, refresh(), prune-missing-selection -->
+        <section class="example-section">
+            <h2>API10 · In-place <code>options</code> update &amp; <code>refresh()</code></h2>
+            <p class="description">
+                Assigning <code>options</code> updates the list <strong>in place</strong> — the picker is
+                not torn down, so an open dropdown stays open and the selection, scroll and search survive.
+                Handing a fresh-but-equivalent array on every parent re-render (React / Lit / LiveView) is
+                cheap and no longer closes the dropdown. When the option <em>objects</em> are mutated in
+                place, or external state a render callback reads changes, call <code>refresh()</code> to
+                re-render without re-ingesting.
+            </p>
+
+            <ul class="feature-list">
+                <li><code>el.options = data</code> — the set changed (new array / add / remove): ingest + repaint, in place</li>
+                <li><code>el.refresh()</code> — same objects mutated, or callback state changed: repaint only (silent — no events)</li>
+                <li><code>prune-missing-selection</code> — on replace, drop a selected value whose option left the list (default: keep)</li>
+            </ul>
+
+            <div class="demo-area">
+                <label class="demo-label">This picker replaces its whole <code>options</code> array every time you select something
+                    (frameworks like React or Vue often do this on each render). Open the dropdown and pick a
+                    few items — the list is rebuilt under you, but the dropdown <strong>stays open</strong>
+                    and your selections are kept, instead of snapping shut after every click:</label>
+                <web-multiselect id="inplace-demo" value-member="value" display-value-member="label" style="max-width: 320px;"></web-multiselect>
+                <div class="output">
+                    <div class="output-label">result:</div>
+                    <pre id="output-inplace">open the dropdown, then pick options…</pre>
+                </div>
+            </div>
+
+            <div class="demo-area">
+                <label class="demo-label"><code>refresh()</code> toggles <code>Cherry.disabled</code> on the existing option object (no new array)
+                    and repaints. The button sits outside the panel, so it closes on click — reopen to see Cherry
+                    now greyed out:</label>
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+                    <web-multiselect id="refresh-demo" value-member="value" display-value-member="label" disabled-member="disabled" style="flex: 1 1 240px;"></web-multiselect>
+                    <div class="controls" style="margin-bottom: 0;">
+                        <button onclick="toggleCherryDisabled()">Toggle Cherry disabled + refresh()</button>
+                    </div>
+                </div>
+                <div class="output">
+                    <div class="output-label">result:</div>
+                    <pre id="output-refresh">toggle, then reopen the dropdown…</pre>
+                </div>
+            </div>
+
+            <p class="description">
+                <strong>Stale selection on replace.</strong> Both pickers below have <code>Cherry</code>
+                preselected. Removing <code>Cherry</code> from the option list leaves it a phantom in the
+                default picker (still reported by <code>getValue()</code>) but drops it in the one with
+                <code>prune-missing-selection</code>.
+            </p>
+            <div class="grid-2">
+                <div>
+                    <div class="demo-area">
+                        <label class="demo-label">Default (keep):</label>
+                        <web-multiselect id="keep-demo" value-member="value" display-value-member="label"></web-multiselect>
+                        <button onclick="removeSelectedFrom('keep')">Remove selected item from the list</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="demo-area">
+                        <label class="demo-label"><code>prune-missing-selection</code>:</label>
+                        <web-multiselect id="prune-demo" prune-missing-selection value-member="value" display-value-member="label"></web-multiselect>
+                        <button onclick="removeSelectedFrom('prune')">Remove selected item from the list</button>
+                    </div>
+                </div>
+            </div>
+            <div class="output">
+                <div class="output-label">getValue() after removing the selected option from each list:</div>
+                <pre id="output-prune">remove the selected item from each…</pre>
+            </div>
+
+            <p class="code-label">The contract — assign when the set changed, refresh when it didn't:</p>
+            <div class="code-block"><pre>// the SET changed (new array, add/remove) → assign; it repaints itself
+el.options = await fetchFromServer();
+
+// same objects mutated in place, or callback state changed → refresh (no new array)
+option.disabled = true;           // or: disabledIds.add(id)
+el.refresh();                     // silent repaint — never call both after an assign</pre></div>
+        </section>
     </div>
 
     <script type="module">
@@ -835,6 +917,38 @@ el.ready();                       // build once, flash-free
                 compactMode.options = badgeModeData;
                 compactMode.setSelected(['js', 'ts', 'py']);
             }
+
+            // API10: in-place options update, refresh(), prune-missing-selection. A fresh seed
+            // each time so the demos never share array/object identity with one another.
+            const fruitSeed = () => ([
+                { value: 'apple', label: 'Apple' },
+                { value: 'banana', label: 'Banana' },
+                { value: 'cherry', label: 'Cherry' },
+                { value: 'date', label: 'Date' },
+                { value: 'elderberry', label: 'Elderberry' },
+                { value: 'fig', label: 'Fig' },
+                { value: 'grape', label: 'Grape' },
+                { value: 'kiwi', label: 'Kiwi' }
+            ]);
+            const inplaceDemo = document.querySelector('#inplace-demo');
+            if (inplaceDemo) {
+                inplaceDemo.options = fruitSeed();
+                // Each pick hands back a brand-new array (new identity + new objects) — the
+                // in-place update keeps the dropdown open; isOpen proves it wasn't rebuilt.
+                inplaceDemo.addEventListener('change', () => {
+                    inplaceDemo.options = inplaceDemo.options.map(o => ({ ...o }));
+                    const out = document.getElementById('output-inplace');
+                    const n = parseInt(out.dataset.count || '0', 10) + 1;
+                    out.dataset.count = String(n);
+                    out.textContent = `options reassigned ${n}× — dropdown isOpen: ${inplaceDemo.isOpen}`;
+                });
+            }
+            const refreshDemo = document.querySelector('#refresh-demo');
+            if (refreshDemo) refreshDemo.options = fruitSeed();
+            const keepDemo = document.querySelector('#keep-demo');
+            if (keepDemo) { keepDemo.options = fruitSeed(); keepDemo.setSelected(['cherry']); }
+            const pruneDemo = document.querySelector('#prune-demo');
+            if (pruneDemo) { pruneDemo.options = fruitSeed(); pruneDemo.setSelected(['cherry']); }
 
             // Example 1: Custom Objects
             const customObjectsSelect = document.querySelector('#custom-objects');
@@ -1720,6 +1834,33 @@ el.ready();                       // build once, flash-free
                 'getValue() - Product IDs': value,
                 'Selected Products': items.map(p => ({ id: p.id, name: p.name, category: p.category })),
                 'count': items.length
+            }, null, 2);
+        };
+
+        // API10 — refresh(): mutate the SAME option object, then repaint (no reassignment).
+        window.toggleCherryDisabled = () => {
+            const el = document.querySelector('#refresh-demo');
+            const cherry = el.options.find(o => o.value === 'cherry');
+            cherry.disabled = !cherry.disabled;
+            el.refresh();
+            document.getElementById('output-refresh').textContent =
+                `Cherry.disabled = ${cherry.disabled} — applied via refresh() (no new array). Reopen to see it.`;
+        };
+
+        // API10 — prune vs keep: drop the currently-selected option from the list.
+        window.removeSelectedFrom = (which) => {
+            const el = document.querySelector(which === 'prune' ? '#prune-demo' : '#keep-demo');
+            const sel = el.getValue();
+            const first = Array.isArray(sel) ? sel[0] : sel;
+            if (first) el.options = el.options.filter(o => o.value !== first);
+            window.showPruneValues();
+        };
+        window.showPruneValues = () => {
+            const keep = document.querySelector('#keep-demo');
+            const prune = document.querySelector('#prune-demo');
+            document.getElementById('output-prune').textContent = JSON.stringify({
+                'keep (default) getValue()': keep.getValue(),
+                'prune getValue()': prune.getValue()
             }, null, 2);
         };
 

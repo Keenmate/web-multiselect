@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-08 [PUBLISHED]
+
+### Added
+
+- **`refresh()` method (element + core).** Re-renders the picker from the
+  *current* option set without re-ingesting it — the companion to assigning
+  `options`. Use it when the option *objects* were mutated in place (e.g.
+  `option.disabled = true`) or when external state a render callback reads
+  (`getDisabledCallback`, an i18n label map, `renderOptionContentCallback`)
+  changed, so there is no new array to assign. It re-projects filtered/tree from
+  `allOptions` (honouring the current search term; it does not re-fire an async
+  `searchCallback`), reconciles the selection, and repaints — silently (no
+  `select`/`deselect`/`change`).
+- **`prune-missing-selection` attribute / `isPruneMissingSelectionEnabled`
+  property.** When the option set is replaced and a selected value no longer has
+  a matching option, drop it. Default off: selections are kept even if their
+  option leaves the list — the safe default for search/paged lists where an item
+  can drop out of the current page yet stay a valid pick. Turn it on when a list
+  replacement means the domain changed (e.g. an item was deleted server-side)
+  and a value with no matching option should stop being reported by
+  `getValue()`. The prune is silent.
+
+### Changed
+
+- **Assigning `options` now updates the list in place instead of rebuilding the
+  picker.** The `options` property is routed `on: 'update'` (was `on: 'reinit'`),
+  so it flows through the core's in-place `updateOptions()` path rather than a
+  destroy + re-init. An open dropdown stays open and the selection, scroll
+  offset, and search term survive — so handing a fresh-but-equivalent array on
+  every parent re-render (React/Vue/Lit/LiveView) is cheap and no longer closes
+  the dropdown after each pick. Replacing a 5000-item list is now an O(n)
+  in-place update (measured ~2 ms) rather than a full teardown with a
+  Floating-UI re-anchor and a fresh `VirtualScroll`. Setting `options` to `null`
+  now clears the list to empty in place.
+
 ## [2.3.0] - 2026-10-07 [PUBLISHED]
 
 ### Added

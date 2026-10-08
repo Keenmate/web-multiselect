@@ -199,7 +199,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
     description: 'Hold the initial render. When the `defer` attribute is present on upgrade the component builds nothing (it only reserves space) — so options, callbacks (e.g. `customStylesCallback`) and event listeners can all be wired first, then released with `el.ready()` (or by removing the `defer` attribute, for server-driven frameworks). The release builds the picker ONCE with everything already in place, avoiding the upgrade-then-restyle flash. Absent (default): builds immediately on connect. Latched — once released the gate never re-closes.' },
 
   // ── Complex property (data) ──────────────────────────────────────────────
-  { configKey: 'options',                                                            converter: toObjectArray(),        on: 'reinit', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
+  { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
+  { configKey: 'isPruneMissingSelectionEnabled', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `getValue()`. The prune is silent (no select/deselect/change).' },
   { configKey: 'optionsSource', attribute: 'data-options',                            converter: toText({ isNullable: true }), on: 'reinit', type: 'string', description: 'HTML-authoring source for the option list, parsed per `data-options-format`. Reactive: changing either attribute re-renders. Prefer the `options` property in JS; a set `options` property and declarative <option> children both win over this.' },
   { configKey: 'optionsFormat', attribute: 'data-options-format',                     converter: toEnum(OPTIONS_FORMATS, { default: 'json' }), on: 'reinit', type: "'json' | 'csv' | 'plain'", description: 'How to parse the `data-options` attribute: `json` (a JSON array of objects or [value, label] tuples), `csv` (rows split on `data-options-row-splitter`, cells on `data-options-splitter`; the first row is a header — map columns via *-member), or `plain` (bare values split on both splitters -> [value, label] tuples, value === label). Default `json`.' },
   { configKey: 'optionsSplitter', attribute: 'data-options-splitter',                 converter: toText({ default: ',' }), on: 'reinit', type: 'string', description: 'Field/cell delimiter for the `csv` and `plain` `data-options` formats. Default `,`. Escapes `\\t` `\\n` `\\r` are honoured (e.g. `data-options-splitter="\\t"` for TSV). Ignored for `json`.' },
@@ -907,6 +908,20 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   getValue(): string | number | (string | number)[] | null {
     this.flush();
     return this.#picker ? this.#picker.getValue() : null;
+  }
+
+  /**
+   * Re-render from the CURRENT option set without re-ingesting it — the companion to the
+   * `options` setter. Assign `el.options = …` when the SET changed (a new array, items
+   * added/removed/reordered); call `refresh()` when the same objects were mutated in place
+   * (e.g. toggling a `disabled` flag) or when external state a render callback reads
+   * (`getDisabledCallback`, an i18n label map, custom renderers) changed — there is nothing to
+   * assign in that case. Silent: fires no select/deselect/change. No-op before the picker is
+   * built (while a `defer` gate is held, options/callbacks are wired and land on release).
+   */
+  refresh(): void {
+    this.flush(); // land any pending `options = …` write before recomputing the view
+    this.#picker?.refresh();
   }
 
   /**

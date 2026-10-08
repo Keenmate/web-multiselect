@@ -4238,6 +4238,27 @@ export class WebMultiSelect<T = any> {
         });
     }
 
+    /**
+     * Drop any selected value whose option is no longer present in `allOptions`. The inverse of
+     * {@link reconcileSelectedOptions}: that one *adds* mappings as options arrive; this one
+     * *removes* selections whose option left the list. Silent — no select/deselect/change (a
+     * data-driven correction when the option set is replaced, not a user gesture). Gated by
+     * `isPruneMissingSelectionEnabled`; the default (off) KEEPS missing selections. Runs before
+     * {@link buildTree}, so cascade atoms recompute from the already-pruned selection.
+     */
+    private pruneMissingSelection(): void {
+        if (this.selectedValues.size === 0) return;
+        const present = new Set(this.allOptions.map(opt => String(this.getItemValue(opt))));
+        const toDrop: string[] = [];
+        this.selectedValues.forEach(valueKey => {
+            if (!present.has(valueKey)) toDrop.push(valueKey);
+        });
+        toDrop.forEach(valueKey => {
+            this.selectedValues.delete(valueKey);
+            this.selectedOptions.delete(valueKey);
+        });
+    }
+
     private toggleSelectedPopover(): void {
         if (this.showSelectedPopover) {
             this.hideSelectedPopover();
@@ -4665,15 +4686,21 @@ export class WebMultiSelect<T = any> {
             || 'isTreeEnabled' in partial || 'isSelectableMember' in partial
             || 'getIsSelectableCallback' in partial;
 
-        if ('options' in partial && partial.options !== undefined) {
-            this.allOptions = partial.options;
+        let optionsChanged = false;
+        if ('options' in partial) {
+            // Replace the option set in place (a nullish value clears to empty). We keep the
+            // SAME array/objects the consumer handed us — reconcile re-maps the live selection
+            // onto them. This is an in-place update, not a rebuild: an open dropdown stays open.
+            this.allOptions = partial.options ?? [];
             this.reconcileSelectedOptions();
+            if (this.options.isPruneMissingSelectionEnabled) this.pruneMissingSelection();
             if (this.isTreeMode()) {
                 // buildTree derives filteredOptions from the tree, honouring the current search term.
                 this.buildTree();
             } else {
                 this.filteredOptions = this.searchTerm ? this.filteredOptions : [...this.allOptions];
             }
+            optionsChanged = true;
         } else if (treeConfigChanged) {
             // Tree config toggled/changed without new options — rebuild from the existing list.
             if (this.isTreeMode()) this.buildTree();
@@ -4747,10 +4774,48 @@ export class WebMultiSelect<T = any> {
             this.hint.textContent = this.options.searchHint || '';
         }
 
-        this.renderDropdown();
+        // An in-place options swap keeps the dropdown open — preserve the scroll offset so the
+        // list doesn't jump to the top on every pick, and clamp a now-out-of-range focus so it
+        // can't highlight a row that the new (shorter) list no longer has.
+        if (optionsChanged && this.focusedIndex >= this.filteredOptions.length) {
+            this.focusedIndex = this.filteredOptions.length - 1;
+        }
+        this.renderDropdown({ preserveScroll: optionsChanged });
         this.renderBadges();
         this.updateHiddenInput();
         return true;
+    }
+
+    /**
+     * Re-render the live view from the CURRENT option set without re-ingesting it — the
+     * companion to assigning `options`.
+     *
+     * Use when option OBJECTS were mutated in place (e.g. `opt.disabled = true` on an object the
+     * component already holds) or when external state a render callback reads
+     * (`getDisabledCallback`, an i18n label map, `renderOptionContentCallback`) changed — there
+     * is no new array to assign, so the `options` setter can't express it. Re-projects
+     * filtered/tree from `allOptions` (honouring the current search term; does NOT re-fire an
+     * async `searchCallback`), reconciles the selection, and repaints dropdown + badges + hidden
+     * inputs. Silent: fires no select/deselect/change — a pure view recompute, not a user gesture.
+     */
+    public refresh(): void {
+        this.reconcileSelectedOptions();
+        if (this.options.isPruneMissingSelectionEnabled) this.pruneMissingSelection();
+        if (this.isTreeMode()) {
+            this.buildTree();
+        } else if (!this.searchTerm) {
+            this.filteredOptions = [...this.allOptions];
+        }
+        // Flat list under an active search term: keep filteredOptions as-is — it already holds
+        // references to the same option objects, so the repaint reflects any in-place field
+        // mutation. Re-deriving match membership would mean re-running the sync filter or an
+        // async searchCallback, which is out of scope for a view refresh.
+        if (this.focusedIndex >= this.filteredOptions.length) {
+            this.focusedIndex = this.filteredOptions.length - 1;
+        }
+        this.renderDropdown({ preserveScroll: true });
+        this.renderBadges();
+        this.updateHiddenInput();
     }
 
     public get selectedItem(): T | null {
