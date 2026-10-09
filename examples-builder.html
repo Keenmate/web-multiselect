@@ -195,11 +195,13 @@
 
     <script type="module">
         import '/src/index.ts';
-        import { computePosition, offset, flip, shift } from '@floating-ui/dom';
 
         const el = document.getElementById('demo');
 
-        // ── Floating-UI tooltip (one shared element, reused by every info icon) ──
+        // ── Tooltip (one shared element, reused by every info icon) ──
+        // Positioned with plain DOM math — no bundler/import-map dependency, so it works
+        // identically under `vite dev` and on the static (nginx) examples site. Prefers above,
+        // flips below when there's no room, and clamps horizontally to the viewport.
         const tip = document.createElement('div');
         tip.className = 'builder-tip';
         tip.setAttribute('role', 'tooltip');
@@ -208,13 +210,18 @@
         function showTip(target, text) {
             tip.textContent = text;
             tip.setAttribute('data-show', '');
-            computePosition(target, tip, {
-                placement: 'top',
-                middleware: [offset(8), flip({ fallbackPlacements: ['bottom', 'left', 'right'] }), shift({ padding: 8 })]
-            }).then(({ x, y }) => {
-                tip.style.left = `${x}px`;
-                tip.style.top = `${y}px`;
-            });
+            const r = target.getBoundingClientRect();
+            const gap = 8, pad = 8;
+            const tw = tip.offsetWidth, th = tip.offsetHeight;
+            // Above the icon, centred; flip below if it would clip the top of the viewport.
+            let top = r.top + window.scrollY - th - gap;
+            if (r.top < th + gap) top = r.bottom + window.scrollY + gap;
+            // Centre horizontally over the icon, then clamp within the viewport.
+            let left = r.left + window.scrollX + r.width / 2 - tw / 2;
+            const min = window.scrollX + pad;
+            const max = window.scrollX + document.documentElement.clientWidth - tw - pad;
+            tip.style.left = `${Math.max(min, Math.min(left, max))}px`;
+            tip.style.top = `${top}px`;
         }
         function hideTip() { tip.removeAttribute('data-show'); }
 
