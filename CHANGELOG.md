@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0-rc02] - 2026-10-12
+
+### Fixed
+
+- **External-search demo (ES01) no longer fails to load on the static site.**
+  `examples-flex-indexer.js` imports FlexSearch as a bare specifier (`from
+  'flexsearch'`), which `vite dev` resolves from `node_modules` but a static
+  browser cannot — the deployed page reported *"Failed to resolve module
+  specifier flexsearch"* / *"Failed to fetch dynamically imported module …
+  examples-flex-indexer.js"* and the demo showed "⚠ Demo failed to load". The
+  Docker serve stage now vendors the self-contained FlexSearch ESM bundle and
+  rewrites the import to it, mirroring the existing `/src/index.ts` →
+  `/dist/multiselect.js` rewrite. Served from `/lib` — **not** `/vendor`, which
+  `nginx.conf` drops as scanner-probe traffic (`444`, surfaced by the edge proxy
+  as a `502`). Demo-site only; the published npm package is unaffected.
+
 ## [2.5.0-rc01] - 2026-10-08 [PUBLISHED]
 
 ### Added

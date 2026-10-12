@@ -66,12 +66,29 @@ COPY --from=build /app/examples-data     /usr/share/nginx/html/examples-data/
 COPY --from=build /app/docs              /usr/share/nginx/html/docs/
 COPY --from=build /app/dist              /usr/share/nginx/html/dist/
 
+# examples-external-search.html's helper (examples-flex-indexer.js) imports FlexSearch as a
+# BARE specifier (`from 'flexsearch'`). `vite dev` resolves that from node_modules, but a static
+# browser can't resolve a bare specifier (no bundler / no import map) — the page reports
+# "Failed to resolve module specifier flexsearch" and the demo fails to load. Vendor the
+# self-contained ESM bundle (no nested static imports; exports both the default and `Charset`)
+# and rewrite the import to it below — the same dev-vs-static split as /src/index.ts → /dist.
+# FlexSearch is a demo/consumer dependency only; the library itself never imports it.
+#
+# NOTE: serve it from /lib, NOT /vendor — nginx.conf (rule 3) returns 444 for any `/vendor/`
+# path (a classic composer/PHP exploit target scanners probe), which the edge proxy surfaces
+# as a 502. `/lib` is not on that block list.
+COPY --from=build /app/node_modules/flexsearch/dist/flexsearch.bundle.module.min.mjs /usr/share/nginx/html/lib/flexsearch.js
+
 # The example pages load the library dev entry via `<script src="/src/index.ts">`,
 # which only works under `vite dev` (it transpiles TS on the fly). A static nginx
 # server has no src/ tree and can't transform TS, so those requests 404. Rewrite
 # the dev entry to the compiled ES bundle in the served copies; the repo HTML is
 # left untouched so `vite dev` keeps working locally.
 RUN sed -i 's#/src/index\.ts#/dist/multiselect.js#g' /usr/share/nginx/html/*.html
+
+# Point the FlexSearch helper's bare import at the vendored bundle copied above (static-serve
+# only; the repo file keeps the bare specifier so `vite dev` resolves it from node_modules).
+RUN sed -i "s#from 'flexsearch'#from './lib/flexsearch.js'#g" /usr/share/nginx/html/examples-flex-indexer.js
 
 # Inject the Plausible analytics snippet into every served page, right after the
 # opening <head>. The snippet lives in plausible-snippet.html (kept out of the
