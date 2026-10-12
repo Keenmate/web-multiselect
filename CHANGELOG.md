@@ -5,7 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.5.0-rc02] - 2026-10-12
+## [2.5.0] - 2026-10-12 [PUBLISHED]
+
+### Added
+
+- **`reserve-icon-slot` attribute / `isIconSlotReserved` property — a fixed-width
+  icon gutter on every option row.** By default the icon slot (`.ms__option-icon`)
+  is rendered only on rows that actually have an icon, so a list mixing icon and
+  icon-less rows gets ragged label starts. Turn `reserve-icon-slot` on and every
+  row reserves the slot — an empty placeholder (`.ms__option-icon--empty`) on
+  icon-less rows — so all labels share one start column. Off by default (behavior
+  unchanged); option-level, so it works identically on a flat list and in tree
+  mode (where the depth indent already offsets each row). The slot reuses the
+  existing `--ms-option-icon-size` box and `--ms-option-content-gap`. Applies in
+  place (`on: 'update'`).
+
+### Changed
+
+- **Bumped `@keenmate/web-components-core` to `1.0.0-rc12` and adopted its
+  canonical null-clear engine-config contract.** `#assembleConfig()` now calls
+  `this.engineConfig(NON_PICKER_KEYS)` and the in-place `update()` path forwards a
+  cleared nullable input to the picker as a present `null` (the clear signal),
+  replacing the two hand-rolled `null → undefined`/absent conversions. This is a
+  consistency change, not a bugfix: the picker engine merges via
+  `Object.assign` + constructor default-spread and reads every nullable field
+  falsily (`||` / `?? default`), so `null` and `undefined` resolve identically —
+  behavior is unchanged, verified by the full suite plus a new set→clear gate.
 
 ### Fixed
 
@@ -20,6 +45,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/dist/multiselect.js` rewrite. Served from `/lib` — **not** `/vendor`, which
   `nginx.conf` drops as scanner-probe traffic (`444`, surfaced by the edge proxy
   as a `502`). Demo-site only; the published npm package is unaffected.
+- **Builder playground no longer breaks on the static site.** Its property tooltips
+  dropped the `@floating-ui/dom` bare import (unresolvable without a bundler/import
+  map, same class as above) in favour of hand-rolled `getBoundingClientRect`
+  positioning. Demo-site only.
+
+### Internal
+
+- **Test coverage.** New `reserve-icon-slot` unit (`test/unit/reserve-icon-slot.test.ts`)
+  and e2e (`e2e/tree-layout.spec.ts` — real-browser label-column alignment) specs; a
+  `null-clear` e2e gate (`e2e/null-clear.spec.ts`) asserting set→clear resets to default
+  on both the update and reinit paths; and `{count}`-interpolation coverage for the
+  `labels` map (`groupSelectedLabel` / `removeHiddenItems` / `andMore`) via a new
+  `test/labels.html` fixture.
+- **Docs & demos.** Dedicated `reserve-icon-slot` demos in `examples-basic.html` (BU02)
+  and `examples-tree.html` (TR04 “Node icons”), plus a Builder property-grid row; the
+  `--ms-option-icon-size` / `--ms-option-content-gap` variables added to the
+  `examples-theming.html` reference table.
 
 ## [2.5.0-rc01] - 2026-10-08 [PUBLISHED]
 
