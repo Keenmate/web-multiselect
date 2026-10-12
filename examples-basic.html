@@ -110,6 +110,25 @@
                     search-placeholder="Search frameworks…">
                 </web-multiselect>
             </div>
+
+            <p style="margin-top:1.5rem">
+                <strong>Reserved icon gutter.</strong> When only <em>some</em> rows carry an icon, the
+                icon-less rows pull their label into the gutter and the list looks ragged. Turn on
+                <code>reserve-icon-slot</code> to keep a fixed-width icon gutter on <em>every</em> row, so
+                all labels share one start column. It's option-level — the same knob works in tree mode.
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="disp-reserve"> <code>reserve-icon-slot</code></label>
+            </div>
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-reserve"
+                    value-member="value"
+                    display-value-member="label"
+                    icon-member="icon"
+                    search-placeholder="Mixed icon / no-icon rows — open me…">
+                </web-multiselect>
+            </div>
         </div>
 
         <!-- ============================================================= -->
@@ -390,6 +409,17 @@ el.scrollToValue('jp');</code></pre>
             { value: 'solid', label: 'Solid', icon: '💎', year: 2018, subtitle: 'Simple and performant reactivity' }
         ];
 
+        // A deliberately MIXED list (some rows carry an icon, some don't) for the
+        // reserve-icon-slot demo — the effect is only visible when the two kinds mix.
+        const mixedIcons = [
+            { value: 'apple',  label: 'Apple',  icon: '🍎' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry', icon: '🍒' },
+            { value: 'date',   label: 'Date' },
+            { value: 'grape',  label: 'Grapes', icon: '🍇' },
+            { value: 'kiwi',   label: 'Kiwi' }
+        ];
+
         const groupedTechnologies = [
             { value: 'react', label: 'React', icon: '⚛️', group: 'frontend' },
             { value: 'vue', label: 'Vue.js', icon: '🖖', group: 'frontend' },
@@ -488,6 +518,13 @@ el.scrollToValue('jp');</code></pre>
                 e.target.checked ? exDisp.setAttribute('icon-member', 'icon') : exDisp.removeAttribute('icon-member'));
             document.getElementById('disp-subtitles').addEventListener('change', (e) =>
                 e.target.checked ? exDisp.setAttribute('subtitle-member', 'subtitle') : exDisp.removeAttribute('subtitle-member'));
+
+            // Reserved icon gutter — a mixed icon / no-icon flat list; the toggle flips the
+            // fixed-width slot so icon-less rows' labels line up with the icon'd ones.
+            const exReserve = document.getElementById('ex-reserve');
+            exReserve.options = mixedIcons;
+            document.getElementById('disp-reserve').addEventListener('change', (e) =>
+                boolAttr(exReserve, 'reserve-icon-slot', e.target.checked));
             const maxVisibleWrap = document.getElementById('disp-maxvisible-wrap');
             document.querySelectorAll('input[name="disp-mode"]').forEach((r) =>
                 r.addEventListener('change', (e) => {

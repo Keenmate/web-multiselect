@@ -51,6 +51,18 @@
     </div>
 
     <div class="fixture">
+        <div class="fixture-label">node icons, default slot (icon-member="icon"; icon-less rows have NO slot)</div>
+        <web-multiselect id="tree-icons" multiple value-member="value" display-value-member="label" path-member="path"
+            icon-member="icon"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">node icons, reserved gutter (reserve-icon-slot — icon-less rows get an empty slot)</div>
+        <web-multiselect id="tree-icons-reserved" multiple value-member="value" display-value-member="label" path-member="path"
+            icon-member="icon" reserve-icon-slot></web-multiselect>
+    </div>
+
+    <div class="fixture">
         <div class="fixture-label">cascade mode (checkbox-mode="cascade", policy rolled-up default)</div>
         <web-multiselect id="tree-cascade" multiple show-checkboxes value-member="value" display-value-member="label"
             path-member="path" checkbox-mode="cascade"></web-multiselect>
@@ -187,6 +199,16 @@
                 return span;
             };
             renderCtx.options = items;
+
+            // Icon slot: fruit branch + Gala leaf carry an icon; the rest don't, so the
+            // default fixture shows ragged label starts and the reserved one lines them up.
+            const iconItems = items.map(it =>
+                it.value === 'fruit' ? { ...it, icon: '🍎' }
+                : it.value === 'gala' ? { ...it, icon: '🍏' }
+                : it.value === 'veg' ? { ...it, icon: '🥕' }
+                : it);
+            document.getElementById('tree-icons').options = iconItems;
+            document.getElementById('tree-icons-reserved').options = iconItems;
 
             // Navigate mode over a tree: whole tree stays visible, matches are jumped between.
             document.getElementById('tree-navigate').options = items;

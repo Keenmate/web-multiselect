@@ -6,97 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A feature-rich multiselect web component with typeahead search, virtual scrolling, grouping, and extensive customization options. Published as `@keenmate/web-multiselect` on npm.
 
-**Current Status**: Fully implemented TypeScript web component with Vite build tooling, ready for development and publishing.
+Core logic lives in `src/multiselect.ts` (the generic `WebMultiSelect<T>` class — search, selection, keyboard nav, virtual scrolling); `src/web-component.ts` wraps it as the `<web-multiselect>` custom element (Shadow DOM, attribute/property reflection, events, form integration); `src/types.ts` holds the config/callback interfaces. Data extraction uses a member/callback pattern (`valueMember` + `getValueCallback`), similar to svelte-treeview.
 
-## Architecture
-
-### Source Files
-
-**src/multiselect.ts** (~2500 lines)
-- Core `WebMultiSelect<T>` class with generic type support
-- Handles all multiselect logic: search, selection, keyboard navigation, virtual scrolling
-- Uses member/callback pattern for data extraction (similar to svelte-treeview)
-- Depends on Floating UI (`@floating-ui/dom`) for dropdown positioning
-
-**src/web-component.ts** (~950 lines)
-- `MultiSelectElement<T>` custom element wrapping the core class
-- Shadow DOM encapsulation with style injection
-- Attribute observation and property setters
-- Event dispatching (select, deselect, change)
-- Form integration with hidden inputs
-
-**src/types.ts** (~360 lines)
-- TypeScript interfaces: `MultiSelectConfig<T>`, `MultiSelectOption`, `ActionButton<T>`
-- Type definitions for display modes, positions, search modes
-- Callback context interfaces for custom rendering
-
-**src/virtual-scroll.ts**
-- `VirtualScroll<T>` class for rendering large lists efficiently
-- Used for both options dropdown and selected items popover
-
-**src/logger.ts**
-- Debug logging utilities (initLogger, dataLogger, uiLogger, interactionLogger)
-
-### CSS Structure
-
-The styles are plain CSS (no SCSS / no preprocessor). All theming is done via CSS custom properties.
-
-**src/css/main.css** - Entry point that declares `@layer variables, component, overrides` and `@import`s all partials with explicit layer bindings. Follows the BlissFramework canonical Tier 1+2+3 file structure:
-
-Tier 1 (skeleton, always non-empty):
-- `variables.css` - All `--ms-*` CSS custom properties at `:host` level (base primitives, semantic per-component theming hooks, sizing)
-- `base.css` - FOUC prevention + `.ms__wrapper` / `.ms` layout containers
-- `dark-mode.css` - Framework class + per-instance `data-theme` selectors (loaded under `@layer overrides`)
-
-Tier 2 (canonical concerns, always created, may be empty):
-- `controls.css` - `.ms__input`, `.ms__toggle`, `.ms__counter` (in-input badge), `.ms__actions`, `.ms__action-btn`
-- `floating.css` - `.ms__hint`, `.ms__dropdown`, `.ms__badge-tooltip`, `.ms__selected-popover` (everything Floating-UI-anchored)
-- `states.css` - `.ms--disabled`, `.ms--no-checkboxes` (block-level state modifiers)
-- `animations.css` - empty stub (no `@keyframes` in this component)
-
-Tier 3 (component-specific features):
-- `badges.css` - `.ms__badges`, `.ms__badge`, `.ms__badge--counter`, `.ms__badge--more`
-- `count-display.css` - `.ms__count-display`, `.ms__counter-wrapper`, `.ms__count-text`, `.ms__count-clear`
-- `debug.css` - `.ms__debug-info`, `.ms__debug-stats` (dev-only)
-- `options.css` - Options list, groups, checkbox, content, per-state styling
-- `rtl.css` - RTL language support. Mirroring is done with **CSS logical
-  properties** in the feature files (driven by an inherited `direction: rtl` — the
-  host carries `dir="rtl"`, and the dropdown/hint/popover also get an explicit `dir`
-  since they're appended to the shadow root, not under `.ms--rtl`). Prefer logical
-  properties over adding `.ms--rtl` overrides; `rtl.css` holds only the
-  `badges-position` / count-display placement, a physical-side choice mirrored in JS.
-
-### Naming Conventions
+## Naming Conventions
 
 - **CSS Classes**: `.ms__*` prefix (e.g., `.ms__input`, `.ms__dropdown`, `.ms__option`)
 - **CSS Variables**: `--ms-*` prefix (e.g., `--ms-accent-color`, `--ms-input-border-radius`)
 
-## Key Features
+> Styling/CSS conventions (layer structure, adding variables, RTL) live in `src/css/CLAUDE.md`, loaded automatically when working under `src/css/`.
 
-### Data Handling
-- Generic type support `<T>` for any data structure
-- Member/callback pattern: `valueMember` + `getValueCallback`
-- Auto-detection of `[key, value]` tuples
-- Async search via `searchCallback`
-
-### Display Modes
-- `badgesDisplayMode`: 'badges' | 'count' | 'compact' | 'partial' | 'none'
-- `badgesPosition`: 'top' | 'bottom' | 'left' | 'right'
-- `searchMode`: 'filter' | 'navigate'
-- `searchInputMode`: 'normal' | 'readonly' | 'hidden'
-
-### Virtual Scrolling
-- Automatic for large datasets (threshold: 100 items)
-- Fixed item height required (`optionHeight`, `badgeHeight`)
-- Buffer for smooth scrolling
-
-### Custom Rendering
-- `renderOptionContentCallback` - Custom dropdown option content
-- `renderBadgeContentCallback` - Custom badge content
-- `renderSelectedItemContentCallback` - Custom popover item content
-- `customStylesCallback` - Inject custom CSS into Shadow DOM
-
-### Sizing System
+## Sizing System
 
 The component uses `--ms-rem` for global scaling. Default is `10px` (so `1.4 * --ms-rem = 14px`).
 
@@ -112,8 +31,7 @@ The component uses `--ms-rem` for global scaling. Default is `10px` (so `1.4 * -
 <web-multiselect style="--ms-rem: 12px;"></web-multiselect>
 ```
 
-**Fine-grained Control:**
-Override individual variables like `--ms-input-font-size`, `--ms-input-padding-v`, `--ms-input-height`, etc.
+**Fine-grained Control:** Override individual variables like `--ms-input-font-size`, `--ms-input-padding-v`, `--ms-input-height`, etc.
 
 **Shadow DOM Note:** CSS variables must be set on the `<web-multiselect>` element itself, not on wrapper divs.
 
@@ -132,30 +50,17 @@ This enables integration with theme-designer's `--base-*` variables:
 
 ## Development Guidelines
 
-### Adding New Attributes
+### Adding a New Attribute / Property
 
-1. Add to `observedAttributes` in `web-component.ts`
-2. Map the attribute to a config key inside `initializePicker` (`web-component.ts`)
-3. Handle in `attributeChangedCallback` (consider if re-init needed)
-4. Add getter/setter property
+Inputs are declared ONCE as rows in the `INPUTS` table in `web-component.ts` (the element extends `BlissElement` from `@keenmate/web-components-core`). Core generates `observedAttributes`, attribute parsing/validation, the property getter/setter, reflection, and reactivity coalescing from that table — there is no manual `attributeChangedCallback` or hand-written accessor.
 
-### Adding New CSS Variables
-
-1. Declare the variable in `src/css/variables.css` at `:host` level. Per-component theming hooks default to a base variable, e.g.
-   `--ms-myComponent-border-color: var(--ms-border-color);`
-2. Reference the new variable from the actual rule in the relevant feature file — e.g.
-   `.ms__myComponent { border: 1px solid var(--ms-myComponent-border-color); }`
-3. Always wire a declared variable into at least one rule. A declaration with no `var()` reader is dead theming surface.
-
-### Writing directional CSS (RTL)
-
-Use **CSS logical properties** for any horizontal/inline direction so it mirrors in
-RTL for free — `margin-inline-start/end`, `padding-inline-*`, `inset-inline-start/end`
-(not `left`/`right`), `border-inline-start/end`, logical border-radius
-(`border-start-start-radius`, …), and `text-align: start/end`. Reserve physical
-`left`/`right` for direction-agnostic cases (e.g. `left: 50%` centering). Don't add
-`.ms--rtl` override rules — the panel isn't under that element, so they won't match;
-`direction` inheritance + logical properties handle it. See `rtl.css`.
+1. Add a row to `INPUTS`: `{ configKey, attribute, converter, on, description }`.
+   - `attribute` — the kebab-case HTML attribute; **omit it** for a property-only input (e.g. callbacks, object maps).
+   - `converter` — `toText(...)`, `toBool('default-true' | 'default-false' | 'presence' | 'tristate')`, `toEnum([...], { default })`, `toInt({ default })`, `toObjectArray()`, `toValue({ validate })`, or `cb()` for a callback.
+   - `on` — `'update'` (cosmetic → applied in place via `picker.updateOptions(partial)`) or `'reinit'` (data-shape / layout-mode change → rebuild the picker). A batch containing any `reinit` key runs `reinit()` only.
+   - `reflect: true` mirrors the property back to the attribute.
+2. If the key is element-only (not forwarded to the core `WebMultiSelect` config), add it to `NON_PICKER_KEYS`.
+3. Consume it in the picker via `this.options.<configKey>` (`multiselect.ts`).
 
 ### Consistency with web-daterangepicker
 
@@ -163,66 +68,3 @@ Both components share similar patterns:
 - Same `--*-rem` scaling approach (`--ms-rem`, `--drp-rem`)
 - Same typography integration with `--base-*` variables
 - CSS variable prefixes (multiselect: `--ms-*`, daterangepicker: `--drp-*`)
-
-## Build System
-
-### Build Tools
-- **Vite** - Fast build tool and dev server with HMR
-- **TypeScript** - Type-safe development
-- **Makefile** / **make.bat** - Build automation
-
-### Available Commands
-
-```bash
-# Using Makefile (Unix/Mac/WSL/Git Bash)
-make setup        # Install dependencies
-make dev          # Start dev server (watches changes)
-make build        # Build for production
-make package      # Create npm package
-make publish-dry  # Dry-run publish
-make publish      # Publish to npm
-make clean        # Clean all artifacts
-make help         # Show all commands
-
-# Using npm directly
-npm install       # Install dependencies
-npm run dev       # Start dev server
-npm run build     # Build for production
-```
-
-### Output Files
-Build creates `dist/` with:
-- `multiselect.js` - ES module format
-- `multiselect.umd.js` - UMD format for CDN/legacy
-- `style.css` - Compiled styles
-
-## State Management
-
-Key state in `WebMultiSelect`:
-- `selectedValues: Set<string>` - Currently selected value IDs
-- `selectedOptions: Map<string, T>` - Full option objects by ID
-- `allOptions: T[]` - All available options
-- `filteredOptions: T[]` - Options after search filtering
-- `focusedIndex: number` - Keyboard navigation index
-- `isOpen: boolean` - Dropdown visibility
-- `isLoading: boolean` - Async search loading state
-
-## Known Dependencies
-
-- `@floating-ui/dom` - Required for dropdown/tooltip positioning (bundled)
-- All SCSS variables converted to CSS custom properties with `--ms-` prefix
-- No external CSS frameworks required
-
-## Event System
-
-Custom events dispatched on the web component:
-- `select` - Option selected (detail: `{ option, selectedOptions, selectedValues }`)
-- `deselect` - Option deselected (detail: `{ option, selectedOptions, selectedValues }`)
-- `change` - Selection changed (detail: `{ selectedOptions, selectedValues }`)
-
-## Form Integration
-
-- `name` attribute for form field name
-- `value-format` attribute: 'json' | 'csv' | 'array'
-- Hidden inputs created in light DOM for form submission
-- Works with both Shadow DOM and traditional forms

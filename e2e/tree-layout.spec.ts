@@ -58,3 +58,44 @@ test('--ms-option-min-height sets an adjustable row height', async ({ page }) =>
     const h = await row.evaluate((el) => el.getBoundingClientRect().height);
     expect(h).toBeGreaterThanOrEqual(56);
 });
+
+// Left edge of a row's label text (`.ms__option-title`), in the row's own
+// coordinate space — this is what "ragged vs aligned" is about.
+async function labelOffset(p: Locator, path: string): Promise<number> {
+    const row = p.locator(`.ms__option[data-path="${path}"]`);
+    return row.evaluate((el) => {
+        const title = el.querySelector('.ms__option-title') as HTMLElement;
+        return title.getBoundingClientRect().left - el.getBoundingClientRect().left;
+    });
+}
+
+test('default slot: an icon-less row has no icon gutter (label starts further left)', async ({ page }) => {
+    const p = picker(page, 'tree-icons');
+    await openDropdown(p);
+
+    // Fruit (1) carries an icon; Pear (1.2) does not → no slot rendered at all by default.
+    await expect(p.locator('.ms__option[data-path="1"] .ms__option-icon')).toHaveCount(1);
+    await expect(p.locator('.ms__option[data-path="1.2"] .ms__option-icon')).toHaveCount(0); // Pear: no icon
+
+    // Within the SAME depth (level 2): Gala (1.1.1 has icon) vs Fuji (1.1.2 no icon) are
+    // siblings → identical indent, so the label offsets differ by the icon slot width.
+    const gala = await labelOffset(p, '1.1.1'); // has icon
+    const fuji = await labelOffset(p, '1.1.2'); // no icon, no slot
+    expect(gala).toBeGreaterThan(fuji + 5);
+});
+
+test('reserve-icon-slot: icon-less rows render an empty slot and share the label column', async ({ page }) => {
+    const p = picker(page, 'tree-icons-reserved');
+    await openDropdown(p);
+
+    // Icon-less row now carries the reserved, empty placeholder slot.
+    const emptySlot = p.locator('.ms__option[data-path="1.1.2"] .ms__option-icon.ms__option-icon--empty');
+    await expect(emptySlot).toHaveCount(1);
+    await expect(emptySlot).toHaveText('');
+
+    // Siblings at the same depth now line up: icon'd Gala and icon-less Fuji share the
+    // same label start column (the reserved gutter closes the gap).
+    const gala = await labelOffset(p, '1.1.1'); // has icon
+    const fuji = await labelOffset(p, '1.1.2'); // no icon → empty slot
+    expect(Math.abs(gala - fuji)).toBeLessThanOrEqual(1);
+});

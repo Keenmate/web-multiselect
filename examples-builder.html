@@ -251,6 +251,7 @@
             'prune-missing-selection': "When options are replaced, drop a selected value whose option is gone (default keeps it).",
             'show-clear': "Show an inline ✕ in the input that clears the whole selection.",
             'show-counter': "Show a small [N] selected-count badge inside the input.",
+            'reserve-icon-slot': "Keep a fixed-width icon gutter on every row, so labels on icon-less rows line up with icon'd ones (needs icon-member; try toggling it).",
             'badges-display-mode': "How selected items appear: badges, count, compact, partial (+N more), or none.",
             'badges-position': "Where the badges block sits relative to the input.",
             'badges-threshold-mode': "Whether the threshold counts items (count) or collapses to +N more (partial).",
@@ -326,6 +327,7 @@
                 { attr: 'prune-missing-selection', type: 'bool', def: false },
                 { attr: 'show-clear', type: 'bool', def: false },
                 { attr: 'show-counter', type: 'bool', def: false },
+                { attr: 'reserve-icon-slot', type: 'bool', def: false },
             ]},
             { name: 'Badges', props: [
                 { attr: 'badges-display-mode', type: 'enum', opts: ['badges','count','compact','partial','none'], def: 'badges' },

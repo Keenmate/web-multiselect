@@ -1537,6 +1537,10 @@ export class WebMultiSelect<T = any> {
             // Default rendering
             if (icon) {
                 html += `<span class="ms__option-icon">${icon}</span>`;
+            } else if (this.options.isIconSlotReserved) {
+                // Reserve the fixed-width gutter so icon-less rows keep the same label
+                // start column as rows that have an icon.
+                html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
             }
 
             html += '<div class="ms__option-text">';
@@ -1649,6 +1653,11 @@ export class WebMultiSelect<T = any> {
         } else {
             if (icon) {
                 html += `<span class="ms__option-icon">${icon}</span>`;
+            } else if (this.options.isIconSlotReserved) {
+                // Reserve the fixed-width gutter so icon-less rows keep the same label
+                // start column as rows that have an icon (most visible in a tree, where
+                // depth indent already offsets each row).
+                html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
             }
             html += '<div class="ms__option-text">';
             html += `<div class="ms__option-title">${this.highlightMatch(displayValue, this.searchTerm)}</div>`;

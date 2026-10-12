@@ -188,6 +188,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'isVirtualScrollEnabled',  attribute: 'enable-virtual-scroll',       converter: toBool('default-false'), on: 'reinit', description: 'Force virtual scrolling on regardless of the threshold.' },
   { configKey: 'isBadgeTooltipsEnabled',  attribute: 'enable-badge-tooltips',       converter: toBool('default-false'), on: 'update', description: 'Enable tooltips on badges.' },
   { configKey: 'isOptionTooltipsEnabled', attribute: 'enable-option-tooltips',      converter: toBool('default-false'), on: 'update', description: 'Enable tooltips on options.' },
+  { configKey: 'isIconSlotReserved',      attribute: 'reserve-icon-slot',           converter: toBool('default-false'), on: 'update', description: 'Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows).' },
   { configKey: 'isOptionTooltipFollowCursor', attribute: 'option-tooltip-follow-cursor', converter: toBool('default-false'), on: 'update', description: 'Make option tooltips follow the pointer.' },
   { configKey: 'isSearchModeToggleShown',  attribute: 'show-search-mode-toggle',      converter: toBool('default-false'), on: 'update', description: 'Show a clickable toggle in the phone fullscreen overlay search header that flips `search-mode` between `filter` and `navigate` live. Fullscreen-only; no effect in the floating presentation or when search is disabled.' },
 
@@ -401,12 +402,14 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     if ('customStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
     if ('showDebugInfo' in partial) this.#syncDebugPanel();
 
-    // Everything else goes to the live picker as an in-place patch; null clears
-    // (matches the old `undefined` semantics), NON_PICKER_KEYS are handled above.
+    // Everything else goes to the live picker as an in-place patch. Forward `null`
+    // verbatim — it's the clear signal under core's null-clear contract, and the
+    // picker's `Object.assign(this.options, partial)` + falsy/`?? default` reads
+    // resolve it as a reset. NON_PICKER_KEYS are handled above.
     const pickerPartial: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(partial)) {
       if (NON_PICKER_KEYS.has(key)) continue;
-      pickerPartial[key] = value === null ? undefined : value;
+      pickerPartial[key] = value;
     }
     if (this.#picker && Object.keys(pickerPartial).length > 0) {
       if (!this.#picker.updateOptions(pickerPartial as Partial<MultiSelectConfig<T>>)) this.#rebuildPicker();
@@ -603,13 +606,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
    * declarative option data + member defaults, counter default).
    */
   #assembleConfig(): Record<string, unknown> {
-    const cfg: Record<string, unknown> = { ...this.config };
-    // Drop element-only keys and normalize "unset" (null) → absent, so the picker
-    // sees exactly what the old hand-coded parser handed it (undefined).
-    for (const key of NON_PICKER_KEYS) delete cfg[key];
-    for (const key of Object.keys(cfg)) {
-      if (cfg[key] === null) delete cfg[key];
-    }
+    // Canonical engine-config assembly (core §6 null-clear contract): a shallow copy
+    // of the merged config with the element-only keys removed and every `null` kept.
+    // A cleared nullable input arrives as `null` and the picker resolves it falsily
+    // (truthiness / `?? default`), so the clear lands — same result the old delete-null
+    // loop produced, now via the one shared assembler instead of a per-component loop.
+    const cfg = this.engineConfig(NON_PICKER_KEYS);
 
     // Option-data precedence: declarative <option> children > the `options`
     // property (JS) > the `data-options` attribute (parsed per data-options-format).

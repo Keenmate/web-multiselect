@@ -413,6 +413,14 @@
   fill: currentColor;
 }
 
+/* Empty icon gutter — rendered on icon-less rows only when `reserve-icon-slot` is on,
+   so a list mixing icon and icon-less rows keeps one label start column. It inherits the
+   fixed box from .ms__option-icon (flex-shrink:0 + --ms-option-icon-size); the modifier
+   is just a styling hook (it draws nothing). */
+.ms__option-icon--empty {
+  visibility: hidden;
+}
+
 /* Option text container */
 .ms__option-text {
   flex: 1;

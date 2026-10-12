@@ -335,6 +335,36 @@ el.customStylesCallback = () =&gt; `
 
 // Compact: scale the whole picker down with --ms-rem (default 10px → 8px = 80%):
 // &lt;web-multiselect style="--ms-rem: 8px; --ms-tree-indent: 1rem;"&gt;</pre></div>
+
+            <h3 class="subsection">Node icons</h3>
+            <p class="description">
+                Set <code>icon-member</code> (or <code>getIconCallback</code>) and each row renders
+                its icon — emoji, text, or inline SVG — in a <strong>fixed-width slot</strong> before
+                the label, after the checkbox and inside the depth indent. The slot never grows with
+                the glyph, so icons at the same depth line up in a column (the tree's depth indent
+                offsets each level, as always). By default the slot is drawn <strong>only on rows that
+                have an icon</strong>, so a tree that mixes icon and icon-less rows gets ragged label
+                starts. Flip <code>reserve-icon-slot</code> to keep an empty gutter on every row, and
+                all labels share one start column.
+            </p>
+            <label class="toggle-label">
+                <input type="checkbox" id="tree-icons-reserve"> <code>reserve-icon-slot</code> — align labels on icon-less rows
+            </label>
+            <div class="demo-area">
+                <label class="demo-label">Folders carry icons, some files don't — toggle the slot and watch the icon-less rows' labels line up:</label>
+                <web-multiselect id="tree-icons" multiple="true" show-checkboxes="true" icon-member="icon"></web-multiselect>
+            </div>
+            <div class="code-block"><pre>el.iconMember = 'icon';   // &lt;web-multiselect icon-member="icon"&gt;
+el.options = [
+  { value: 'src',    label: 'src',      path: '1',   icon: '📁' },
+  { value: 'index',  label: 'index.ts', path: '1.1', icon: '📄' },
+  { value: 'types',  label: 'types.ts', path: '1.2' },  // no icon → bare label
+  …
+];
+
+// Mixing icon + icon-less rows? Reserve the gutter so every label lines up:
+// &lt;web-multiselect icon-member="icon" reserve-icon-slot&gt;
+// (works the same on a flat list — it's an option-level knob, not tree-only)</pre></div>
         </section>
 
         <!-- ============================================================= -->
@@ -751,6 +781,34 @@ el.scrollToValue('2211');</pre></div>
                 .ms__option--tree-leaf   { background: #fff; }
                 .node-count { opacity: .55; font-weight: 400; }
             `;
+
+            // Node icons + reserve-icon-slot. A file-tree where folders (and a couple of
+            // files) carry an emoji icon while the rest don't — so the icon-less rows show
+            // the gutter behavior. The checkbox flips `reserve-icon-slot` live: off, the
+            // bare-label rows pull left; on, every label shares one start column.
+            const icons = document.querySelector('#tree-icons');
+            icons.valueMember = 'value';
+            icons.displayValueMember = 'label';
+            icons.pathMember = 'path';
+            icons.options = [
+                { value: 'src',     label: 'src',          path: '1',     icon: '📁' },
+                { value: 'index',   label: 'index.ts',     path: '1.1',   icon: '📄' },
+                { value: 'utils',   label: 'utils',        path: '1.2',   icon: '📁' },
+                { value: 'math',    label: 'math.ts',      path: '1.2.1', icon: '📄' },
+                { value: 'dom',     label: 'dom.ts',       path: '1.2.2' },   // no icon
+                { value: 'types',   label: 'types.ts',     path: '1.3' },     // no icon
+                { value: 'assets',  label: 'assets',       path: '2',     icon: '📁' },
+                { value: 'logo',    label: 'logo.svg',     path: '2.1',   icon: '🖼️' },
+                { value: 'hero',    label: 'hero.png',     path: '2.2',   icon: '🖼️' },
+                { value: 'fonts',   label: 'fonts',        path: '2.3',   icon: '📁' },
+                { value: 'inter',   label: 'inter.woff2',  path: '2.3.1' },   // no icon
+                { value: 'readme',  label: 'README.md',    path: '3' },       // no icon (top level)
+                { value: 'license', label: 'LICENSE',      path: '4' }        // no icon (top level)
+            ];
+            document.querySelector('#tree-icons-reserve').addEventListener('change', (e) => {
+                // reserve-icon-slot defaults to false when absent, so write the explicit value.
+                icons.setAttribute('reserve-icon-slot', String(e.target.checked));
+            });
 
             // ---- TR05 · Breadcrumbs & selection display ------------------------
             // Full breadcrumb on badges (two items pre-selected).

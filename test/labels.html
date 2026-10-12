@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — labels (i18n)</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 420px; }
+    </style>
+</head>
+<body>
+    <h1>labels / i18n</h1>
+    <p>Targeted by <code>e2e/labels.spec.ts</code>. The <code>#lbl-count</code> picker is built to
+       surface every <code>{count}</code>-interpolated label at once: grouped data
+       (<code>groupSelectedLabel</code> on headers), partial badges with a low max-visible
+       (<code>removeHiddenItems</code> on the “+N more” badge), and <code>show-counter</code> with
+       &gt;12 selected (<code>andMore</code> in the counter chip’s native title).</p>
+
+    <div class="fixture">
+        <div class="fixture-label">grouped · partial badges · counter · 14 pre-selected</div>
+        <web-multiselect id="lbl-count" multiple show-counter
+            value-member="value" display-value-member="label" group-member="group"
+            badges-display-mode="partial" badges-max-visible="2"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        // Two groups of 10 → 20 options; preselect all of A (10) + 4 of B = 14 selected.
+        const items = [];
+        for (let i = 1; i <= 10; i++) items.push({ value: `a${i}`, label: `Alpha ${i}`, group: 'Group A' });
+        for (let i = 1; i <= 10; i++) items.push({ value: `b${i}`, label: `Beta ${i}`,  group: 'Group B' });
+        const preselect = [
+            ...items.filter(o => o.group === 'Group A').map(o => o.value),          // 10
+            ...items.filter(o => o.group === 'Group B').slice(0, 4).map(o => o.value) // 4
+        ]; // 14 total → counter tooltip ("…and {count} more") kicks in above 12
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            const el = document.getElementById('lbl-count');
+            el.options = items;
+            el.setSelected(preselect);
+        });
+    </script>
+</body>
+</html>

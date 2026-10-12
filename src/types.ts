@@ -462,6 +462,14 @@ export interface MultiSelectConfig<T = any> {
     iconMember?: string;
     /** Callback to extract icon from item */
     getIconCallback?: (item: T) => string;
+    /**
+     * Reserve a fixed-width icon gutter on every option row, even rows that have no
+     * icon. Off by default (icon-less rows pull their label into the gutter). Turn it
+     * on when a list mixes icon and icon-less rows and you want all labels to share one
+     * start column — most visible in tree mode, where depth indent already shifts rows
+     * (internal: isIconSlotReserved).
+     */
+    isIconSlotReserved?: boolean;
 
     /** Member property name for subtitle extraction */
     subtitleMember?: string;
