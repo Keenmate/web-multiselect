@@ -147,7 +147,7 @@
   --ms-dropdown-bg: var(--base-dropdown-bg, var(--base-elevated-bg, light-dark(#ffffff, #1a1a1a)));
   --ms-dropdown-text-color: var(--ms-text-color-1);
   --ms-dropdown-border-color: var(--ms-border-color);
-  --ms-dropdown-box-shadow-semantic: var(--base-dropdown-box-shadow, 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1));
+  --ms-dropdown-box-shadow-semantic: var(--base-dropdown-box-shadow, 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1)));
 
   /* Dropdown Actions Semantic Variables */
   --ms-actions-bg: var(--base-main-bg, light-dark(#ffffff, #1a1a1a));
@@ -349,7 +349,7 @@
   --ms-hint-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-hint-border: 1px solid var(--ms-hint-border-color);
   --ms-hint-border-radius: var(--ms-border-radius-lg);
-  --ms-hint-box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ms-hint-box-shadow: 0 4px 6px -1px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 2px 4px -2px var(--base-shadow-color, rgba(0, 0, 0, 0.1));
   --ms-hint-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
 
   /* ==========================================================================
@@ -366,7 +366,7 @@
   --ms-dropdown-inner-border-radius: max(0px, calc(var(--ms-dropdown-border-radius) - 1px));
   /* Prefers the shared --base token (light-dark aware — deepens on dark themes); the
      flat two-layer shadow is the standalone fallback. */
-  --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1));
+  --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1)));
   /* Live input width, published by JS each positioning frame. It's the only panel
      dimension CSS can't measure itself, so panels that "match the input" read it. */
   --ms-input-current-width: auto;
@@ -756,8 +756,8 @@
   --ms-icon-check-size: var(--base-icon-check-size, 68%);
   /* "Add new" glyph (empty-state create prompt) — a plus, rendered as a mask so it
      inherits the row's currentColor. Follows the shared --base-icon-* contract:
-     prefers --base-icon-plus, then --base-icon-add, then an inline "+" fallback. */
-  --ms-icon-add-new: var(--base-icon-plus, var(--base-icon-add, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='M12 5v14'/></svg>")));
+     reads --base-icon-add, with an inline "+" fallback. */
+  --ms-icon-add-new: var(--base-icon-add, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='M12 5v14'/></svg>"));
 
   /* Badge Counter Indicator (layout-only properties, colors come from semantic section) */
   --ms-badge-counter-bg: transparent;
@@ -824,7 +824,7 @@
   --ms-tooltip-border-radius: var(--ms-border-radius-lg);
   --ms-tooltip-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-tooltip-max-width: calc(32 * var(--ms-rem));
-  --ms-tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --ms-tooltip-shadow: 0 2px 8px var(--base-shadow-color, rgba(0, 0, 0, 0.15));
   --ms-tooltip-z-index: 10000;
 
   /* Option (dropdown row) tooltip — per-feature hooks default to the shared tooltip surface,
@@ -853,7 +853,7 @@
   --ms-message-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-message-font-weight: var(--base-font-weight-medium, 500);
   --ms-message-max-width: calc(40 * var(--ms-rem));
-  --ms-message-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  --ms-message-shadow: 0 4px 16px var(--base-shadow-color, rgba(0, 0, 0, 0.18));
   /* Gap from the bottom edge of the viewport in the fullscreen overlay. */
   --ms-message-fullscreen-offset: calc(2.4 * var(--ms-fullscreen-rem));
   --ms-message-z-index: var(--ms-z-index-fullscreen-tooltip);
@@ -879,7 +879,7 @@
   --ms-selected-popover-max-height: calc(32 * var(--ms-rem));
   --ms-selected-popover-border: 1px solid var(--ms-selected-popover-border-color);
   --ms-selected-popover-border-radius: var(--ms-border-radius-lg);
-  --ms-selected-popover-box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --ms-selected-popover-box-shadow: 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1));
 
   /* Popover Header */
   --ms-selected-popover-header-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));

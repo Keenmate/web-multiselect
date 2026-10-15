@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Shadows share one tone with pure-admin: `--base-shadow-color`.** Hint, message, tooltip,
+  selected-items popover and the dropdown fallback keep their sizes but take their colour from
+  `--base-shadow-color` (falls back to the previous black when the base layer is absent).
+- `--ms-icon-add-new` reads `--base-icon-add` (the contract name); the non-existent
+  `--base-icon-plus` step is gone.
+
 ### Fixed
 
 - **Warning / error / success messages were unreadable under the base theme.** Their text

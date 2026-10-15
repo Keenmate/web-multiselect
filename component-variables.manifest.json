@@ -179,6 +179,11 @@
       "usage": "Dropdown shadow"
     },
     {
+      "name": "base-shadow-color",
+      "required": false,
+      "usage": "Shadow colour for the hint, message, tooltip and selected-items popover (one tone with pure-admin)"
+    },
+    {
       "name": "base-tooltip-bg",
       "required": false,
       "usage": "Tooltip background (primary; falls back to base-inverse-bg)"
@@ -334,14 +339,9 @@
       "usage": "Funnel/filter glyph (fullscreen search-mode toggle); chained by --ms-icon-filter; inline Lucide SVG fallback"
     },
     {
-      "name": "base-icon-plus",
-      "required": false,
-      "usage": "Plus glyph for the \"add new\" empty-state prompt; chained by --ms-icon-add-new; falls back to base-icon-add then inline Lucide SVG"
-    },
-    {
       "name": "base-icon-add",
       "required": false,
-      "usage": "Alternate add glyph (fallback for base-icon-plus in the \"add new\" prompt)"
+      "usage": "Plus glyph for the \"add new\" empty-state prompt; chained by --ms-icon-add-new; inline Lucide SVG fallback"
     },
     {
       "name": "base-icon-check",
