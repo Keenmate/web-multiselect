@@ -31,9 +31,9 @@ Individual dropdown option items.
 |-------|-----------|---------------|
 | **Default** | `.ms__option` | `--ms-option-background`, `--ms-option-text-color` |
 | **Hover** | `:hover` | `--ms-option-background-hover`, `--ms-option-color-hover` |
-| **Focused** | `--focused` | `--ms-option-background-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` |
+| **Focused** | `--focused` | `--ms-option-bg-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` (read `--base-focused-bg/-text/-ring`, offset follows `--base-outline-width`) |
 | **Matched** | `--matched` | `--ms-option-background-matched`, `--ms-option-color-matched`, `--ms-option-border-matched` |
-| **Selected** | `--selected` | `--ms-option-background-selected`, `--ms-option-color-selected` |
+| **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-highlighted-bg/-text/-ring`) |
 | **Disabled** | `--disabled` | `--ms-disabled-opacity` |
 | **Focused + Hover** | `--focused:hover` | `--ms-option-bg-focused-hover`, `--ms-option-color-focused-hover` |
 | **Matched + Hover** | `--matched:hover` | `--ms-option-bg-matched-hover`, `--ms-option-color-matched-hover` |

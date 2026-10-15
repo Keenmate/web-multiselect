@@ -30,7 +30,7 @@ test('individual --ms-* override flows through to the rendered border', async ({
 
 test('--base-hover-bg flows through to --ms-primary-bg (option hover)', async ({ page }) => {
     const p = picker(page, 'base-hover');
-    // --ms-primary-bg paints option hover / focus / action-button hover. With --base-hover-bg
+    // --ms-primary-bg paints option hover / action-button hover. With --base-hover-bg
     // set, --ms-primary-bg resolves to it directly (no color-mix fallback).
     const hoverBg = await p.evaluate(el => getComputedStyle(el).getPropertyValue('--ms-primary-bg').trim());
     expect(hoverBg).toMatch(/^rgb\(0,\s*255,\s*0\)$/);

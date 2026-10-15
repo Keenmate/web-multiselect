@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Warning / error / success messages were unreadable under the base theme.** Their text
+  read `--base-<role>-color` — the same vivid color as the message background — so with
+  `@keenmate/base-css-variables` loaded the text matched its background. Text now reads
+  `--base-text-on-<role>` (readable text on the role fill).
+
+### Changed
+
+- **Reads `--base-primary-*` (was `--base-accent-*`)**, following `@keenmate/base-css-variables`
+  2.0.0, which drops the `accent` names: `--base-primary-color[-hover|-active]`,
+  `--base-primary-bg-subtle[-hover]` (was `-color-light[-hover]`) and `--base-on-primary-text-color`
+  (was `--base-text-color-on-accent`). The component's own `--*-accent-*` tokens keep their names.
+  Docs, examples and manifest updated.
+- **Tooltip background no longer falls back through `--base-inverse-bg`** (removed in
+  `@keenmate/base-css-variables` 2.0.0): it reads `--base-tooltip-bg` directly, then the
+  component's own default. No visual change — `--base-tooltip-bg` is always defined by the contract.
+- **Reads the 2.0.0 type-stating names:** `--base-outline-width` / `--base-focused-outline` /
+  `--base-highlighted-outline` (were `-ring`), `--base-*-text-color` (was `-text`),
+  `--base-on-<role>-text-color` (was `--base-text-on-<role>`), `--base-input-text-color` (was
+  `--base-input-color`), `--base-input-icon-color` / `-icon-bg-hover` (were `--base-input-clear-*`),
+  `--base-tooltip-text-color` (the `--base-tooltip-color` duplicate is gone) — whichever of these
+  the component uses.
+- **Message backgrounds read `--base-<role>-color`** instead of `--base-<role>-bg`, which
+  base-css-variables 2.0.0 removes (it was a copy of `-color`). Manifest updated:
+  `base-*-bg` dropped, `base-text-on-success/-danger/-warning` added.
+
+- **Option selected / focused states now read the shared `--base-highlighted-*` /
+  `--base-focused-*` item-state tokens** from `@keenmate/base-css-variables`, so a
+  selected or keyboard-focused option looks identical to a highlighted / focused
+  row in the KeenMate tree components on the same page. Each read keeps an inline
+  fallback, so nothing changes visually for the selected tint when the tokens are
+  absent.
+  - Selected: `--ms-option-bg-selected` → `var(--base-highlighted-bg, <10% accent>)`;
+    new `--ms-option-bg-selected-hover` (`--base-highlighted-bg-hover`),
+    `--ms-option-color-selected` (`--base-highlighted-text`, default `currentColor`)
+    and `--ms-option-outline-selected` (`--base-highlighted-ring`, default `none`,
+    drawn as an inset outline like the focus ring).
+  - Focused: `--ms-option-bg-focused` → `var(--base-focused-bg, transparent)`,
+    `--ms-option-color-focused` → `var(--base-focused-text, currentColor)`,
+    `--ms-option-outline-focused` → `var(--base-focused-ring, 1px solid …)`.
+  - **Focus ring is now 1px (was 2px)**; `--ms-option-focus-outline-offset` is
+    `calc(-1 * var(--base-ring-width, 1px))` (was `-2px`) so the ring stays
+    inset — it follows the shared `--base-ring-width`, so a thicker ring stays inset too.
+  - **A keyboard-focused option no longer gets the grey `--ms-primary-bg`
+    background** — the ring alone marks focus. Focused + hover shows the normal
+    hover fill (`--ms-option-bg-focused-hover` → `var(--ms-option-bg-hover)`).
+  - Selected + focused now shows the selected tint plus the focus ring
+    (`--ms-option-bg-selected-focused` → `var(--ms-option-bg-selected)`; was a
+    stronger 15% accent mix).
+  - The search-match state (8% tint + 3px leading bar) and plain hover
+    (`--base-hover-bg`) are unchanged.
+
+### Fixed
+
+- **`search-mode="navigate"` + virtual scrolling now scrolls to the first match
+  when it sits below the fold** (tree and flat lists). The deferred virtual-scroll
+  `setItems()` reset the scroll position to 0 a frame after the search had already
+  scrolled to the match, so the focused row was never rendered. The scroll to the
+  focused row is now re-applied after the reset.
+
 ## [2.5.0] - 2026-10-12 [PUBLISHED]
 
 ### Added

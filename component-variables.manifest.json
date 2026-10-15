@@ -4,27 +4,27 @@
   "prefix": "ms",
   "baseVariables": [
     {
-      "name": "base-accent-color",
+      "name": "base-primary-color",
       "required": true,
       "usage": "Primary accent for selections, badges, focus states"
     },
     {
-      "name": "base-accent-color-hover",
+      "name": "base-primary-color-hover",
       "required": false,
       "usage": "Accent hover state"
     },
     {
-      "name": "base-accent-color-active",
+      "name": "base-primary-color-active",
       "required": false,
       "usage": "Accent active/pressed state"
     },
     {
-      "name": "base-accent-color-light",
+      "name": "base-primary-bg-subtle",
       "required": false,
       "usage": "Light accent for badge backgrounds"
     },
     {
-      "name": "base-accent-color-light-hover",
+      "name": "base-primary-bg-subtle-hover",
       "required": false,
       "usage": "Light accent hover state"
     },
@@ -49,7 +49,7 @@
       "usage": "Quaternary text (placeholders)"
     },
     {
-      "name": "base-text-color-on-accent",
+      "name": "base-on-primary-text-color",
       "required": false,
       "usage": "Text on accent backgrounds (badges, checkboxes)"
     },
@@ -61,7 +61,47 @@
     {
       "name": "base-hover-bg",
       "required": false,
-      "usage": "Hover background (drives --ms-primary-bg: option hover/focus, action-button hover, counter hover)"
+      "usage": "Hover background (drives --ms-primary-bg: option hover, action-button hover, counter hover)"
+    },
+    {
+      "name": "base-outline-width",
+      "required": false,
+      "usage": "Shared item-ring thickness; the inset offset follows it (drives --ms-option-focus-outline-offset and the fallback ring width)"
+    },
+    {
+      "name": "base-highlighted-bg",
+      "required": false,
+      "usage": "Shared highlighted-item background (drives --ms-option-bg-selected)"
+    },
+    {
+      "name": "base-highlighted-bg-hover",
+      "required": false,
+      "usage": "Shared highlighted-item hover background (drives --ms-option-bg-selected-hover)"
+    },
+    {
+      "name": "base-highlighted-text-color",
+      "required": false,
+      "usage": "Shared highlighted-item text color (drives --ms-option-color-selected)"
+    },
+    {
+      "name": "base-highlighted-outline",
+      "required": false,
+      "usage": "Shared highlighted-item ring, outline shorthand drawn inset (drives --ms-option-outline-selected)"
+    },
+    {
+      "name": "base-focused-bg",
+      "required": false,
+      "usage": "Shared keyboard-focused item background (drives --ms-option-bg-focused)"
+    },
+    {
+      "name": "base-focused-text-color",
+      "required": false,
+      "usage": "Shared keyboard-focused item text color (drives --ms-option-color-focused)"
+    },
+    {
+      "name": "base-focused-outline",
+      "required": false,
+      "usage": "Shared keyboard-focused item ring, outline shorthand drawn inset (drives --ms-option-outline-focused)"
     },
     {
       "name": "base-active-bg",
@@ -89,7 +129,7 @@
       "usage": "Input field background"
     },
     {
-      "name": "base-input-color",
+      "name": "base-input-text-color",
       "required": false,
       "usage": "Input text color"
     },
@@ -142,11 +182,6 @@
       "name": "base-tooltip-bg",
       "required": false,
       "usage": "Tooltip background (primary; falls back to base-inverse-bg)"
-    },
-    {
-      "name": "base-inverse-bg",
-      "required": false,
-      "usage": "Inverse surface (fallback for tooltip background)"
     },
     {
       "name": "base-tooltip-text-color",
@@ -259,12 +294,12 @@
       "usage": "Checkbox box scale (default 1). Applied to the box via calc (NOT a CSS transform) so the masked check/dash stays crisp. See base-css-variables 'Checkbox render method'."
     },
     {
-      "name": "base-input-clear-color",
+      "name": "base-input-icon-color",
       "required": false,
       "usage": "Inline field-clear (✕) icon color"
     },
     {
-      "name": "base-input-clear-bg-hover",
+      "name": "base-input-icon-bg-hover",
       "required": false,
       "usage": "Inline field-clear (✕) hover background"
     },
@@ -324,32 +359,32 @@
       "usage": "Tri-state (partial) checkbox dash glyph; chained by --ms-icon-indeterminate; inline Lucide SVG fallback"
     },
     {
-      "name": "base-danger-bg",
+      "name": "base-danger-color",
       "required": false,
       "usage": "Error message background"
     },
     {
-      "name": "base-danger-color",
+      "name": "base-on-danger-text-color",
       "required": false,
       "usage": "Error message text color"
     },
     {
-      "name": "base-warning-bg",
+      "name": "base-warning-color",
       "required": false,
       "usage": "Warning message background"
     },
     {
-      "name": "base-warning-color",
+      "name": "base-on-warning-text-color",
       "required": false,
       "usage": "Warning message text color"
     },
     {
-      "name": "base-success-bg",
+      "name": "base-success-color",
       "required": false,
       "usage": "Success message background"
     },
     {
-      "name": "base-success-color",
+      "name": "base-on-success-text-color",
       "required": false,
       "usage": "Success message text color"
     }
@@ -423,7 +458,7 @@
     {
       "name": "ms-primary-bg",
       "category": "surface",
-      "usage": "Hover/focus background (options, action buttons, counter); reads --base-hover-bg"
+      "usage": "Hover background (options, action buttons, counter); reads --base-hover-bg"
     },
     {
       "name": "ms-primary-bg-hover",
@@ -838,17 +873,17 @@
     {
       "name": "ms-option-bg-focused",
       "category": "option",
-      "usage": "Option focused background"
+      "usage": "Option focused (keyboard) background; reads --base-focused-bg (default transparent — the ring marks focus)"
     },
     {
       "name": "ms-option-outline-focused",
       "category": "option",
-      "usage": "Option focus outline"
+      "usage": "Option focus ring (inset outline shorthand); reads --base-focused-outline (default 1px solid accent)"
     },
     {
       "name": "ms-option-focus-outline-offset",
       "category": "option",
-      "usage": "Option focus outline offset"
+      "usage": "Inset offset for the option focus/selected ring (keep = minus ring width; follows --base-outline-width)"
     },
     {
       "name": "ms-option-bg-matched",
@@ -863,7 +898,22 @@
     {
       "name": "ms-option-bg-selected",
       "category": "option",
-      "usage": "Selected option background"
+      "usage": "Selected option background; reads --base-highlighted-bg (default 10% accent tint)"
+    },
+    {
+      "name": "ms-option-bg-selected-hover",
+      "category": "option",
+      "usage": "Selected option hover background; reads --base-highlighted-bg-hover"
+    },
+    {
+      "name": "ms-option-color-selected",
+      "category": "option",
+      "usage": "Selected option text color; reads --base-highlighted-text-color"
+    },
+    {
+      "name": "ms-option-outline-selected",
+      "category": "option",
+      "usage": "Selected option ring (inset outline shorthand); reads --base-highlighted-outline (default none)"
     },
     {
       "name": "ms-option-text-color",
@@ -878,7 +928,7 @@
     {
       "name": "ms-option-color-focused",
       "category": "option",
-      "usage": "Option focused color"
+      "usage": "Option focused color; reads --base-focused-text-color"
     },
     {
       "name": "ms-option-outline-color-focused",
@@ -898,7 +948,7 @@
     {
       "name": "ms-option-bg-focused-hover",
       "category": "option",
-      "usage": "Focused option hover background"
+      "usage": "Focused option hover background (defaults to the hover bg)"
     },
     {
       "name": "ms-option-bg-matched-hover",
@@ -908,7 +958,7 @@
     {
       "name": "ms-option-bg-selected-focused",
       "category": "option",
-      "usage": "Selected focused background"
+      "usage": "Selected + focused background (defaults to the selected bg; the focus ring is added on top)"
     },
     {
       "name": "ms-option-bg-selected-matched",

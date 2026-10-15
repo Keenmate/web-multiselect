@@ -92,18 +92,26 @@ Keenmate components support a **two-layer theming architecture**:
 ```css
 :root {
   /* Base layer - single source of truth */
-  --base-accent-color: #3b82f6;
+  --base-primary-color: #3b82f6;
   --base-main-bg: #ffffff;
   --base-hover-bg: #f3f4f6;
   --base-text-color-1: #111827;
 
   /* Components reference base layer */
-  --ms-accent-color: var(--base-accent-color);
-  --drp-accent-color: var(--base-accent-color);
+  --ms-accent-color: var(--base-primary-color);
+  --drp-accent-color: var(--base-primary-color);
 }
 ```
 
-Change `--base-accent-color` once → all components update automatically.
+Change `--base-primary-color` once → all components update automatically.
+
+**Shared item states** — an option's selected and keyboard-focused looks read the
+shared `--base-highlighted-bg` / `--base-highlighted-bg-hover` / `--base-highlighted-text-color` /
+`--base-highlighted-outline` and `--base-focused-bg` / `--base-focused-text-color` /
+`--base-focused-outline` tokens (borders are outline shorthands drawn inset), so a
+selected / focused option matches a highlighted / focused row in the KeenMate tree
+components. Defaults: selected = 10% accent tint, no ring; focused = transparent
+background + `1px solid` accent inset ring.
 
 ### Unified variable naming
 
@@ -252,9 +260,15 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-option-padding-h` | `0.75rem` | Option horizontal padding |
 | `--ms-option-hover-bg` | `#f9fafb` | Option background on hover |
 | `--ms-option-color-hover` | `inherit` | Option text color on hover |
-| `--ms-option-bg-selected` | (rgba accent) | Selected option background |
-| `--ms-option-bg-focused` | `#f9fafb` | Focused option background (keyboard) |
-| `--ms-option-color-focused` | `inherit` | Focused option text color |
+| `--ms-option-bg-selected` | `var(--base-highlighted-bg, <accent 10%>)` | Selected option background |
+| `--ms-option-bg-selected-hover` | `var(--base-highlighted-bg-hover, var(--ms-option-bg-selected))` | Selected option background on hover |
+| `--ms-option-color-selected` | `var(--base-highlighted-text-color, currentColor)` | Selected option text color |
+| `--ms-option-outline-selected` | `var(--base-highlighted-outline, none)` | Selected option ring (outline shorthand, drawn inset) |
+| `--ms-option-bg-selected-focused` | `var(--ms-option-bg-selected)` | Selected + focused background (focus ring drawn on top) |
+| `--ms-option-bg-focused` | `var(--base-focused-bg, transparent)` | Focused option background (keyboard) — the ring alone marks focus |
+| `--ms-option-color-focused` | `var(--base-focused-text-color, currentColor)` | Focused option text color |
+| `--ms-option-outline-focused` | `var(--base-focused-outline, 1px solid <accent>)` | Focused option ring (outline shorthand, drawn inset) |
+| `--ms-option-focus-outline-offset` | `calc(-1 * var(--base-outline-width, 1px))` | Inset offset for the focus/selected ring (keep = minus the ring width; follows `--base-outline-width`) |
 | `--ms-option-bg-matched` | (accent 8%) | Matched option background (navigate mode) |
 | `--ms-option-color-matched` | `inherit` | Matched option text color |
 
@@ -316,7 +330,7 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-tooltip-bg` | `var(--base-tooltip-bg, var(--base-inverse-bg, light-dark(#333333, #f5f5f5)))` | Tooltip background (auto-adapts to OS dark mode) |
+| `--ms-tooltip-bg` | `var(--base-tooltip-bg, light-dark(#333333, #f5f5f5))` | Tooltip background (auto-adapts to OS dark mode) |
 | `--ms-tooltip-color` | `var(--ms-tooltip-text-color)` | Tooltip text color |
 | `--ms-tooltip-padding` | `0.5rem 0.75rem` | Tooltip padding |
 | `--ms-tooltip-border-radius` | `0.375rem` | Tooltip border radius |

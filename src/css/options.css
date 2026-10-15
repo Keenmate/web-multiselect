@@ -192,6 +192,9 @@
 
 .ms__option--selected {
   background: var(--ms-option-bg-selected);
+  color: var(--ms-option-color-selected, inherit);
+  outline: var(--ms-option-outline-selected, none);
+  outline-offset: var(--ms-option-focus-outline-offset);
 }
 
 @media (hover: hover) {
@@ -227,6 +230,7 @@
 /* Selected + Focused */
 .ms__option--selected.ms__option--focused {
   background: var(--ms-option-bg-selected-focused);
+  color: var(--ms-option-color-selected-focused, var(--ms-option-color-selected, inherit));
   outline: var(--ms-option-outline-focused);
   outline-offset: var(--ms-option-focus-outline-offset);
 }

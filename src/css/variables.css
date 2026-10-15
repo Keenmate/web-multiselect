@@ -62,19 +62,19 @@
      ==========================================================================
      Color variables follow this priority chain:
        1. External override: --ms-accent-color: #custom
-       2. Base theme value: var(--base-accent-color)
+       2. Base theme value: var(--base-primary-color)
        3. Hardcoded default fallback */
 
   /* Accent Colors */
-  --ms-accent-color: var(--base-accent-color, #3b82f6);
-  --ms-accent-color-hover: var(--base-accent-color-hover, #2563eb);
-  --ms-accent-color-active: var(--base-accent-color-active, #1d4ed8);
+  --ms-accent-color: var(--base-primary-color, #3b82f6);
+  --ms-accent-color-hover: var(--base-primary-color-hover, #2563eb);
+  --ms-accent-color-active: var(--base-primary-color-active, #1d4ed8);
 
   /* Accent Color Light Variants (for backgrounds)
      Dark variants are muted dark-blue tints that read like "accent-tinted dark surface" rather than
      "near-white", keeping badge / +X more / popover-header backgrounds visible on a dark page. */
-  --ms-accent-color-light: var(--base-accent-color-light, light-dark(#eff6ff, #1e3a5f));
-  --ms-accent-color-light-hover: var(--base-accent-color-light-hover, light-dark(#e0f2fe, #264a73));
+  --ms-accent-color-light: var(--base-primary-bg-subtle, light-dark(#eff6ff, #1e3a5f));
+  --ms-accent-color-light-hover: var(--base-primary-bg-subtle-hover, light-dark(#e0f2fe, #264a73));
 
   /* Text Color Levels (FluentUI-style hierarchy)
      Light mode = the original dark-on-light palette (#111827 → #a0a3a9).
@@ -85,7 +85,7 @@
   --ms-text-color-2: var(--base-text-color-2, light-dark(#353b47, #d4d4d4));
   --ms-text-color-3: var(--base-text-color-3, light-dark(#6b7280, #a3a3a3));
   --ms-text-color-4: var(--base-text-color-4, light-dark(#a0a3a9, #737373));
-  --ms-text-color-on-accent: var(--base-text-color-on-accent, #ffffff);
+  --ms-text-color-on-accent: var(--base-on-primary-text-color, #ffffff);
 
   /* Legacy aliases (for backward compatibility) */
   --ms-text-primary: var(--ms-text-color-1);
@@ -115,7 +115,7 @@
 
   /* Input Component Semantic Variables */
   --ms-input-bg: var(--base-input-bg, light-dark(#ffffff, #1a1a1a));
-  --ms-input-color: var(--base-input-color, var(--ms-text-color-1));
+  --ms-input-color: var(--base-input-text-color, var(--ms-text-color-1));
   --ms-input-border: var(--base-input-border, 1px solid var(--ms-border-color));
   --ms-input-border-hover: var(--base-input-border-hover, 1px solid var(--ms-accent-color));
   --ms-input-border-focus: var(--base-input-border-focus, 1px solid var(--ms-accent-color));
@@ -171,10 +171,16 @@
   --ms-option-bg: transparent;
   --ms-option-bg-hover: var(--ms-primary-bg);
   --ms-option-color-hover: inherit;
-  --ms-option-bg-focused: var(--ms-primary-bg);
-  --ms-option-color-focused: inherit;
+  /* Selected + focused read the SHARED item-state tokens (--base-highlighted-* /
+     --base-focused-*) so a selected / keyboard-focused option looks identical to a
+     highlighted / focused row in the KeenMate tree components on the same page.
+     Focus is marked by the inset ring alone (transparent bg) — no grey fill. */
+  --ms-option-bg-focused: var(--base-focused-bg, transparent);
+  --ms-option-color-focused: var(--base-focused-text-color, currentColor);
   --ms-option-outline-color-focused: var(--ms-accent-color);
-  --ms-option-bg-selected: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
+  --ms-option-bg-selected: var(--base-highlighted-bg, color-mix(in srgb, var(--ms-accent-color) 10%, transparent));
+  --ms-option-bg-selected-hover: var(--base-highlighted-bg-hover, var(--ms-option-bg-selected));
+  --ms-option-color-selected: var(--base-highlighted-text-color, currentColor);
   --ms-option-bg-matched: color-mix(in srgb, var(--ms-accent-color) 8%, transparent);
   --ms-option-color-matched: inherit;
   --ms-option-border-matched-color: color-mix(in srgb, var(--ms-accent-color) 40%, transparent);
@@ -245,7 +251,7 @@
   /* Tooltip Semantic Variables
      Tooltips invert relative to the page: dark tooltip on light page, light tooltip on dark page.
      This keeps the tooltip distinct from its surrounding surface in both modes. */
-  --ms-tooltip-bg: var(--base-tooltip-bg, var(--base-inverse-bg, light-dark(#333333, #f5f5f5)));
+  --ms-tooltip-bg: var(--base-tooltip-bg, light-dark(#333333, #f5f5f5));
   --ms-tooltip-text-color: var(--base-tooltip-text-color, light-dark(#ffffff, #1a1a1a));
 
   /* Selected Popover Semantic Variables */
@@ -321,8 +327,8 @@
      ========================================================================== */
   --ms-input-clear-size: calc(2.4 * var(--ms-rem));
   --ms-input-clear-icon-size: calc(1.4 * var(--ms-rem));
-  --ms-input-clear-color: var(--base-input-clear-color, var(--ms-text-secondary));
-  --ms-input-clear-bg-hover: var(--base-input-clear-bg-hover, var(--ms-option-bg-matched, transparent));
+  --ms-input-clear-color: var(--base-input-icon-color, var(--ms-text-secondary));
+  --ms-input-clear-bg-hover: var(--base-input-icon-bg-hover, var(--ms-option-bg-matched, transparent));
   --ms-input-clear-border-radius: var(--ms-border-radius); /* matches the input; square when radius is 0 */
 
   /* ==========================================================================
@@ -556,14 +562,18 @@
      content is taller (unless you also truncate the title, below). Virtual-scroll
      rows use the fixed `--ms-option-height` instead. */
   --ms-option-min-height: auto;
-  --ms-option-outline-focused: 2px solid var(--ms-option-outline-color-focused);
-  --ms-option-focus-outline-offset: -2px;
+  /* Rings are drawn INSET: keep the offset equal to minus the ring width. */
+  --ms-option-outline-focused: var(--base-focused-outline, var(--base-outline-width, 1px) solid var(--ms-option-outline-color-focused));
+  --ms-option-focus-outline-offset: calc(-1 * var(--base-outline-width, 1px));
+  --ms-option-outline-selected: var(--base-highlighted-outline, none);
   --ms-option-border-matched: 3px solid var(--ms-option-border-matched-color);
 
   /* Option State Combinations */
-  --ms-option-bg-focused-hover: var(--ms-primary-bg);
+  /* Focused + hover = the normal hover fill (focus itself adds no bg, only the ring). */
+  --ms-option-bg-focused-hover: var(--ms-option-bg-hover);
   --ms-option-bg-matched-hover: color-mix(in srgb, var(--ms-accent-color) 12%, transparent);
-  --ms-option-bg-selected-focused: color-mix(in srgb, var(--ms-accent-color) 15%, transparent);
+  /* Selected + focused = the selected tint + the focus ring (focus must not wipe the tint). */
+  --ms-option-bg-selected-focused: var(--ms-option-bg-selected);
   --ms-option-bg-selected-matched: color-mix(in srgb, var(--ms-accent-color) 15%, transparent);
   --ms-option-disabled-bg: var(--base-disabled-bg, transparent);
   --ms-option-bg-disabled-selected: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
@@ -850,12 +860,12 @@
   /* Variants (bg + text). Info reuses the tooltip surface; the rest are status tones. */
   --ms-message-info-bg: var(--ms-tooltip-bg);
   --ms-message-info-color: var(--ms-tooltip-text-color);
-  --ms-message-warning-bg: var(--base-warning-bg, #f59e0b);
-  --ms-message-warning-color: var(--base-warning-color, #1a1a1a);
-  --ms-message-error-bg: var(--base-danger-bg, #ef4444);
-  --ms-message-error-color: var(--base-danger-color, #ffffff);
-  --ms-message-success-bg: var(--base-success-bg, #10b981);
-  --ms-message-success-color: var(--base-success-color, #ffffff);
+  --ms-message-warning-bg: var(--base-warning-color, #f59e0b);
+  --ms-message-warning-color: var(--base-on-warning-text-color, #1a1a1a);
+  --ms-message-error-bg: var(--base-danger-color, #ef4444);
+  --ms-message-error-color: var(--base-on-danger-text-color, #ffffff);
+  --ms-message-success-bg: var(--base-success-color, #10b981);
+  --ms-message-success-color: var(--base-on-success-text-color, #ffffff);
 
   /* ==========================================================================
      SELECTED POPOVER
