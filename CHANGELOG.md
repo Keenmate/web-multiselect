@@ -5,71 +5,120 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.6.0-rc01] - 2026-10-20 [PUBLISHED]
 
 ### Changed
 
+- **Reads `@keenmate/base-css-variables` 2.0.** `--base-primary-color[-hover|-active]` and
+  `--base-primary-bg-subtle[-hover]` (were `--base-accent-color*` / `-color-light[-hover]`),
+  `--base-on-<role>-text-color` (was `--base-text-color-on-accent` / `--base-text-on-<role>`),
+  `--base-input-text-color` (was `--base-input-color`), `--base-input-icon-color` /
+  `-icon-bg-hover` (were `--base-input-clear-*`), `--base-tooltip-text-color` (the
+  `--base-tooltip-color` duplicate is gone), and the item-state names below. The component's
+  own `--ms-accent-*` tokens keep their names.
+- **Message backgrounds read `--base-<role>-color`** instead of `--base-<role>-bg` (removed in
+  2.0; it was a copy of `-color`).
+- **Tooltip background reads `--base-tooltip-bg` directly** (the `--base-inverse-bg` step is
+  removed in 2.0). No visual change.
+- **Option selected / focused states read the shared item-state tokens**, so a selected or
+  keyboard-focused option looks identical to a highlighted / focused row in the Keenmate tree
+  components on the same page. Each read keeps an inline fallback.
+  - Selected: `--ms-option-bg-selected` → `var(--base-highlighted-bg, <10% accent>)`;
+    new `--ms-option-bg-selected-hover` (`--base-highlighted-bg-hover`),
+    `--ms-option-color-selected` (`--base-highlighted-text-color`, default `currentColor`)
+    and `--ms-option-outline-selected` (`--base-highlighted-outline`, default `none`,
+    drawn as an inset outline like the focus outline).
+  - Focused: `--ms-option-bg-focused` → `var(--base-focused-bg, transparent)`,
+    `--ms-option-color-focused` → `var(--base-focused-text-color, currentColor)`,
+    `--ms-option-outline-focused` → `var(--base-focused-outline, 1px solid …)`.
+  - **The focus outline is 1px (was 2px)**; `--ms-option-focus-outline-offset` is
+    `calc(-1 * var(--base-outline-width, 1px))` (was `-2px`), so it stays inset at any width.
+  - **A keyboard-focused option no longer gets the grey `--ms-primary-bg` background** — the
+    outline alone marks focus. Focused + hover shows the normal hover fill.
+  - Selected + focused shows the selected tint plus the focus outline
+    (`--ms-option-bg-selected-focused` → `var(--ms-option-bg-selected)`; was a 15% accent mix).
+  - The search-match state (8% tint + 3px leading bar) and plain hover (`--base-hover-bg`) are
+    unchanged.
+- **Controls take the control outline, not the divider** (base-css-variables 2.0.0-rc02 made it
+  stronger): new `--ms-input-border-color` (`--base-input-border-color`) drives the input
+  fallback, the Select All / Clear All action buttons and the count pill (were
+  `--ms-border-color`, which nearly vanished in some themes).
+- **Focus halo:** the focused input and the fullscreen search show
+  `--ms-input-box-shadow-focus` (`--base-input-box-shadow-focus`, the soft ring pure-admin's
+  inputs use). Before, only the border changed.
+- **Panels share the dropdown surface:** the sticky actions bar and the floating hint read
+  `--ms-dropdown-bg` (were `--base-main-bg`, a different strip when a theme retargets
+  `--base-dropdown-bg`); the selected-items popover reads `--base-dropdown-border` and the
+  dropdown shadow (was its own two-layer shadow). The unreachable `--base-elevated-bg` step in
+  the dropdown / popover background fallback is gone.
+- **Placeholder no longer fades twice:** `--ms-placeholder-opacity` defaults to 1, because
+  `--ms-input-placeholder-color` is already the faint text level (`--base-text-color-4`).
+- **Disabled checkbox background** reads `--ms-input-bg-disabled` (`--base-input-bg-disabled`;
+  was the hover overlay).
+- **Every border width follows `--base-border-width`** through the new `--ms-border-width`
+  (hint, dropdown and popover borders, separators, checkbox, badge counter, message).
 - **Shadows share one tone with pure-admin: `--base-shadow-color`.** Hint, message, tooltip,
   selected-items popover and the dropdown fallback keep their sizes but take their colour from
-  `--base-shadow-color` (falls back to the previous black when the base layer is absent).
-- `--ms-icon-add-new` reads `--base-icon-add` (the contract name); the non-existent
-  `--base-icon-plus` step is gone.
+  `--base-shadow-color` (falls back to the previous black when the base layer is absent). The
+  tooltip shadow reads `--base-shadow-md`.
+- `--ms-icon-info` reads `--base-icon-info`, `--ms-icon-add-new` reads `--base-icon-add` (the
+  non-existent `--base-icon-plus` step is gone), the debug panel uses `--base-font-family-mono`,
+  and the remaining hard-coded `ease` transitions use `--ms-easing-snappy`.
+- **Item-state text colors reach the option title:** new `--ms-option-title-color-focused` /
+  `-selected` read `--base-focused-text-color` / `--base-highlighted-text-color` (the title has
+  its own color, so those tokens only recolored the row before). Default unchanged.
+- **Icons inside the input share `--base-input-icon-color`:** the chevron
+  (`--ms-toggle-icon-color`) and the fullscreen search clear / mode toggle (were the undeclared
+  `--ms-text-muted-color`, i.e. full text color).
+- **Stacking follows `--base-z-*`:** `--ms-z-index-dropdown` / `-popover` / `--ms-tooltip-z-index`
+  read `--base-z-dropdown` / `-popover` / `-tooltip` (pure-admin: 7500 / 7600 / 9000), so page
+  toasts and tooltips stack the same way around the component; the phone sheet sits one step
+  above tooltips. Standalone values are unchanged (9999 / 10000 / 10001).
+- **Tree indent scales with `--ms-rem`** (`0.75` / `1.25 × --ms-rem`; was real `rem`, which
+  ignored `--base-rem`). Same 7.5 / 12.5px on a 10px root.
+- The `defer` placeholder reserves `--ms-input-height` (was a fixed 3.5, short of a 3.8 theme).
+- **`--ms-fullscreen-rem` is `calc(1.2 * var(--ms-rem))`** (was a fixed `12px`), so the phone
+  view is always the larger one — with `--base-rem: 1rem` on a 16px page the 12px sheet was
+  smaller than the floating dropdown.
+
+### Removed
+
+- **44 variables nothing read** (no CSS rule, no other variable in use and no script referenced
+  them, so setting them never had an effect): `--ms-input-border-width`, `--ms-input-text`,
+  `--ms-dropdown-box-shadow-semantic`, `--ms-accent-color-active`,
+  `--ms-accent-color-light-hover`, `--ms-text-color-2`, `--ms-text-primary`,
+  `--ms-primary-bg-hover`, `--ms-border`, `--ms-option-color`, `--ms-toggle-color`,
+  `--ms-transform-rotate-180`, `--ms-badge-bg` / `-bg-hover` / `-bg-active`, `--ms-badge-gap` (the
+  gap is `--ms-badges-gap`), `--ms-badge-counter-bg`, `--ms-badge-counter-border-radius`,
+  `--ms-more-badge-bg` / `-hover-bg` / `-active-bg` (the "+X more" badge is the counter variant),
+  `--ms-counter-bg` / `-bg-hover` / `-color` (the in-input counter is `--ms-counter-badge-*`),
+  `--ms-action-btn-bg` / `-bg-hover` / `-color` / `-border-color-hover` (the buttons read
+  `--ms-action-button-*`), `--ms-loading-text-color` (`--ms-loading-color`), `--ms-tooltip-color`
+  (`--ms-tooltip-text-color`), `--ms-checkbox-checkmark-thickness`, and the never-applied
+  `--ms-font-size-*`, `--ms-font-weight-*`, `--ms-line-height-tight` and `--ms-spacing-*` scales
+  (font sizes and weights read `--base-*` directly). With them the manifest drops seven
+  `--base-*` tokens that only fed them. Also second copies of 22 color tokens declared twice in
+  `variables.css` (same values).
 
 ### Fixed
 
+- **Declarative `<option>` children rendered every option as "[N/A]"** (regressed in 2.5.0).
+  Since the core null-clear contract, unset inputs reach the config as `null`, but the
+  declarative `value` / `label` / `group` / `icon` / `subtitle` / `disabled` member defaults
+  only applied to `undefined`, so they were never set. They now apply to `null` too.
+  New e2e coverage (`test/declarative.html`).
 - **Warning / error / success messages were unreadable under the base theme.** Their text
   read `--base-<role>-color` — the same vivid color as the message background — so with
   `@keenmate/base-css-variables` loaded the text matched its background. Text now reads
-  `--base-text-on-<role>` (readable text on the role fill).
-
-### Changed
-
-- **Reads `--base-primary-*` (was `--base-accent-*`)**, following `@keenmate/base-css-variables`
-  2.0.0, which drops the `accent` names: `--base-primary-color[-hover|-active]`,
-  `--base-primary-bg-subtle[-hover]` (was `-color-light[-hover]`) and `--base-on-primary-text-color`
-  (was `--base-text-color-on-accent`). The component's own `--*-accent-*` tokens keep their names.
-  Docs, examples and manifest updated.
-- **Tooltip background no longer falls back through `--base-inverse-bg`** (removed in
-  `@keenmate/base-css-variables` 2.0.0): it reads `--base-tooltip-bg` directly, then the
-  component's own default. No visual change — `--base-tooltip-bg` is always defined by the contract.
-- **Reads the 2.0.0 type-stating names:** `--base-outline-width` / `--base-focused-outline` /
-  `--base-highlighted-outline` (were `-ring`), `--base-*-text-color` (was `-text`),
-  `--base-on-<role>-text-color` (was `--base-text-on-<role>`), `--base-input-text-color` (was
-  `--base-input-color`), `--base-input-icon-color` / `-icon-bg-hover` (were `--base-input-clear-*`),
-  `--base-tooltip-text-color` (the `--base-tooltip-color` duplicate is gone) — whichever of these
-  the component uses.
-- **Message backgrounds read `--base-<role>-color`** instead of `--base-<role>-bg`, which
-  base-css-variables 2.0.0 removes (it was a copy of `-color`). Manifest updated:
-  `base-*-bg` dropped, `base-text-on-success/-danger/-warning` added.
-
-- **Option selected / focused states now read the shared `--base-highlighted-*` /
-  `--base-focused-*` item-state tokens** from `@keenmate/base-css-variables`, so a
-  selected or keyboard-focused option looks identical to a highlighted / focused
-  row in the KeenMate tree components on the same page. Each read keeps an inline
-  fallback, so nothing changes visually for the selected tint when the tokens are
-  absent.
-  - Selected: `--ms-option-bg-selected` → `var(--base-highlighted-bg, <10% accent>)`;
-    new `--ms-option-bg-selected-hover` (`--base-highlighted-bg-hover`),
-    `--ms-option-color-selected` (`--base-highlighted-text`, default `currentColor`)
-    and `--ms-option-outline-selected` (`--base-highlighted-ring`, default `none`,
-    drawn as an inset outline like the focus ring).
-  - Focused: `--ms-option-bg-focused` → `var(--base-focused-bg, transparent)`,
-    `--ms-option-color-focused` → `var(--base-focused-text, currentColor)`,
-    `--ms-option-outline-focused` → `var(--base-focused-ring, 1px solid …)`.
-  - **Focus ring is now 1px (was 2px)**; `--ms-option-focus-outline-offset` is
-    `calc(-1 * var(--base-ring-width, 1px))` (was `-2px`) so the ring stays
-    inset — it follows the shared `--base-ring-width`, so a thicker ring stays inset too.
-  - **A keyboard-focused option no longer gets the grey `--ms-primary-bg`
-    background** — the ring alone marks focus. Focused + hover shows the normal
-    hover fill (`--ms-option-bg-focused-hover` → `var(--ms-option-bg-hover)`).
-  - Selected + focused now shows the selected tint plus the focus ring
-    (`--ms-option-bg-selected-focused` → `var(--ms-option-bg-selected)`; was a
-    stronger 15% accent mix).
-  - The search-match state (8% tint + 3px leading bar) and plain hover
-    (`--base-hover-bg`) are unchanged.
-
-### Fixed
-
+  `--base-on-<role>-text-color` (readable text on the role fill).
+- **A disabled checked / indeterminate checkbox lost its mark:** the disabled background
+  replaced the accent fill, leaving a white tick on near-white. It now keeps the fill and mark
+  (dimmed), like pure-admin's checkbox; only an empty box takes the disabled surface.
+- **A disabled field no longer shows the accent hover border.**
+- **Fullscreen virtual rows were 12× too tall with `--base-rem` set.** `fullscreenScale()`
+  `parseFloat`-ed `--ms-rem`, which is `1rem` under base-css-variables (→ 1), so virtual
+  option rows became 600px and popover badges were inflated the same way. Both sizes are now
+  measured as lengths.
 - **`search-mode="navigate"` + virtual scrolling now scrolls to the first match
   when it sits below the fold** (tree and flat lists). The deferred virtual-scroll
   `setItems()` reset the scroll position to 0 a frame after the search had already
