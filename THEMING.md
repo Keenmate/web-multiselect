@@ -29,18 +29,18 @@ Individual dropdown option items.
 
 | State | CSS Class | CSS Variables |
 |-------|-----------|---------------|
-| **Default** | `.ms__option` | `--ms-option-background`, `--ms-option-text-color` |
-| **Hover** | `:hover` | `--ms-option-background-hover`, `--ms-option-color-hover` |
-| **Focused** | `--focused` | `--ms-option-bg-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` (read `--base-focused-bg/-text/-ring`, offset follows `--base-outline-width`) |
-| **Matched** | `--matched` | `--ms-option-background-matched`, `--ms-option-color-matched`, `--ms-option-border-matched` |
-| **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-highlighted-bg/-text/-ring`) |
+| **Default** | `.ms__option` | `--ms-option-bg`, `--ms-option-text-color` |
+| **Hover** | `:hover` | `--ms-option-bg-hover`, `--ms-option-color-hover` |
+| **Focused** | `--focused` | `--ms-option-bg-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` (read `--base-focused-bg` / `-text-color` / `-outline`, offset follows `--base-outline-width`) |
+| **Matched** | `--matched` | `--ms-option-bg-matched`, `--ms-option-color-matched`, `--ms-option-border-matched` |
+| **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-highlighted-bg` / `-text-color` / `-outline`) |
 | **Disabled** | `--disabled` | `--ms-disabled-opacity` |
 | **Focused + Hover** | `--focused:hover` | `--ms-option-bg-focused-hover`, `--ms-option-color-focused-hover` |
 | **Matched + Hover** | `--matched:hover` | `--ms-option-bg-matched-hover`, `--ms-option-color-matched-hover` |
-| **Selected + Hover** | `--selected:hover` | `--ms-option-bg-selected-hover`, `--ms-option-color-selected-hover` |
+| **Selected + Hover** | `--selected:hover` | `--ms-option-bg-selected-hover`, `--ms-option-title-color-selected-hover` |
 | **Selected + Focused** | `--selected--focused` | `--ms-option-bg-selected-focused`, `--ms-option-color-selected-focused` |
-| **Selected + Matched** | `--selected--matched` | `--ms-option-bg-selected-matched`, `--ms-option-color-selected-matched` |
-| **Disabled + Selected** | `--disabled--selected` | `--ms-option-bg-disabled-selected`, `--ms-option-color-disabled-selected` |
+| **Selected + Matched** | `--selected--matched` | `--ms-option-bg-selected-matched` |
+| **Disabled + Selected** | `--disabled--selected` | `--ms-option-bg-disabled-selected` |
 | **Disabled + Focused** | `--disabled--focused` | *(outline removed)* |
 | **Disabled + Hover** | `--disabled:hover` | *(resets to default background)* |
 
@@ -49,12 +49,14 @@ Individual dropdown option items.
 | Element | CSS Variables |
 |---------|---------------|
 | **Title** | `--ms-option-title-font-size`, `--ms-option-title-color` |
+| **Title (focused / selected)** | `--ms-option-title-color-focused`, `--ms-option-title-color-selected` (read `--base-focused-text-color` / `--base-highlighted-text-color`) |
+| **Title (hover / selected+hover)** | `--ms-option-title-color-hover`, `--ms-option-title-color-selected-hover` |
 | **Subtitle** | `--ms-option-subtitle-font-size`, `--ms-option-subtitle-color`, `--ms-option-subtitle-margin-top`, `--ms-option-subtitle-line-height` |
 | **Subtitle (hover)** | `--ms-option-subtitle-color-hover` |
 | **Subtitle (selected)** | `--ms-option-subtitle-color-selected` |
 | **Subtitle (selected+hover)** | `--ms-option-subtitle-color-selected-hover` |
 | **Icon** | `--ms-option-icon-size`, `--ms-option-icon-font-size` |
-| **Mark (highlight)** | `--ms-option-mark-background`, `--ms-option-mark-color`, `--ms-option-mark-font-weight` |
+| **Mark (highlight)** | `--ms-option-mark-bg`, `--ms-option-mark-color`, `--ms-option-mark-font-weight` |
 
 ---
 
@@ -69,8 +71,8 @@ Custom-styled checkbox within options.
 | **Checked** | `:checked` | `--ms-checkbox-checked-bg`, `--ms-checkbox-checked-border`, `--ms-checkbox-checkmark-color` |
 | **Checked + Hover** | `:checked:hover:not(:disabled)` | `--ms-checkbox-checked-bg-hover`, `--ms-checkbox-checked-border-color-hover` |
 | **Focus** | `:focus-visible` | *(uses `--ms-checkbox-checked-bg` for outline)* |
-| **Disabled** | `:disabled` | `--ms-checkbox-disabled-bg`, `--ms-checkbox-disabled-border` |
-| **Checked + Disabled** | `:checked:disabled` | *(uses disabled background)* |
+| **Disabled** | `:disabled` | `--ms-checkbox-disabled-bg`, `--ms-checkbox-disabled-border` (empty box), `--ms-disabled-input-opacity` |
+| **Checked + Disabled** | `:checked:disabled` | *(keeps the checked fill and mark, dimmed by `--ms-disabled-input-opacity`)* |
 
 ### Checkbox Positioning
 
@@ -87,28 +89,28 @@ The search/selection input field.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__input` | `--ms-input-background`, `--ms-input-color`, `--ms-input-border-style`, `--ms-input-border-radius`, `--ms-input-font-size`, `--ms-input-padding`, `--ms-input-padding-right` |
-| **Hover** | `:hover:not(:focus):not(:disabled)` | `--ms-input-border-color-hover` |
-| **Focus** | `:focus` | `--ms-input-border-color-focus` |
+| **Default** | `.ms__input-wrapper` (the field shell) | `--ms-input-bg`, `--ms-input-color`, `--ms-input-border` (color: `--ms-input-border-color`), `--ms-input-border-radius`, `--ms-input-height`, `--ms-input-font-size`, `--ms-input-padding-h`, `--ms-input-gap` |
+| **Hover** | `:hover:not(:focus-within)` | `--ms-input-border-hover` |
+| **Focus** | `:focus-within` | `--ms-input-border-focus`, `--ms-input-box-shadow-focus` |
 | **Placeholder** | `::placeholder` | `--ms-input-placeholder-color`, `--ms-placeholder-opacity` |
-| **Disabled** | `.ms--disabled .ms__input` | `--ms-input-background-disabled`, `--ms-disabled-input-opacity` |
+| **Disabled** | `.ms--disabled .ms__input-wrapper` | `--ms-input-bg-disabled`, `--ms-disabled-input-opacity` |
 
 ### Input Sizing
 
-The component uses `--ms-rem` for proportional scaling. Default is `10px`.
+The component uses `--ms-rem` for proportional scaling: `var(--base-rem, 10px)`, so it follows the shared `--base-rem` and is 10px without a base layer.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-rem` | `10px` | Base unit for all sizing calculations |
-| `--ms-input-height` | `calc(3.5 * var(--ms-rem))` | Input field height (35px) |
-| `--ms-input-padding` | `calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))` | Input padding |
+| `--ms-rem` | `var(--base-rem, 10px)` | Base unit for all sizing calculations |
+| `--ms-input-height` | `calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))` | Input field height (35px) |
+| `--ms-input-padding-h` | `calc(1.2 * var(--ms-rem))` | Inline padding of the field |
 | `--ms-input-font-size` | `calc(1.4 * var(--ms-rem))` | Input font size (14px) |
 
 **Scale Examples:**
 - `--ms-rem: 8px` → 80% size (compact)
 - `--ms-rem: 10px` → 100% size (default)
 - `--ms-rem: 12px` → 120% size (large)
-- `--ms-rem: 1rem` → Pure Admin integration (inherits from `html { font-size: 10px }`)
+- Pure Admin sets `--base-rem: 1rem` (with `html { font-size: 10px }`), which `--ms-rem` follows — nothing to set on the component
 
 ---
 
@@ -118,8 +120,8 @@ The dropdown arrow/chevron icon.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__toggle` | `--ms-toggle-icon-color`, `--ms-toggle-right` |
-| **Open** | `.ms--open .ms__toggle` | `--ms-toggle-icon-color-open`, `--ms-transform-rotate-180` |
+| **Default** | `.ms__toggle` | `--ms-toggle-icon-color` (default `--base-input-icon-color`), `--ms-toggle-icon-size`, `--ms-toggle-rotate-closed` |
+| **Open** | `.ms--open .ms__toggle` | `--ms-toggle-icon-color-open`, `--ms-toggle-rotate-open` |
 | **Disabled** | `.ms--disabled .ms__toggle` | `--ms-disabled-input-opacity` |
 
 ---
@@ -130,8 +132,8 @@ Small badge showing selection count inside the input.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__counter` | `--ms-counter-badge-background`, `--ms-counter-badge-color`, `--ms-counter-font-size`, `--ms-counter-font-weight`, `--ms-counter-border-radius`, `--ms-counter-padding`, `--ms-counter-offset` |
-| **Hover** | `:hover` | `--ms-counter-badge-background-hover`, `--ms-transform-scale-hover` |
+| **Default** | `.ms__counter` | `--ms-counter-badge-bg`, `--ms-counter-badge-color`, `--ms-counter-font-size`, `--ms-counter-font-weight`, `--ms-counter-border-radius`, `--ms-counter-padding` |
+| **Hover** | `:hover` | `--ms-counter-badge-bg-hover`, `--ms-transform-scale-hover` |
 
 ---
 
@@ -141,14 +143,14 @@ The floating options container.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__dropdown` | `--ms-dropdown-background`, `--ms-dropdown-text-color`, `--ms-dropdown-border`, `--ms-dropdown-border-radius`, `--ms-dropdown-box-shadow`, `--ms-options-max-height`, `--ms-z-index-dropdown` |
+| **Default** | `.ms__dropdown` | `--ms-dropdown-bg`, `--ms-dropdown-text-color`, `--ms-dropdown-border`, `--ms-dropdown-border-radius`, `--ms-dropdown-box-shadow`, `--ms-options-max-height`, `--ms-z-index-dropdown` |
 | **Visible** | `--visible` | *(display: block)* |
 
 ### Floating Hint
 
 | State | CSS Variables |
 |-------|---------------|
-| **Default** | `--ms-hint-background`, `--ms-hint-color`, `--ms-hint-border`, `--ms-hint-border-radius`, `--ms-hint-box-shadow`, `--ms-hint-font-size`, `--ms-hint-padding` |
+| **Default** | `--ms-hint-bg`, `--ms-hint-color`, `--ms-hint-border`, `--ms-hint-border-radius`, `--ms-hint-box-shadow`, `--ms-hint-font-size`, `--ms-hint-padding` |
 
 ### Groups
 
@@ -172,9 +174,9 @@ Select All / Clear All buttons in dropdown.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Container** | `.ms__actions` | `--ms-actions-background`, `--ms-actions-border-bottom`, `--ms-actions-padding`, `--ms-actions-gap` |
-| **Default** | `.ms__action-btn` | `--ms-action-button-background`, `--ms-action-button-color`, `--ms-action-btn-border`, `--ms-action-btn-border-radius`, `--ms-action-btn-font-size`, `--ms-action-btn-padding` |
-| **Hover** | `:hover` | `--ms-action-button-background-hover`, `--ms-action-button-border-color-hover` |
+| **Container** | `.ms__actions` | `--ms-actions-bg`, `--ms-actions-border-bottom`, `--ms-actions-padding`, `--ms-actions-gap` |
+| **Default** | `.ms__action-btn` | `--ms-action-button-bg`, `--ms-action-button-color`, `--ms-action-btn-border`, `--ms-action-btn-border-radius`, `--ms-action-btn-font-size`, `--ms-action-btn-padding` |
+| **Hover** | `:hover` | `--ms-action-button-bg-hover`, `--ms-action-button-border-color-hover` |
 | **Active** | `:active` | `--ms-transform-scale-active` |
 | **Disabled** | `:disabled` | `--ms-disabled-opacity` |
 
@@ -188,10 +190,10 @@ Selected item badges displayed outside the dropdown.
 |-------|----------|---------------|
 | **Container** | `.ms__badges` | `--ms-badges-gap`, `--ms-badges-margin-top`, `--ms-badges-margin-bottom`, `--ms-badges-margin-left`, `--ms-badges-margin-right` |
 | **Badge** | `.ms__badge` | `--ms-badge-height`, `--ms-badge-font-size`, `--ms-badge-font-weight`, `--ms-badge-border-radius` |
-| **Badge Text** | `.ms__badge-text` | `--ms-badge-text-background`, `--ms-badge-text-color`, `--ms-badge-text-padding`, `--ms-badge-text-border` |
-| **Badge Hover** | `.ms__badge:hover .ms__badge-text` | `--ms-badge-text-background-hover`, `--ms-badge-text-color-hover` |
-| **Remove Button** | `.ms__badge-remove` | `--ms-badge-remove-background`, `--ms-badge-remove-color`, `--ms-badge-remove-border`, `--ms-badge-remove-width`, `--ms-badge-remove-icon-size` |
-| **Remove Hover** | `.ms__badge-remove:hover` | `--ms-badge-remove-background-hover` |
+| **Badge Text** | `.ms__badge-text` | `--ms-badge-text-bg`, `--ms-badge-text-color`, `--ms-badge-text-padding`, `--ms-badge-text-border` |
+| **Badge Hover** | `.ms__badge:hover .ms__badge-text` | `--ms-badge-text-bg-hover`, `--ms-badge-text-color-hover` |
+| **Remove Button** | `.ms__badge-remove` | `--ms-badge-remove-bg`, `--ms-badge-remove-color`, `--ms-badge-remove-border`, `--ms-badge-remove-width`, `--ms-badge-remove-icon-size` |
+| **Remove Hover** | `.ms__badge-remove:hover` | `--ms-badge-remove-bg-hover` |
 | **Remove Focus** | `.ms__badge-remove:focus` | `--ms-badge-remove-box-shadow-focus` |
 
 ### Badge Border Styling
@@ -201,11 +203,11 @@ Badges have **separate borders** for the text part and remove button, allowing d
 ```css
 web-multiselect {
   /* Text part - light pink border */
-  --ms-badge-text-background: #f8d7da;
+  --ms-badge-text-bg: #f8d7da;
   --ms-badge-text-border: 1px solid #f8d7da;
 
   /* Button part - dark red border matching background */
-  --ms-badge-remove-background: #bb0a30;
+  --ms-badge-remove-bg: #bb0a30;
   --ms-badge-remove-border: 1px solid #bb0a30;
 }
 ```
@@ -219,17 +221,13 @@ Gray/neutral badges for "+X more", count indicators, compact mode.
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
 | **Container** | `.ms__badge--counter` | `--ms-badge-counter-border` |
-| **Text** | `.ms__badge--counter .ms__badge-text` | `--ms-badge-counter-text-background`, `--ms-badge-counter-text-color` |
-| **Remove** | `.ms__badge--counter .ms__badge-remove` | `--ms-badge-counter-remove-background`, `--ms-badge-counter-remove-color` |
-| **Remove Hover** | `.ms__badge--counter .ms__badge-remove:hover` | `--ms-badge-counter-remove-background-hover` |
+| **Text** | `.ms__badge--counter .ms__badge-text` | `--ms-badge-counter-text-bg`, `--ms-badge-counter-text-color` |
+| **Remove** | `.ms__badge--counter .ms__badge-remove` | `--ms-badge-counter-remove-bg`, `--ms-badge-counter-remove-color` |
+| **Remove Hover** | `.ms__badge--counter .ms__badge-remove:hover` | `--ms-badge-counter-remove-bg-hover` |
 
 ### "+X More" Badge
 
-| State | CSS Variables |
-|-------|---------------|
-| **Default** | `--ms-more-badge-bg` |
-| **Hover** | `--ms-more-badge-hover-bg` |
-| **Active** | `--ms-more-badge-active-bg` |
+The "+X more" badge is a `.ms__badge--counter` — theme it with the Badge Counter variables above.
 
 ---
 
@@ -240,11 +238,11 @@ Alternative to badges - shows "X selected" with clear button.
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
 | **Container** | `.ms__count-display` | `--ms-count-display-margin-top`, `--ms-count-display-margin-bottom`, `--ms-count-display-margin-left`, `--ms-count-display-margin-right` |
-| **Wrapper** | `.ms__counter-wrapper` | `--ms-counter-wrapper-background`, `--ms-counter-wrapper-border`, `--ms-counter-wrapper-border-radius`, `--ms-counter-wrapper-padding`, `--ms-counter-wrapper-gap` |
-| **Wrapper Hover** | `.ms__counter-wrapper:hover` | `--ms-counter-wrapper-background-hover`, `--ms-counter-wrapper-border-color-hover` |
+| **Wrapper** | `.ms__counter-wrapper` | `--ms-counter-wrapper-bg`, `--ms-counter-wrapper-border`, `--ms-counter-wrapper-border-radius`, `--ms-counter-wrapper-padding`, `--ms-counter-wrapper-gap` |
+| **Wrapper Hover** | `.ms__counter-wrapper:hover` | `--ms-counter-wrapper-bg-hover`, `--ms-counter-wrapper-border-color-hover` |
 | **Text** | `.ms__count-text` | `--ms-count-text-color`, `--ms-count-text-font-size`, `--ms-count-text-bg`, `--ms-count-text-border` |
-| **Clear Button** | `.ms__count-clear` | `--ms-count-clear-background`, `--ms-count-clear-color`, `--ms-count-clear-size`, `--ms-count-clear-icon-size`, `--ms-count-clear-border-radius` |
-| **Clear Hover** | `.ms__count-clear:hover` | `--ms-count-clear-background-hover`, `--ms-count-clear-color-hover` |
+| **Clear Button** | `.ms__count-clear` | `--ms-count-clear-bg`, `--ms-count-clear-color`, `--ms-count-clear-size`, `--ms-count-clear-icon-size`, `--ms-count-clear-border-radius` |
+| **Clear Hover** | `.ms__count-clear:hover` | `--ms-count-clear-bg-hover`, `--ms-count-clear-color-hover` |
 
 ---
 
@@ -254,7 +252,7 @@ Badge tooltips showing full text on hover.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__badge-tooltip` | `--ms-tooltip-background`, `--ms-tooltip-text-color`, `--ms-tooltip-padding`, `--ms-tooltip-border-radius`, `--ms-tooltip-font-size`, `--ms-tooltip-max-width`, `--ms-tooltip-shadow`, `--ms-tooltip-z-index` |
+| **Default** | `.ms__badge-tooltip` | `--ms-tooltip-bg`, `--ms-tooltip-text-color`, `--ms-tooltip-padding`, `--ms-tooltip-border-radius`, `--ms-tooltip-font-size`, `--ms-tooltip-max-width`, `--ms-tooltip-shadow`, `--ms-tooltip-z-index` |
 | **Visible** | `--visible` | *(opacity: 1, visibility: visible)* |
 
 ---
@@ -265,10 +263,10 @@ Popover showing all selected items (for count display mode).
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Container** | `.ms__selected-popover` | `--ms-selected-popover-background`, `--ms-selected-popover-border`, `--ms-selected-popover-border-radius`, `--ms-selected-popover-box-shadow`, `--ms-selected-popover-width`, `--ms-selected-popover-max-height`, `--ms-z-index-popover` |
-| **Header** | `.ms__selected-popover-header` | `--ms-selected-popover-header-background`, `--ms-selected-popover-header-color`, `--ms-selected-popover-header-border-bottom`, `--ms-selected-popover-header-font-size`, `--ms-selected-popover-header-font-weight`, `--ms-selected-popover-header-padding` |
-| **Close Button** | `.ms__selected-popover-close` | `--ms-selected-popover-close-background`, `--ms-selected-popover-close-color`, `--ms-selected-popover-close-icon-size`, `--ms-selected-popover-close-border-radius`, `--ms-popover-close-size` |
-| **Close Hover** | `.ms__selected-popover-close:hover` | `--ms-selected-popover-close-background-hover`, `--ms-selected-popover-close-color-hover` |
+| **Container** | `.ms__selected-popover` | `--ms-selected-popover-bg`, `--ms-selected-popover-border`, `--ms-selected-popover-border-radius`, `--ms-selected-popover-box-shadow`, `--ms-selected-popover-width`, `--ms-selected-popover-max-height`, `--ms-z-index-popover` |
+| **Header** | `.ms__selected-popover-header` | `--ms-selected-popover-header-bg`, `--ms-selected-popover-header-color`, `--ms-selected-popover-header-border-bottom`, `--ms-selected-popover-header-font-size`, `--ms-selected-popover-header-font-weight`, `--ms-selected-popover-header-padding` |
+| **Close Button** | `.ms__selected-popover-close` | `--ms-selected-popover-close-bg`, `--ms-selected-popover-close-color`, `--ms-selected-popover-close-icon-size`, `--ms-selected-popover-close-border-radius`, `--ms-popover-close-size` |
+| **Close Hover** | `.ms__selected-popover-close:hover` | `--ms-selected-popover-close-bg-hover`, `--ms-selected-popover-close-color-hover` |
 | **Body** | `.ms__selected-popover-body` | `--ms-selected-popover-body-padding`, `--ms-selected-popover-body-gap`, `--ms-selected-popover-body-max-height` |
 
 ---
@@ -292,33 +290,27 @@ Custom scrollbar styling for dropdown and popover.
 
 | Variable | Description |
 |----------|-------------|
-| `--ms-accent-color` | Primary accent color |
+| `--ms-accent-color` | Primary accent color (`--base-primary-color`) |
 | `--ms-accent-color-hover` | Accent color on hover |
-| `--ms-accent-color-active` | Accent color when active |
-| `--ms-text-primary` | Primary text color |
-| `--ms-text-secondary` | Secondary/muted text color |
-| `--ms-text-on-accent` | Text color on accent backgrounds (for contrast) |
-| `--ms-primary-bg` | Primary background color |
-| `--ms-primary-bg-hover` | Background on hover |
-| `--ms-border-color` | Default border color |
+| `--ms-accent-color-light` | Accent tint (badges) — `--base-primary-bg-subtle` |
+| `--ms-text-color-1` / `-3` / `-4` | Text levels: body, tertiary (subtitles, icons), faint (placeholder) |
+| `--ms-text-secondary` | Alias of `--ms-text-color-3` |
+| `--ms-text-color-on-accent` | Text color on accent backgrounds (for contrast) |
+| `--ms-primary-bg` | Hover fill (options, action buttons, counter) — `--base-hover-bg` |
+| `--ms-border-width` | Stroke width of every border — `--base-border-width` |
+| `--ms-border-color` | Divider color (panels, separators) — `--base-border-color` |
+| `--ms-input-border-color` | Control outline (input, action buttons, count pill) — `--base-input-border-color` |
 
 ### Typography
 
-| Variable | Description | Theme Designer Integration |
-|----------|-------------|---------------------------|
-| `--ms-font-family` | Font family | Falls back to `--base-font-family` |
-| `--ms-font-size-2xs` | 10px | Falls back to `--base-font-size-2xs` |
-| `--ms-font-size-xs` | 12px | Falls back to `--base-font-size-xs` |
-| `--ms-font-size-sm` | 14px | Falls back to `--base-font-size-sm` |
-| `--ms-font-size-base` | 16px | Falls back to `--base-font-size-base` |
-| `--ms-font-size-lg` | 18px | Falls back to `--base-font-size-lg` |
-| `--ms-font-weight-normal` | 400 | Falls back to `--base-font-weight-normal` |
-| `--ms-font-weight-medium` | 500 | Falls back to `--base-font-weight-medium` |
-| `--ms-font-weight-semibold` | 600 | Falls back to `--base-font-weight-semibold` |
-| `--ms-line-height-none` | 1 | *(no base equivalent)* |
-| `--ms-line-height-tight` | 1.25 | Falls back to `--base-line-height-tight` |
-| `--ms-line-height-normal` | 1.5 | Falls back to `--base-line-height-normal` |
-| `--ms-line-height-relaxed` | 1.75 | Falls back to `--base-line-height-relaxed` |
+Font sizes, weights and line heights read the shared `--base-*` scale directly (e.g.
+`calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))`); per-element knobs such as
+`--ms-option-title-font-size` or `--ms-badge-font-weight` override one spot.
+
+| Variable | Description |
+|----------|-------------|
+| `--ms-font-family` | Font family (optional; falls back to `--base-font-family`, then the page font) |
+| `--ms-line-height-none` / `-normal` / `-relaxed` | 1 / `--base-line-height-normal` / `--base-line-height-relaxed` |
 
 #### Theme Designer Integration
 
@@ -328,26 +320,17 @@ When using the `@keenmate/theme-designer`, set the `--base-*` CSS variables and 
 /* Set by theme-designer (or manually) */
 :root {
   --base-font-family: "Inter", system-ui, sans-serif;
-  --base-font-size-sm: 1.4rem;
+  --base-font-size-sm: 1.4; /* unitless: × --base-rem */
   --base-font-weight-semibold: 600;
   --base-line-height-normal: 1.5;
 }
 
 /* The component picks these up automatically */
 web-multiselect {
-  /* --ms-font-family resolves to var(--base-font-family, inherit) */
-  /* --ms-font-size-sm resolves to var(--base-font-size-sm, ...) */
+  /* font-family: var(--ms-font-family, var(--base-font-family, inherit)) */
+  /* font sizes:  calc(var(--base-font-size-sm, 1.4) * var(--ms-rem)) */
 }
 ```
-
-### Spacing
-
-| Variable | Description |
-|----------|-------------|
-| `--ms-spacing-xs` | 4px |
-| `--ms-spacing-sm` | 8px |
-| `--ms-spacing-md` | 12px |
-| `--ms-spacing-lg` | 16px |
 
 ### Transitions
 
@@ -361,7 +344,7 @@ web-multiselect {
 
 | Variable | Description |
 |----------|-------------|
-| `--ms-rem` | Base sizing unit (default: 10px). Set to `1rem` for Pure Admin integration. |
+| `--ms-rem` | Base sizing unit: `var(--base-rem, 10px)` (Pure Admin sets `--base-rem: 1rem`). |
 
 ---
 
@@ -373,7 +356,7 @@ When using solid/strong background colors for selected or hover states, **you mu
 
 State-specific color variables use a smart fallback chain. If you don't set them, they automatically fall back to parent state colors:
 
-- `--ms-option-color-selected-hover` → falls back to `--ms-option-color-selected` → falls back to `--ms-option-text-color`
+- `--ms-option-title-color-selected-hover` → falls back to `--ms-option-title-color-selected` → falls back to `--ms-option-title-color`
 - `--ms-option-subtitle-color-selected` → falls back to `--ms-option-subtitle-color`
 
 This means you only need to set the base color once, and all derived states will inherit it.
@@ -383,15 +366,15 @@ This means you only need to set the base color once, and all derived states will
 ```css
 /* ❌ WRONG - Text will be hard to read */
 web-multiselect {
-  --ms-option-background-selected: #bb0a30;  /* Strong red */
+  --ms-option-bg-selected: #bb0a30;  /* Strong red */
   /* Text stays gray/dark = poor contrast! */
 }
 
 /* ✅ CORRECT - Set text color for contrast */
 web-multiselect {
-  --ms-option-background-selected: #bb0a30;  /* Strong red */
-  --ms-option-color-selected: #ffffff;       /* White text */
-  --ms-option-color-selected-hover: #ffffff; /* White on hover too */
+  --ms-option-bg-selected: #bb0a30;              /* Strong red */
+  --ms-option-title-color-selected: #ffffff;       /* White title */
+  --ms-option-title-color-selected-hover: #ffffff; /* White on hover too */
 }
 ```
 
@@ -401,13 +384,11 @@ When using solid accent backgrounds, set both background AND text color:
 
 | Background Variable | Title Color Variable | Subtitle Color Variable |
 |---------------------|---------------------|-------------------------|
-| `--ms-option-background-hover` | `--ms-option-color-hover` | `--ms-option-subtitle-color-hover` |
-| `--ms-option-background-selected` | `--ms-option-color-selected` | `--ms-option-subtitle-color-selected` |
-| `--ms-option-bg-selected-hover` | `--ms-option-color-selected-hover` | `--ms-option-subtitle-color-selected-hover` |
-| `--ms-option-background-focused` | `--ms-option-color-focused` | *(use hover)* |
-| `--ms-option-background-matched` | `--ms-option-color-matched` | *(use default)* |
-| `--ms-option-bg-selected-focused` | `--ms-option-color-selected-focused` | *(use selected)* |
-| `--ms-option-bg-selected-matched` | `--ms-option-color-selected-matched` | *(use selected)* |
+| `--ms-option-bg-hover` | `--ms-option-title-color-hover` | `--ms-option-subtitle-color-hover` |
+| `--ms-option-bg-selected` | `--ms-option-title-color-selected` | `--ms-option-subtitle-color-selected` |
+| `--ms-option-bg-selected-hover` | `--ms-option-title-color-selected-hover` | `--ms-option-subtitle-color-selected-hover` |
+| `--ms-option-bg-focused` | `--ms-option-title-color-focused` | *(use default)* |
+| `--ms-option-bg-matched` | `--ms-option-color-matched` | *(use default)* |
 
 ---
 
@@ -418,15 +399,15 @@ web-multiselect {
   /* Base colors */
   --ms-accent-color: #bb0a30;
   --ms-accent-color-hover: #8b0720;
-  --ms-text-primary: #333333;
+  --ms-text-color-1: #333333;
   --ms-text-secondary: #858585;
 
   /* Options - IMPORTANT: Set text colors for solid backgrounds */
-  --ms-option-background-selected: #bb0a30;
-  --ms-option-color-selected: #ffffff;                /* White title on red */
+  --ms-option-bg-selected: #bb0a30;
+  --ms-option-title-color-selected: #ffffff;          /* White title on red */
   --ms-option-subtitle-color-selected: #dbdbdb;       /* Light gray subtitle on red */
   --ms-option-bg-selected-hover: #8b0720;
-  --ms-option-color-selected-hover: #ffffff;          /* White title on darker red */
+  --ms-option-title-color-selected-hover: #ffffff;    /* White title on darker red */
   --ms-option-subtitle-color-selected-hover: #dbdbdb; /* Light gray subtitle */
 
   /* Checkbox on selected */
@@ -444,34 +425,33 @@ web-multiselect {
   /* Base colors */
   --ms-accent-color: #60a5fa;
   --ms-accent-color-hover: #3b82f6;
-  --ms-text-primary: #f3f4f6;
+  --ms-text-color-1: #f3f4f6;
   --ms-text-secondary: #9ca3af;
   --ms-border-color: #374151;
-  --ms-primary-bg: #1f2937;
-  --ms-primary-bg-hover: #374151;
+  --ms-primary-bg: #374151; /* hover fill */
 
   /* Input */
-  --ms-input-background: #111827;
+  --ms-input-bg: #111827;
   --ms-input-color: #f3f4f6;
   --ms-input-border-color: #374151;
   --ms-input-placeholder-color: #6b7280;
 
   /* Dropdown */
-  --ms-dropdown-background: #1f2937;
+  --ms-dropdown-bg: #1f2937;
   --ms-dropdown-border-color: #374151;
 
   /* Options */
-  --ms-option-background: transparent;
-  --ms-option-background-hover: #374151;
-  --ms-option-background-selected: rgba(96, 165, 250, 0.15);
+  --ms-option-bg: transparent;
+  --ms-option-bg-hover: #374151;
+  --ms-option-bg-selected: rgba(96, 165, 250, 0.15);
 
   /* Badges */
-  --ms-badge-text-background: #1e3a5f;
+  --ms-badge-text-bg: #1e3a5f;
   --ms-badge-text-color: #60a5fa;
-  --ms-badge-remove-background: #3b82f6;
+  --ms-badge-remove-bg: #3b82f6;
 
   /* Tooltip */
-  --ms-tooltip-background: #111827;
+  --ms-tooltip-bg: #111827;
   --ms-tooltip-text-color: #f3f4f6;
 }
 ```

@@ -1403,6 +1403,13 @@ export class WebMultiSelect<T = any> {
                 this.virtualScroll.setItems(this.filteredOptions);
             }
 
+            // Navigate mode: setItems() above resets scroll to 0 on a new items array, which
+            // undoes the synchronous scrollToFocused() handleSearch ran before this frame —
+            // re-apply it so a match far below the fold is scrolled into view.
+            if (this.options.searchMode === 'navigate' && this.searchTerm.trim() && this.focusedIndex >= 0) {
+                this.scrollToFocused();
+            }
+
             // Attach tooltips to action buttons after rendering
             this.attachActionButtonTooltips();
         });
@@ -3786,15 +3793,24 @@ export class WebMultiSelect<T = any> {
      * overrides `--ms-rem` — so this exists only for the JS-driven pixel heights that
      * CSS can't reach: the virtual/fixed option rows and the popover's virtual badges.
      * Returns 1 when floating (or when computed styles aren't readable, e.g. jsdom).
+     *
+     * Both are measured as lengths on a probe, not parseFloat()-ed: `--ms-rem` is
+     * `var(--base-rem, 10px)`, which is `1rem` under base-css-variables (parseFloat → 1),
+     * and `--ms-fullscreen-rem` is a calc().
      */
     private fullscreenScale(): number {
         if (this.presentationMode !== 'fullscreen') return 1;
         if (typeof getComputedStyle !== 'function') return 1;
         const host = this.options.hostElement ?? this.element;
-        const cs = getComputedStyle(host);
-        const rem = parseFloat(cs.getPropertyValue('--ms-rem')) || 10;
-        const fsRem = parseFloat(cs.getPropertyValue('--ms-fullscreen-rem')) || (rem * 1.2);
-        return fsRem / rem;
+        const probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;'
+            + 'width:var(--ms-rem);height:var(--ms-fullscreen-rem)';
+        (host.shadowRoot ?? host).appendChild(probe);
+        const cs = getComputedStyle(probe);
+        const rem = parseFloat(cs.width);
+        const fsRem = parseFloat(cs.height);
+        probe.remove();
+        return rem > 0 && fsRem > 0 ? fsRem / rem : 1;
     }
 
     /** Virtual/fixed row height (px), scaled up in the fullscreen phone view. */

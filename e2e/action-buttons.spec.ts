@@ -143,3 +143,20 @@ test.describe('per-item callbacks fire on bulk operations', () => {
         );
     });
 });
+
+test.describe('base-css-variables 2.0 control tokens', () => {
+    test('action buttons take the control outline; the focused input shows the focus halo', async ({ page }) => {
+        const p = picker(page, 'builtins');
+        await p.evaluate((el) => {
+            const s = (el as HTMLElement).style;
+            s.setProperty('--base-border-color', 'rgb(9, 9, 9)');
+            s.setProperty('--base-input-border-color', 'rgb(1, 2, 3)');
+            s.setProperty('--base-input-box-shadow-focus', 'rgb(4, 5, 6) 0px 0px 0px 3px');
+        });
+        await openDropdown(p);
+        const btn = p.locator('.ms__action-btn[data-action="select-all"]');
+        await expect.poll(() => btn.evaluate((el) => getComputedStyle(el).borderTopColor)).toBe('rgb(1, 2, 3)');
+        const wrapper = p.locator('.ms__input-wrapper');
+        await expect.poll(() => wrapper.evaluate((el) => getComputedStyle(el).boxShadow)).toBe('rgb(4, 5, 6) 0px 0px 0px 3px');
+    });
+});

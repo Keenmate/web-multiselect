@@ -31,7 +31,7 @@ The component uses `--ms-rem` for global scaling. Default is `10px` (so `1.4 * -
 <web-multiselect style="--ms-rem: 12px;"></web-multiselect>
 ```
 
-**Fine-grained Control:** Override individual variables like `--ms-input-font-size`, `--ms-input-padding-v`, `--ms-input-height`, etc.
+**Fine-grained Control:** Override individual variables like `--ms-input-font-size`, `--ms-input-padding-h`, `--ms-input-height`, etc.
 
 **Shadow DOM Note:** CSS variables must be set on the `<web-multiselect>` element itself, not on wrapper divs.
 

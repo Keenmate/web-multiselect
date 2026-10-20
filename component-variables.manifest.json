@@ -14,19 +14,9 @@
       "usage": "Accent hover state"
     },
     {
-      "name": "base-primary-color-active",
-      "required": false,
-      "usage": "Accent active/pressed state"
-    },
-    {
       "name": "base-primary-bg-subtle",
       "required": false,
       "usage": "Light accent for badge backgrounds"
-    },
-    {
-      "name": "base-primary-bg-subtle-hover",
-      "required": false,
-      "usage": "Light accent hover state"
     },
     {
       "name": "base-text-color-1",
@@ -34,14 +24,9 @@
       "usage": "Primary text (input, options, badges)"
     },
     {
-      "name": "base-text-color-2",
-      "required": false,
-      "usage": "Secondary text"
-    },
-    {
       "name": "base-text-color-3",
       "required": false,
-      "usage": "Tertiary text (placeholders, hints, group labels)"
+      "usage": "Tertiary text (subtitles, group labels, icons)"
     },
     {
       "name": "base-text-color-4",
@@ -56,7 +41,7 @@
     {
       "name": "base-main-bg",
       "required": true,
-      "usage": "Primary background, hint background, actions background"
+      "usage": "Primary background (fallbacks), debug stats"
     },
     {
       "name": "base-hover-bg",
@@ -104,11 +89,6 @@
       "usage": "Shared keyboard-focused item ring, outline shorthand drawn inset (drives --ms-option-outline-focused)"
     },
     {
-      "name": "base-active-bg",
-      "required": false,
-      "usage": "Active/pressed background (drives --ms-primary-bg-hover: selected-active, counter badge)"
-    },
-    {
       "name": "base-disabled-bg",
       "required": false,
       "usage": "Disabled/readonly surface backgrounds"
@@ -116,12 +96,12 @@
     {
       "name": "base-border-color",
       "required": true,
-      "usage": "Input, dropdown, action button borders"
+      "usage": "Dividers: dropdown / popover / hint borders, group and actions separators (inputs and buttons use --base-input-border-color)"
     },
     {
-      "name": "base-border",
+      "name": "base-border-width",
       "required": false,
-      "usage": "Full border shorthand"
+      "usage": "Stroke width of every border the component draws"
     },
     {
       "name": "base-input-bg",
@@ -136,7 +116,22 @@
     {
       "name": "base-input-border",
       "required": false,
-      "usage": "Input border"
+      "usage": "Input border (the control outline)"
+    },
+    {
+      "name": "base-input-border-color",
+      "required": false,
+      "usage": "Control outline color: input fallback, action buttons, count pill"
+    },
+    {
+      "name": "base-input-box-shadow-focus",
+      "required": false,
+      "usage": "Focus halo around the input (and the fullscreen search)"
+    },
+    {
+      "name": "base-input-shadow-color-focus",
+      "required": false,
+      "usage": "Focus halo tone (fallback when --base-input-box-shadow-focus is absent)"
     },
     {
       "name": "base-input-border-hover",
@@ -161,12 +156,12 @@
     {
       "name": "base-dropdown-bg",
       "required": false,
-      "usage": "Dropdown and popover backgrounds (primary; falls back to base-elevated-bg)"
+      "usage": "Dropdown, selected-items popover, hint and sticky actions-bar background"
     },
     {
       "name": "base-elevated-bg",
       "required": false,
-      "usage": "Elevated surface (fallback for dropdown and popover backgrounds)"
+      "usage": "Debug panel background"
     },
     {
       "name": "base-dropdown-border",
@@ -184,9 +179,14 @@
       "usage": "Shadow colour for the hint, message, tooltip and selected-items popover (one tone with pure-admin)"
     },
     {
+      "name": "base-shadow-md",
+      "required": false,
+      "usage": "Tooltip shadow"
+    },
+    {
       "name": "base-tooltip-bg",
       "required": false,
-      "usage": "Tooltip background (primary; falls back to base-inverse-bg)"
+      "usage": "Tooltip background (and the info message)"
     },
     {
       "name": "base-tooltip-text-color",
@@ -199,9 +199,9 @@
       "usage": "All text in component"
     },
     {
-      "name": "base-font-size-2xs",
+      "name": "base-font-family-mono",
       "required": false,
-      "usage": "Smallest text (multiplier)"
+      "usage": "Monospace font (debug panel)"
     },
     {
       "name": "base-font-size-xs",
@@ -227,11 +227,6 @@
       "name": "base-font-size-xl",
       "required": false,
       "usage": "Extra large text (multiplier)"
-    },
-    {
-      "name": "base-font-weight-normal",
-      "required": false,
-      "usage": "Normal text weight"
     },
     {
       "name": "base-font-weight-medium",
@@ -314,6 +309,11 @@
       "usage": "Shared chevron glyph (toggle indicator + fullscreen pager); inline Lucide SVG fallback"
     },
     {
+      "name": "base-icon-info",
+      "required": false,
+      "usage": "Truncated-label info glyph (fullscreen; chained by --ms-icon-info)"
+    },
+    {
       "name": "base-icon-clear",
       "required": false,
       "usage": "Inline field-clear (✕) glyph; falls back to --ms-icon-remove"
@@ -387,13 +387,28 @@
       "name": "base-on-success-text-color",
       "required": false,
       "usage": "Success message text color"
+    },
+    {
+      "name": "base-z-dropdown",
+      "required": false,
+      "usage": "Stacking of the options dropdown (--ms-z-index-dropdown)"
+    },
+    {
+      "name": "base-z-popover",
+      "required": false,
+      "usage": "Stacking of the selected-items popover (--ms-z-index-popover)"
+    },
+    {
+      "name": "base-z-tooltip",
+      "required": false,
+      "usage": "Stacking of tooltips; the phone fullscreen sheet sits one step above it"
     }
   ],
   "componentVariables": [
     {
       "name": "ms-rem",
       "category": "sizing",
-      "usage": "Base sizing unit for proportional scaling (default: 10px)"
+      "usage": "Base sizing unit (default var(--base-rem, 10px))"
     },
     {
       "name": "ms-accent-color",
@@ -406,29 +421,14 @@
       "usage": "Accent color on hover"
     },
     {
-      "name": "ms-accent-color-active",
-      "category": "accent",
-      "usage": "Accent color when pressed"
-    },
-    {
       "name": "ms-accent-color-light",
       "category": "accent",
       "usage": "Light accent background"
     },
     {
-      "name": "ms-accent-color-light-hover",
-      "category": "accent",
-      "usage": "Light accent hover"
-    },
-    {
       "name": "ms-text-color-1",
       "category": "text",
       "usage": "Primary text color"
-    },
-    {
-      "name": "ms-text-color-2",
-      "category": "text",
-      "usage": "Secondary text color"
     },
     {
       "name": "ms-text-color-3",
@@ -446,11 +446,6 @@
       "usage": "Text on accent backgrounds"
     },
     {
-      "name": "ms-text-primary",
-      "category": "text",
-      "usage": "Legacy alias for text-color-1"
-    },
-    {
       "name": "ms-text-secondary",
       "category": "text",
       "usage": "Legacy alias for text-color-3"
@@ -461,19 +456,14 @@
       "usage": "Hover background (options, action buttons, counter); reads --base-hover-bg"
     },
     {
-      "name": "ms-primary-bg-hover",
-      "category": "surface",
-      "usage": "Active/stronger background (counter badge text); reads --base-active-bg"
-    },
-    {
       "name": "ms-border-color",
       "category": "border",
       "usage": "Default border color"
     },
     {
-      "name": "ms-border",
+      "name": "ms-border-width",
       "category": "border",
-      "usage": "Full border shorthand"
+      "usage": "Stroke width of every border (reads --base-border-width)"
     },
     {
       "name": "ms-input-bg",
@@ -489,6 +479,16 @@
       "name": "ms-input-border",
       "category": "input",
       "usage": "Input border"
+    },
+    {
+      "name": "ms-input-border-color",
+      "category": "input",
+      "usage": "Control outline color (input fallback, action buttons, count pill); reads --base-input-border-color"
+    },
+    {
+      "name": "ms-input-box-shadow-focus",
+      "category": "input",
+      "usage": "Focus halo (reads --base-input-box-shadow-focus)"
     },
     {
       "name": "ms-input-border-hover",
@@ -521,29 +521,14 @@
       "usage": "Input font size"
     },
     {
-      "name": "ms-input-border-width",
-      "category": "input",
-      "usage": "Input border width"
-    },
-    {
       "name": "ms-input-border-radius",
       "category": "input",
       "usage": "Input border radius"
     },
     {
-      "name": "ms-input-text",
-      "category": "input",
-      "usage": "Input text color"
-    },
-    {
-      "name": "ms-toggle-color",
-      "category": "toggle",
-      "usage": "Toggle icon color"
-    },
-    {
       "name": "ms-toggle-icon-color",
       "category": "toggle",
-      "usage": "Toggle icon color (semantic)"
+      "usage": "Chevron color (default --base-input-icon-color)"
     },
     {
       "name": "ms-toggle-icon-color-open",
@@ -554,16 +539,6 @@
       "name": "ms-counter-padding",
       "category": "counter",
       "usage": "Counter badge padding"
-    },
-    {
-      "name": "ms-counter-bg",
-      "category": "counter",
-      "usage": "Counter badge background"
-    },
-    {
-      "name": "ms-counter-color",
-      "category": "counter",
-      "usage": "Counter badge text color"
     },
     {
       "name": "ms-counter-font-size",
@@ -579,11 +554,6 @@
       "name": "ms-counter-border-radius",
       "category": "counter",
       "usage": "Counter badge border radius"
-    },
-    {
-      "name": "ms-counter-bg-hover",
-      "category": "counter",
-      "usage": "Counter badge hover background"
     },
     {
       "name": "ms-counter-badge-bg",
@@ -628,7 +598,7 @@
     {
       "name": "ms-hint-bg",
       "category": "hint",
-      "usage": "Floating hint background"
+      "usage": "Floating hint background (the dropdown surface)"
     },
     {
       "name": "ms-hint-color",
@@ -671,11 +641,6 @@
       "usage": "Dropdown shadow"
     },
     {
-      "name": "ms-dropdown-box-shadow-semantic",
-      "category": "dropdown",
-      "usage": "Dropdown semantic shadow"
-    },
-    {
       "name": "ms-dropdown-width",
       "category": "dropdown",
       "usage": "Options dropdown width (defaults to the input width; also set via the dropdown-width attribute)"
@@ -688,7 +653,7 @@
     {
       "name": "ms-z-index-dropdown",
       "category": "dropdown",
-      "usage": "Dropdown z-index"
+      "usage": "Dropdown z-index (default --base-z-dropdown, 9999 standalone)"
     },
     {
       "name": "ms-z-index-sticky",
@@ -713,7 +678,7 @@
     {
       "name": "ms-actions-bg",
       "category": "actions",
-      "usage": "Actions row background"
+      "usage": "Sticky actions bar background (the dropdown surface)"
     },
     {
       "name": "ms-actions-border-color",
@@ -739,26 +704,6 @@
       "name": "ms-action-btn-border-radius",
       "category": "action-button",
       "usage": "Action button border radius"
-    },
-    {
-      "name": "ms-action-btn-bg",
-      "category": "action-button",
-      "usage": "Action button background"
-    },
-    {
-      "name": "ms-action-btn-color",
-      "category": "action-button",
-      "usage": "Action button color"
-    },
-    {
-      "name": "ms-action-btn-bg-hover",
-      "category": "action-button",
-      "usage": "Action button hover background"
-    },
-    {
-      "name": "ms-action-btn-border-color-hover",
-      "category": "action-button",
-      "usage": "Action button hover border"
     },
     {
       "name": "ms-action-button-bg",
@@ -856,11 +801,6 @@
       "usage": "Option horizontal padding"
     },
     {
-      "name": "ms-option-color",
-      "category": "option",
-      "usage": "Option text color"
-    },
-    {
       "name": "ms-option-bg",
       "category": "option",
       "usage": "Option background"
@@ -933,7 +873,7 @@
     {
       "name": "ms-option-outline-color-focused",
       "category": "option",
-      "usage": "Option focus outline color"
+      "usage": "Focus outline color, used only when --base-focused-outline is absent"
     },
     {
       "name": "ms-option-color-matched",
@@ -1004,6 +944,16 @@
       "name": "ms-option-title-color",
       "category": "option-content",
       "usage": "Option title color"
+    },
+    {
+      "name": "ms-option-title-color-focused",
+      "category": "option",
+      "usage": "Title color of the keyboard-focused option (reads --base-focused-text-color)"
+    },
+    {
+      "name": "ms-option-title-color-selected",
+      "category": "option",
+      "usage": "Title color of a selected option (reads --base-highlighted-text-color)"
     },
     {
       "name": "ms-option-subtitle-margin-top",
@@ -1113,7 +1063,7 @@
     {
       "name": "ms-checkbox-disabled-bg",
       "category": "checkbox",
-      "usage": "Disabled checkbox background"
+      "usage": "Disabled checkbox background (reads --base-input-bg-disabled)"
     },
     {
       "name": "ms-checkbox-disabled-border",
@@ -1166,11 +1116,6 @@
       "usage": "Loading text font size"
     },
     {
-      "name": "ms-loading-text-color",
-      "category": "loading",
-      "usage": "Loading text color"
-    },
-    {
       "name": "ms-loading-color",
       "category": "loading",
       "usage": "Loading color (semantic)"
@@ -1201,11 +1146,6 @@
       "usage": "Badges margin right"
     },
     {
-      "name": "ms-badge-gap",
-      "category": "badge",
-      "usage": "Badge internal gap"
-    },
-    {
       "name": "ms-badge-height",
       "category": "badge",
       "usage": "Badge height"
@@ -1224,21 +1164,6 @@
       "name": "ms-badge-border-radius",
       "category": "badge",
       "usage": "Badge border radius"
-    },
-    {
-      "name": "ms-badge-bg",
-      "category": "badge",
-      "usage": "Badge background"
-    },
-    {
-      "name": "ms-badge-bg-hover",
-      "category": "badge",
-      "usage": "Badge hover background"
-    },
-    {
-      "name": "ms-badge-bg-active",
-      "category": "badge",
-      "usage": "Badge active background"
     },
     {
       "name": "ms-badge-text-padding",
@@ -1336,11 +1261,6 @@
       "usage": "mask-size for the checkmark/dash glyph inside the checkbox box; chains to --base-icon-check-size (default 68%, the same knob as pure-admin's .pa-checkbox)"
     },
     {
-      "name": "ms-badge-counter-bg",
-      "category": "badge",
-      "usage": "Counter badge background"
-    },
-    {
       "name": "ms-badge-counter-border",
       "category": "badge",
       "usage": "Counter badge border"
@@ -1349,11 +1269,6 @@
       "name": "ms-badge-counter-border-color",
       "category": "badge",
       "usage": "Counter badge border color"
-    },
-    {
-      "name": "ms-badge-counter-border-radius",
-      "category": "badge",
-      "usage": "Counter badge border radius"
     },
     {
       "name": "ms-badge-counter-text-color",
@@ -1379,21 +1294,6 @@
       "name": "ms-badge-counter-remove-bg-hover",
       "category": "badge",
       "usage": "Counter badge remove hover background"
-    },
-    {
-      "name": "ms-more-badge-bg",
-      "category": "badge",
-      "usage": "More badge background"
-    },
-    {
-      "name": "ms-more-badge-hover-bg",
-      "category": "badge",
-      "usage": "More badge hover background"
-    },
-    {
-      "name": "ms-more-badge-active-bg",
-      "category": "badge",
-      "usage": "More badge active background"
     },
     {
       "name": "ms-count-display-margin-bottom",
@@ -1531,11 +1431,6 @@
       "usage": "Tooltip text color"
     },
     {
-      "name": "ms-tooltip-color",
-      "category": "tooltip",
-      "usage": "Tooltip color"
-    },
-    {
       "name": "ms-tooltip-padding",
       "category": "tooltip",
       "usage": "Tooltip padding"
@@ -1563,12 +1458,12 @@
     {
       "name": "ms-tooltip-z-index",
       "category": "tooltip",
-      "usage": "Tooltip z-index"
+      "usage": "Tooltip z-index (default --base-z-tooltip, 10000 standalone)"
     },
     {
       "name": "ms-z-index-popover",
       "category": "popover",
-      "usage": "Popover z-index"
+      "usage": "Selected popover z-index (default --base-z-popover, 10000 standalone)"
     },
     {
       "name": "ms-selected-popover-width",
@@ -1583,7 +1478,7 @@
     {
       "name": "ms-selected-popover-border",
       "category": "popover",
-      "usage": "Selected popover border"
+      "usage": "Selected popover border (reads --base-dropdown-border)"
     },
     {
       "name": "ms-selected-popover-border-radius",
@@ -1593,7 +1488,7 @@
     {
       "name": "ms-selected-popover-box-shadow",
       "category": "popover",
-      "usage": "Selected popover shadow"
+      "usage": "Selected popover shadow (the dropdown shadow)"
     },
     {
       "name": "ms-selected-popover-bg",
@@ -1696,54 +1591,9 @@
       "usage": "Popover body max height"
     },
     {
-      "name": "ms-font-size-2xs",
-      "category": "typography",
-      "usage": "Extra extra small font size"
-    },
-    {
-      "name": "ms-font-size-xs",
-      "category": "typography",
-      "usage": "Extra small font size"
-    },
-    {
-      "name": "ms-font-size-sm",
-      "category": "typography",
-      "usage": "Small font size"
-    },
-    {
-      "name": "ms-font-size-base",
-      "category": "typography",
-      "usage": "Base font size"
-    },
-    {
-      "name": "ms-font-size-lg",
-      "category": "typography",
-      "usage": "Large font size"
-    },
-    {
-      "name": "ms-font-weight-normal",
-      "category": "typography",
-      "usage": "Normal font weight"
-    },
-    {
-      "name": "ms-font-weight-medium",
-      "category": "typography",
-      "usage": "Medium font weight"
-    },
-    {
-      "name": "ms-font-weight-semibold",
-      "category": "typography",
-      "usage": "Semibold font weight"
-    },
-    {
       "name": "ms-line-height-none",
       "category": "typography",
       "usage": "No line height (1)"
-    },
-    {
-      "name": "ms-line-height-tight",
-      "category": "typography",
-      "usage": "Tight line height"
     },
     {
       "name": "ms-line-height-normal",
@@ -1776,26 +1626,6 @@
       "usage": "Default border radius"
     },
     {
-      "name": "ms-spacing-xs",
-      "category": "spacing",
-      "usage": "Extra small spacing"
-    },
-    {
-      "name": "ms-spacing-sm",
-      "category": "spacing",
-      "usage": "Small spacing"
-    },
-    {
-      "name": "ms-spacing-md",
-      "category": "spacing",
-      "usage": "Medium spacing"
-    },
-    {
-      "name": "ms-spacing-lg",
-      "category": "spacing",
-      "usage": "Large spacing"
-    },
-    {
       "name": "ms-transition-fast",
       "category": "transition",
       "usage": "Fast transition duration"
@@ -1813,7 +1643,7 @@
     {
       "name": "ms-placeholder-opacity",
       "category": "opacity",
-      "usage": "Placeholder opacity"
+      "usage": "Placeholder opacity once ready (default 1: the color is already the faint level)"
     },
     {
       "name": "ms-disabled-input-opacity",
@@ -1901,11 +1731,6 @@
       "usage": "Debug stat bullet marker color"
     },
     {
-      "name": "ms-transform-rotate-180",
-      "category": "transform",
-      "usage": "180 degree rotation"
-    },
-    {
       "name": "ms-transform-scale-hover",
       "category": "transform",
       "usage": "Hover scale transform"
@@ -1984,11 +1809,6 @@
       "name": "ms-checkbox-border-width-scaled",
       "category": "checkbox",
       "usage": "Checkbox border width multiplied by --ms-checkbox-scale (keeps the border proportional when the box is scaled; used by every checkbox border shorthand)"
-    },
-    {
-      "name": "ms-checkbox-checkmark-thickness",
-      "category": "checkbox",
-      "usage": "Option checkbox checkmark stroke thickness"
     },
     {
       "name": "ms-dropdown-inner-border-radius",
@@ -2183,7 +2003,7 @@
     {
       "name": "ms-fullscreen-rem",
       "category": "fullscreen",
-      "usage": "Base sizing unit for the phone fullscreen overlay (default: 12px)"
+      "usage": "Base sizing unit for the phone fullscreen overlay (default: 1.2 × --ms-rem)"
     },
     {
       "name": "ms-fullscreen-search-border",
@@ -2508,12 +2328,12 @@
     {
       "name": "ms-z-index-fullscreen",
       "category": "layout",
-      "usage": "z-index of the fullscreen overlay"
+      "usage": "Phone fullscreen sheet z-index (one above --base-z-tooltip)"
     },
     {
       "name": "ms-z-index-fullscreen-tooltip",
       "category": "layout",
-      "usage": "z-index of tooltips / messages above the fullscreen overlay"
+      "usage": "Tooltip / message z-index inside the phone sheet (one above the sheet)"
     }
   ]
 }

@@ -68,13 +68,11 @@
   /* Accent Colors */
   --ms-accent-color: var(--base-primary-color, #3b82f6);
   --ms-accent-color-hover: var(--base-primary-color-hover, #2563eb);
-  --ms-accent-color-active: var(--base-primary-color-active, #1d4ed8);
 
   /* Accent Color Light Variants (for backgrounds)
      Dark variants are muted dark-blue tints that read like "accent-tinted dark surface" rather than
      "near-white", keeping badge / +X more / popover-header backgrounds visible on a dark page. */
   --ms-accent-color-light: var(--base-primary-bg-subtle, light-dark(#eff6ff, #1e3a5f));
-  --ms-accent-color-light-hover: var(--base-primary-bg-subtle-hover, light-dark(#e0f2fe, #264a73));
 
   /* Text Color Levels (FluentUI-style hierarchy)
      Light mode = the original dark-on-light palette (#111827 → #a0a3a9).
@@ -82,22 +80,18 @@
      keep the same relative contrast steps. text-color-on-accent stays white in both modes — the
      accent color is the same blue in both, and white-on-blue reads in both. */
   --ms-text-color-1: var(--base-text-color-1, light-dark(#111827, #f5f5f5));
-  --ms-text-color-2: var(--base-text-color-2, light-dark(#353b47, #d4d4d4));
   --ms-text-color-3: var(--base-text-color-3, light-dark(#6b7280, #a3a3a3));
   --ms-text-color-4: var(--base-text-color-4, light-dark(#a0a3a9, #737373));
   --ms-text-color-on-accent: var(--base-on-primary-text-color, #ffffff);
 
-  /* Legacy aliases (for backward compatibility) */
-  --ms-text-primary: var(--ms-text-color-1);
+  /* Alias read by the input clear fallback */
   --ms-text-secondary: var(--ms-text-color-3);
 
   /* Background Colors
-     --ms-primary-bg paints hover/focus states (option hover, action-button hover, counter
-     hover, etc.); --ms-primary-bg-hover is one step stronger (selected-active, counter badge).
-     The color-mix fallback keeps the hover visible on dark themes — a flat var(--base-main-bg)
+     --ms-primary-bg paints hover states (option hover, action-button hover, counter
+     hover, etc.). The color-mix fallback keeps the hover visible on dark themes — a flat var(--base-main-bg)
      substrate used to make hover collapse onto the panel background. */
   --ms-primary-bg: var(--base-hover-bg, color-mix(in srgb, var(--ms-text-color-1) 8%, var(--base-main-bg, light-dark(#ffffff, #1a1a1a))));
-  --ms-primary-bg-hover: var(--base-active-bg, color-mix(in srgb, var(--ms-text-color-1) 14%, var(--base-main-bg, light-dark(#ffffff, #1a1a1a))));
 
   /* Border Base Variables */
   /* Default border colour. The previous fallbacks (#e5e7eb light / #3a3a3a dark) were very
@@ -105,7 +99,7 @@
      vanished, especially on phones. Bumped to a clearly-visible gray on each side (still
      soft, not harsh). Consumers with `--base-border-color` set are unaffected. */
   --ms-border-color: var(--base-border-color, light-dark(#cbd5e1, #52525b));
-  --ms-border: var(--base-border, 1px solid var(--ms-border-color));
+  --ms-border-width: var(--base-border-width, 1px);
 
   /* ==========================================================================
      SEMANTIC VARIABLES - Component-Specific Theming
@@ -116,15 +110,20 @@
   /* Input Component Semantic Variables */
   --ms-input-bg: var(--base-input-bg, light-dark(#ffffff, #1a1a1a));
   --ms-input-color: var(--base-input-text-color, var(--ms-text-color-1));
-  --ms-input-border: var(--base-input-border, 1px solid var(--ms-border-color));
-  --ms-input-border-hover: var(--base-input-border-hover, 1px solid var(--ms-accent-color));
-  --ms-input-border-focus: var(--base-input-border-focus, 1px solid var(--ms-accent-color));
+  /* The control outline: stronger than the --ms-border-color divider (base-css-variables 2.0). */
+  --ms-input-border-color: var(--base-input-border-color, var(--ms-border-color));
+  --ms-input-border: var(--base-input-border, var(--ms-border-width) solid var(--ms-input-border-color));
+  --ms-input-border-hover: var(--base-input-border-hover, var(--ms-border-width) solid var(--ms-accent-color));
+  --ms-input-border-focus: var(--base-input-border-focus, var(--ms-border-width) solid var(--ms-accent-color));
+  /* Soft halo around the focused field — the same one pure-admin's inputs show. */
+  --ms-input-box-shadow-focus: var(--base-input-box-shadow-focus, 0 0 0 3px var(--base-input-shadow-color-focus, color-mix(in srgb, var(--ms-accent-color) 5%, transparent)));
   --ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-4));
   --ms-input-bg-disabled: var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05));
 
   /* Toggle Icon Semantic Variables */
-  --ms-toggle-icon-color: var(--ms-text-color-3);
-  --ms-toggle-icon-color-open: var(--ms-text-color-3);
+  /* Icons inside the input (chevron, ✕, search) share --base-input-icon-color. */
+  --ms-toggle-icon-color: var(--base-input-icon-color, var(--ms-text-color-3));
+  --ms-toggle-icon-color-open: var(--ms-toggle-icon-color);
   --ms-toggle-icon-size: calc(1.6 * var(--ms-rem));
   /* Toggle chevron rotation, closed vs open. Defaults orient the directional right-pointing
      --base-icon-chevron (90° → points down when closed, -90° → up when open). Override BOTH
@@ -139,24 +138,23 @@
   --ms-counter-badge-color: var(--ms-text-color-on-accent);
 
   /* Floating Hint Semantic Variables */
-  --ms-hint-bg: var(--base-main-bg, light-dark(#ffffff, #1a1a1a));
+  --ms-hint-bg: var(--ms-dropdown-bg);
   --ms-hint-color: var(--ms-text-color-4);
   --ms-hint-border-color: var(--ms-border-color);
 
   /* Dropdown Semantic Variables */
-  --ms-dropdown-bg: var(--base-dropdown-bg, var(--base-elevated-bg, light-dark(#ffffff, #1a1a1a)));
+  --ms-dropdown-bg: var(--base-dropdown-bg, light-dark(#ffffff, #1a1a1a));
   --ms-dropdown-text-color: var(--ms-text-color-1);
   --ms-dropdown-border-color: var(--ms-border-color);
-  --ms-dropdown-box-shadow-semantic: var(--base-dropdown-box-shadow, 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1)));
 
-  /* Dropdown Actions Semantic Variables */
-  --ms-actions-bg: var(--base-main-bg, light-dark(#ffffff, #1a1a1a));
+  /* Dropdown Actions Semantic Variables — the sticky bar sits on the panel surface */
+  --ms-actions-bg: var(--ms-dropdown-bg);
   --ms-actions-border-color: var(--ms-border-color);
 
   /* Action Button Semantic Variables */
   --ms-action-button-bg: transparent;
   --ms-action-button-bg-hover: var(--ms-primary-bg);
-  --ms-action-button-border-color: var(--ms-border-color);
+  --ms-action-button-border-color: var(--ms-input-border-color);
   --ms-action-button-border-color-hover: var(--ms-accent-color);
   --ms-action-button-color: var(--ms-text-color-1);
 
@@ -187,6 +185,11 @@
 
   /* Option Content Semantic Variables */
   --ms-option-title-color: var(--ms-text-color-1);
+  /* The title has its own color, so the item-state text colors must reach it explicitly.
+     Both contract tokens default to currentColor (= unchanged); a theme that sets them
+     (e.g. white text on a solid highlighted fill) recolors the title too. */
+  --ms-option-title-color-selected: var(--base-highlighted-text-color, var(--ms-option-title-color));
+  --ms-option-title-color-focused: var(--base-focused-text-color, var(--ms-option-title-color));
   --ms-option-subtitle-color: var(--ms-text-color-3);
   --ms-option-mark-bg: color-mix(in srgb, var(--ms-accent-color) 20%, transparent);
   --ms-option-mark-color: inherit;
@@ -195,21 +198,11 @@
   --ms-empty-color: var(--ms-text-color-3);
   --ms-loading-color: var(--ms-text-color-3);
 
-  /* Badge Semantic Variables */
-  --ms-badge-bg: var(--ms-accent-color-light);
-  /* Hover DEEPENS the badge's OWN rest background toward its OWN text colour.
-     Deliberately self-referential: NOT --base-hover-bg (a generic surface token →
-     accent pill flipped near-white in dark/neon), and NOT --ms-accent-color-light-hover
-     (a separate accent-tint token themes forget to set when they change the accent →
-     a black brutalist pill fell back to the hardcoded blue tint on hover). Mixing 12%
-     of the text colour into the rest bg is a subtle, always-readable nudge that follows
-     whatever bg/text pair a theme sets. */
-  --ms-badge-bg-hover: color-mix(in srgb, var(--ms-badge-bg) 88%, var(--ms-badge-text-color) 12%);
-  --ms-badge-bg-active: var(--ms-accent-color-light-hover);
-
   /* Badge Text Semantic Variables */
   --ms-badge-text-bg: var(--ms-accent-color-light);
   --ms-badge-text-color: var(--ms-accent-color);
+  /* Hover deepens the badge's OWN bg toward its OWN text colour (12%), so it stays readable
+     with whatever bg/text pair a theme sets — not --base-hover-bg (a surface token). */
   --ms-badge-text-bg-hover: color-mix(in srgb, var(--ms-badge-text-bg) 88%, var(--ms-badge-text-color) 12%);
   --ms-badge-text-color-hover: var(--ms-badge-text-color);
 
@@ -240,7 +233,7 @@
   /* Count Display Semantic Variables */
   --ms-counter-wrapper-bg: transparent;
   --ms-counter-wrapper-bg-hover: var(--ms-primary-bg);
-  --ms-counter-wrapper-border-color: var(--ms-border-color);
+  --ms-counter-wrapper-border-color: var(--ms-input-border-color);
   --ms-counter-wrapper-border-color-hover: var(--ms-accent-color);
   --ms-count-text-color: var(--ms-text-color-1);
   --ms-count-clear-bg: transparent;
@@ -255,7 +248,7 @@
   --ms-tooltip-text-color: var(--base-tooltip-text-color, light-dark(#ffffff, #1a1a1a));
 
   /* Selected Popover Semantic Variables */
-  --ms-selected-popover-bg: var(--base-dropdown-bg, var(--base-elevated-bg, light-dark(#ffffff, #1a1a1a)));
+  --ms-selected-popover-bg: var(--ms-dropdown-bg);
   --ms-selected-popover-border-color: var(--ms-border-color);
   --ms-selected-popover-header-bg: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
   --ms-selected-popover-header-color: var(--ms-text-color-1);
@@ -272,12 +265,7 @@
   --ms-input-gap: calc(0.6 * var(--ms-rem));             /* gap between input + trailing decorations */
   --ms-input-height: calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem));
   --ms-input-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
-  --ms-input-border-width: 1px;
   --ms-input-border-radius: var(--ms-border-radius-md);
-  --ms-input-text: var(--ms-text-color-1);
-  /* Prefers the shared --base token (light-dark aware, so it adapts on dark themes);
-     the flat gray is the standalone fallback. */
-  --ms-input-bg-disabled: var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05));
 
   /* ==========================================================================
      INPUT SIZE VARIANTS — currently unused (commented out)
@@ -317,12 +305,6 @@
   */
 
   /* ==========================================================================
-     TOGGLE ICON
-     ========================================================================== */
-  --ms-toggle-color: var(--ms-text-color-3);
-  --ms-transform-rotate-180: 180deg;
-
-  /* ==========================================================================
      INPUT CLEAR (✕)
      ========================================================================== */
   --ms-input-clear-size: calc(2.4 * var(--ms-rem));
@@ -335,19 +317,16 @@
      COUNT BADGE (in input)
      ========================================================================== */
   --ms-counter-padding: calc(0.2 * var(--ms-rem)) calc(0.4 * var(--ms-rem));
-  --ms-counter-bg: var(--ms-accent-color);
-  --ms-counter-color: var(--ms-text-color-on-accent);
   --ms-counter-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-counter-font-weight: var(--base-font-weight-semibold, 600);
   --ms-counter-border-radius: var(--ms-border-radius-sm);
-  --ms-counter-bg-hover: var(--ms-accent-color-hover);
   --ms-transform-scale-hover: 1.1;
 
   /* ==========================================================================
      FLOATING HINT
      ========================================================================== */
   --ms-hint-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
-  --ms-hint-border: 1px solid var(--ms-hint-border-color);
+  --ms-hint-border: var(--ms-border-width) solid var(--ms-hint-border-color);
   --ms-hint-border-radius: var(--ms-border-radius-lg);
   --ms-hint-box-shadow: 0 4px 6px -1px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 2px 4px -2px var(--base-shadow-color, rgba(0, 0, 0, 0.1));
   --ms-hint-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
@@ -355,15 +334,16 @@
   /* ==========================================================================
      DROPDOWN
      ========================================================================== */
-  --ms-dropdown-border: var(--base-dropdown-border, 1px solid var(--ms-dropdown-border-color));
+  --ms-dropdown-border: var(--base-dropdown-border, var(--ms-border-width) solid var(--ms-dropdown-border-color));
   --ms-dropdown-border-radius: var(--ms-border-radius-lg);
   /* Inner content clip radius — a hair tighter than the panel so a highlighted
      first/last row (or the sticky Select-All/Clear actions bar) follows the panel's
      rounded corners instead of its square background bleeding ~1px past the rounded
-     border (the classic rounded-parent + bordered-box corner artifact). Assumes the
-     default 1px --ms-dropdown-border; if you theme a thicker border, override this to
-     match (panel radius − border width). Clamped at 0 so a squared panel stays square. */
-  --ms-dropdown-inner-border-radius: max(0px, calc(var(--ms-dropdown-border-radius) - 1px));
+     border (the classic rounded-parent + bordered-box corner artifact). Follows
+     --ms-border-width (--base-border-width); if you theme a thicker --ms-dropdown-border
+     alone, override this to match (panel radius − border width). Clamped at 0 so a
+     squared panel stays square. */
+  --ms-dropdown-inner-border-radius: max(0px, calc(var(--ms-dropdown-border-radius) - var(--ms-border-width)));
   /* Prefers the shared --base token (light-dark aware — deepens on dark themes); the
      flat two-layer shadow is the standalone fallback. */
   --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1)));
@@ -375,8 +355,10 @@
      dropdown-width attribute. dropdown-min-width / dropdown-max-width still clamp it. */
   --ms-dropdown-width: var(--ms-input-current-width);
   --ms-options-max-height: calc(32 * var(--ms-rem));
-  --ms-option-color: var(--ms-text-color-1);
-  --ms-z-index-dropdown: 9999;
+  /* Stacking follows the shared --base-z-* scale (pure-admin: dropdown 7500, popover 7600,
+     tooltip 9000), so toasts and tooltips stack the same way around every component. The
+     numbers after the comma are the standalone values (no base layer). */
+  --ms-z-index-dropdown: var(--base-z-dropdown, 9999);
   --ms-z-index-sticky: 1;
 
   /* ==========================================================================
@@ -388,23 +370,25 @@
      environmentChanged hook on phones. Everything defaults to the dropdown's own
      theming so a fullscreen panel looks like the same component.
      ========================================================================== */
-  --ms-z-index-fullscreen: 10001; /* above dropdown (9999) + popover/tooltip (10000) */
+  --ms-z-index-fullscreen: calc(var(--base-z-tooltip, 10000) + 1); /* the phone sheet covers everything */
   /* The truncated-label reveal is triggered from INSIDE the fullscreen overlay, so it
      must sit above it (the plain option tooltip at 10000 renders behind the 10001 panel). */
-  --ms-z-index-fullscreen-tooltip: 10002;
+  --ms-z-index-fullscreen-tooltip: calc(var(--ms-z-index-fullscreen) + 1);
   /* Size of the phone view. Every size in the component is calc(N × --ms-rem), so the
      fullscreen panels override --ms-rem with this to scale rows, text, checkboxes,
      padding, header and search up together (~1.2× → comfortable ~44–48px touch rows).
-     A plain length (not calc(1.2 × --ms-rem)) so assigning it to --ms-rem on the panel
-     can't form a cyclic var() reference. Set it larger for chunkier touch targets. */
-  --ms-fullscreen-rem: 12px;
+     Relative to --ms-rem, so the phone view is always the larger one (a fixed 12px was
+     SMALLER than the floating view when --base-rem is 1rem on a 16px page). No cycle: it
+     is resolved here on :host and inherited as a length by the panel, which assigns it
+     to its own --ms-rem. Set it larger for chunkier touch targets. */
+  --ms-fullscreen-rem: calc(1.2 * var(--ms-rem));
   /* These overlay-only vars are sized in --ms-fullscreen-rem (NOT --ms-rem): a custom
      property bakes its var() at its declaration site, so declaring them here against
      --ms-fullscreen-rem gives the enlarged phone-view sizes wherever they're consumed. */
   --ms-fullscreen-bg: var(--ms-dropdown-bg);
   --ms-fullscreen-text-color: var(--ms-dropdown-text-color);
   --ms-fullscreen-header-bg: var(--ms-dropdown-bg);
-  --ms-fullscreen-header-border: 1px solid var(--ms-dropdown-border-color);
+  --ms-fullscreen-header-border: var(--ms-border-width) solid var(--ms-dropdown-border-color);
   --ms-fullscreen-header-gap: calc(0.8 * var(--ms-fullscreen-rem));
   /* Split into v/h so the close button can reclaim this exact padding with negative
      margins to reach the sheet's physical corner (see .ms__fullscreen-close). */
@@ -425,7 +409,7 @@
   --ms-fullscreen-search-clear-icon-size: calc(1.4 * var(--ms-fullscreen-rem));
   --ms-fullscreen-search-clear-inset: calc(0.4 * var(--ms-fullscreen-rem));
   --ms-fullscreen-search-clear-gutter: calc(3.4 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-search-clear-color: var(--ms-text-muted-color, var(--ms-dropdown-text-color));
+  --ms-fullscreen-search-clear-color: var(--ms-input-clear-color);
   --ms-fullscreen-search-clear-bg-hover: var(--ms-option-bg-matched, transparent);
   /* Leading search-mode toggle (opt-in): a small round mask-icon button at the field's
      leading edge, sized like the clear button. Icon swaps by mode (see the [data-mode]
@@ -436,7 +420,7 @@
      matches the field↔close spacing on the trailing side (symmetric bar); override to
      decouple. */
   --ms-fullscreen-mode-toggle-gap: var(--ms-fullscreen-header-gap);
-  --ms-fullscreen-mode-toggle-color: var(--ms-text-muted-color, var(--ms-dropdown-text-color));
+  --ms-fullscreen-mode-toggle-color: var(--ms-input-clear-color);
   --ms-fullscreen-mode-toggle-bg: transparent;
   --ms-fullscreen-mode-toggle-bg-hover: var(--ms-option-bg-matched, transparent);
   --ms-fullscreen-close-size: calc(3.6 * var(--ms-fullscreen-rem));
@@ -473,7 +457,7 @@
   --ms-fullscreen-nav-gap: calc(0.6 * var(--ms-fullscreen-rem));
   --ms-fullscreen-nav-padding-top: calc(0.6 * var(--ms-fullscreen-rem));
   --ms-fullscreen-nav-count-font-size: calc(1.3 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-nav-count-color: var(--ms-text-muted-color, var(--ms-dropdown-text-color));
+  --ms-fullscreen-nav-count-color: var(--ms-text-color-3);
   --ms-fullscreen-nav-btn-size: calc(3.2 * var(--ms-fullscreen-rem));
   --ms-fullscreen-nav-btn-icon-size: calc(1.6 * var(--ms-fullscreen-rem));
   --ms-fullscreen-nav-btn-color: var(--ms-dropdown-text-color);
@@ -501,11 +485,11 @@
   --ms-icon-chevron: var(--base-icon-chevron, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6'/></svg>"));
   /* SVG "i-in-a-circle" glyph — rendered via mask so it inherits the info color via
      currentColor. Override with any mask-friendly url() SVG. */
-  --ms-icon-info: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2'/><circle cx='12' cy='7.5' r='1.3' fill='black'/><path d='M12 11v6' stroke='black' stroke-width='2' stroke-linecap='round' fill='none'/></svg>");
+  --ms-icon-info: var(--base-icon-info, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2'/><circle cx='12' cy='7.5' r='1.3' fill='black'/><path d='M12 11v6' stroke='black' stroke-width='2' stroke-linecap='round' fill='none'/></svg>"));
   /* Tighter tree indent for the phone overlay so deep nodes leave room for the label.
      Sized in --ms-fullscreen-rem (like the rest of the overlay) so it scales with the
-     phone view: at the 12px default this is ~8.4px base + ~14.4px/level, vs the
-     floating default's real-rem 0.75rem/1.25rem (tree.css). Raise --ms-fullscreen-rem
+     phone view: 0.7 / 1.2 × the phone rem, vs the floating 0.75 / 1.25 × --ms-rem
+     (tree.css) — tighter relative to the bigger rows. Raise --ms-fullscreen-rem
      and the indent grows with the rows. */
   --ms-fullscreen-tree-base-indent: calc(0.7 * var(--ms-fullscreen-rem));
   --ms-fullscreen-tree-indent: calc(1.2 * var(--ms-fullscreen-rem));
@@ -515,17 +499,13 @@
      ========================================================================== */
   --ms-actions-gap: calc(0.4 * var(--ms-rem));
   --ms-actions-padding: calc(0.8 * var(--ms-rem));
-  --ms-actions-border-bottom: 1px solid var(--ms-actions-border-color);
+  --ms-actions-border-bottom: var(--ms-border-width) solid var(--ms-actions-border-color);
 
   /* Action Button */
   --ms-action-btn-padding: calc(0.4 * var(--ms-rem)) calc(0.8 * var(--ms-rem));
   --ms-action-btn-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
-  --ms-action-btn-border: var(--ms-border);
+  --ms-action-btn-border: var(--ms-border-width) solid var(--ms-action-button-border-color);
   --ms-action-btn-border-radius: var(--ms-border-radius-sm);
-  --ms-action-btn-bg: transparent;
-  --ms-action-btn-color: inherit;
-  --ms-action-btn-bg-hover: var(--ms-primary-bg);
-  --ms-action-btn-border-color-hover: var(--ms-accent-color);
   --ms-transform-scale-active: 0.98;
 
   /* ==========================================================================
@@ -534,7 +514,7 @@
   --ms-options-padding: 0;
 
   /* Group */
-  --ms-group-border-top: 1px solid var(--ms-group-border-color);
+  --ms-group-border-top: var(--ms-border-width) solid var(--ms-group-border-color);
   --ms-group-margin-top: calc(0.4 * var(--ms-rem));
   --ms-group-padding-top: calc(0.4 * var(--ms-rem));
 
@@ -542,7 +522,6 @@
   --ms-group-label-padding: calc(0.4 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-group-label-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-group-label-font-weight: var(--base-font-weight-semibold, 600);
-  --ms-group-label-color: var(--ms-text-color-3);
   --ms-group-label-transform: uppercase;
   --ms-group-label-letter-spacing: 0.05em;
 
@@ -633,7 +612,7 @@
   --ms-checkbox-bg: var(--ms-input-bg);
   /* Unchecked border — deliberately stronger than the faint generic --ms-border so
      the box reads as a real, clickable control. Tune weight/colour with these two. */
-  --ms-checkbox-border-width: 1px;
+  --ms-checkbox-border-width: var(--ms-border-width);
   --ms-checkbox-border-color: var(--base-checkbox-border-color, #8f8f8f);
   /* Scaled width/radius — proportional to --ms-checkbox-scale so the border and
      corners grow with the box (calc, no transform). Reused by every state
@@ -642,12 +621,11 @@
   --ms-checkbox-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-checkbox-border-color);
   --ms-checkbox-border-radius: calc(0.3 * var(--ms-rem) * var(--ms-checkbox-scale, 1));
   /* Checkmark stroke width — bump for a bolder tick. */
-  --ms-checkbox-checkmark-thickness: 2.5px;
   --ms-checkbox-checked-bg: var(--ms-accent-color);
   --ms-checkbox-checked-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-accent-color);
   --ms-checkbox-checkmark-color: var(--ms-text-color-on-accent);
   --ms-checkbox-hover-border-color: var(--ms-accent-color);
-  --ms-checkbox-disabled-bg: var(--ms-primary-bg);
+  --ms-checkbox-disabled-bg: var(--ms-input-bg-disabled);
   --ms-checkbox-disabled-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-border-color);
 
   /* Checkbox State Combinations */
@@ -664,7 +642,6 @@
   --ms-state-min-height: calc(8 * var(--ms-rem));
   --ms-empty-padding: calc(1.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-empty-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
-  --ms-empty-color: var(--ms-text-color-3);
 
   /* "Add new" prompt (empty state when isAddNewAllowed + typed text). A clickable
      row keyed off the accent so it reads as an action, not a dead message. */
@@ -682,7 +659,6 @@
 
   /* Loading Text */
   --ms-loading-text-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
-  --ms-loading-text-color: var(--ms-text-color-3);
 
   /* ==========================================================================
      BADGES DISPLAY
@@ -698,7 +674,6 @@
   --ms-inline-align: center;
 
   /* Individual Badge (--ms-badge-bg / --ms-badge-bg-hover / --ms-badge-bg-active live in the SEMANTIC VARIABLES block above) */
-  --ms-badge-gap: calc(0.8 * var(--ms-rem));
   --ms-badge-height: calc(2.7 * var(--ms-rem));
   --ms-badge-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-badge-font-weight: var(--base-font-weight-semibold, 600);
@@ -710,17 +685,12 @@
      ========================================================================== */
   /* Badge Text */
   --ms-badge-text-padding: 0 calc(0.8 * var(--ms-rem));
-  --ms-badge-text-bg: var(--ms-accent-color-light);
-  --ms-badge-text-color: var(--ms-accent-color);
   --ms-badge-text-border: none;
 
   /* Badge Remove Button */
   --ms-badge-remove-width: calc(2.7 * var(--ms-rem));
-  --ms-badge-remove-bg: var(--ms-accent-color);
-  --ms-badge-remove-color: var(--ms-text-color-on-accent);
   --ms-badge-remove-border: none;
   --ms-badge-remove-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
-  --ms-badge-remove-bg-hover: var(--ms-accent-color-hover);
   --ms-badge-remove-box-shadow-focus: 0 0 0 2px color-mix(in srgb, var(--ms-accent-color) 50%, transparent);
   /* Matches the input-clear / count-clear ✕ glyphs (also 1.4×rem) so all three read at the
      same size; the old 1.0×rem was fine for the default stroke `x` but rendered a filled
@@ -760,16 +730,7 @@
   --ms-icon-add-new: var(--base-icon-add, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14'/><path d='M12 5v14'/></svg>"));
 
   /* Badge Counter Indicator (layout-only properties, colors come from semantic section) */
-  --ms-badge-counter-bg: transparent;
-  --ms-badge-counter-border: 1px solid var(--ms-badge-counter-border-color);
-  --ms-badge-counter-border-radius: var(--ms-border-radius-sm);
-
-  /* ==========================================================================
-     "+X MORE" BADGE
-     ========================================================================== */
-  --ms-more-badge-bg: var(--ms-accent-color-light);
-  --ms-more-badge-hover-bg: var(--ms-badge-bg-hover);
-  --ms-more-badge-active-bg: var(--ms-accent-color-light-hover);
+  --ms-badge-counter-border: var(--ms-border-width) solid var(--ms-badge-counter-border-color);
 
   /* ==========================================================================
      COUNT DISPLAY MODE
@@ -779,14 +740,11 @@
   --ms-count-display-margin-left: calc(0.8 * var(--ms-rem));
   --ms-count-display-margin-right: calc(0.8 * var(--ms-rem));
 
-  /* Count Badge Wrapper */
-  --ms-counter-wrapper-bg: transparent;
-  --ms-counter-wrapper-border: var(--ms-border);
+  /* Count Badge Wrapper (colors: semantic block) */
+  --ms-counter-wrapper-border: var(--ms-border-width) solid var(--ms-counter-wrapper-border-color);
   --ms-counter-wrapper-border-radius: var(--ms-border-radius-sm);
   --ms-counter-wrapper-padding: calc(0.4 * var(--ms-rem)) calc(0.8 * var(--ms-rem));
   --ms-counter-wrapper-gap: calc(0.4 * var(--ms-rem));
-  --ms-counter-wrapper-bg-hover: var(--ms-primary-bg);
-  --ms-counter-wrapper-border-color-hover: var(--ms-accent-color);
 
   /* ==========================================================================
      COUNT TEXT & CLEAR BUTTON
@@ -795,20 +753,14 @@
   --ms-count-text-bg: transparent;
   --ms-count-text-border: none;
   --ms-count-text-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
-  --ms-count-text-color: var(--ms-text-color-1);
 
   /* Count Clear Button */
   --ms-count-clear-size: calc(1.6 * var(--ms-rem));
-  --ms-count-clear-bg: transparent;
-  --ms-count-clear-color: var(--ms-text-color-3);
   --ms-count-clear-font-size: calc(var(--base-font-size-lg, 1.8) * var(--ms-rem));
   --ms-count-clear-border-radius: var(--ms-border-radius-sm);
-  /* Hover fills with SOLID accent and flips the glyph to text-on-accent — mirrors
-     .ms__badge-remove. The old "accent-tint bg + accent glyph" was same-hue: the ✕
-     melted into its own hover background (invisible on near-white accents like
-     minimal-dark, low-contrast blue-on-blue everywhere else). */
-  --ms-count-clear-bg-hover: var(--ms-accent-color);
-  --ms-count-clear-color-hover: var(--ms-text-color-on-accent);
+  /* Hover (semantic block) fills with SOLID accent and flips the glyph to text-on-accent —
+     mirrors .ms__badge-remove; an accent-tint bg + accent glyph was same-hue (the ✕ melted
+     into its own hover background). */
   --ms-count-clear-icon-size: calc(1.4 * var(--ms-rem));
   /* Field-clear ✕ (input clear + count clear). Its own knob in the --base-icon contract:
      prefers --base-icon-clear so a theme can diverge field-clear from close/remove, then falls
@@ -819,13 +771,12 @@
   /* ==========================================================================
      TOOLTIPS
      ========================================================================== */
-  --ms-tooltip-color: var(--ms-tooltip-text-color);
   --ms-tooltip-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-tooltip-border-radius: var(--ms-border-radius-lg);
   --ms-tooltip-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-tooltip-max-width: calc(32 * var(--ms-rem));
-  --ms-tooltip-shadow: 0 2px 8px var(--base-shadow-color, rgba(0, 0, 0, 0.15));
-  --ms-tooltip-z-index: 10000;
+  --ms-tooltip-shadow: var(--base-shadow-md, 0 2px 8px var(--base-shadow-color, rgba(0, 0, 0, 0.15)));
+  --ms-tooltip-z-index: var(--base-z-tooltip, 10000);
 
   /* Option (dropdown row) tooltip — per-feature hooks default to the shared tooltip surface,
      so option tooltips look identical until you override one of these independently. */
@@ -847,7 +798,7 @@
      ========================================================================== */
   --ms-message-bg: var(--ms-message-info-bg);
   --ms-message-color: var(--ms-message-info-color);
-  --ms-message-border: 1px solid transparent;
+  --ms-message-border: var(--ms-border-width) solid transparent;
   --ms-message-border-radius: var(--ms-border-radius-lg);
   --ms-message-padding: calc(1.0 * var(--ms-rem)) calc(1.4 * var(--ms-rem));
   --ms-message-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
@@ -870,37 +821,29 @@
   /* ==========================================================================
      SELECTED POPOVER
      ========================================================================== */
-  --ms-z-index-popover: 10000;
+  --ms-z-index-popover: var(--base-z-popover, 10000);
   /* Selected-items ("badges") popover width — tracks the live field width by default (same
      as the dropdown, so the two panels line up under the control). Override at app/theme
      level or per-instance via the selected-popover-width attribute — e.g. a fixed
      calc(32 * var(--ms-rem)) for a constant width independent of the field. */
   --ms-selected-popover-width: var(--ms-input-current-width);
   --ms-selected-popover-max-height: calc(32 * var(--ms-rem));
-  --ms-selected-popover-border: 1px solid var(--ms-selected-popover-border-color);
+  --ms-selected-popover-border: var(--base-dropdown-border, var(--ms-border-width) solid var(--ms-selected-popover-border-color));
   --ms-selected-popover-border-radius: var(--ms-border-radius-lg);
-  --ms-selected-popover-box-shadow: 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1));
+  --ms-selected-popover-box-shadow: var(--ms-dropdown-box-shadow);
 
   /* Popover Header */
   --ms-selected-popover-header-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
-  --ms-selected-popover-header-bg: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
-  --ms-selected-popover-header-border-bottom: 1px solid var(--ms-selected-popover-header-border-color);
+  --ms-selected-popover-header-border-bottom: var(--ms-border-width) solid var(--ms-selected-popover-header-border-color);
   --ms-selected-popover-header-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-selected-popover-header-font-weight: var(--base-font-weight-semibold, 600);
-  --ms-selected-popover-header-color: var(--ms-text-color-1);
 
   /* ==========================================================================
      POPOVER CLOSE BUTTON
      ========================================================================== */
   --ms-popover-close-size: calc(2.4 * var(--ms-rem));
-  --ms-selected-popover-close-bg: transparent;
-  --ms-selected-popover-close-color: var(--ms-text-color-3);
   --ms-selected-popover-close-font-size: calc(var(--base-font-size-xl, 2) * var(--ms-rem));
   --ms-selected-popover-close-border-radius: var(--ms-border-radius-sm);
-  /* Solid accent fill + on-accent glyph (see .ms__count-clear note) — avoids the
-     same-hue "accent glyph on accent-tint" melt on hover. */
-  --ms-selected-popover-close-bg-hover: var(--ms-accent-color);
-  --ms-selected-popover-close-color-hover: var(--ms-text-color-on-accent);
   --ms-selected-popover-close-icon-size: calc(1.4 * var(--ms-rem));
 
   /* ==========================================================================
@@ -911,23 +854,9 @@
   --ms-selected-popover-body-max-height: calc(28.8 * var(--ms-rem));
 
   /* ==========================================================================
-     TYPOGRAPHY SCALE
+     LINE HEIGHTS
      ========================================================================== */
-  /* Font Sizes (unitless multipliers × --ms-rem) */
-  --ms-font-size-2xs: calc(var(--base-font-size-2xs, 1) * var(--ms-rem));
-  --ms-font-size-xs: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
-  --ms-font-size-sm: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
-  --ms-font-size-base: calc(var(--base-font-size-base, 1.6) * var(--ms-rem));
-  --ms-font-size-lg: calc(var(--base-font-size-lg, 1.8) * var(--ms-rem));
-
-  /* Font Weights */
-  --ms-font-weight-normal: var(--base-font-weight-normal, 400);
-  --ms-font-weight-medium: var(--base-font-weight-medium, 500);
-  --ms-font-weight-semibold: var(--base-font-weight-semibold, 600);
-
-  /* Line Heights */
   --ms-line-height-none: 1;
-  --ms-line-height-tight: var(--base-line-height-tight, 1.25);
   --ms-line-height-normal: var(--base-line-height-normal, 1.5);
   --ms-line-height-relaxed: var(--base-line-height-relaxed, 1.75);
 
@@ -938,14 +867,6 @@
   --ms-border-radius-md: calc(var(--base-border-radius-md, 0.6) * var(--ms-rem));
   --ms-border-radius-lg: calc(var(--base-border-radius-lg, 0.8) * var(--ms-rem));
   --ms-border-radius: var(--ms-border-radius-md);
-
-  /* ==========================================================================
-     SPACING & SIZING
-     ========================================================================== */
-  --ms-spacing-xs: calc(0.4 * var(--ms-rem));
-  --ms-spacing-sm: calc(0.8 * var(--ms-rem));
-  --ms-spacing-md: calc(1.2 * var(--ms-rem));
-  --ms-spacing-lg: calc(1.6 * var(--ms-rem));
 
   /* ==========================================================================
      TRANSITIONS & EFFECTS
@@ -960,7 +881,9 @@
   /* ==========================================================================
      OPACITY VALUES
      ========================================================================== */
-  --ms-placeholder-opacity: 0.6;
+  /* 1: --ms-input-placeholder-color is already the faint text level (--base-text-color-4);
+     a further fade made the placeholder lighter than pure-admin's. */
+  --ms-placeholder-opacity: 1;
   --ms-disabled-input-opacity: 0.6;
 
   /* ==========================================================================

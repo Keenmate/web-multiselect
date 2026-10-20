@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — declarative &lt;option&gt; children</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>declarative &lt;option&gt; children</h1>
+    <p>Targeted by <code>e2e/declarative.spec.ts</code>. No script sets options or members.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">plain options, one selected, single-select</div>
+        <web-multiselect id="single" multiple="false">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            <option value="maybe" selected>Maybe</option>
+        </web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">optgroups, data-icon / data-subtitle, disabled</div>
+        <web-multiselect id="grouped">
+            <optgroup label="Fruit">
+                <option value="apple" data-icon="🍎" data-subtitle="Red" selected>Apple</option>
+                <option value="banana" disabled>Banana</option>
+            </optgroup>
+            <optgroup label="Veg">
+                <option value="carrot">Carrot</option>
+            </optgroup>
+        </web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+    </script>
+</body>
+</html>

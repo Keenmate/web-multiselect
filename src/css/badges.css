@@ -93,8 +93,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: background-color var(--ms-transition-normal) ease,
-              color var(--ms-transition-normal) ease;
+  transition: background-color var(--ms-transition-normal) var(--ms-easing-snappy),
+              color var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 /* Badge hover state */
@@ -126,7 +126,7 @@
   border-start-start-radius: 0;
   border-end-start-radius: 0;
   cursor: pointer;
-  transition: background-color var(--ms-transition-normal) ease;
+  transition: background-color var(--ms-transition-normal) var(--ms-easing-snappy);
   font-size: var(--ms-badge-remove-font-size);
 }
 

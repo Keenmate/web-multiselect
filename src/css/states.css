@@ -19,6 +19,11 @@
   cursor: not-allowed;
 }
 
+/* No accent hover border on a disabled field (it can't be interacted with). */
+.ms--disabled .ms__input-wrapper:hover {
+  border: var(--ms-input-border);
+}
+
 /* No checkboxes modifier (for simple select mode) */
 .ms--no-checkboxes .ms__option {
   gap: 0; /* Remove gap since there's no checkbox */

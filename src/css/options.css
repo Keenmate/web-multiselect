@@ -299,7 +299,7 @@
   background: var(--ms-checkbox-bg);
   border: var(--ms-checkbox-border);
   border-radius: var(--ms-checkbox-border-radius);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--ms-transition-fast) var(--ms-easing-snappy), border-color var(--ms-transition-fast) var(--ms-easing-snappy);
 }
 
 /* Checkmark using ::after pseudo-element */
@@ -370,16 +370,17 @@
   outline-offset: 2px;
 }
 
-/* Disabled state */
+/* Disabled state. An EMPTY box takes the disabled surface; a checked / indeterminate
+   box keeps its accent fill and mark (like pure-admin's .pa-checkbox) — swapping the
+   fill for the near-white disabled bg left a white tick on white. Opacity dims both. */
 .ms__checkbox:disabled {
   cursor: not-allowed;
-  background: var(--ms-checkbox-disabled-bg);
-  border: var(--ms-checkbox-disabled-border);
-  opacity: 0.6;
+  opacity: var(--ms-disabled-input-opacity);
 }
 
-.ms__checkbox:disabled:checked {
+.ms__checkbox:disabled:not(:checked):not(.ms__checkbox--indeterminate) {
   background: var(--ms-checkbox-disabled-bg);
+  border: var(--ms-checkbox-disabled-border);
 }
 
 .ms__option--disabled .ms__checkbox {
@@ -450,8 +451,12 @@
   }
 }
 
+.ms__option--focused .ms__option-title {
+  color: var(--ms-option-title-color-focused);
+}
+
 .ms__option--selected .ms__option-title {
-  color: var(--ms-option-title-color-selected, var(--ms-option-title-color));
+  color: var(--ms-option-title-color-selected);
 }
 
 @media (hover: hover) {

@@ -125,3 +125,21 @@ test.describe('forced modes ignore rotation', () => {
         await expect(fullscreen(p)).toBeVisible();
     });
 });
+
+test.describe('fullscreen scale under base-css-variables (--base-rem: 1rem)', () => {
+    // --ms-rem is var(--base-rem, 10px). With the contract loaded it is `1rem`: the
+    // JS-driven virtual row height must scale by --ms-fullscreen-rem / --ms-rem (1.2),
+    // measured as lengths — parseFloat('1rem') used to give 12× (600px rows).
+    test('virtual rows are 1.2× the option height, not 12×', async ({ page }) => {
+        await page.addStyleTag({ content: ':root { --base-rem: 1rem; }' });
+        const p = picker(page, 'fullscreen');
+        await p.evaluate((el) => el.setAttribute('enable-virtual-scroll', ''));
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+        const height = await p.evaluate((el) => {
+            const box = el.shadowRoot!.querySelector<HTMLElement>('[style*="--ms-option-height"]');
+            return box?.style.getPropertyValue('--ms-option-height');
+        });
+        expect(height).toBe('60px');
+    });
+});

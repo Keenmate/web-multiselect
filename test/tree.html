@@ -116,6 +116,12 @@
             path-member="path" search-mode="filter" mobile-presentation="fullscreen" show-search-mode-toggle></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">tree + navigate + virtual scroll, long tree (match far below the fold)</div>
+        <web-multiselect id="tree-navigate-virtual" multiple value-member="value" display-value-member="label"
+            path-member="path" search-mode="navigate" enable-virtual-scroll option-height="32"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -214,6 +220,22 @@
             document.getElementById('tree-navigate').options = items;
             document.getElementById('tree-navigate-fs').options = items;
             document.getElementById('tree-navigate-fs-toggle').options = items;
+
+            // Long tree for navigate + virtual scroll: 30 branches x 10 leaves (330 rows).
+            // The only "Zebra" node sits in the last branch, far below the initial viewport.
+            const longTree = [];
+            for (let b = 1; b <= 30; b++) {
+                longTree.push({ value: `b${b}`, label: `Branch ${b}`, path: `${b}` });
+                for (let l = 1; l <= 10; l++) {
+                    const isTarget = b === 28 && l === 7;
+                    longTree.push({
+                        value: isTarget ? 'zebra' : `b${b}-l${l}`,
+                        label: isTarget ? 'Zebra' : `Leaf ${b}.${l}`,
+                        path: `${b}.${l}`
+                    });
+                }
+            }
+            document.getElementById('tree-navigate-virtual').options = longTree;
         });
     </script>
 </body>

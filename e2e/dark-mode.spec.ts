@@ -10,7 +10,7 @@ import { test, expect, Page, Locator } from './fixtures';
  *
  * Strategy:
  *   1. Render two pickers — one with the bare-minimum dark overrides a consumer would
- *      reach for first (just `--base-main-bg` + `--base-text-color`), and one with the
+ *      reach for first (just `--base-main-bg` + `--base-text-color-1`), and one with the
  *      fuller recommended set (also `--base-hover-bg` + `--base-border-color`).
  *   2. Open the dropdown, hover or focus an option, and verify the rendered option's
  *      text vs background contrast ratio meets WCAG AA for non-text UI (≥ 3:1).

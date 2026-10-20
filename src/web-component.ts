@@ -642,7 +642,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     // the member isn't otherwise configured (member key or its get*Callback).
     if (this.#hasDeclarativeOptions) {
       for (const { key, member, callbackKey } of DECLARATIVE_MEMBER_DEFAULTS) {
-        if (cfg[key] === undefined && !cfg[callbackKey]) cfg[key] = member;
+        if (cfg[key] == null && !cfg[callbackKey]) cfg[key] = member;
       }
     }
 

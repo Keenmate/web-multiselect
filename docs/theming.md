@@ -39,7 +39,7 @@ Override individual sizing variables for specific adjustments:
 
 - `--ms-input-height` — input field height (default: 35px)
 - `--ms-input-font-size` — input font size
-- `--ms-input-padding` — input padding
+- `--ms-input-padding-h` — inline padding of the field
 - `--ms-badge-height` — badge height
 - `--ms-option-height` — option height in dropdown
 
@@ -83,7 +83,7 @@ Keenmate components support a **two-layer theming architecture**:
 :root {
   --ms-accent-color: #your-brand-color;
   --ms-primary-bg: #your-background;
-  --ms-text-primary: #your-text-color;
+  --ms-text-color-1: #your-text-color;
 }
 ```
 
@@ -109,7 +109,7 @@ Change `--base-primary-color` once → all components update automatically.
 shared `--base-highlighted-bg` / `--base-highlighted-bg-hover` / `--base-highlighted-text-color` /
 `--base-highlighted-outline` and `--base-focused-bg` / `--base-focused-text-color` /
 `--base-focused-outline` tokens (borders are outline shorthands drawn inset), so a
-selected / focused option matches a highlighted / focused row in the KeenMate tree
+selected / focused option matches a highlighted / focused row in the Keenmate tree
 components. Defaults: selected = 10% accent tint, no ring; focused = transparent
 background + `1px solid` accent inset ring.
 
@@ -121,7 +121,7 @@ All Keenmate components follow a consistent naming convention for **Tier 1 varia
 |---------|-----------------|---------------------|
 | Brand color | `--ms-accent-color` | `--drp-accent-color` |
 | Background | `--ms-primary-bg` | `--drp-primary-bg` |
-| Text color | `--ms-text-primary` | `--drp-text-primary` |
+| Text color | `--ms-text-color-1` | `--drp-text-primary` |
 | Text on accent | `--ms-text-color-on-accent` | `--drp-text-on-accent` |
 | Border color | `--ms-border-color` | `--drp-border-color` |
 
@@ -146,7 +146,7 @@ You can customize the component using CSS variables even with just a `<script>` 
   /* Override tooltip appearance */
   web-multiselect {
     --ms-tooltip-bg: #1f2937;
-    --ms-tooltip-color: #f9fafb;
+    --ms-tooltip-text-color: #f9fafb;
     --ms-tooltip-padding: 0.625rem 0.875rem;
     --ms-tooltip-border-radius: 0.5rem;
     --ms-tooltip-font-size: 0.8125rem;
@@ -155,11 +155,10 @@ You can customize the component using CSS variables even with just a `<script>` 
     --ms-tooltip-z-index: 10000;
   }
 
-  /* Override "+X more" badge colors */
+  /* Override "+X more" badge colors (the counter badge variant) */
   web-multiselect {
-    --ms-more-badge-bg: #dbeafe;
-    --ms-more-badge-hover-bg: #bfdbfe;
-    --ms-more-badge-active-bg: #93c5fd;
+    --ms-badge-counter-text-bg: #dbeafe;
+    --ms-badge-counter-text-bg-hover: #bfdbfe;
   }
 
   /* Size the component */
@@ -226,39 +225,43 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-accent-color` | `#3b82f6` | Primary accent color (blue) |
-| `--ms-accent-color-hover` | `#2563eb` | Accent color on hover |
-| `--ms-accent-color-active` | `#1d4ed8` | Accent color when active |
-| `--ms-text-primary` | `#111827` | Primary text color |
-| `--ms-text-secondary` | `#6b7280` | Secondary/muted text color |
-| `--ms-border-color` | `#e5e7eb` | Default border color |
-| `--ms-border` | `var(--base-border, 1px solid var(--ms-border-color))` | Default full border (inherits from theme-designer) |
+| `--ms-accent-color` | `var(--base-primary-color, #3b82f6)` | Accent (selection, focus, checked state) |
+| `--ms-accent-color-hover` | `var(--base-primary-color-hover, #2563eb)` | Accent on hover |
+| `--ms-accent-color-light` | `var(--base-primary-bg-subtle, …)` | Accent tint (badges, "+N more") |
+| `--ms-text-color-1` … `-4` | `var(--base-text-color-1 … -4, …)` | Text levels: body, secondary, tertiary, faint |
+| `--ms-primary-bg` | `var(--base-hover-bg, …)` | Hover fill (options, action buttons, counter) |
+| `--ms-border-width` | `var(--base-border-width, 1px)` | Stroke width of every border |
+| `--ms-border-color` | `var(--base-border-color, light-dark(#cbd5e1, #52525b))` | Divider color (panels, separators) |
+| `--ms-border` | `var(--base-border, var(--ms-border-width) solid var(--ms-border-color))` | Divider shorthand |
 
 ### Input component
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-input-bg` | `var(--base-input-bg, #ffffff)` | Input background |
-| `--ms-input-text` | `#111827` | Input text color |
-| `--ms-input-border` | `#d1d5db` | Input border color |
-| `--ms-input-focus-border-color` | `#3b82f6` | Border color when focused |
-| `--ms-input-padding-v` | `0.5rem` | Input vertical padding |
-| `--ms-input-padding-h` | `0.75rem` | Input horizontal padding |
-| `--ms-input-font-size` | `0.875rem` | Input font size |
-| `--ms-input-border-radius` | `0.375rem` | Input border radius |
-| `--ms-input-placeholder-color` | `#6b7280` | Placeholder text color |
+| `--ms-input-bg` | `var(--base-input-bg, light-dark(#ffffff, #1a1a1a))` | Input background |
+| `--ms-input-color` | `var(--base-input-text-color, var(--ms-text-color-1))` | Input text color |
+| `--ms-input-border-color` | `var(--base-input-border-color, var(--ms-border-color))` | Control outline color (stronger than the divider); also action buttons and the count pill |
+| `--ms-input-border` | `var(--base-input-border, var(--ms-border-width) solid var(--ms-input-border-color))` | Input border |
+| `--ms-input-border-hover` | `var(--base-input-border-hover, … var(--ms-accent-color))` | Border on hover |
+| `--ms-input-border-focus` | `var(--base-input-border-focus, … var(--ms-accent-color))` | Border when focused |
+| `--ms-input-box-shadow-focus` | `var(--base-input-box-shadow-focus, 0 0 0 3px <accent 5%>)` | Focus halo |
+| `--ms-input-padding-h` | `calc(1.2 * var(--ms-rem))` | Inline padding of the field |
+| `--ms-input-height` | `calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))` | Field height |
+| `--ms-input-font-size` | `calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))` | Input font size |
+| `--ms-input-border-radius` | `var(--ms-border-radius-md)` | Input border radius |
+| `--ms-input-placeholder-color` | `var(--base-input-placeholder-color, var(--ms-text-color-4))` | Placeholder color (shown at `--ms-placeholder-opacity`, default 1) |
+| `--ms-input-bg-disabled` | `var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05))` | Disabled background |
 
 ### Dropdown & options
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-dropdown-bg` | `var(--base-dropdown-bg, var(--base-elevated-bg, light-dark(#ffffff, #1a1a1a)))` | Dropdown background (auto-adapts to OS dark mode) |
-| `--ms-dropdown-border` | `var(--ms-border-color)` | Dropdown border color |
-| `--ms-dropdown-shadow` | (box shadow) | Dropdown shadow |
-| `--ms-dropdown-max-height` | `20rem` | Max height of dropdown |
-| `--ms-option-padding-v` | `0.5rem` | Option vertical padding |
-| `--ms-option-padding-h` | `0.75rem` | Option horizontal padding |
-| `--ms-option-hover-bg` | `#f9fafb` | Option background on hover |
+| `--ms-dropdown-bg` | `var(--base-dropdown-bg, light-dark(#ffffff, #1a1a1a))` | Dropdown background; the sticky actions bar, the hint and the selected-items popover use it too |
+| `--ms-dropdown-border` | `var(--base-dropdown-border, var(--ms-border-width) solid var(--ms-dropdown-border-color))` | Dropdown border |
+| `--ms-dropdown-box-shadow` | `var(--base-dropdown-box-shadow, …)` | Dropdown shadow (the selected-items popover uses it too) |
+| `--ms-options-max-height` | `calc(32 * var(--ms-rem))` | Max height of the options list |
+| `--ms-option-padding` | `calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))` | Option padding |
+| `--ms-option-bg-hover` | `var(--ms-primary-bg)` | Option background on hover |
 | `--ms-option-color-hover` | `inherit` | Option text color on hover |
 | `--ms-option-bg-selected` | `var(--base-highlighted-bg, <accent 10%>)` | Selected option background |
 | `--ms-option-bg-selected-hover` | `var(--base-highlighted-bg-hover, var(--ms-option-bg-selected))` | Selected option background on hover |
@@ -278,19 +281,20 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 |----------|---------|-------------|
 | `--ms-badge-text-bg` | `var(--ms-accent-color-light)` | Badge background color |
 | `--ms-badge-text-color` | `var(--ms-accent-color)` | Badge text color |
-| `--ms-badge-gap` | `0.5rem` | Gap between badges |
-| `--ms-badge-height` | `1.5rem` | Height of badges |
-| `--ms-badge-font-size` | `0.75rem` | Badge font size |
-| `--ms-badge-border-radius` | `0.375rem` | Badge border radius |
+| `--ms-badges-gap` | `calc(0.8 * var(--ms-rem))` | Gap between badges |
+| `--ms-badge-height` | `calc(2.7 * var(--ms-rem))` | Height of badges |
+| `--ms-badge-font-size` | `calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))` | Badge font size |
+| `--ms-badge-font-weight` | `var(--base-font-weight-semibold, 600)` | Badge font weight |
+| `--ms-badge-border-radius` | `var(--ms-border-radius-sm)` | Badge border radius |
 | `--ms-badge-remove-bg` | `var(--ms-accent-color)` | Remove button background |
 | `--ms-badge-remove-color` | `var(--ms-text-color-on-accent)` | Remove button (X) color — applied to the SVG via `currentColor` |
-| `--ms-badge-remove-icon-size` | `calc(1.0 * var(--ms-rem))` | Size of the X glyph inside the remove button |
+| `--ms-badge-remove-icon-size` | `calc(1.4 * var(--ms-rem))` | Size of the X glyph inside the remove button |
 | `--ms-icon-remove` | (inline SVG `url(...)`) | The X mask SVG; override to swap the glyph shape (alpha-only — color comes from `--ms-badge-remove-color`) |
-| `--ms-badge-counter-text-bg` | `var(--ms-primary-bg)` | BadgeCounter text background ("+X more") |
-| `--ms-badge-counter-text-color` | `var(--ms-text-color-3)` | BadgeCounter text color |
-| `--ms-badge-counter-remove-bg` | `var(--ms-text-color-3)` | BadgeCounter remove button background |
-| `--ms-badge-counter-remove-color` | `var(--ms-text-color-on-accent)` | BadgeCounter remove button color |
-| `--ms-badge-counter-border` | `1px solid var(--ms-border-color)` | BadgeCounter border |
+| `--ms-badge-counter-text-bg` | text-color-1 at 10% | Counter badge ("+X more") text background |
+| `--ms-badge-counter-text-color` | `var(--ms-text-color-1)` | Counter badge text color |
+| `--ms-badge-counter-remove-bg` | text-color-1 at 10% | Counter badge remove button background |
+| `--ms-badge-counter-remove-color` | `var(--ms-text-color-3)` | Counter badge remove button color |
+| `--ms-badge-counter-border` | `var(--ms-border-width) solid var(--ms-badge-counter-border-color)` | Counter badge border |
 | `--ms-badge-text-border` | `none` | Badge text border (e.g., `1px solid #3b82f6`) |
 
 ### Checkboxes
@@ -298,14 +302,15 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `--ms-checkbox-bg` | `var(--ms-input-bg)` | Checkbox background |
-| `--ms-checkbox-border` | `1px solid var(--ms-border-color)` | Checkbox border |
-| `--ms-checkbox-border-radius` | `0.3rem` | Checkbox border radius |
+| `--ms-checkbox-border-color` | `var(--base-checkbox-border-color, #8f8f8f)` | Unchecked border color (a control outline) |
+| `--ms-checkbox-border` | `<scaled width> solid var(--ms-checkbox-border-color)` | Checkbox border |
+| `--ms-checkbox-border-radius` | `calc(0.3 * var(--ms-rem) * <scale>)` | Checkbox border radius |
 | `--ms-checkbox-checked-bg` | `var(--ms-accent-color)` | Background when checked |
-| `--ms-checkbox-checked-border` | `1px solid var(--ms-accent-color)` | Border when checked |
+| `--ms-checkbox-checked-border` | `<scaled width> solid var(--ms-accent-color)` | Border when checked |
 | `--ms-checkbox-checkmark-color` | `var(--ms-text-color-on-accent)` | Checkmark color |
 | `--ms-checkbox-hover-border-color` | `var(--ms-accent-color)` | Border on hover |
-| `--ms-checkbox-disabled-bg` | `var(--ms-primary-bg)` | Disabled background |
-| `--ms-checkbox-disabled-border` | `1px solid var(--ms-border-color)` | Disabled border |
+| `--ms-checkbox-disabled-bg` | `var(--ms-input-bg-disabled)` | Disabled background |
+| `--ms-checkbox-disabled-border` | `<scaled width> solid var(--ms-border-color)` | Disabled border |
 
 ### Scrollbar
 
@@ -321,17 +326,17 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-counter-bg` | `#3b82f6` | Counter background |
-| `--ms-counter-color` | `#ffffff` | Counter text color |
-| `--ms-counter-font-size` | `0.75rem` | Counter font size |
-| `--ms-counter-bg-hover` | `#2563eb` | Hover background color |
+| `--ms-counter-badge-bg` | `var(--ms-accent-color)` | Counter background |
+| `--ms-counter-badge-color` | `var(--ms-text-color-on-accent)` | Counter text color |
+| `--ms-counter-badge-bg-hover` | `var(--ms-accent-color-hover)` | Hover background color |
+| `--ms-counter-font-size` | `calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))` | Counter font size |
 
 ### Tooltips
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `--ms-tooltip-bg` | `var(--base-tooltip-bg, light-dark(#333333, #f5f5f5))` | Tooltip background (auto-adapts to OS dark mode) |
-| `--ms-tooltip-color` | `var(--ms-tooltip-text-color)` | Tooltip text color |
+| `--ms-tooltip-text-color` | `var(--base-tooltip-text-color, …)` | Tooltip text color |
 | `--ms-tooltip-padding` | `0.5rem 0.75rem` | Tooltip padding |
 | `--ms-tooltip-border-radius` | `0.375rem` | Tooltip border radius |
 | `--ms-tooltip-font-size` | `0.875rem` | Tooltip font size |
@@ -341,13 +346,10 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 ### Typography
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `--ms-font-size-xs` | `0.75rem` | Extra small font size |
-| `--ms-font-size-sm` | `0.875rem` | Small font size |
-| `--ms-font-size-base` | `1rem` | Base font size |
-| `--ms-font-weight-medium` | `500` | Medium font weight |
-| `--ms-font-weight-semibold` | `600` | Semibold font weight |
+Font sizes and weights read the shared scale directly — `--base-font-size-*` (× `--ms-rem`) and
+`--base-font-weight-*` — so a theme sets them once for every component. Per-element knobs
+(`--ms-input-font-size`, `--ms-option-title-font-size`, `--ms-badge-font-size`,
+`--ms-badge-font-weight`, …) override one spot.
 
 ### Effects & transitions
 
@@ -356,8 +358,6 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-transition-fast` | `150ms` | Fast transition duration |
 | `--ms-transition-normal` | `200ms` | Normal transition duration |
 | `--ms-easing-snappy` | (cubic-bezier) | Snappy easing function |
-| `--ms-shadow-md` | (box shadow) | Medium shadow |
-| `--ms-shadow-xl` | (box shadow) | Extra large shadow |
 | `--ms-disabled-opacity` | `0.5` | Opacity for disabled state |
 
 ## Cascade layers / override contract

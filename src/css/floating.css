@@ -67,7 +67,7 @@
    ------------------------------------------------------------------------------ */
 /* Phone-view scaling. Every size is calc(N × --ms-rem), but a custom property bakes
    its var(--ms-rem) at its DECLARATION site — the semantic vars are declared at :host
-   (10px), so overriding --ms-rem on the panel alone does NOT re-scale them. So we both
+   (floating --ms-rem), so overriding --ms-rem on the panel alone does NOT re-scale them. So we both
    (a) set the panel's --ms-rem to --ms-fullscreen-rem, and (b) RE-DECLARE the shared
    option/checkbox/group vars here in the panel scope, with the same formulas as
    variables.css, so their var(--ms-rem) now resolves to the enlarged value. Overlay-
@@ -85,7 +85,7 @@
   --ms-group-label-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-group-label-padding: calc(0.4 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   /* Reclaim horizontal space for labels: tighter indent than the floating default
-     (--ms-tree-base-indent 0.75rem / --ms-tree-indent 1.25rem in tree.css). */
+     (0.75 / 1.25 × --ms-rem in tree.css). */
   --ms-tree-base-indent: var(--ms-fullscreen-tree-base-indent);
   --ms-tree-indent: var(--ms-fullscreen-tree-indent);
 }
@@ -98,7 +98,6 @@
    The row height is also mirrored in JS (scaledBadgeHeight → --ms-badge-height-virtual)
    for the virtual list, so both paths agree. */
 .ms__selected-popover--fullscreen {
-  --ms-badge-gap: calc(0.8 * var(--ms-rem));
   --ms-badge-height: calc(4.2 * var(--ms-rem));
   --ms-badge-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-badge-text-padding: 0 calc(1.2 * var(--ms-rem));
@@ -352,6 +351,7 @@
 .ms__fullscreen-search:focus {
   outline: none;
   border: var(--ms-input-border-focus);
+  box-shadow: var(--ms-input-box-shadow-focus);
 }
 
 /* Inline clear pinned to the trailing edge of the search field. Small, round,
@@ -601,7 +601,7 @@
   z-index: var(--ms-tooltip-z-index);
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--ms-transition-normal) ease, visibility var(--ms-transition-normal) ease;
+  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy), visibility var(--ms-transition-normal) var(--ms-easing-snappy);
 
   background: var(--ms-tooltip-bg);
   color: var(--ms-tooltip-text-color);
@@ -629,7 +629,7 @@
   z-index: var(--ms-option-tooltip-z-index);
   opacity: 0;
   visibility: hidden;
-  transition: opacity var(--ms-transition-normal) ease, visibility var(--ms-transition-normal) ease;
+  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy), visibility var(--ms-transition-normal) var(--ms-easing-snappy);
 
   background: var(--ms-option-tooltip-bg);
   color: var(--ms-option-tooltip-text-color);
@@ -679,7 +679,7 @@
   box-shadow: var(--ms-message-shadow);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--ms-transition-normal) ease;
+  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy);
   /* The one tap-highlight declaration NOT covered by :host (base.css): the message can
      be reparented to document.body, outside the shadow subtree, so it sets its own. */
   -webkit-tap-highlight-color: transparent;

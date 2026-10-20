@@ -157,7 +157,7 @@
         /* Custom variable override example */
         #custom-vars {
             --ms-input-font-size: 18px;
-            --ms-input-padding: 12px 16px;
+            --ms-input-padding-h: 16px;
             --ms-option-title-font-size: 16px;
         }
 
@@ -241,8 +241,6 @@
             /* Base theme variables - these cascade to all components */
             --base-input-bg: #2a2a2a;
             --base-dropdown-bg: #2a2a2a;
-            --base-actions-bg: #2a2a2a;
-            --base-popover-bg: #2a2a2a;
             --base-text-color-1: #e5e5e5;
             --base-text-color-3: #808080;
             --base-border-color: #404040;
@@ -295,10 +293,9 @@
             /* Base theme variables */
             --base-input-bg: #1a0a1a;
             --base-dropdown-bg: #1a0a1a;
-            --base-actions-bg: rgba(255, 0, 255, 0.3);
-            --base-popover-bg: #1a0a1a;
             --base-text-color-1: #00ffff;
             --base-primary-color: #ff00ff;
+            --ms-actions-bg: rgba(255, 0, 255, 0.3); /* sticky actions bar (defaults to the dropdown bg) */
 
             /* Custom icons — one --base-icon-* swap re-skins the lot: the toggle chevron
                (+ fullscreen pager) and every ✕ (badge remove, popover close, count clear).
@@ -1127,7 +1124,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             <div class="code-block"><pre>&lt;style&gt;
   #my-multiselect {
     --ms-input-font-size: 18px;
-    --ms-input-padding: 12px 16px;
+    --ms-input-padding-h: 16px;
     --ms-option-title-font-size: 16px;
   }
 &lt;/style&gt;</pre></div>
@@ -1420,9 +1417,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                         <td>Input text size (14px default)</td>
                     </tr>
                     <tr>
-                        <td><code>--ms-input-padding</code></td>
-                        <td>calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))</td>
-                        <td>Input padding</td>
+                        <td><code>--ms-input-padding-h</code></td>
+                        <td>calc(1.2 * var(--ms-rem))</td>
+                        <td>Inline padding of the field</td>
                     </tr>
                     <tr>
                         <td><code>--ms-option-title-font-size</code></td>
@@ -1455,7 +1452,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
         <!-- Typography Variables Reference -->
         <section class="example-section">
             <h2>TH19 · Typography Variables</h2>
-            <p>All typography variables with their theme-designer integration:</p>
+            <p>Typography reads the shared <code>--base-*</code> scale directly (font sizes × <code>--ms-rem</code>); a theme sets them once for every component:</p>
 
             <table class="reference-table">
                 <thead>
@@ -1467,47 +1464,47 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>--ms-font-size-2xs</code></td>
+                        <td><code>--base-font-size-2xs</code> (read directly)</td>
                         <td>10px</td>
                         <td><code>--base-font-size-2xs</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-size-xs</code></td>
+                        <td><code>--base-font-size-xs</code> (read directly)</td>
                         <td>12px</td>
                         <td><code>--base-font-size-xs</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-size-sm</code></td>
+                        <td><code>--base-font-size-sm</code> (read directly)</td>
                         <td>14px</td>
                         <td><code>--base-font-size-sm</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-size-base</code></td>
+                        <td><code>--base-font-size-base</code> (read directly)</td>
                         <td>16px</td>
                         <td><code>--base-font-size-base</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-size-lg</code></td>
+                        <td><code>--base-font-size-lg</code> (read directly)</td>
                         <td>18px</td>
                         <td><code>--base-font-size-lg</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-weight-normal</code></td>
+                        <td><code>--base-font-weight-normal</code> (read directly)</td>
                         <td>400</td>
                         <td><code>--base-font-weight-normal</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-weight-medium</code></td>
+                        <td><code>--base-font-weight-medium</code> (read directly)</td>
                         <td>500</td>
                         <td><code>--base-font-weight-medium</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-font-weight-semibold</code></td>
+                        <td><code>--base-font-weight-semibold</code> (read directly)</td>
                         <td>600</td>
                         <td><code>--base-font-weight-semibold</code></td>
                     </tr>
                     <tr>
-                        <td><code>--ms-line-height-tight</code></td>
+                        <td><code>--base-line-height-tight</code> (read directly)</td>
                         <td>1.25</td>
                         <td><code>--base-line-height-tight</code></td>
                     </tr>

@@ -30,7 +30,8 @@
   border: var(--ms-input-border);
   border-radius: var(--ms-input-border-radius);
   cursor: pointer;
-  transition: border var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: border var(--ms-transition-fast) var(--ms-easing-snappy),
+              box-shadow var(--ms-transition-fast) var(--ms-easing-snappy);
 }
 
 .ms__input-wrapper:hover:not(:focus-within) {
@@ -39,6 +40,7 @@
 
 .ms__input-wrapper:focus-within {
   border: var(--ms-input-border-focus);
+  box-shadow: var(--ms-input-box-shadow-focus);
 }
 
 .ms__input {
