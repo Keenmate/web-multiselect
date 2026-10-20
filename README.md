@@ -18,14 +18,15 @@
 
 `@keenmate/web-multiselect` is a custom element (`<web-multiselect>`) that turns a list of options into a searchable, themeable multi-select dropdown. Framework-agnostic — works in React, Vue, Svelte, Blazor, plain HTML.
 
-Reads `--base-*` variables from the page if [`@keenmate/theme-designer`](https://theme-designer.keenmate.dev) is present, falls back to sensible OS-aware defaults otherwise, and ships with first-class dark-mode and per-instance theming.
+Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.npmjs.com/package/@keenmate/base-css-variables) 2.0 when the page loads them (the shared layer behind pure-admin and the [Theme Designer](https://theme-designer.keenmate.dev)), falls back to sensible OS-aware defaults otherwise, and ships with first-class dark-mode and per-instance theming.
 
 **Headline features:**
 
 - Declarative `<option>` / `<optgroup>` markup — no JavaScript required for simple cases.
 - Virtual scrolling for 10,000+ option datasets (25× faster opening, 99.8% memory reduction).
 - Filter or navigate search modes; async / hybrid search.
-- Five badge display modes (pills, count, compact, partial, none) with positioning on any side.
+- Five badge display modes (badges, count, compact, partial, none) with positioning on any side.
+- Tree mode with cascade / independent checkboxes; phone-friendly fullscreen presentation.
 - Full keyboard navigation, RTL language support, badge tooltips.
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
@@ -154,14 +155,16 @@ Follows the BlissFramework four-layer web-component layout:
 
 | Layer | File | Role |
 |-------|------|------|
-| Element | `src/web-component.ts` | `MultiSelectElement` — custom-element I/O wrapper, `ATTRIBUTE_TABLE`-driven |
-| Logic | `src/multiselect.ts` | `WebMultiSelect<T>` — framework-agnostic core |
-| Service | `src/tooltip.ts`, `src/virtual-scroll.ts` | single-purpose helpers (`Tooltip`, `VirtualScroll`) |
-| Side | `src/types.ts`, `src/logger.ts`, `src/vendor/` | types, logging, vendored deps |
+| Element | `src/web-component.ts` | `MultiSelectElement` — custom-element I/O wrapper, driven by the `INPUTS` table (attributes, properties, callbacks) and the events table |
+| Logic | `src/multiselect.ts` | `WebMultiSelect<T>` — framework-agnostic core (search, selection, keyboard, rendering) |
+| Service | `src/virtual-scroll.ts`, `src/tree/` | `VirtualScroll`; the ltree option model and checkbox cascade for tree mode |
+| Side | `src/types.ts`, `src/option-formats.ts`, `src/converters.ts`, `src/logger.ts`, `src/index.ts` | types, `data-options` parsers, component-local converters, logging shim, package entry |
+
+Positioning (dropdown, popovers, tooltips), attribute parsing and reflection, and the logging engine come from [`@keenmate/web-components-core`](https://www.npmjs.com/package/@keenmate/web-components-core).
 
 Two deviations from the canonical shape, both intentional:
 
-- **`MultiSelectElement extends BaseElement`, not `HTMLElement` directly.** `BaseElement` is a local `const` resolving to `HTMLElement` in the browser and to a stub class under SSR (`typeof HTMLElement === 'undefined'`), so importing the module in Node doesn't throw. A literal `grep "extends HTMLElement"` structure check will not match here by design.
+- **`MultiSelectElement extends BlissElement`, not `HTMLElement` directly.** Core's `BlissElement` resolves to `HTMLElement` in the browser and to a stub class under SSR (`typeof HTMLElement === 'undefined'`), so importing the module in Node doesn't throw. A literal `grep "extends HTMLElement"` structure check will not match here by design.
 - **`src/vite-env.d.ts`** is a standard Vite ambient-types file, not part of the four-layer model.
 
 ## License

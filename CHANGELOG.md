@@ -124,6 +124,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `setItems()` reset the scroll position to 0 a frame after the search had already
   scrolled to the match, so the focused row was never rendered. The scroll to the
   focused row is now re-applied after the reset.
+- **Docs brought in line with the source** (the shipped `docs/*.md`, `THEMING.md`, README).
+  `badges-display-mode` is `badges` (the docs said `pills`, which the attribute rejects); the
+  `actionButtons` "Invert" example threw (it now uses the `ActionContext` argument). The API
+  reference gains ~30 missing attributes, ~15 property-only inputs/callbacks, the `labels`
+  map, the `add` event, `selectedValues` on `select`/`deselect`, and the `refresh` / `search`
+  / `scrollTo*` / `showMessage` / `whenSettled` / `batch` methods. The accessibility guide
+  now reads the remove-button name from `labels.removeItem`, documents Enter as a toggle and
+  the real keyboard / ARIA behaviour, and drops two false form-integration claims. The
+  theming docs drop removed and never-declared variables, fix tooltip / checkbox defaults,
+  and name `@keenmate/base-css-variables` 2.0 as the token layer. The
+  `keep-options-on-search` description (IDE hover help) now matches its behaviour.
 
 ## [2.5.0] - 2026-10-12 [PUBLISHED]
 

@@ -34,7 +34,7 @@ Individual dropdown option items.
 | **Focused** | `--focused` | `--ms-option-bg-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` (read `--base-focused-bg` / `-text-color` / `-outline`, offset follows `--base-outline-width`) |
 | **Matched** | `--matched` | `--ms-option-bg-matched`, `--ms-option-color-matched`, `--ms-option-border-matched` |
 | **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-highlighted-bg` / `-text-color` / `-outline`) |
-| **Disabled** | `--disabled` | `--ms-disabled-opacity` |
+| **Disabled** | `--disabled` | `--ms-disabled-opacity`, `--ms-option-disabled-bg` (reads `--base-disabled-bg`, default `transparent`) |
 | **Focused + Hover** | `--focused:hover` | `--ms-option-bg-focused-hover`, `--ms-option-color-focused-hover` |
 | **Matched + Hover** | `--matched:hover` | `--ms-option-bg-matched-hover`, `--ms-option-color-matched-hover` |
 | **Selected + Hover** | `--selected:hover` | `--ms-option-bg-selected-hover`, `--ms-option-title-color-selected-hover` |
@@ -104,7 +104,7 @@ The component uses `--ms-rem` for proportional scaling: `var(--base-rem, 10px)`,
 | `--ms-rem` | `var(--base-rem, 10px)` | Base unit for all sizing calculations |
 | `--ms-input-height` | `calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))` | Input field height (35px) |
 | `--ms-input-padding-h` | `calc(1.2 * var(--ms-rem))` | Inline padding of the field |
-| `--ms-input-font-size` | `calc(1.4 * var(--ms-rem))` | Input font size (14px) |
+| `--ms-input-font-size` | `calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))` | Input font size (14px) |
 
 **Scale Examples:**
 - `--ms-rem: 8px` → 80% size (compact)
@@ -312,12 +312,12 @@ Font sizes, weights and line heights read the shared `--base-*` scale directly (
 | `--ms-font-family` | Font family (optional; falls back to `--base-font-family`, then the page font) |
 | `--ms-line-height-none` / `-normal` / `-relaxed` | 1 / `--base-line-height-normal` / `--base-line-height-relaxed` |
 
-#### Theme Designer Integration
+#### Base CSS Variables Integration
 
-When using the `@keenmate/theme-designer`, set the `--base-*` CSS variables and they will automatically be applied to the component:
+The component reads the `--base-*` tokens of `@keenmate/base-css-variables` 2.0. Load that layer (or set the `--base-*` variables yourself) and they are applied to the component automatically:
 
 ```css
-/* Set by theme-designer (or manually) */
+/* Set by @keenmate/base-css-variables (or manually) */
 :root {
   --base-font-family: "Inter", system-ui, sans-serif;
   --base-font-size-sm: 1.4; /* unitless: × --base-rem */
@@ -400,7 +400,7 @@ web-multiselect {
   --ms-accent-color: #bb0a30;
   --ms-accent-color-hover: #8b0720;
   --ms-text-color-1: #333333;
-  --ms-text-secondary: #858585;
+  --ms-text-color-3: #858585;
 
   /* Options - IMPORTANT: Set text colors for solid backgrounds */
   --ms-option-bg-selected: #bb0a30;
@@ -426,7 +426,7 @@ web-multiselect {
   --ms-accent-color: #60a5fa;
   --ms-accent-color-hover: #3b82f6;
   --ms-text-color-1: #f3f4f6;
-  --ms-text-secondary: #9ca3af;
+  --ms-text-color-3: #9ca3af;
   --ms-border-color: #374151;
   --ms-primary-bg: #374151; /* hover fill */
 

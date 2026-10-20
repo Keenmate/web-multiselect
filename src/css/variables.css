@@ -673,7 +673,7 @@
   /* Options: center (default), flex-start (top), flex-end (bottom) */
   --ms-inline-align: center;
 
-  /* Individual Badge (--ms-badge-bg / --ms-badge-bg-hover / --ms-badge-bg-active live in the SEMANTIC VARIABLES block above) */
+  /* Individual Badge (the visible fill is --ms-badge-text-bg) */
   --ms-badge-height: calc(2.7 * var(--ms-rem));
   --ms-badge-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-badge-font-weight: var(--base-font-weight-semibold, 600);

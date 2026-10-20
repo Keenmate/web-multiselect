@@ -309,7 +309,7 @@ Perfect for different use cases and space constraints:
 
 ```html
 <!-- Badges mode (default) - Show all selections as removable badges -->
-<web-multiselect badges-display-mode="pills"></web-multiselect>
+<web-multiselect badges-display-mode="badges"></web-multiselect>
 
 <!-- Count mode - Show "X selected" text with clear button -->
 <web-multiselect badges-display-mode="count" show-counter="true"></web-multiselect>
@@ -339,7 +339,7 @@ Perfect for different use cases and space constraints:
 
 **Display mode behavior:**
 
-- **`pills`** — individual removable badges for each selected item. Calls `getBadgeDisplayCallback` for each item.
+- **`badges`** (default) — individual removable badges for each selected item. Calls `getBadgeDisplayCallback` for each item.
 - **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback(count)`.
 - **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback(firstItem)` and `getCounterCallback(count, remainingCount)`.
 - **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback(count, remainingCount)` for badge.
@@ -612,7 +612,7 @@ select.renderSelectedItemContentCallback = (item) => {
 
 **Context object** (`BadgeContentRenderContext` for `renderBadgeContentCallback`):
 
-- `displayMode: BadgesDisplayMode` — current badges display mode (`'pills'`, `'count'`, `'compact'`, `'partial'`, `'none'`).
+- `displayMode: BadgesDisplayMode` — current badges display mode (`'badges'`, `'count'`, `'compact'`, `'partial'`, `'none'`).
 - `isInPopover: boolean` — whether the badge is being rendered in the selected items popover (always false for this callback).
 
 ### Custom group label rendering
@@ -904,8 +904,8 @@ Control checkbox appearance and alignment with CSS variables and attributes:
 **Checkbox alignment (via attribute):**
 
 ```html
-<web-multiselect checkbox-align="top"></web-multiselect>    <!-- Default -->
-<web-multiselect checkbox-align="center"></web-multiselect> <!-- Middle aligned -->
+<web-multiselect checkbox-align="top"></web-multiselect>    <!-- Top aligned -->
+<web-multiselect checkbox-align="center"></web-multiselect> <!-- Default (middle aligned) -->
 <web-multiselect checkbox-align="bottom"></web-multiselect> <!-- Bottom aligned -->
 ```
 
@@ -925,7 +925,7 @@ Control checkbox appearance and alignment with CSS variables and attributes:
 
   /* Fine-tune checkbox positioning */
   web-multiselect {
-    --ms-checkbox-margin-top: 0.5rem;    /* Vertical alignment (default: 0.125rem) */
+    --ms-checkbox-margin-top: 0.5rem;    /* Vertical alignment (default: 0; 0.2 × --ms-rem when top-aligned) */
     --ms-checkbox-margin-right: 0;       /* Right spacing (default: 0) */
     --ms-checkbox-margin-bottom: 0;      /* Bottom spacing (default: 0) */
     --ms-checkbox-margin-left: 0;        /* Left spacing (default: 0) */
@@ -971,12 +971,12 @@ multiselect.renderOptionContentCallback = (item, context) => {
 
 - `--ms-checkbox-size` — checkbox width/height (default: `16px`).
 - `--ms-checkbox-scale` — scale multiplier (default: `1`).
-- `--ms-checkbox-margin-top` — top margin for vertical alignment (default: `0.125rem`).
+- `--ms-checkbox-margin-top` — top margin for vertical alignment (default: `0`; `calc(0.2 * var(--ms-rem))` when `checkbox-align="top"`).
 - `--ms-checkbox-margin-right` — right margin (default: `0`).
 - `--ms-checkbox-margin-bottom` — bottom margin (default: `0`).
 - `--ms-checkbox-margin-left` — left margin (default: `0`).
-- `--ms-checkbox-align` — alignment value (default: `flex-start`).
-- `--ms-option-gap` — gap between checkbox and content (default: `0.5rem`).
+- `--ms-checkbox-align` — alignment value (default: `center`; `checkbox-align` sets it to `flex-start` / `flex-end`).
+- `--ms-option-gap` — gap between checkbox and content (default: `calc(0.8 * var(--ms-rem))`).
 
 > **Note:** Horizontal and bottom margins default to `0` since spacing is handled by flexbox gap. Override for custom layouts.
 
@@ -1273,7 +1273,7 @@ The `defer` attribute holds the first render until you say go:
 const el = document.getElementById('skills');
 
 el.options = await loadSkills();
-el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+el.customStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
 
 el.ready();          // builds once — the styled badges appear in one shot, no flash
@@ -1306,7 +1306,7 @@ Hooks.MultiSelect = {
   mounted() {
     const el = this.el;
     el.options = JSON.parse(el.dataset.options);
-    el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+    el.customStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
     el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
     el.ready();                // build once, flash-free
   },

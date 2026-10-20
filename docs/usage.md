@@ -123,22 +123,36 @@ multiselect.setSelected(['js', 'ts']);
 | `no-data-placeholder` | `string` | - | Opt-in placeholder shown when the option list is empty, so users see there's no data without opening. Highest priority when the list is empty. Useful for cascade multiselects (a child whose parent isn't resolved yet) |
 | `search-hint` | `string` | - | Hint text shown above input when focused |
 | `allow-groups` | `boolean` | `true` | Enable option grouping |
+| `group-select-mode` | `'none' \| 'cascade'` | `'none'` | Group-header selection in a flat (non-tree) grouped multi-select list. `none`: headers are inert labels. `cascade`: each header shows a tristate checkbox that checks/unchecks all of the group's currently-visible members (the group itself is never a selected value). No effect in tree mode (use `checkbox-mode`) or single-select |
 | `show-checkboxes` | `boolean` | `true` | Show checkboxes next to options |
+| `checkbox-align` | `'top' \| 'center' \| 'bottom'` | `'center'` | Vertical alignment of an option's checkbox |
+| `reserve-icon-slot` | `boolean` | `false` | Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows) |
 | `close-on-select` | `boolean` | `false` | Close dropdown after selecting |
 | `dropdown-min-width` | `string` | - | Min width for dropdown (e.g., `'20rem'`) |
-| `badges-display-mode` | `'pills' \| 'count' \| 'compact' \| 'partial' \| 'none'` | `'pills'` | How to display selected items. `compact`: first item + count. `none`: no display |
+| `dropdown-max-width` | `string` | - | Max width for dropdown (any CSS length) |
+| `dropdown-width` | `string` | - | Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable |
+| `badges-display-mode` | `'badges' \| 'count' \| 'compact' \| 'partial' \| 'none'` | `'badges'` | How to display selected items. `badges`: one pill per item. `compact`: first item + count. `none`: no display |
 | `badges-threshold` | `number` | - | Auto-switch mode when exceeded (see `badges-threshold-mode`) |
 | `badges-threshold-mode` | `'count' \| 'partial'` | `'count'` | Mode after threshold: `count` shows badge, `partial` shows limited badges + more badge |
 | `badges-max-visible` | `number` | `3` | Max badges shown in partial mode |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
+| `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
+| `badge-height` | `number` | `36` | Fixed badge height in px used for layout/virtualization |
+| `show-badge-full-title` | `boolean` | `false` | Show the full title (`full-title-member` / `getFullTitleCallback`) on badges instead of the short label |
+| `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `getValue()`, `getSelected()` and form output keep pick order; the dropdown is never reordered |
+| `selected-order-member` | `string` | - | Property used as the sort key when `selected-order="member"`. Numeric keys sort numerically. Overridden by `getSelectedOrderCallback` |
+| `enable-selected-popover` | `boolean` | `true` | Allow the selected-items popover to open (from the count/compact/"+N more" badge or the in-input counter). Turn off when you render your own selection UI |
+| `selected-popover-title` | `string` | `'Selected Items ({count})'` | Header text of the selected-items popover. `{count}` is replaced with the selection count |
+| `selected-popover-width` | `string` | - | Selected-items popover width; mirrored to the `--ms-selected-popover-width` CSS variable |
 | `show-counter` | `boolean` | `false` | Show `[3]` badge next to toggle icon |
 | `show-clear` | `boolean` | `false` | Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses |
 | `enable-badge-tooltips` | `boolean` | `false` | Enable tooltips on selected badges |
-| `badge-tooltip-placement` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Tooltip placement relative to badge |
+| `badge-tooltip-placement` | floating-ui placement: `'top' \| 'top-start' \| 'top-end' \| 'bottom' \| 'bottom-start' \| 'bottom-end' \| 'left' \| 'left-start' \| 'left-end' \| 'right' \| 'right-start' \| 'right-end'` | `'top'` | Tooltip placement relative to badge |
 | `badge-tooltip-delay` | `number` | `100` | Delay in ms before showing tooltip |
 | `badge-tooltip-offset` | `number` | `8` | Distance in pixels between badge and tooltip |
+| `remove-button-tooltip-text` | `string` | `'Remove {0}'` | Hover-tooltip text for a badge's remove (×) button; `{0}` is replaced with the item's label. Shown only with `enable-badge-tooltips`. `getRemoveButtonTooltipCallback` wins. (The button's `aria-label` comes from `labels.removeItem`, not this) |
 | `enable-option-tooltips` | `boolean` | `false` | Enable hover tooltips on dropdown options |
-| `option-tooltip-placement` | `'top' \| 'top-start' \| … \| 'left' \| 'right'` | `'top-start'` | Option tooltip placement (anchored to the row's start edge by default; use `left`/`right` for the start/end side on a narrow control) |
+| `option-tooltip-placement` | floating-ui placement (same 12 values as `badge-tooltip-placement`) | `'top-start'` | Option tooltip placement (anchored to the row's start edge by default; use `left`/`right` for the start/end side on a narrow control) |
 | `option-tooltip-delay` | `number` | inherits `badge-tooltip-delay`, then `100` | Delay in ms before showing an option tooltip |
 | `option-tooltip-offset` | `number` | inherits `badge-tooltip-offset`, then `8` | Distance in pixels between row and option tooltip |
 | `option-tooltip-follow-cursor` | `boolean` | `false` | Anchor the option tooltip to the mouse pointer and follow it across the row (best for full-width rows) |
@@ -159,7 +173,11 @@ multiselect.setSelected(['js', 'ts']);
 | `search-mode` | `'filter' \| 'navigate'` | `'filter'` | Search behavior: `filter` hides non-matches, `navigate` jumps to matches |
 | `overlay-group` | `string` | — | Scope the "one overlay open at a time" coordination to a named group. Overlays (multiselects, datepickers, external popovers) sharing a group dismiss each other when one opens; different groups are independent. Unset = the default (ungrouped) group |
 | `show-search-mode-toggle` | `boolean` | `false` | In the phone fullscreen overlay, show a leading icon in the search bar that flips `search-mode` between `filter` and `navigate` live (no reopen). Fullscreen-only |
-| `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list |
+| `mobile-presentation` | `'auto' \| 'floating' \| 'fullscreen'` | `'auto'` | How the open dropdown is presented on phones. `auto`: floating panel on desktop/tablet, full-screen overlay on phone-sized touch devices. `floating`: anchored panel everywhere. `fullscreen`: full-screen overlay on any device (handy for previews/testing) |
+| `fullscreen-autofocus` | `boolean` | `false` | In the phone fullscreen overlay, focus the search field on open (pops the soft keyboard immediately). Default: the sheet opens with the list visible and the keyboard closed. No effect in the floating presentation |
+| `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list (fires the `add` event) |
+| `add-new-text` | `string` | `'Add "{value}"'` | Template for the "add new" prompt shown in place of the empty message when a search has no matches. `{value}` is the typed text. `getAddNewTextCallback` wins |
+| `add-new-pending-text` | `string` | `'Adding "{value}"…'` | Template for the pending prompt (spinner + text) shown while an async `addNewCallback` runs. `{value}` is the typed text |
 | `value-member` | `string` | - | Property name for value/ID extraction from custom objects |
 | `display-value-member` | `string` | - | Property name for display text extraction from custom objects |
 | `search-value-member` | `string` | - | Property name for search text extraction from custom objects |
@@ -167,6 +185,15 @@ multiselect.setSelected(['js', 'ts']);
 | `subtitle-member` | `string` | - | Property name for subtitle extraction from custom objects |
 | `group-member` | `string` | - | Property name for group extraction from custom objects |
 | `disabled-member` | `string` | - | Property name for disabled state extraction from custom objects |
+| `full-title-member` | `string` | - | Property name for a full/long title (shown on badges with `show-badge-full-title`) |
+| `path-member` | `string` | - | Tree mode: property holding a node's materialized path (e.g. `1.1.2`). Setting a path source enables tree mode |
+| `parent-path-member` | `string` | - | Tree mode: property holding a node's parent path |
+| `level-member` | `string` | - | Tree mode: property holding a node's depth level |
+| `has-children-member` | `string` | - | Tree mode: property flagging that a node has children |
+| `is-selectable-member` | `string` | - | Tree mode: property marking whether a node can be selected |
+| `tree-path-separator` | `string` | `'.'` | Tree mode: separator between segments of a materialized path |
+| `checkbox-mode` | `'independent' \| 'cascade'` | `'cascade'` | Tree checkbox interaction. `cascade`: checks a node's whole subtree, tristate boxes on branches. `independent`: toggles only the clicked node. Tree + multiple only |
+| `cascade-select-policy` | `'rolled-up' \| 'leaves' \| 'all'` | `'rolled-up'` | In `cascade` mode, which values a selection emits (badges / form / `change`). `rolled-up`: a fully-selected subtree collapses to its root. `leaves`: only checked leaves. `all`: every fully-checked node |
 | `name` | `string` | - | HTML form field name for form integration (creates hidden input) |
 | `value-format` | `'json' \| 'csv' \| 'array'` | `'json'` | Format for form value serialization |
 | `initial-values` | `string` (JSON array or CSV) | - | Pre-selected values. Accepts `["js","ts"]` or a bare `js,ts` |
@@ -174,10 +201,13 @@ multiselect.setSelected(['js', 'ts']);
 | `data-options-format` | `'json' \| 'csv' \| 'plain'` | `'json'` | How to parse `data-options`: `json` (array of objects or `[value,label]` tuples), `csv` (first row = header → object per row, keyed by the header cells; map columns via `*-member`), or `plain` (bare values → `value=label` options) |
 | `data-options-splitter` | `string` | `','` | Field/cell delimiter for the `csv` and `plain` formats (e.g. `;`, `\|`). Escapes `\t` `\n` `\r` are honoured (`"\t"` → TSV). Ignored for `json` |
 | `data-options-row-splitter` | `string` | newline | Row/record delimiter for the `csv` and `plain` formats (e.g. `;` for single-line data). Escapes honoured. Ignored for `json` |
+| `prune-missing-selection` | `boolean` | `false` | When the option set is replaced (`options` / `data-options`), silently drop selected values whose option is no longer present. Default keeps them (safe for search/paged lists) |
 | `enable-virtual-scroll` | `boolean` | `false` | Enable virtual scrolling for large datasets |
 | `virtual-scroll-threshold` | `number` | `100` | Minimum items before virtual scroll activates |
 | `option-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
 | `virtual-scroll-buffer` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
+| `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `customStylesCallback`, which wins when both are set |
+| `show-debug-info` | `boolean` | `false` | **Deprecated** — use per-instance logging (`el.enableLogging()`) instead. Renders an in-component debug panel |
 
 ## Properties
 
@@ -207,19 +237,20 @@ multiselect.beforeSearchCallback = (searchTerm) => {
 };
 
 // Interceptors — veto a selection/deselection before it happens.
-// Return false to block; return true/undefined to allow. Silent (no event).
+// Return false to block silently; return a string to block AND show it as a
+// warning message (see showMessage()); return true/undefined to allow. No event fires on a veto.
 // Receives the option being toggled and the current selection (before the change).
 // Note: programmatic setSelected() and the Select-All / Clear-All buttons bypass these.
 multiselect.beforeSelectCallback = (option, selectedOptions) => {
   // Example: don't allow selecting "item1" while "item2" is already selected
   if (option.value === 'item1' && selectedOptions.some(o => o.value === 'item2')) {
-    return false; // blocked
+    return false; // blocked silently
   }
 };
 
 multiselect.beforeDeselectCallback = (option, selectedOptions) => {
   // Example: "item1" is required — can't be removed once chosen
-  if (option.value === 'item1') return false;
+  if (option.value === 'item1') return 'Item 1 is required'; // blocked + message shown
 };
 
 // Keyboard hook — runs on every keydown BEFORE the built-in handling.
@@ -240,9 +271,17 @@ multiselect.keydownCallback = (ctx) => {
   }
   // ctx also exposes: event, key, isOpen, presentation, searchTerm,
   // focusedIndex, focusedOption, filteredOptions, selectedValues.
-  // controller: focusNext/Previous/First/Last, focusPageUp/Down,
-  // focusNextMatch/PreviousMatch, focusIndex, toggleFocused, toggleValue,
-  // selectValue, deselectValue, open, close, setSearch, clearSearch.
+  // controller (keyboard-only): focusNext/Previous/First/Last, focusPageUp/Down,
+  // focusNextMatch/PreviousMatch, focusIndex, toggleFocused, selectValue,
+  // deselectValue (setSearch is a deprecated alias of search).
+  // controller (shared, same as ActionContext.controller): getSelected, getValue,
+  // getOptions, setSelected(values, { notify }), selectAll, clearAll, toggleValue,
+  // open, close, toggle, search, clearSearch, scrollToValue/Group/Index,
+  // showMessage, hideMessage.
+};
+
+multiselect.onAdd = (e) => {
+  console.log('Add requested:', e.detail.value, e.detail.option);
 };
 
 // Event handler properties. Since v2 these are real listeners: each receives
@@ -276,14 +315,19 @@ multiselect.getOptionTooltipCallback = (item) => {
   return `${item.label} — ${item.description}`;
 };
 
-// Action buttons (Select All, Clear All, custom actions)
+// Action buttons (Select All, Clear All, custom actions).
+// Every button callback receives (picker, ctx): `picker` is the internal engine
+// instance (untyped); `ctx` is a typed ActionContext — selectedValues,
+// selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm,
+// presentation, controller (see the keydown controller list) and element (the host).
+// Prefer `ctx`. Optional `row` (1-based) stacks buttons into multiple rows.
 multiselect.actionButtons = [
   {
     action: 'select-all',
     text: 'Select All',
     tooltip: 'Select all items',
     cssClass: 'my-custom-class',
-    getIsVisibleCallback: (multiselect) => multiselect.getSelected().length < 5  // Hide if 5+ selected
+    getIsVisibleCallback: (_, ctx) => ctx.selectedCount < 5  // Hide if 5+ selected
   },
   {
     action: 'clear-all',
@@ -296,17 +340,17 @@ multiselect.actionButtons = [
     action: 'custom',
     text: 'Invert',
     tooltip: 'Invert selection',
-    onClick: (multiselect) => {
-      // Custom action - invert selection
-      const allValues = multiselect.options.map(opt => opt.value);
-      const selectedValues = multiselect.getValue();
-      const inverted = allValues.filter(v => !selectedValues.includes(v));
-      multiselect.setSelected(inverted);
+    onClick: (_, ctx) => {
+      // Custom action - invert selection (assumes options with a `value` field)
+      const allValues = ctx.options.map(opt => opt.value);
+      const inverted = allValues.filter(v => !ctx.selectedValues.includes(v));
+      ctx.controller.setSelected(inverted, { notify: true }); // emit one `change`
     },
     // Dynamic callbacks (take priority over static properties)
-    getIsDisabledCallback: (multiselect) => multiselect.getSelected().length === 0,
-    getTextCallback: (multiselect) => multiselect.getSelected().length > 0 ? 'Invert' : 'Select Items First',
-    getClassCallback: (multiselect) => multiselect.getSelected().length > 0 ? 'active' : 'inactive'
+    getIsDisabledCallback: (_, ctx) => ctx.selectedCount === 0,
+    getTextCallback: (_, ctx) => ctx.selectedCount > 0 ? 'Invert' : 'Select Items First',
+    getClassCallback: (_, ctx) => ctx.selectedCount > 0 ? 'active' : 'inactive',
+    getTooltipCallback: (_, ctx) => `Invert ${ctx.selectedCount} of ${ctx.optionCount}`
   }
 ];
 
@@ -334,10 +378,33 @@ multiselect.getIconCallback = (item) => item.icon || '📄';
 multiselect.getSubtitleCallback = (item) => `${item.price} - ${item.stock} in stock`;
 multiselect.getGroupCallback = (item) => item.category;
 multiselect.getDisabledCallback = (item) => item.stock === 0;
+multiselect.getFullTitleCallback = (item) => `${item.name} (${item.email})`; // badges, with show-badge-full-title
+
+// Tree of options (alternative to path-member etc.)
+multiselect.getPathCallback = (node) => node.path;            // e.g. "1.2.3"; enables tree mode
+multiselect.getIsSelectableCallback = (node) => !node.isFolder;
+multiselect.isTreeEnabled = true; // tristate: true / false force tree mode; null (default) = auto when a path source is set
+
+// Selected-items display order (with selected-order="member" / "custom")
+multiselect.getSelectedOrderCallback = (item) => item.priority;            // sort key
+multiselect.selectedOrderCompareCallback = (a, b) => a.rank - b.rank;      // comparator
+
+// Extra CSS classes
+multiselect.getBadgeClassCallback = (item) => item.isVip ? 'vip' : '';                // badges (string | string[])
+multiselect.getSelectedItemClassCallback = (item) => item.isVip ? ['vip', 'bold'] : []; // popover items (falls back to getBadgeClassCallback)
+
+// Count chip shared by the in-input counter and group-header counts (default `[selected]`)
+multiselect.getCountLabelCallback = (selected, total) => `${selected}/${total}`;
+
+// Badge remove-button hover tooltip (shown with enable-badge-tooltips; the
+// button's aria-label comes from labels.removeItem instead)
+multiselect.getRemoveButtonTooltipCallback = (item) => `Unassign ${item.name}`;
 
 // Custom rendering - Full HTML control
-multiselect.renderGroupLabelContentCallback = (groupName) => {
-  return `<strong>📦 ${groupName.toUpperCase()}</strong>`;
+multiselect.renderGroupLabelContentCallback = (groupName, context) => {
+  // context: groupName, members, selectedMembers, selectedCount, memberCount,
+  // selectableCount, checkState, plus presentation / isFullscreen / isModal
+  return `<strong>📦 ${groupName.toUpperCase()}</strong> ${context.selectedCount}/${context.memberCount}`;
 };
 
 multiselect.renderOptionContentCallback = (item, context) => {
@@ -350,10 +417,26 @@ multiselect.renderBadgeContentCallback = (item, context) => {
     : `${item.icon} ${item.name}`;
 };
 
-multiselect.renderSelectedContentCallback = (item) => {
-  // Customize selected item text in single-select mode (plain text only)
+// Replace the WHOLE badge (not just its content). Wrapped in
+// .ms__badge.ms__badge--custom; an inner [data-action="remove"] removes the item.
+// Return null to fall back to the default pill for that item.
+multiselect.renderBadgeCallback = (item, context) => {
+  return `<span class="my-chip">${item.name} <button data-action="remove">×</button></span>`;
+};
+
+// One selected item inside the selected-items popover (context.isInPopover === true)
+multiselect.renderSelectedItemContentCallback = (item, context) => {
+  return `${item.name} <small>${item.email}</small>`;
+};
+
+multiselect.renderSelectedContentCallback = (item, context) => {
+  // Customize selected item text in single-select mode (plain text only).
+  // context: presentation / isFullscreen / isModal
   return item.firstName;
 };
+
+// Inject CSS into the Shadow DOM (wins over the custom-styles attribute)
+multiselect.customStylesCallback = () => `.ms__badge { border-radius: 0; }`;
 
 // Form integration
 multiselect.name = 'selected_items';
@@ -364,7 +447,9 @@ multiselect.getValueFormatCallback = (values) => values.join('|'); // Custom for
 const selectedValue = multiselect.selectedValue; // string | number | array | null
 const selectedItem = multiselect.selectedItem;   // First selected item object
 
-// Add new option callback
+// Add new option callback (requires allow-add-new). May be async; return
+// null/undefined to cancel (no add, no `add` event). Omit it entirely to handle
+// creation yourself in the `add` event.
 multiselect.addNewCallback = async (value) => {
   const newOption = await fetch('/api/options', {
     method: 'POST',
@@ -372,7 +457,31 @@ multiselect.addNewCallback = async (value) => {
   }).then(r => r.json());
   return newOption;
 };
+
+// "Add new" prompt label (plain text; wins over add-new-text)
+multiselect.getAddNewTextCallback = (value) => `Create "${value}"`;
+
+// i18n of ARIA labels / short UI strings — see "Labels (i18n)" below
+multiselect.labels = { removeItem: 'Odebrat {item}', close: 'Zavřít' };
 ```
+
+### Labels (i18n)
+
+`labels` is a property-only, partial `MultiSelectLabels` map. Any key you leave unset falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader (`aria-label`) strings; visible text (placeholders, empty/loading messages, counter, popover title) has its own attributes.
+
+| Key | Default | Used for |
+|-----|---------|----------|
+| `close` | `Close` | Selected-items popover / fullscreen close button |
+| `clearSelection` | `Clear selection` | Inline ✕ clear button (`show-clear`) |
+| `clearAllSelections` | `Clear all selections` | Clear (×) button on the count / compact badge |
+| `clearSearch` | `Clear search` | Fullscreen search clear (✕) |
+| `showFullLabel` | `Show full label` | Option info button that reveals a clipped label (fullscreen) |
+| `removeItem` | `Remove {item}` | Badge remove (×) button; `{item}` = the item's label |
+| `removeHiddenItems` | `Remove {count} hidden items` | "+N more" badge remove (×); `{count}` = hidden count |
+| `groupSelectedLabel` | `{count} selected` | Group-header selected-count chip |
+| `andMore` | `…and {count} more` | Counter tooltip overflow tail (beyond 12 items) |
+| `prevMatch` | `Previous match` | Fullscreen navigate-mode "previous match" button |
+| `nextMatch` | `Next match` | Fullscreen navigate-mode "next match" button |
 
 ### Reading back state after a write (v2)
 
@@ -391,12 +500,23 @@ You do **not** need to await between a property write and an imperative method �
 | Method | Description |
 |--------|-------------|
 | `getSelected()` | Get currently selected options as array of option objects |
-| `setSelected(values: (string \| number)[])` | Set selected values by ID/value |
+| `setSelected(values: (string \| number)[], opts?: { notify?: boolean })` | Set selected values by ID/value. Silent by default; pass `{ notify: true }` to emit one aggregate `change` |
 | `getValue()` | Get selected value(s) — returns single value in single-select mode, array in multi-select mode |
 | `open()` | Open the dropdown |
 | `close()` | Close the dropdown |
 | `toggle()` | Toggle the dropdown open/closed |
 | `isOpen` | Property: `true` when the dropdown is open. Assigning `true`/`false` opens/closes it |
+| `refresh()` | Re-render from the current option set without re-ingesting it — use after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads. Silent (no events). Assign `options` instead when the set itself changed |
+| `search(term: string)` | Set the search text and filter as if typed (runs `beforeSearchCallback` / `min-search-length` / `searchCallback`). Does not open the dropdown. `''` clears |
+| `clearSearch()` | Clear the search text and restore the full list (selection untouched) |
+| `searchText` | Property (read-only): the current search text (`''` when empty) |
+| `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `boolean` (`false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
+| `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Returns `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) — call `clearSearch()` first |
+| `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Returns `false` in tree mode or if the group is empty |
+| `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `variant` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `duration` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
+| `hideMessage()` | Dismiss the message shown by `showMessage()` |
+| `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered — see below |
+| `batch(fn: () => void)` | Run `fn` (e.g. several `setAttribute` calls) and apply the resulting changes as one update. Flushes synchronously |
 | `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `searchPlaceholder`) or their kebab attribute (`search-placeholder`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
 | `ready()` | Release the `defer` render gate: build the picker once with everything wired while deferred (flushes pending property writes first). No-op if not deferred or already built. Latched. Fires the `ready` event |
 | `isReady` | Property (read-only): `true` once the picker has been built (the `ready` event has fired). `false` while a `defer` gate is still held. Reflected as the `is-ready` attribute |
@@ -406,9 +526,10 @@ You do **not** need to await between a property write and an imperative method �
 
 | Event | Detail | Description |
 |-------|--------|-------------|
-| `select` | `{ option, selectedOptions }` | Fired when an option is selected |
-| `deselect` | `{ option, selectedOptions }` | Fired when an option is deselected |
+| `select` | `{ option, selectedOptions, selectedValues }` | Fired when an option is selected |
+| `deselect` | `{ option, selectedOptions, selectedValues }` | Fired when an option is deselected |
 | `change` | `{ selectedOptions, selectedValues }` | Fired when selection changes |
+| `add` | `{ value, option?, selectedOptions, selectedValues }` | Fired when the user chooses to create a new option from the typed text (the "add new" prompt or Enter) — requires `allow-add-new`. `value` is the typed text; `option` is the created item when `addNewCallback` returned one. Not fired if `addNewCallback` returns `null`/`undefined` |
 | `ready` | — | Fired once, right after the first build — synchronously during upgrade for a normal element, or when the `defer` gate is released for a deferred one. Bubbles + composed |
 
 ## Option structure

@@ -6,14 +6,17 @@ This component is designed to be navigable from the keyboard alone and to work w
 
 | Key | Action |
 |-----|--------|
-| **↑ / ↓** | Navigate up/down through options |
-| **Ctrl + ↑ / Ctrl + ↓** | Jump between matched items (navigate mode only) |
+| **Enter / ↓** (while closed) | Open the dropdown |
+| **↑ / ↓** | Navigate up/down through options. When the "add new" prompt is shown (no matches, `allow-add-new`), highlights it |
+| **Ctrl + ↑ / Ctrl + ↓** (Cmd on macOS) | Jump between matched items (navigate mode only) |
 | **Page Up / Page Down** | Move focus by 10 options at a time |
-| **Home / End** | Jump to first / last option |
-| **Enter** | Select focused option (or add new entry when `allow-add-new="true"` and the search has text) |
+| **Home / End** | Jump to first / last option. Caret-aware: while the search box has text, Home/End first move the text caret and only jump in the list once the caret is already at that end |
+| **Enter** | Toggle the focused option (selects it, or deselects it if already selected). With no focused option, `allow-add-new="true"`, no matches and search text: add the typed entry |
 | **Escape** | Close popover → clear search → close dropdown (priority order) |
 | **Tab** | Close dropdown and move to next field |
-| **Type** | Filter options by search term |
+| **Type** | `search-mode="filter"` (default): filter options by the search term. `search-mode="navigate"`: keep all options and jump to matches. With `enable-search="false"` printable keys are ignored |
+
+Any key can be intercepted or overridden with `keydownCallback`, which runs before the built-in handling — see [usage.md → Properties](./usage.md#properties).
 
 > 💡 To surface these shortcuts to your users, set the `search-hint` attribute — the hint floats above the input when focused. Example:
 >
@@ -26,44 +29,58 @@ This component is designed to be navigable from the keyboard alone and to work w
 
 ## ARIA labels
 
-The component ships labels on every interactive control:
+The component ships an `aria-label` on every icon-only control. All of them are translatable through the `labels` property (see [Translating labels](#translating-labels)); `{item}` / `{count}` placeholders are interpolated.
 
-| Control | Label | Source |
-|---------|-------|--------|
-| Per-badge remove button | `Remove {item display value}` | `getRemoveButtonTooltipCallback` or `removeButtonTooltipText` (with `{0}` placeholder); default `"Remove {name}"` |
-| Hidden-items remove badge (partial mode "+N more") | `Remove {N} hidden items` | Built-in |
-| Clear-all badge (count mode) | `Clear all selections` | Built-in |
-| Selected-items popover close | `Close` | Built-in |
+| Control | Default label | `labels` key |
+|---------|---------------|--------------|
+| Per-badge remove button | `Remove {item}` | `removeItem` |
+| Hidden-items remove badge (partial mode "+N more") | `Remove {count} hidden items` | `removeHiddenItems` |
+| Clear-all button on the count / compact badge | `Clear all selections` | `clearAllSelections` |
+| Inline ✕ clear button (`show-clear`) | `Clear selection` | `clearSelection` |
+| Selected-items popover close / fullscreen close | `Close` | `close` |
+| Fullscreen search clear (✕) | `Clear search` | `clearSearch` |
+| Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `prevMatch` / `nextMatch` |
+| Option info button revealing a clipped label (fullscreen) | `Show full label` | `showFullLabel` |
+| Group-header selected-count chip | `{count} selected` | `groupSelectedLabel` |
+| Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `andMore` |
+| Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | — not yet translatable |
 
-Custom remove-button labels via the `getRemoveButtonTooltipCallback`:
+> **Tooltip vs. accessible name.** The badge remove button's *hover tooltip* is configured separately — via `getRemoveButtonTooltipCallback` or the `remove-button-tooltip-text` attribute (`{0}` = item name), shown only with `enable-badge-tooltips`. Those do **not** change the button's `aria-label`; use `labels.removeItem` for that.
+
+### Translating labels
+
+Pass a partial map to the `labels` property; unset keys keep their English defaults:
 
 ```javascript
-multiselect.getRemoveButtonTooltipCallback = (option) => {
-  return `Unassign ${option.name} from this task`;
+multiselect.labels = {
+  removeItem: 'Odebrat {item}',
+  removeHiddenItems: 'Odebrat {count} skrytých položek',
+  clearAllSelections: 'Zrušit výběr',
+  close: 'Zavřít',
 };
 ```
 
-Or via attribute, with `{0}` as the item name placeholder:
+All keys: `close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch` (defaults in the table above and in [usage.md → Labels (i18n)](./usage.md#labels-i18n)).
 
-```html
-<web-multiselect remove-button-tooltip-text="Unassign {0}"></web-multiselect>
-```
+## Other ARIA semantics
+
+- **Messages** (`showMessage()`, or a `beforeSelectCallback` / `beforeDeselectCallback` returning a string) are live regions: `role="status"` + `aria-live="polite"` for `info` / `success`, `role="alert"` + `aria-live="assertive"` for `warning` / `error`.
+- **Tristate checkboxes** (tree `checkbox-mode="cascade"` branches, `group-select-mode="cascade"` headers) expose the partial state as `aria-checked="mixed"`.
+- **"Add new" prompt** is `role="button"`; while an async `addNewCallback` runs, the pending prompt carries `aria-busy="true"`.
+- **Fullscreen search-mode toggle** exposes the current mode with `aria-pressed` (`true` = navigate). Its `aria-label` is English-only for now.
+- Decorative icons (empty icon gutters, spinners, add-new icon) are `aria-hidden="true"`.
 
 ## Focus & input behavior
 
-- Opening the dropdown moves DOM focus to the search input.
+- The dropdown opens when the input gains focus (or on click / Enter / ↓); DOM focus stays in the input. In the phone fullscreen overlay the search field is focused on open only with `fullscreen-autofocus`.
 - Arrow-key navigation moves a *visual* focus indicator through options without moving DOM focus — the search input stays focused so typing continues to filter.
 - **Escape** behaves in priority order: close the selected-items popover (if open) → clear the search text (if any) → close the dropdown.
 - **Tab** closes the dropdown and moves DOM focus to the next focusable element in the page, matching native `<select>` semantics.
-- Disabled options are skipped during keyboard navigation.
+- In flat lists, disabled options can receive the keyboard focus indicator but cannot be toggled (Enter and click are ignored on them). In tree mode, non-selectable nodes (`is-selectable-member` / `getIsSelectableCallback`) are skipped during keyboard navigation.
 
 ## Form integration & screen readers
 
-When the `name` attribute is set, the component creates hidden inputs in the **light DOM** (outside the shadow root) for form submission. This means:
-
-- Standard `<label for="…">` linking to a wrapping `<form>` or sibling label works as expected.
-- Form validation events (`invalid`, `change`) propagate to the host element.
-- Screen readers that announce form controls will see the hidden inputs.
+When the `name` attribute is set, the component creates `type="hidden"` inputs in the **light DOM** (outside the shadow root) for form submission, and the element is form-associated (`form.reset()` clears the selection). Hidden inputs are not exposed to assistive technology, so give the control an accessible name yourself.
 
 For best results, wrap the component with a `<label>` so the label's text becomes the accessible name:
 

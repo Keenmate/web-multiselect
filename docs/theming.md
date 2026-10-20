@@ -2,7 +2,7 @@
 
 `@keenmate/web-multiselect` is styled entirely through CSS custom properties. The component uses Shadow DOM for encapsulation, but every visible color, size, and effect is exposed as a `--ms-*` variable that you can override from the light DOM.
 
-For interactive theme exploration, use the [Keenmate Theme Designer](https://theme-designer.keenmate.dev).
+The `--ms-*` variables default to the shared `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.npmjs.com/package/@keenmate/base-css-variables) 2.0 when that layer is on the page, and fall back to built-in OS-aware defaults when it isn't. For interactive exploration of `--base-*` values, you can use the [Keenmate Theme Designer](https://theme-designer.keenmate.dev).
 
 ## Sizing
 
@@ -41,21 +41,12 @@ Override individual sizing variables for specific adjustments:
 - `--ms-input-font-size` — input font size
 - `--ms-input-padding-h` — inline padding of the field
 - `--ms-badge-height` — badge height
-- `--ms-option-height` — option height in dropdown
+- `--ms-option-min-height` — minimum row height for regular (non-virtual) options (default: `auto`, content-driven)
+- `option-height` attribute — fixed row height in px for virtual-scroll rows (default: `50`). The component writes it to `--ms-option-height` as an inline style, so set the attribute rather than the variable.
 
-**Input size variants:**
+**Input height:**
 
-Five size variants for consistent input sizing across Keenmate components:
-
-| Size | Variable | Height | Base variable |
-|------|----------|--------|---------------|
-| XS | `--ms-input-size-xs-height` | 31px | `--base-input-size-xs-height` |
-| SM | `--ms-input-size-sm-height` | 33px | `--base-input-size-sm-height` |
-| MD | `--ms-input-size-md-height` | 35px | `--base-input-size-md-height` |
-| LG | `--ms-input-size-lg-height` | 38px | `--base-input-size-lg-height` |
-| XL | `--ms-input-size-xl-height` | 41px | `--base-input-size-xl-height` |
-
-Heights reference `--base-input-size-*-height` from the [Theme Designer](https://theme-designer.keenmate.dev), ensuring consistent input heights across all Keenmate components.
+`--ms-input-height` reads the shared `--base-input-size-md-height` from `@keenmate/base-css-variables`: `calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))`, so 35px by default. Setting the base variable keeps input heights consistent across all Keenmate components.
 
 ```css
 /* Set consistent input heights across all components */
@@ -64,9 +55,11 @@ Heights reference `--base-input-size-*-height` from the [Theme Designer](https:/
 }
 ```
 
-## Theme Designer integration
+## Base CSS variables integration
 
-The easiest way to customize the appearance of this component is the **Keenmate Theme Designer** at [theme-designer.keenmate.dev](https://theme-designer.keenmate.dev).
+The component reads the token names of **`@keenmate/base-css-variables` 2.0** (`--base-primary-color`, `--base-on-primary-text-color`, `--base-input-text-color`, `--base-highlighted-*`, `--base-focused-*`, …). Load that layer, or define the `--base-*` tokens yourself, and every Keenmate component on the page follows the same theme.
+
+The **Keenmate Theme Designer** at [theme-designer.keenmate.dev](https://theme-designer.keenmate.dev) is an optional tool for exploring and generating `--base-*` values:
 
 1. **Choose 3 base colors** — background, text, and accent.
 2. **Preview changes live** — see your theme applied instantly.
@@ -82,7 +75,7 @@ Keenmate components support a **two-layer theming architecture**:
 ```css
 :root {
   --ms-accent-color: #your-brand-color;
-  --ms-primary-bg: #your-background;
+  --ms-primary-bg: #your-hover-fill;
   --ms-text-color-1: #your-text-color;
 }
 ```
@@ -120,7 +113,7 @@ All Keenmate components follow a consistent naming convention for **Tier 1 varia
 | Purpose | web-multiselect | web-daterangepicker |
 |---------|-----------------|---------------------|
 | Brand color | `--ms-accent-color` | `--drp-accent-color` |
-| Background | `--ms-primary-bg` | `--drp-primary-bg` |
+| Hover fill | `--ms-primary-bg` | `--drp-primary-bg` |
 | Text color | `--ms-text-color-1` | `--drp-text-primary` |
 | Text on accent | `--ms-text-color-on-accent` | `--drp-text-on-accent` |
 | Border color | `--ms-border-color` | `--drp-border-color` |
@@ -133,8 +126,9 @@ This package exports a `component-variables.manifest.json` file that documents a
 
 ```javascript
 import manifest from '@keenmate/web-multiselect/component-variables.manifest.json';
-// manifest.baseVariables - list of --base-* variables the component responds to
-// manifest.componentVariables - list of --ms-* component-specific variables
+// manifest.baseVariables - --base-* tokens the component reads: { name: 'base-primary-color', required, usage }
+// manifest.componentVariables - --ms-* variables: { name: 'ms-rem', category, usage }
+// (names are stored without the leading "--")
 ```
 
 ## CSS variables (no build system required)
@@ -196,7 +190,7 @@ This works for any of signals #3–#5. The symmetric `data-theme="light"`, `data
 
 ## Available CSS variables
 
-The component exposes **150+ CSS custom properties** defined at the `:host` level, making them inspectable and overridable. Below are the **50+ most commonly customized variables** organized by category.
+The component exposes **~380+ CSS custom properties** defined at the `:host` level, making them inspectable and overridable. Below are the **50+ most commonly customized variables** organized by category.
 
 ### Inspecting variables in DevTools
 
@@ -204,7 +198,7 @@ All CSS custom properties are defined at the `:host` level in the compiled CSS, 
 
 1. Open DevTools (F12) and select the `<web-multiselect>` element.
 2. In the **Styles** panel, look for the `:host` selector.
-3. You'll see all 150+ variables with their default values.
+3. You'll see all ~380+ variables with their default values.
 4. Edit values live to preview changes instantly.
 
 **CSS variables work with Shadow DOM** because they inherit through the shadow boundary. This means you can customize the component from outside:
@@ -219,7 +213,7 @@ All CSS custom properties are defined at the `:host` level in the compiled CSS, 
 </style>
 ```
 
-For the complete list of all available CSS variables, see [`src/css/variables.css`](../src/css/variables.css) — all 150+ CSS custom properties at `:host` level.
+For the complete list of all available CSS variables, see [`src/css/variables.css`](../src/css/variables.css) — all ~380+ CSS custom properties at `:host` level.
 
 ### Colors
 
@@ -232,7 +226,6 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-primary-bg` | `var(--base-hover-bg, …)` | Hover fill (options, action buttons, counter) |
 | `--ms-border-width` | `var(--base-border-width, 1px)` | Stroke width of every border |
 | `--ms-border-color` | `var(--base-border-color, light-dark(#cbd5e1, #52525b))` | Divider color (panels, separators) |
-| `--ms-border` | `var(--base-border, var(--ms-border-width) solid var(--ms-border-color))` | Divider shorthand |
 
 ### Input component
 
@@ -337,12 +330,12 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 |----------|---------|-------------|
 | `--ms-tooltip-bg` | `var(--base-tooltip-bg, light-dark(#333333, #f5f5f5))` | Tooltip background (auto-adapts to OS dark mode) |
 | `--ms-tooltip-text-color` | `var(--base-tooltip-text-color, …)` | Tooltip text color |
-| `--ms-tooltip-padding` | `0.5rem 0.75rem` | Tooltip padding |
-| `--ms-tooltip-border-radius` | `0.375rem` | Tooltip border radius |
-| `--ms-tooltip-font-size` | `0.875rem` | Tooltip font size |
-| `--ms-tooltip-max-width` | `20rem` | Tooltip maximum width |
-| `--ms-tooltip-shadow` | (box shadow) | Tooltip box shadow |
-| `--ms-tooltip-z-index` | `10000` | Tooltip z-index |
+| `--ms-tooltip-padding` | `calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))` | Tooltip padding |
+| `--ms-tooltip-border-radius` | `var(--ms-border-radius-lg)` | Tooltip border radius |
+| `--ms-tooltip-font-size` | `calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))` | Tooltip font size |
+| `--ms-tooltip-max-width` | `calc(32 * var(--ms-rem))` | Tooltip maximum width |
+| `--ms-tooltip-shadow` | `var(--base-shadow-md, 0 2px 8px <--base-shadow-color or black 15%>)` | Tooltip box shadow |
+| `--ms-tooltip-z-index` | `var(--base-z-tooltip, 10000)` | Tooltip z-index (follows the shared `--base-z-*` scale) |
 
 ### Typography
 

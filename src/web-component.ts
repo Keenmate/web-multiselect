@@ -175,7 +175,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'isActionsSticky',         attribute: 'sticky-actions',              converter: toBool('default-true'), on: 'update', description: 'Keep the action bar pinned while the list scrolls.' },
   { configKey: 'isPlacementLocked',       attribute: 'lock-placement',              converter: toBool('default-true'), on: 'update', description: 'Keep the dropdown initial placement instead of flipping when it fits.' },
   { configKey: 'isSearchEnabled',         attribute: 'enable-search',               converter: toBool('default-true'), on: 'reinit', description: 'Show the search input.' },
-  { configKey: 'isKeepOptionsOnSearch',   attribute: 'keep-options-on-search',      converter: toBool('default-true'), on: 'update', description: 'Keep already-selected options visible while filtering.' },
+  { configKey: 'isKeepOptionsOnSearch',   attribute: 'keep-options-on-search',      converter: toBool('default-true'), on: 'update', description: 'With `searchCallback` (hybrid search), keep showing the initial options when the dropdown opens and while the search term is shorter than `min-search-length`.' },
   { configKey: 'shouldKeepSearchOnClose', attribute: 'should-keep-search-on-close', converter: toBool('default-true'), on: 'update', description: 'Preserve the search text after the dropdown closes.' },
   { configKey: 'isSelectedPopoverEnabled', attribute: 'enable-selected-popover',     converter: toBool('default-true'), on: 'update', description: 'Allow the selected-items popover to open (from the count/compact/"+X more" badge or the in-input counter). Turn off when you render your own selection UI, so those affordances become inert.' },
 
