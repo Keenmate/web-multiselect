@@ -142,7 +142,9 @@ test.describe('cascade-select-policy="all"', () => {
         await optAt(p, '1.1').click(); // Apple + Gala + Fuji all checked and emitted
         expect((await val(p)).sort()).toEqual(['apple', 'fuji', 'gala']);
 
-        // Delete the "Apple" branch badge.
+        // Delete the "Apple" branch badge. Close the dropdown first: open, it covers the
+        // badge row, so the remove button isn't reachable by a real pointer.
+        await page.keyboard.press('Escape');
         await p.locator('.ms__badge-remove[data-value="apple"]').click();
 
         // The whole Apple subtree is now unchecked — nothing re-derives it.
@@ -157,6 +159,7 @@ test.describe('cascade-select-policy="all"', () => {
         await openDropdown(p);
 
         await optAt(p, '1.1').click(); // Apple subtree fully checked
+        await page.keyboard.press('Escape'); // the open dropdown covers the badge row
         await p.locator('.ms__badge-remove[data-value="gala"]').click();
 
         // Only Gala goes; Fuji stays, and Apple drops to indeterminate.

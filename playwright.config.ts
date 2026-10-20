@@ -9,8 +9,10 @@ import { defineConfig, devices } from '@playwright/test';
  * stay minimal and focused on the feature under test.
  *
  * Commands:
- *   npm run test:e2e:install   # one-time: download chromium browser binary
- *   npm run test:e2e           # headless run
+ *   npm run test:e2e:install   # one-time: download chromium, firefox, webkit binaries
+ *   npm run test:e2e           # headless run, chromium + mobile (the publish gate)
+ *   npm run test:e2e:all       # + firefox, webkit, mobile-webkit; 4 workers, because the
+ *                              #   dev server refuses some Firefox connections under more load
  *   npm run test:e2e:ui        # Playwright Test UI (debugging)
  *   npm run test:e2e:headed    # watch the browser do its thing
  */
@@ -49,11 +51,33 @@ export default defineConfig({
             // Touch-primary phone context: Pixel 7 emulation gives a coarse pointer
             // and no hover (isMobile + hasTouch), so `mobile-presentation="auto"`
             // resolves to fullscreen and rotation (viewport swap) is testable.
-            // Chromium-only — `isMobile` is unsupported on Firefox/WebKit in Playwright,
-            // and this suite runs on chromium anyway.
             name: 'mobile',
             testMatch: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
             use: { ...devices['Pixel 7'] }
+        },
+        {
+            // Same desktop suite on Gecko and WebKit (Safari's engine).
+            name: 'firefox',
+            testIgnore: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
+            use: {
+                ...devices['Desktop Firefox'],
+                viewport: { width: 1440, height: 1024 }
+            }
+        },
+        {
+            name: 'webkit',
+            testIgnore: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
+            use: {
+                ...devices['Desktop Safari'],
+                viewport: { width: 1440, height: 1024 }
+            }
+        },
+        {
+            // iOS Safari: WebKit supports isMobile/hasTouch emulation (Firefox does not,
+            // so there is no mobile-firefox project).
+            name: 'mobile-webkit',
+            testMatch: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
+            use: { ...devices['iPhone 14'] }
         }
     ],
 

@@ -19,7 +19,9 @@ test('selected-popover-title translates the header and interpolates {count}', as
     // Default (English) header.
     await badge.click();
     await expect(header).toHaveText('Selected Items (3)');
-    await badge.click(); // close
+    // Close via the popover's own ✕ — the open popover covers the counter badge, so a
+    // second badge click can't reach it (Chromium's hit-test lets it through; Firefox doesn't).
+    await p.locator('.ms__selected-popover-close').click();
 
     // Translated header — {count} is substituted; wording and placement are the author's.
     await p.evaluate((el: any) => el.setAttribute('selected-popover-title', 'Vybrané položky ({count})'));

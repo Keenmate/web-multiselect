@@ -293,7 +293,7 @@ Custom scrollbar styling for dropdown and popover.
 | `--ms-accent-color` | Primary accent color (`--base-primary-color`) |
 | `--ms-accent-color-hover` | Accent color on hover |
 | `--ms-accent-color-light` | Accent tint (badges) — `--base-primary-bg-subtle` |
-| `--ms-text-color-1` / `-3` / `-4` | Text levels: body, tertiary (subtitles, icons), faint (placeholder) |
+| `--ms-text-color-1` / `-3` / `-4` | Text levels: body, tertiary (subtitles, icons, placeholder, hints), faint (disabled) |
 | `--ms-text-secondary` | Alias of `--ms-text-color-3` |
 | `--ms-text-color-on-accent` | Text color on accent backgrounds (for contrast) |
 | `--ms-primary-bg` | Hover fill (options, action buttons, counter) — `--base-hover-bg` |

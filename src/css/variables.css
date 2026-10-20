@@ -117,7 +117,7 @@
   --ms-input-border-focus: var(--base-input-border-focus, var(--ms-border-width) solid var(--ms-accent-color));
   /* Soft halo around the focused field — the same one pure-admin's inputs show. */
   --ms-input-box-shadow-focus: var(--base-input-box-shadow-focus, 0 0 0 3px var(--base-input-shadow-color-focus, color-mix(in srgb, var(--ms-accent-color) 5%, transparent)));
-  --ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-4));
+  --ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-3));
   --ms-input-bg-disabled: var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05));
 
   /* Toggle Icon Semantic Variables */
@@ -139,7 +139,7 @@
 
   /* Floating Hint Semantic Variables */
   --ms-hint-bg: var(--ms-dropdown-bg);
-  --ms-hint-color: var(--ms-text-color-4);
+  --ms-hint-color: var(--ms-text-color-3);
   --ms-hint-border-color: var(--ms-border-color);
 
   /* Dropdown Semantic Variables */
@@ -881,7 +881,7 @@
   /* ==========================================================================
      OPACITY VALUES
      ========================================================================== */
-  /* 1: --ms-input-placeholder-color is already the faint text level (--base-text-color-4);
+  /* 1: --ms-input-placeholder-color is already a muted text level (--base-text-color-3);
      a further fade made the placeholder lighter than pure-admin's. */
   --ms-placeholder-opacity: 1;
   --ms-disabled-input-opacity: 0.6;

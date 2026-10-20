@@ -97,6 +97,12 @@ export class WebMultiSelect<T = any> {
     // swallows exactly that one click. See armClickGuard(), attachEvents() (mousedown)
     // and handleClickOutside().
     private justOpenedViaClick = false;
+    // Set when the input's own mousedown opens the dropdown, and held until that
+    // gesture's click arrives (consumed in handleClickOutside) or the next pointerdown
+    // starts a new gesture. The one-tick justOpenedViaClick can't cover this case: the
+    // click follows mouseup, and Firefox/WebKit (and any real press held longer than a
+    // tick) run the clearing timer first, so a fullscreen sheet closed itself on open.
+    private isOpeningGestureClickPending = false;
     private positioningDriftWarned = false;
     // Fullscreen counterpart of positioningDriftWarned: warn once per instance when an
     // ancestor establishes a fixed-positioning containing block, so the full-viewport
@@ -1981,8 +1987,9 @@ export class WebMultiSelect<T = any> {
                     e.preventDefault();
                 }
                 // Open if closed (don't rely on focus event as input might already be
-                // focused). open() itself arms justOpenedViaClick for one tick, so the
-                // click that follows this mousedown won't be misread as an outside-click.
+                // focused). The click that follows this mousedown must not be misread as
+                // an outside-click, so hold the guard for the whole gesture.
+                this.armOpeningGestureGuard();
                 this.open();
             }
         });
@@ -2652,6 +2659,10 @@ export class WebMultiSelect<T = any> {
 
         // Swallow the click that came from the opening gesture — a fullscreen overlay
         // that just appeared over the pointer makes it look like an outside-click.
+        if (this.isOpeningGestureClickPending) {
+            this.isOpeningGestureClickPending = false;
+            return;
+        }
         if (this.justOpenedViaClick) return;
 
         // Check if any element in the event path is inside our elements
@@ -3358,6 +3369,20 @@ export class WebMultiSelect<T = any> {
     private armClickGuard(): void {
         this.justOpenedViaClick = true;
         setTimeout(() => { this.justOpenedViaClick = false; }, 0);
+    }
+
+    /**
+     * Guard the click of the mousedown gesture that is opening the dropdown, however
+     * long the press lasts. Consumed by that click in handleClickOutside(); if the
+     * gesture produces no click, the next pointerdown (registered now, after this
+     * gesture's pointerdown has already fired) clears it so it can't swallow a later
+     * genuine outside-click.
+     */
+    private armOpeningGestureGuard(): void {
+        this.isOpeningGestureClickPending = true;
+        document.addEventListener('pointerdown', () => {
+            this.isOpeningGestureClickPending = false;
+        }, { capture: true, once: true });
     }
 
     /** Open the dropdown (no-op if already open, or if there is nothing to show). */

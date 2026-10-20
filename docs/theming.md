@@ -242,7 +242,7 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-input-height` | `calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))` | Field height |
 | `--ms-input-font-size` | `calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))` | Input font size |
 | `--ms-input-border-radius` | `var(--ms-border-radius-md)` | Input border radius |
-| `--ms-input-placeholder-color` | `var(--base-input-placeholder-color, var(--ms-text-color-4))` | Placeholder color (shown at `--ms-placeholder-opacity`, default 1) |
+| `--ms-input-placeholder-color` | `var(--base-input-placeholder-color, var(--ms-text-color-3))` | Placeholder color (shown at `--ms-placeholder-opacity`, default 1) |
 | `--ms-input-bg-disabled` | `var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05))` | Disabled background |
 
 ### Dropdown & options

@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0-rc02] - 2026-10-20
+
+### Changed
+
+- **Placeholder and hint fall back to text step 3** (`--ms-text-color-3`, was `-4`), following
+  `@keenmate/base-css-variables` 2.0.0-rc03, which moved `--base-input-placeholder-color` to
+  `--base-text-color-3`: the faint step was too light to read (about 2:1). With the contract loaded
+  the placeholder simply follows the token; `--ms-hint-color` now uses step 3 like the contract's
+  hints.
+
+### Fixed
+
+- **`mobile-presentation="fullscreen"` closed itself on open in Firefox and Safari.** The
+  dropdown opens on the input's `mousedown`, and the guard that keeps the follow-up `click`
+  from counting as an outside-click was cleared by a zero-delay timer. Firefox and WebKit run
+  that timer before the `click` (as does any real press held longer than a tick), so the sheet,
+  which appears under the pointer, closed at once. The guard now lasts for the whole opening
+  gesture: the gesture's `click` consumes it, and the next `pointerdown` clears it if no click
+  arrives.
+
+### Internal
+
+- **e2e runs on Firefox and WebKit too.** New Playwright projects: `firefox`, `webkit`
+  (desktop) and `mobile-webkit` (iPhone 14). Three specs that clicked a badge hidden under an
+  open popover or dropdown (only Chromium's hit-test let those clicks through) now close the
+  panel first, as a user would. The ancestor-class dark-mode specs (`data-bs-theme`, `.dark`,
+  `data-theme` on an ancestor) still fail on Firefox / WebKit: `:host-context()` isn't supported
+  there; the fix is planned for `@keenmate/web-components-core`.
+
 ## [2.6.0-rc01] - 2026-10-20 [PUBLISHED]
 
 ### Changed

@@ -1,4 +1,4 @@
-.PHONY: help setup dev build package publish publish-rc publish-dry clean lint test-e2e test-e2e-ui test-e2e-headed test-e2e-install kill-port image-build image-run image-stop image-clean
+.PHONY: help setup dev build package publish publish-rc publish-dry clean lint test-e2e test-e2e-all test-e2e-ui test-e2e-headed test-e2e-install kill-port image-build image-run image-stop image-clean
 
 # Per-developer overrides (container runner, image name, port). Optional: the
 # leading `-` means it's fine if the file is absent. Defaults below apply when a
@@ -100,8 +100,11 @@ lint: ## Run linter (if configured)
 	@echo "Linting is not configured yet"
 	@echo "Consider adding ESLint in the future"
 
-test-e2e: ## Run Playwright e2e tests (headless)
+test-e2e: ## Run Playwright e2e tests (headless, chromium + mobile)
 	npm run test:e2e
+
+test-e2e-all: ## Run Playwright e2e tests on chromium, firefox, webkit + mobile (4 workers)
+	npm run test:e2e:all
 
 test-e2e-ui: ## Run Playwright e2e tests in UI mode
 	npm run test:e2e:ui
@@ -109,7 +112,7 @@ test-e2e-ui: ## Run Playwright e2e tests in UI mode
 test-e2e-headed: ## Run Playwright e2e tests headed (watch the browser)
 	npm run test:e2e:headed
 
-test-e2e-install: ## Install chromium browser binary (one-time)
+test-e2e-install: ## Install chromium, firefox and webkit browser binaries (one-time)
 	npm run test:e2e:install
 
 check-version: ## Show current package version
