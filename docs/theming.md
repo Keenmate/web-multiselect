@@ -57,7 +57,7 @@ Override individual sizing variables for specific adjustments:
 
 ## Base CSS variables integration
 
-The component reads the token names of **`@keenmate/base-css-variables` 2.0** (`--base-primary-color`, `--base-on-primary-text-color`, `--base-input-text-color`, `--base-highlighted-*`, `--base-focused-*`, …). Load that layer, or define the `--base-*` tokens yourself, and every Keenmate component on the page follows the same theme.
+The component reads the token names of **`@keenmate/base-css-variables` 2.0** (`--base-primary-color`, `--base-on-primary-text-color`, `--base-input-text-color`, `--base-selected-*`, `--base-focused-*`, …). Load that layer, or define the `--base-*` tokens yourself, and every Keenmate component on the page follows the same theme.
 
 The **Keenmate Theme Designer** at [theme-designer.keenmate.dev](https://theme-designer.keenmate.dev) is an optional tool for exploring and generating `--base-*` values:
 
@@ -99,10 +99,10 @@ Keenmate components support a **two-layer theming architecture**:
 Change `--base-primary-color` once → all components update automatically.
 
 **Shared item states** — an option's selected and keyboard-focused looks read the
-shared `--base-highlighted-bg` / `--base-highlighted-bg-hover` / `--base-highlighted-text-color` /
-`--base-highlighted-outline` and `--base-focused-bg` / `--base-focused-text-color` /
+shared `--base-selected-bg` / `--base-selected-bg-hover` / `--base-selected-text-color` /
+`--base-selected-outline` and `--base-focused-bg` / `--base-focused-text-color` /
 `--base-focused-outline` tokens (borders are outline shorthands drawn inset), so a
-selected / focused option matches a highlighted / focused row in the Keenmate tree
+selected / focused option matches a selected / focused row in the Keenmate tree
 components. Defaults: selected = 10% accent tint, no ring; focused = transparent
 background + `1px solid` accent inset ring.
 
@@ -256,10 +256,10 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-option-padding` | `calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))` | Option padding |
 | `--ms-option-bg-hover` | `var(--ms-primary-bg)` | Option background on hover |
 | `--ms-option-color-hover` | `inherit` | Option text color on hover |
-| `--ms-option-bg-selected` | `var(--base-highlighted-bg, <accent 10%>)` | Selected option background |
-| `--ms-option-bg-selected-hover` | `var(--base-highlighted-bg-hover, var(--ms-option-bg-selected))` | Selected option background on hover |
-| `--ms-option-color-selected` | `var(--base-highlighted-text-color, currentColor)` | Selected option text color |
-| `--ms-option-outline-selected` | `var(--base-highlighted-outline, none)` | Selected option ring (outline shorthand, drawn inset) |
+| `--ms-option-bg-selected` | `var(--base-selected-bg, <accent 10%>)` | Selected option background |
+| `--ms-option-bg-selected-hover` | `var(--base-selected-bg-hover, var(--ms-option-bg-selected))` | Selected option background on hover |
+| `--ms-option-color-selected` | `var(--base-selected-text-color, currentColor)` | Selected option text color |
+| `--ms-option-outline-selected` | `var(--base-selected-outline, none)` | Selected option ring (outline shorthand, drawn inset) |
 | `--ms-option-bg-selected-focused` | `var(--ms-option-bg-selected)` | Selected + focused background (focus ring drawn on top) |
 | `--ms-option-bg-focused` | `var(--base-focused-bg, transparent)` | Focused option background (keyboard) — the ring alone marks focus |
 | `--ms-option-color-focused` | `var(--base-focused-text-color, currentColor)` | Focused option text color |

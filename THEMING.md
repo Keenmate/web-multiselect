@@ -33,7 +33,7 @@ Individual dropdown option items.
 | **Hover** | `:hover` | `--ms-option-bg-hover`, `--ms-option-color-hover` |
 | **Focused** | `--focused` | `--ms-option-bg-focused`, `--ms-option-color-focused`, `--ms-option-outline-focused`, `--ms-option-focus-outline-offset` (read `--base-focused-bg` / `-text-color` / `-outline`, offset follows `--base-outline-width`) |
 | **Matched** | `--matched` | `--ms-option-bg-matched`, `--ms-option-color-matched`, `--ms-option-border-matched` |
-| **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-highlighted-bg` / `-text-color` / `-outline`) |
+| **Selected** | `--selected` | `--ms-option-bg-selected`, `--ms-option-color-selected`, `--ms-option-outline-selected` (read `--base-selected-bg` / `-text-color` / `-outline`) |
 | **Disabled** | `--disabled` | `--ms-disabled-opacity`, `--ms-option-disabled-bg` (reads `--base-disabled-bg`, default `transparent`) |
 | **Focused + Hover** | `--focused:hover` | `--ms-option-bg-focused-hover`, `--ms-option-color-focused-hover` |
 | **Matched + Hover** | `--matched:hover` | `--ms-option-bg-matched-hover`, `--ms-option-color-matched-hover` |
@@ -49,7 +49,7 @@ Individual dropdown option items.
 | Element | CSS Variables |
 |---------|---------------|
 | **Title** | `--ms-option-title-font-size`, `--ms-option-title-color` |
-| **Title (focused / selected)** | `--ms-option-title-color-focused`, `--ms-option-title-color-selected` (read `--base-focused-text-color` / `--base-highlighted-text-color`) |
+| **Title (focused / selected)** | `--ms-option-title-color-focused`, `--ms-option-title-color-selected` (read `--base-focused-text-color` / `--base-selected-text-color`) |
 | **Title (hover / selected+hover)** | `--ms-option-title-color-hover`, `--ms-option-title-color-selected-hover` |
 | **Subtitle** | `--ms-option-subtitle-font-size`, `--ms-option-subtitle-color`, `--ms-option-subtitle-margin-top`, `--ms-option-subtitle-line-height` |
 | **Subtitle (hover)** | `--ms-option-subtitle-color-hover` |

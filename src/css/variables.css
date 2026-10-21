@@ -169,16 +169,16 @@
   --ms-option-bg: transparent;
   --ms-option-bg-hover: var(--ms-primary-bg);
   --ms-option-color-hover: inherit;
-  /* Selected + focused read the SHARED item-state tokens (--base-highlighted-* /
+  /* Selected + focused read the SHARED item-state tokens (--base-selected-* /
      --base-focused-*) so a selected / keyboard-focused option looks identical to a
-     highlighted / focused row in the KeenMate tree components on the same page.
+     selected / focused row in the Keenmate tree components on the same page.
      Focus is marked by the inset ring alone (transparent bg) — no grey fill. */
   --ms-option-bg-focused: var(--base-focused-bg, transparent);
   --ms-option-color-focused: var(--base-focused-text-color, currentColor);
   --ms-option-outline-color-focused: var(--ms-accent-color);
-  --ms-option-bg-selected: var(--base-highlighted-bg, color-mix(in srgb, var(--ms-accent-color) 10%, transparent));
-  --ms-option-bg-selected-hover: var(--base-highlighted-bg-hover, var(--ms-option-bg-selected));
-  --ms-option-color-selected: var(--base-highlighted-text-color, currentColor);
+  --ms-option-bg-selected: var(--base-selected-bg, color-mix(in srgb, var(--ms-accent-color) 10%, transparent));
+  --ms-option-bg-selected-hover: var(--base-selected-bg-hover, var(--ms-option-bg-selected));
+  --ms-option-color-selected: var(--base-selected-text-color, currentColor);
   --ms-option-bg-matched: color-mix(in srgb, var(--ms-accent-color) 8%, transparent);
   --ms-option-color-matched: inherit;
   --ms-option-border-matched-color: color-mix(in srgb, var(--ms-accent-color) 40%, transparent);
@@ -187,8 +187,8 @@
   --ms-option-title-color: var(--ms-text-color-1);
   /* The title has its own color, so the item-state text colors must reach it explicitly.
      Both contract tokens default to currentColor (= unchanged); a theme that sets them
-     (e.g. white text on a solid highlighted fill) recolors the title too. */
-  --ms-option-title-color-selected: var(--base-highlighted-text-color, var(--ms-option-title-color));
+     (e.g. white text on a solid selected fill) recolors the title too. */
+  --ms-option-title-color-selected: var(--base-selected-text-color, var(--ms-option-title-color));
   --ms-option-title-color-focused: var(--base-focused-text-color, var(--ms-option-title-color));
   --ms-option-subtitle-color: var(--ms-text-color-3);
   --ms-option-mark-bg: color-mix(in srgb, var(--ms-accent-color) 20%, transparent);
@@ -544,7 +544,7 @@
   /* Rings are drawn INSET: keep the offset equal to minus the ring width. */
   --ms-option-outline-focused: var(--base-focused-outline, var(--base-outline-width, 1px) solid var(--ms-option-outline-color-focused));
   --ms-option-focus-outline-offset: calc(-1 * var(--base-outline-width, 1px));
-  --ms-option-outline-selected: var(--base-highlighted-outline, none);
+  --ms-option-outline-selected: var(--base-selected-outline, none);
   --ms-option-border-matched: 3px solid var(--ms-option-border-matched-color);
 
   /* Option State Combinations */

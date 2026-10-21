@@ -54,24 +54,24 @@
       "usage": "Shared item-ring thickness; the inset offset follows it (drives --ms-option-focus-outline-offset and the fallback ring width)"
     },
     {
-      "name": "base-highlighted-bg",
+      "name": "base-selected-bg",
       "required": false,
-      "usage": "Shared highlighted-item background (drives --ms-option-bg-selected)"
+      "usage": "Shared selected-item background (drives --ms-option-bg-selected)"
     },
     {
-      "name": "base-highlighted-bg-hover",
+      "name": "base-selected-bg-hover",
       "required": false,
-      "usage": "Shared highlighted-item hover background (drives --ms-option-bg-selected-hover)"
+      "usage": "Shared selected-item hover background (drives --ms-option-bg-selected-hover)"
     },
     {
-      "name": "base-highlighted-text-color",
+      "name": "base-selected-text-color",
       "required": false,
-      "usage": "Shared highlighted-item text color (drives --ms-option-color-selected)"
+      "usage": "Shared selected-item text color (drives --ms-option-color-selected)"
     },
     {
-      "name": "base-highlighted-outline",
+      "name": "base-selected-outline",
       "required": false,
-      "usage": "Shared highlighted-item ring, outline shorthand drawn inset (drives --ms-option-outline-selected)"
+      "usage": "Shared selected-item ring, outline shorthand drawn inset (drives --ms-option-outline-selected)"
     },
     {
       "name": "base-focused-bg",
@@ -838,22 +838,22 @@
     {
       "name": "ms-option-bg-selected",
       "category": "option",
-      "usage": "Selected option background; reads --base-highlighted-bg (default 10% accent tint)"
+      "usage": "Selected option background; reads --base-selected-bg (default 10% accent tint)"
     },
     {
       "name": "ms-option-bg-selected-hover",
       "category": "option",
-      "usage": "Selected option hover background; reads --base-highlighted-bg-hover"
+      "usage": "Selected option hover background; reads --base-selected-bg-hover"
     },
     {
       "name": "ms-option-color-selected",
       "category": "option",
-      "usage": "Selected option text color; reads --base-highlighted-text-color"
+      "usage": "Selected option text color; reads --base-selected-text-color"
     },
     {
       "name": "ms-option-outline-selected",
       "category": "option",
-      "usage": "Selected option ring (inset outline shorthand); reads --base-highlighted-outline (default none)"
+      "usage": "Selected option ring (inset outline shorthand); reads --base-selected-outline (default none)"
     },
     {
       "name": "ms-option-text-color",
@@ -953,7 +953,7 @@
     {
       "name": "ms-option-title-color-selected",
       "category": "option",
-      "usage": "Title color of a selected option (reads --base-highlighted-text-color)"
+      "usage": "Title color of a selected option (reads --base-selected-text-color)"
     },
     {
       "name": "ms-option-subtitle-margin-top",

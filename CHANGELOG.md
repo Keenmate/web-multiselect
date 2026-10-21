@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Selected options read `--base-selected-*`** (was `--base-highlighted-*`), following
+  `@keenmate/base-css-variables` 2.0.0-rc03, which renamed the item state: *selected* = the
+  click / Ctrl / Shift-click set, *checked* = the checkbox. `--ms-option-bg-selected`,
+  `-bg-selected-hover`, `-color-selected`, `-title-color-selected` and `-outline-selected` now
+  read `--base-selected-bg` / `-bg-hover` / `-text-color` / `-outline`; the `--ms-*` names and
+  the defaults are unchanged. A theme that set `--base-highlighted-*` must rename it.
+
 - **Placeholder and hint fall back to text step 3** (`--ms-text-color-3`, was `-4`), following
   `@keenmate/base-css-variables` 2.0.0-rc03, which moved `--base-input-placeholder-color` to
   `--base-text-color-3`: the faint step was too light to read (about 2:1). With the contract loaded
