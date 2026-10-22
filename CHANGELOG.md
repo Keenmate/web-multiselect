@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.6.0-rc02] - 2026-10-20
+## [2.6.0-rc02] - 2026-10-22 [PUBLISHED]
 
 ### Changed
 
@@ -63,6 +63,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `getThemeContext()`, `observeThemeContext()` and their types, from the core. `setThemeMode`
   forces every Keenmate component on the page at once.
 
+- **`search-behavior` / `searchBehavior`: accent-insensitive search, on by default.** Controls
+  how local search compares the typed term with each option:
+  - `normalized` (new default) ignores case and diacritics: `ces` finds `Český`, `muller` finds
+    `Müller`, `lodz` finds `Łódź`.
+  - `case-insensitive` ignores case only. This is the previous behavior: set it to keep
+    accent-sensitive matching.
+  - `exact` is case- and diacritic-sensitive.
+
+  In every mode text is Unicode-normalized (NFC), so a composed `č` and a decomposed `c` +
+  combining caron match each other. The `<mark>` highlight follows the same rules, so `ces`
+  highlights `Čes` in `Český`. Internal search only: no effect on `searchCallback` or `regex`
+  matching. Changing it re-runs the current search in place, for a page-level switch.
+
+- **`search-match` / `searchMatch`: where internal search looks for the term.** `contains`
+  (default, as before), `equals` (the whole value, for codes: `haxkl324` finds `HAxKL324` but not
+  `HAxKL3245`), `starts-with` / `ends-with` (the whole value), `word-starts-with` /
+  `word-ends-with` (any word, so `kru` finds `Český Krumlov`), or `regex`. A regex is tested
+  against the raw search value without normalization, so case and accents are up to the pattern.
+  A typed pattern that doesn't compile keeps the last valid result. Live, like `search-behavior`.
+
+- **`getSearchTermCallback(term, context)`: prepare the term yourself.** Runs after
+  `beforeSearchCallback`, with `context.target` set to `'internal'` or `'callback'`. For internal
+  search, return a string (used as-is) or a `RegExp`, e.g. so `ha-324/56` finds `HA 324-56`. For
+  `searchCallback`, return anything (objects too); it arrives as `context.searchTerm`.
+
+- **`searchCallback` gets a third `context` argument** with `searchTerm` (the prepared term) and
+  `entries`: every option paired with its raw search value, which may now be an object, e.g.
+  `{ title, zip }` from `getSearchValueCallback`, so your own search can match a zip code. `entries`
+  is built on first access, and it's the same array until the options change, so a search engine
+  can key its index on it. The callback may also return results synchronously. Existing
+  `(term, signal)` callbacks are unaffected.
+
+- **`normalizeSearchText(text, behavior?)` exported**: the standard normalization, for custom
+  search.
+
+- **Search values are prepared once per option.** The search value (`searchValueMember` /
+  `getSearchValueCallback`, else the display value) and its normalized form are cached per option
+  on first use. A keystroke is one lookup per option. Before, every keystroke re-read and
+  lowercased every option's value. Replacing `options`, `refresh()`, or changing a member /
+  callback that feeds the value re-prepares.
+
 ### Fixed
 
 - **`mobile-presentation="fullscreen"` closed itself on open in Firefox and Safari.** The
@@ -81,6 +122,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--ms-group-label-padding` grows from `0.4` to `0.6 × --ms-rem` vertically, so every group
   header is about 4px taller (about 5px in the overlay). The chip also stops inheriting the
   header's uppercase and letter-spacing, which pushed the count off-centre.
+
+- **Flat-list search trims the term**, as tree search already did. `york ` (trailing space) no
+  longer misses `New York`, and a whitespace-only term shows every option instead of filtering
+  on spaces.
 
 ### Internal
 
