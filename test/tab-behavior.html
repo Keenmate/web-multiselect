@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — tab-behavior + search kept on close</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+        input.field { display: block; margin: .4rem 0; }
+    </style>
+</head>
+<body>
+    <h1>tab-behavior</h1>
+    <p>Targeted by <code>e2e/tab-behavior.spec.ts</code>. A form-like column: plain inputs between pickers so
+        Tab / Shift+Tab traverse them. Events are recorded per picker in <code>window.__events[id]</code>.</p>
+
+    <input class="field" id="before" placeholder="before">
+
+    <div class="fixture">
+        <div class="fixture-label">single, default (select-highlighted, search cleared on close)</div>
+        <web-multiselect id="tb-single" multiple="false" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <input class="field" id="between" placeholder="between">
+
+    <div class="fixture">
+        <div class="fixture-label">single, tab-behavior="select-navigated"</div>
+        <web-multiselect id="tb-navigated" multiple="false" tab-behavior="select-navigated" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">single, tab-behavior="close"</div>
+        <web-multiselect id="tb-close" multiple="false" tab-behavior="close" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">single, should-keep-search-on-close="true" + tab-behavior="close"</div>
+        <web-multiselect id="tb-keep" multiple="false" tab-behavior="close" should-keep-search-on-close="true" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">multi, default (close, search kept)</div>
+        <web-multiselect id="tb-multi" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">multi, tab-behavior="select-highlighted"</div>
+        <web-multiselect id="tb-multi-hl" tab-behavior="select-highlighted" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <input class="field" id="before-long" placeholder="before long">
+
+    <div class="fixture">
+        <div class="fixture-label">single, 50 options, Item 30 selected (open starts at the value)</div>
+        <web-multiselect id="tb-long" multiple="false" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">single, 2000 options, virtual scroll, Item 1500 selected</div>
+        <web-multiselect id="tb-long-virtual" multiple="false" virtual-scroll="true" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <input class="field" id="after" placeholder="after">
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const cities = [
+            { value: 'praha', label: 'Praha' },
+            { value: 'brno', label: 'Brno' },
+            { value: 'cb', label: 'České Budějovice' },
+            { value: 'ck', label: 'Český Krumlov' },
+            { value: 'plzen', label: 'Plzeň' },
+        ];
+
+        window.__events = {};
+        customElements.whenDefined('web-multiselect').then(() => {
+            const numbered = (n) => Array.from({ length: n }, (_, i) => ({ value: `item-${i}`, label: `Item ${String(i).padStart(2, '0')}` }));
+            document.getElementById('tb-long').options = numbered(50);
+            document.getElementById('tb-long').setSelected(['item-30']);
+            document.getElementById('tb-long-virtual').options = numbered(2000);
+            document.getElementById('tb-long-virtual').setSelected(['item-1500']);
+            document.querySelectorAll('web-multiselect').forEach((el) => {
+                if (!el.id.startsWith('tb-long')) el.options = cities;
+                const log = (window.__events[el.id] = { select: [], change: [] });
+                el.addEventListener('select', (e) => log.select.push(e.detail.selectedValues));
+                el.addEventListener('change', (e) => log.change.push(e.detail.selectedValues));
+            });
+        });
+    </script>
+</body>
+</html>

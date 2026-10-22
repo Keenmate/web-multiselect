@@ -92,7 +92,9 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | PageDown/PageUp move 10 options                               | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
 | Enter toggles focused option's selection                      | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
 | Escape clears search (or closes if empty)                     | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
-| Tab leaves the component cleanly                              | ✗      |      |         |
+| Tab leaves the component cleanly                              | ✓      | `tab-behavior.spec.ts`       | `tab-behavior.html`       |
+| `tab-behavior`: Tab / Shift+Tab select per mode, never deselect | ✓    | `tab-behavior.spec.ts`       | `tab-behavior.html`       |
+| Single-select clears search on close by default               | ✓      | `tab-behavior.spec.ts`       | `tab-behavior.html`       |
 | Navigate-mode: Ctrl/Cmd + ↓ jumps to next match               | △      | `keyboard.spec.ts`           | `keyboard.html`           |
 | Navigate-mode: Ctrl/Cmd + ↑ jumps to previous match           | ✗      |      |         |
 | Focused option scrolls into view                              | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
