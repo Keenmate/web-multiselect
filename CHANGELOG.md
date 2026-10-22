@@ -31,6 +31,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   picked up on its own — add `theme-source="closest"` (nearest ancestor with a signal) or
   `theme-source="<selector>"` to the element. Core dependency bumped to `1.0.0-rc13`.
 
+- **Primary used as text reads `--base-primary-text-color`** (base-css-variables 2.0.0-rc03): the
+  badge text (`--ms-badge-text-color`), the "add new" row (`--ms-add-new-color`) and the fullscreen
+  info icon (`--ms-fullscreen-info-color`). The raw primary on its own 10% tint was about 2.6:1;
+  the contract's primary foreground is darker in light mode and lighter in dark mode, ≥ 4.5:1.
+  Standalone (no contract) they still fall back to `--ms-accent-color`.
+
+- **Disabled opacity follows `--base-disabled-opacity`** (0.65 in the contract):
+  `--ms-disabled-opacity` (was 0.5), `--ms-disabled-input-opacity` (was 0.6) and the disabled
+  fullscreen pager buttons (was 0.4) — one fade for every disabled control on the page. The old
+  values stay as the standalone fallbacks, so disabled items are slightly less faded with the
+  contract loaded.
+
+- **Standalone fallbacks match the 2.0.0-rc03 contract defaults:** accent `#3b82f6` → `#0ea5e9`
+  (`--base-primary-color`), error message `#ef4444` → `#dc2626` (`--base-danger-color`), success
+  message text white → black (white on `#10b981` was about 2.5:1). No change with the contract
+  loaded.
+
+- **Popover header and disabled-selected tint use `--ms-accent-color-light`**
+  (`--base-primary-bg-subtle`) instead of their own 10% `color-mix`, so they get the contract's
+  dark-mode tint (20%) too.
+
+- **Docs: override `--ms-accent-color` together with `--ms-text-color-on-accent`.** The text on
+  accent fills (checkbox tick, counter, badge ×) comes from `--base-on-primary-text-color`, which
+  is picked for the *base* primary, not for a custom accent. The header example in `variables.css`
+  and `docs/theming.md` now pairs emerald with black text.
+
 ### Added
 
 - **Theme API re-exported:** `setThemeMode('light' | 'dark' | 'auto')`, `getThemeMode()`,

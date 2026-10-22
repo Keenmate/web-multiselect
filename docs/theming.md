@@ -228,6 +228,7 @@ All CSS custom properties are defined at the `:host` level in the compiled CSS, 
   /* These variables will penetrate into the Shadow DOM */
   web-multiselect {
     --ms-accent-color: #10b981;          /* Changes primary color */
+    --ms-text-color-on-accent: #000;     /* …and the text drawn on it (black reads on emerald) */
     --ms-input-border-radius: 0.5rem;    /* Rounds input corners */
   }
 </style>
@@ -239,7 +240,7 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-accent-color` | `var(--base-primary-color, #3b82f6)` | Accent (selection, focus, checked state) |
+| `--ms-accent-color` | `var(--base-primary-color, #0ea5e9)` | Accent (selection, focus, checked state). Override it together with `--ms-text-color-on-accent`: the text on accent fills (checkbox tick, counter, badge ×) follows `--base-on-primary-text-color`, which is picked for the *base* primary, not for your accent |
 | `--ms-accent-color-hover` | `var(--base-primary-color-hover, #2563eb)` | Accent on hover |
 | `--ms-accent-color-light` | `var(--base-primary-bg-subtle, …)` | Accent tint (badges, "+N more") |
 | `--ms-text-color-1` … `-4` | `var(--base-text-color-1 … -4, …)` | Text levels: body, secondary, tertiary, faint |
@@ -293,7 +294,7 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `--ms-badge-text-bg` | `var(--ms-accent-color-light)` | Badge background color |
-| `--ms-badge-text-color` | `var(--ms-accent-color)` | Badge text color |
+| `--ms-badge-text-color` | `var(--base-primary-text-color, var(--ms-accent-color))` | Badge text color (the contract's readable primary foreground) |
 | `--ms-badges-gap` | `calc(0.8 * var(--ms-rem))` | Gap between badges |
 | `--ms-badge-height` | `calc(2.7 * var(--ms-rem))` | Height of badges |
 | `--ms-badge-font-size` | `calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))` | Badge font size |
@@ -371,7 +372,7 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 | `--ms-transition-fast` | `150ms` | Fast transition duration |
 | `--ms-transition-normal` | `200ms` | Normal transition duration |
 | `--ms-easing-snappy` | (cubic-bezier) | Snappy easing function |
-| `--ms-disabled-opacity` | `0.5` | Opacity for disabled state |
+| `--ms-disabled-opacity` | `var(--base-disabled-opacity, 0.5)` | Opacity for disabled state (0.65 with the contract loaded) |
 
 ## Cascade layers / override contract
 

@@ -9,6 +9,7 @@
    Usage from outside Shadow DOM:
      multi-select {
        --ms-accent-color: #10b981;
+       --ms-text-color-on-accent: #000;   (pair it: black reads on emerald)
        --ms-input-border-radius: 0.5rem;
      }
    ============================================================================== */
@@ -66,7 +67,7 @@
        3. Hardcoded default fallback */
 
   /* Accent Colors */
-  --ms-accent-color: var(--base-primary-color, #3b82f6);
+  --ms-accent-color: var(--base-primary-color, #0ea5e9);
   --ms-accent-color-hover: var(--base-primary-color-hover, #2563eb);
 
   /* Accent Color Light Variants (for backgrounds)
@@ -77,8 +78,10 @@
   /* Text Color Levels (FluentUI-style hierarchy)
      Light mode = the original dark-on-light palette (#111827 → #a0a3a9).
      Dark mode  = the same hierarchy inverted (#f5f5f5 → #737373) so heading/body/secondary/disabled
-     keep the same relative contrast steps. text-color-on-accent stays white in both modes — the
-     accent color is the same blue in both, and white-on-blue reads in both. */
+     keep the same relative contrast steps. text-color-on-accent is the text drawn ON the accent
+     fill: with the contract loaded it is --base-on-primary-text-color, picked black or white for
+     --base-primary-color; standalone it is white. It follows the BASE primary, not
+     --ms-accent-color — set both together when overriding the accent (e.g. #000 on a light fill). */
   --ms-text-color-1: var(--base-text-color-1, light-dark(#111827, #f5f5f5));
   --ms-text-color-3: var(--base-text-color-3, light-dark(#6b7280, #a3a3a3));
   --ms-text-color-4: var(--base-text-color-4, light-dark(#a0a3a9, #737373));
@@ -200,7 +203,7 @@
 
   /* Badge Text Semantic Variables */
   --ms-badge-text-bg: var(--ms-accent-color-light);
-  --ms-badge-text-color: var(--ms-accent-color);
+  --ms-badge-text-color: var(--base-primary-text-color, var(--ms-accent-color));
   /* Hover deepens the badge's OWN bg toward its OWN text colour (12%), so it stays readable
      with whatever bg/text pair a theme sets — not --base-hover-bg (a surface token). */
   --ms-badge-text-bg-hover: color-mix(in srgb, var(--ms-badge-text-bg) 88%, var(--ms-badge-text-color) 12%);
@@ -250,7 +253,7 @@
   /* Selected Popover Semantic Variables */
   --ms-selected-popover-bg: var(--ms-dropdown-bg);
   --ms-selected-popover-border-color: var(--ms-border-color);
-  --ms-selected-popover-header-bg: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
+  --ms-selected-popover-header-bg: var(--ms-accent-color-light);
   --ms-selected-popover-header-color: var(--ms-text-color-1);
   --ms-selected-popover-header-border-color: var(--ms-border-color);
   --ms-selected-popover-close-bg: transparent;
@@ -449,7 +452,7 @@
      on touch (where hover tooltips never fire). Sized in --ms-fullscreen-rem. */
   --ms-fullscreen-info-size: calc(2.8 * var(--ms-fullscreen-rem));
   --ms-fullscreen-info-icon-size: calc(1.8 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-info-color: var(--ms-accent-color);
+  --ms-fullscreen-info-color: var(--base-primary-text-color, var(--ms-accent-color));
   --ms-fullscreen-info-bg-hover: var(--ms-option-bg-matched, transparent);
   /* Navigate-mode match navigator under the fullscreen search box: a muted result
      count plus round prev/next buttons that step through matches (the touch stand-in
@@ -555,9 +558,9 @@
   --ms-option-bg-selected-focused: var(--ms-option-bg-selected);
   --ms-option-bg-selected-matched: color-mix(in srgb, var(--ms-accent-color) 15%, transparent);
   --ms-option-disabled-bg: var(--base-disabled-bg, transparent);
-  --ms-option-bg-disabled-selected: color-mix(in srgb, var(--ms-accent-color) 10%, transparent);
+  --ms-option-bg-disabled-selected: var(--ms-accent-color-light);
 
-  --ms-disabled-opacity: 0.5;
+  --ms-disabled-opacity: var(--base-disabled-opacity, 0.5);
 
   /* ==========================================================================
      OPTION CONTENT
@@ -648,7 +651,7 @@
   --ms-add-new-padding: var(--ms-option-padding);
   --ms-add-new-gap: var(--ms-option-gap);
   --ms-add-new-font-size: var(--ms-empty-font-size);
-  --ms-add-new-color: var(--ms-accent-color);
+  --ms-add-new-color: var(--base-primary-text-color, var(--ms-accent-color));
   --ms-add-new-color-hover: var(--ms-accent-color);
   --ms-add-new-bg-hover: var(--ms-option-bg-hover);
   --ms-add-new-icon-size: calc(1.6 * var(--ms-rem));
@@ -813,10 +816,10 @@
   --ms-message-info-color: var(--ms-tooltip-text-color);
   --ms-message-warning-bg: var(--base-warning-color, #f59e0b);
   --ms-message-warning-color: var(--base-on-warning-text-color, #1a1a1a);
-  --ms-message-error-bg: var(--base-danger-color, #ef4444);
+  --ms-message-error-bg: var(--base-danger-color, #dc2626);
   --ms-message-error-color: var(--base-on-danger-text-color, #ffffff);
   --ms-message-success-bg: var(--base-success-color, #10b981);
-  --ms-message-success-color: var(--base-on-success-text-color, #ffffff);
+  --ms-message-success-color: var(--base-on-success-text-color, #000000);
 
   /* ==========================================================================
      SELECTED POPOVER
@@ -884,7 +887,7 @@
   /* 1: --ms-input-placeholder-color is already a muted text level (--base-text-color-3);
      a further fade made the placeholder lighter than pure-admin's. */
   --ms-placeholder-opacity: 1;
-  --ms-disabled-input-opacity: 0.6;
+  --ms-disabled-input-opacity: var(--base-disabled-opacity, 0.6);
 
   /* ==========================================================================
      SCROLLBAR

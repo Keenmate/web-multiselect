@@ -34,6 +34,16 @@
       "usage": "Quaternary text (placeholders)"
     },
     {
+      "name": "base-primary-text-color",
+      "required": false,
+      "usage": "Primary used as text (badge text, add-new row, fullscreen info icon)"
+    },
+    {
+      "name": "base-disabled-opacity",
+      "required": false,
+      "usage": "Fade for disabled options, input and fullscreen pager buttons"
+    },
+    {
       "name": "base-on-primary-text-color",
       "required": false,
       "usage": "Text on accent backgrounds (badges, checkboxes)"
