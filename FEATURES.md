@@ -168,7 +168,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Close on select | attr/prop | `close-on-select` / `isCloseOnSelect` | `bool(false)` | | | |
 | Auto-positioning (Floating UI) | behavior | dropdown / popover / tooltip placement | — | Auto-flip + overflow-escape (e2e: `positioning.spec.ts`, `floating-panels.spec.ts`) | | |
 | Lock placement | attr/prop | `lock-placement` / `isPlacementLocked` | `bool(true)` | Prevent flip after first open | | |
-| Keep search on close | attr/prop | `should-keep-search-on-close` / `shouldKeepSearchOnClose` | `bool(true)` | Preserve text + filtered results | | |
+| Keep search on close | attr/prop | `should-keep-search-on-close` / `shouldKeepSearchOnClose` | `bool(tristate)` | Preserve text + filtered results. Unset: kept in multi, cleared in single | | ✓ |
+| Tab behavior | attr/prop | `tab-behavior` / `tabBehavior` | unset | `select-highlighted` / `select-navigated` / `close`; unset = `select-highlighted` (single), `close` (multi) | | ✓ |
 | Dropdown min width | attr/prop | `dropdown-min-width` / `dropdownMinWidth` | — | e.g. `'20rem'` | | |
 | Dropdown max width | attr/prop | `dropdown-max-width` / `dropdownMaxWidth` | — | e.g. `'40rem'` | | |
 | Dropdown max height | attr/prop | `max-height` / `maxHeight` | `'20rem'` | | | |

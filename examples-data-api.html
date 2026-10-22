@@ -550,11 +550,43 @@ multiselect.searchCallback = async (searchTerm, signal) => {
             <p class="description">
                 Create dependent dropdowns that automatically update! The <code>options</code> property is reactive - setting <code>element.options = newArray</code> triggers automatic re-rendering. Perfect for Organization → Business Unit → Department flows.
             </p>
+            <p class="description">
+                <strong>Keyboard form flow.</strong> Click "Before", then Tab through the cascade: type <code>glo</code>, Tab — the
+                highlighted match is selected and the next level fills. Shift+Tab back — the old term is gone (single-select
+                clears its search on close). Switch the controls to compare:
+                <code>tab-behavior</code> — <code>select-highlighted</code> (single-select default: Tab takes the highlighted
+                option, also the first match highlighted while typing), <code>select-navigated</code> (only an option you arrowed
+                to), <code>close</code> (Tab selects nothing; the pre-2.6 behavior). <code>should-keep-search-on-close</code> —
+                unset = cleared in single-select, kept in multi-select.
+            </p>
+
+            <div class="controls">
+                <label><code>tab-behavior</code>:
+                    <select id="cascade-tab-behavior">
+                        <option value="">unset (single → select-highlighted)</option>
+                        <option value="select-highlighted">select-highlighted</option>
+                        <option value="select-navigated">select-navigated</option>
+                        <option value="close">close</option>
+                    </select>
+                </label>
+                <label><code>should-keep-search-on-close</code>:
+                    <select id="cascade-keep-search">
+                        <option value="">unset (single → cleared)</option>
+                        <option value="true">true</option>
+                        <option value="false">false</option>
+                    </select>
+                </label>
+            </div>
 
             <div class="demo-area">
                 <label class="demo-label">Organization → Business Unit → Department Cascade:</label>
 
                 <div style="display: grid; gap: 1rem; margin: 1rem 0;">
+                    <div>
+                        <label class="demo-label" for="cascade-before">Before (a plain field to Tab from)</label>
+                        <input id="cascade-before" type="text" placeholder="Click here, then Tab">
+                    </div>
+
                     <div>
                         <label class="demo-label">
                             1️⃣ Select Organization
@@ -594,6 +626,11 @@ multiselect.searchCallback = async (searchTerm, signal) => {
                             display-value-member="label"
                             search-placeholder="Select department..."
                         ></web-multiselect>
+                    </div>
+
+                    <div>
+                        <label class="demo-label" for="cascade-after">After (Tab lands here)</label>
+                        <input id="cascade-after" type="text" placeholder="…and Shift+Tab goes back">
                     </div>
                 </div>
 
@@ -1530,6 +1567,15 @@ el.refresh();                     // silent repaint — never call both after an
 
             // Initialize organization select with data
             cascadeOrgSelect.options = mockData.organizations;
+
+            // Keyboard-flow controls: apply to all three levels (empty = remove the attribute → mode default).
+            const cascadeAll = [cascadeOrgSelect, cascadeBuSelect, cascadeDeptSelect];
+            const applyCascadeAttr = (attr, value) => cascadeAll.forEach((el) =>
+                value ? el.setAttribute(attr, value) : el.removeAttribute(attr));
+            document.getElementById('cascade-tab-behavior').addEventListener('change', (e) =>
+                applyCascadeAttr('tab-behavior', e.target.value));
+            document.getElementById('cascade-keep-search').addEventListener('change', (e) =>
+                applyCascadeAttr('should-keep-search-on-close', e.target.value));
 
             // Organization change handler
             cascadeOrgSelect.addEventListener('change', async (e) => {

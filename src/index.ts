@@ -13,7 +13,7 @@ export { WebMultiSelect } from './multiselect';
 
 // data-options authoring formats (data-options-format)
 export { parseOptionsData, OPTIONS_FORMATS } from './option-formats';
-export { normalizeSearchText } from './search';
+export { normalizeSearchText } from '@keenmate/web-components-core/search';
 export type { OptionsFormat, ParsedOptions } from './option-formats';
 
 // Device / viewport detection — re-exported from the core so consumers get the
@@ -62,6 +62,7 @@ export type {
   SearchInputMode,
   SearchMode,
   SearchBehavior,
+  TabBehavior,
   SearchMatch,
   SearchTermContext,
   PreparedSearchTerm,

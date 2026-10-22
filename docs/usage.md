@@ -162,7 +162,8 @@ multiselect.setSelected(['js', 'ts']);
 | `min-search-length` | `number` | `0` | Minimum search length for async |
 | `search-debounce` | `number` | `0` | Debounce (ms) before the async `searchCallback` fires; coalesces keystroke bursts into one request. Resets on each keystroke. Async callback only — local filtering stays instant. `0` = no debounce |
 | `keep-options-on-search` | `boolean` | `true` | Keep initial options visible when `searchCallback` is active (hybrid search) |
-| `should-keep-search-on-close` | `boolean` | `true` | Preserve search text and filtered results when dropdown closes |
+| `should-keep-search-on-close` | `boolean` | unset | Preserve search text and filtered results when the dropdown closes. Unset: kept in multi-select, cleared in single-select |
+| `tab-behavior` | `'select-highlighted' \| 'select-navigated' \| 'close'` | unset | What Tab / Shift+Tab selects before focus moves on: the highlighted option (also the first match highlighted while typing), only an option the user arrowed to, or nothing. Unset: `select-highlighted` in single-select, `close` in multi-select. Tab never deselects |
 | `sticky-actions` | `boolean` | `true` | Keep the action-buttons block pinned to its edge while scrolling |
 | `actions-layout` | `'nowrap' \| 'wrap'` | `'nowrap'` | Whether buttons in a row wrap: `nowrap` (single line) or `wrap` |
 | `actions-position` | `'top' \| 'bottom'` | `'top'` | Place the actions block at the top or bottom (sticky footer) of the dropdown |

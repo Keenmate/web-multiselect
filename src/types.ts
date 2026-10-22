@@ -5,6 +5,18 @@
 import type { Placement } from '@keenmate/web-components-core/positioning';
 import type { PresentationContext } from '@keenmate/web-components-core';
 import type { LTreeNode } from './tree/ltree-node';
+import type {
+    SearchBehavior,
+    SearchMatch,
+    SearchTermContext,
+    PreparedSearchTerm,
+    SearchEntry,
+    SearchCallbackContext,
+} from '@keenmate/web-components-core/search';
+
+// Search vocabulary lives in core (`/search`, shared with other Keenmate components);
+// re-exported so this package's public types are unchanged.
+export type { SearchBehavior, SearchMatch, SearchTermContext, PreparedSearchTerm, SearchEntry, SearchCallbackContext };
 
 
 /**
@@ -40,57 +52,18 @@ export type BadgesDisplayMode = 'badges' | 'count' | 'compact' | 'partial' | 'no
 export type SearchMode = 'filter' | 'navigate';
 
 /**
- * How internal search normalizes text before matching (see `normalizeSearchText`).
+ * What Tab (and Shift+Tab) does while the dropdown is open. Tab always closes the dropdown and
+ * lets focus move on; this decides whether it selects something first.
  *
- * - `normalized` (default) — ignores case and diacritics: `ces` matches `Český`, `muller` matches `Müller`
- * - `case-insensitive` — ignores case only: `čes` matches `Český`, `ces` does not
- * - `exact` — case- and diacritic-sensitive
- */
-export type SearchBehavior = 'normalized' | 'case-insensitive' | 'exact';
-
-/**
- * Where in an option's search value internal search looks for the term.
+ * - `select-highlighted` — select the highlighted option, including the first match that is
+ *   highlighted automatically while typing (type `cesky kru`, Tab). Default for single-select.
+ * - `select-navigated` — select the highlighted option only if the user moved the highlight
+ *   (arrow keys, PageUp/PageDown, Home/End); an automatic highlight from typing is ignored.
+ * - `close` — select nothing. Default for multi-select.
  *
- * - `contains` (default) — anywhere
- * - `equals` — the whole value (codes: `haxkl324` finds `HAxKL324` but not `HAxKL3245`;
- *   case/accents per `searchBehavior`)
- * - `starts-with` / `ends-with` — at the start / end of the whole value
- * - `word-starts-with` / `word-ends-with` — at the start / end of any word
- * - `regex` — the term is a regular expression, tested against the RAW search value
- *   (`searchBehavior` does not apply)
+ * Tab only ever adds: in multi-select an already-selected option stays selected.
  */
-export type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 'ends-with' | 'word-ends-with' | 'regex';
-
-/** Context passed to `getSearchTermCallback`. */
-export interface SearchTermContext {
-    /** Which search the term is being prepared for: internal matching, or your `searchCallback`. */
-    target: 'internal' | 'callback';
-    /** The current `searchBehavior`. */
-    behavior: SearchBehavior;
-    /** The current `searchMatch`. */
-    match: SearchMatch;
-}
-
-/** What `getSearchTermCallback` may return. `null` / `undefined` / `''` = no search. */
-export type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
-
-/** One option paired with its search value (the raw `searchValueMember` / `getSearchValueCallback` output). */
-export interface SearchEntry<T = any> {
-    item: T;
-    searchValue: unknown;
-}
-
-/** Context passed to `searchCallback` as its third argument. */
-export interface SearchCallbackContext<T = any> {
-    /** The term as prepared by `getSearchTermCallback` (or the plain term when it isn't set). */
-    searchTerm: string | RegExp | Record<string, unknown>;
-    /**
-     * Every current option with its search value. Built on first access; each value is
-     * computed once and the array is the SAME reference until the options change, so a
-     * search engine can key its index on it.
-     */
-    readonly entries: ReadonlyArray<SearchEntry<T>>;
-}
+export type TabBehavior = 'select-highlighted' | 'select-navigated' | 'close';
 
 /**
  * Visual tone of a transient message shown via `showMessage()` (or a veto callback's
@@ -771,8 +744,12 @@ export interface MultiSelectConfig<T = any> {
     isBadgeFullTitleShown?: boolean;
     /** Keep initial options visible when searchCallback is active and search term is empty/short (internal: isKeepOptionsOnSearch) */
     isKeepOptionsOnSearch?: boolean;
-    /** Keep search text and filtered results when dropdown closes (default: true) */
-    shouldKeepSearchOnClose?: boolean;
+    /**
+     * Keep search text and filtered results when the dropdown closes. Unset (`null`) = keep in
+     * multi-select (reopen and keep picking from the same results), clear in single-select
+     * (the term is finished once a value is picked or focus leaves the field).
+     */
+    shouldKeepSearchOnClose?: boolean | null;
     /** Enable virtual scrolling for large datasets (internal: isVirtualScrollEnabled) */
     isVirtualScrollEnabled?: boolean;
 
@@ -879,6 +856,11 @@ export interface MultiSelectConfig<T = any> {
      * the last valid result. Internal search only.
      */
     searchMatch?: SearchMatch;
+    /**
+     * What Tab does while the dropdown is open. Unset (`null`) = `select-highlighted` in
+     * single-select, `close` in multi-select. See `TabBehavior`.
+     */
+    tabBehavior?: TabBehavior | null;
     /**
      * Show a clickable mode toggle in the phone fullscreen overlay's search header that
      * flips `searchMode` between `filter` and `navigate` live (no reopen). Default `false`.

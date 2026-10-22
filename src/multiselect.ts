@@ -12,7 +12,7 @@ import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, des
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
 import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
-import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, SearchEntry, SearchCallbackContext, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
+import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchCallbackContext, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
 
 /** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -30,14 +30,16 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     nextMatch: 'Next match',
 };
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
-import { normalizeSearchText, matchesText, findTextMatches, findRegexMatches, statelessRegex } from './search';
-
-/** The internal-search term, prepared once per keystroke. */
-type ActiveSearchTerm =
-    | { kind: 'none' }
-    | { kind: 'text'; text: string }
-    | { kind: 'regex'; re: RegExp };
-const NO_SEARCH_TERM: ActiveSearchTerm = { kind: 'none' };
+import {
+    NO_SEARCH_TERM,
+    createRegexCompiler,
+    findHighlightRanges,
+    matchesSearchTerm,
+    normalizeSearchText,
+    prepareSearchTerm,
+    wrapRanges,
+    type ActiveSearchTerm,
+} from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './tree/ltree-node';
@@ -77,6 +79,9 @@ export class WebMultiSelect<T = any> {
     private cascadeCheckedAtoms: Set<string> = new Set();
     private hiddenInputs: HTMLInputElement[] = [];
     private focusedIndex = -1;
+    /** True when the user moved `focusedIndex` (arrows, PageUp/Down, Home/End) rather than search
+     *  auto-highlighting a match; `tab-behavior="select-navigated"` only commits then. */
+    private isFocusNavigated = false;
     // Stable imperative facade handed to keydownCallback (built once, reused). See getKeyboardController().
     private keyboardController: MultiSelectKeyboardController<T> | null = null;
     private matchingIndices: Set<number> = new Set();
@@ -96,7 +101,8 @@ export class WebMultiSelect<T = any> {
     private activeTerm: ActiveSearchTerm = NO_SEARCH_TERM;
     private activeTermFor: string | null = null;
     /** search-match="regex": the last pattern that compiled, kept while the user types an invalid one. */
-    private lastValidSearchRegex: RegExp | null = null;
+    /** Compiles typed `search-match="regex"` patterns, keeping this instance's last valid one. */
+    private readonly searchRegex = createRegexCompiler();
     private hasWarnedObjectSearchValue = false;
     private hasWarnedObjectSearchTerm = false;
     /** Keyboard focus sits on the empty-state "add new" prompt (arrow-navigated). */
@@ -405,35 +411,18 @@ export class WebMultiSelect<T = any> {
      * `useCallback` is false on the searchCallback path, where this only drives highlighting.
      */
     private prepareSearchTerm(term: string, useCallback: boolean): ActiveSearchTerm {
-        const match = this.options.searchMatch || 'contains';
         const callback = useCallback ? this.options.getSearchTermCallback : null;
-        if (callback) {
-            const prepared = callback(term, this.searchTermContext('internal'));
-            if (prepared instanceof RegExp) return { kind: 'regex', re: statelessRegex(prepared) };
-            if (prepared == null || prepared === '') return NO_SEARCH_TERM;
-            if (typeof prepared !== 'string') {
-                if (!this.hasWarnedObjectSearchTerm) {
-                    this.hasWarnedObjectSearchTerm = true;
-                    console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
-                }
-                return NO_SEARCH_TERM;
-            }
-            return match === 'regex' ? this.compileSearchRegex(prepared) : { kind: 'text', text: prepared };
-        }
-        const trimmed = term.trim();
-        if (!trimmed) return NO_SEARCH_TERM;
-        if (match === 'regex') return this.compileSearchRegex(trimmed);
-        return { kind: 'text', text: normalizeSearchText(trimmed, this.options.searchBehavior || 'normalized') };
-    }
-
-    /** Compile a typed pattern; an invalid one (mid-typing) reuses the last valid pattern. */
-    private compileSearchRegex(pattern: string): ActiveSearchTerm {
-        try {
-            this.lastValidSearchRegex = new RegExp(pattern);
-        } catch {
-            // keep lastValidSearchRegex
-        }
-        return this.lastValidSearchRegex ? { kind: 'regex', re: this.lastValidSearchRegex } : NO_SEARCH_TERM;
+        return prepareSearchTerm(term, {
+            behavior: this.options.searchBehavior || 'normalized',
+            match: this.options.searchMatch || 'contains',
+            regex: this.searchRegex,
+            prepare: callback ? (t) => callback(t, this.searchTermContext('internal')) : undefined,
+            onObjectTerm: () => {
+                if (this.hasWarnedObjectSearchTerm) return;
+                this.hasWarnedObjectSearchTerm = true;
+                console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
+            },
+        });
     }
 
     /**
@@ -449,12 +438,10 @@ export class WebMultiSelect<T = any> {
         return this.activeTerm;
     }
 
-    /** Whether an option matches the prepared internal-search term. */
+    /** Whether an option matches the prepared internal-search term (values computed lazily, cached per item). */
     private matchesSearchTerm(item: T, term: ActiveSearchTerm): boolean {
-        if (term.kind === 'none') return true;
-        if (term.kind === 'regex') return term.re.test(this.getSearchString(item));
-        const match = this.options.searchMatch || 'contains';
-        return matchesText(this.getPreparedSearchValue(item), term.text, match === 'regex' ? 'contains' : match);
+        return matchesSearchTerm(term, this.options.searchMatch || 'contains',
+            () => this.getPreparedSearchValue(item), () => this.getSearchString(item));
     }
 
     /** Sort key for `selectedOrder === 'member'` (member/callback pattern). */
@@ -609,7 +596,8 @@ export class WebMultiSelect<T = any> {
             isSelectedPopoverEnabled: element.dataset.enableSelectedPopover !== 'false',
             isSearchModeToggleShown: element.dataset.showSearchModeToggle === 'true',
             isKeepOptionsOnSearch: element.dataset.keepOptionsOnSearch !== 'false',
-            shouldKeepSearchOnClose: element.dataset.keepSearchOnClose !== 'false',
+            shouldKeepSearchOnClose: element.dataset.keepSearchOnClose === undefined ? null : element.dataset.keepSearchOnClose !== 'false',
+            tabBehavior: (element.dataset.tabBehavior as TabBehavior) || null,
 
             // Data and callbacks
             options: [],
@@ -1900,43 +1888,12 @@ export class WebMultiSelect<T = any> {
     private highlightMatch(text: string): string {
         const term = this.currentSearchTerm();
         if (term.kind === 'none' || !text) return text;
-
-        let ranges: Array<[number, number]>;
-        if (term.kind === 'regex') {
-            ranges = findRegexMatches(text, term.re);
-        } else {
-            const behavior = this.options.searchBehavior || 'normalized';
-            const match = this.options.searchMatch || 'contains';
-            text = text.normalize('NFC');
-            let folded = '';
-            const start: number[] = []; // original start index of each folded char's source char
-            const end: number[] = [];   // ...and its end index
-            for (let i = 0; i < text.length;) {
-                const ch = String.fromCodePoint(text.codePointAt(i)!);
-                const f = normalizeSearchText(ch, behavior);
-                for (let k = 0; k < f.length; k++) {
-                    start.push(i);
-                    end.push(i + ch.length);
-                }
-                folded += f;
-                i += ch.length;
-            }
-            ranges = findTextMatches(folded, term.text, match === 'regex' ? 'contains' : match).map(([a, b]) => {
-                // Extend over any following characters that folded to nothing (combining marks).
-                const next = b < folded.length ? start[b] : text.length;
-                return [start[a], Math.max(end[b - 1], next)] as [number, number];
-            });
-        }
-
-        let out = '';
-        let last = 0;
-        for (const [a, b] of ranges) {
-            const from = Math.max(a, last);
-            if (b <= from) continue;
-            out += text.slice(last, from) + '<mark>' + text.slice(from, b) + '</mark>';
-            last = b;
-        }
-        return out + text.slice(last);
+        const r = findHighlightRanges(text, term, {
+            behavior: this.options.searchBehavior || 'normalized',
+            match: this.options.searchMatch || 'contains',
+        });
+        // No escape: display values may carry trusted HTML (unchanged pre-core behaviour).
+        return wrapRanges(r.text, r.ranges);
     }
 
     private groupOptions(options: T[]): Record<string, T[]> {
@@ -2289,6 +2246,8 @@ export class WebMultiSelect<T = any> {
         this.searchTerm = value;
         // A fresh keystroke drops the "add new" prompt highlight — arrows re-focus it.
         this.addNewFocused = false;
+        // ...and any highlight from now on is search's auto-highlight, not the user's.
+        this.isFocusNavigated = false;
 
         // If search is disabled, don't filter options
         if (!this.options.isSearchEnabled) {
@@ -2510,6 +2469,7 @@ export class WebMultiSelect<T = any> {
 
             // Auto-focus first option if search is enabled and there are results
             this.focusedIndex = (this.options.isSearchEnabled && this.filteredOptions.length > 0) ? 0 : -1;
+            this.isFocusNavigated = false; // results replaced the list - row 0 is auto-highlighted
             this.renderDropdown();
             // Results just replaced an empty/loading panel — its height changed, so
             // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
@@ -2640,6 +2600,8 @@ export class WebMultiSelect<T = any> {
                 }
                 break;
             case 'Tab':
+                // No preventDefault: focus moves on to the next / previous field as usual.
+                this.commitOnTab();
                 this.close();
                 break;
             case 'PageUp':
@@ -2905,6 +2867,7 @@ export class WebMultiSelect<T = any> {
         const next = this.resolveSelectableIndex(target, dir, total);
         if (next < 0) return;
         this.focusedIndex = next;
+        this.isFocusNavigated = true;
         this.renderDropdown();
         this.scrollToFocused();
         this.updateFullscreenNav();
@@ -2935,6 +2898,67 @@ export class WebMultiSelect<T = any> {
     private focusPageDown(): void { this.focusBy((i, n) => Math.min(n - 1, i + 10), 1); }
 
     /** Move keyboard focus onto the empty-state "add new" prompt (the only actionable row). */
+    /**
+     * Where the keyboard highlight starts when the dropdown opens: the selected option in a
+     * single-select with no search term (it is in the full list), else nowhere (-1). Multi-select
+     * and an active search keep their own rules (nothing / the first match).
+     */
+    private getOpenFocusIndex(): number {
+        if (this.options.isMultipleEnabled || this.searchTerm || this.selectedValues.size === 0) return -1;
+        return this.filteredOptions.findIndex(o => this.selectedValues.has(String(this.getItemValue(o))));
+    }
+
+    /**
+     * Bring the focused option into the middle of the list right after open — instantly and by
+     * scrolling only the list itself (scrollIntoView would also scroll the page, and a smooth
+     * scroll from the top reads as a jump).
+     */
+    private revealFocusedOnOpen(): void {
+        if (!this.#isOpen || this.focusedIndex < 0) return;
+        if (this.virtualScroll) {
+            this.virtualScroll.scrollToIndex(this.focusedIndex, 'center');
+            return;
+        }
+        const el = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
+        // The scroller differs by presentation (.ms__dropdown-inner floating, .ms__options in the
+        // fullscreen sheet): take the nearest ancestor that actually scrolls.
+        let scroller = el?.parentElement ?? null;
+        while (scroller && scroller !== this.dropdown.parentElement
+            && !(scroller.scrollHeight > scroller.clientHeight && /auto|scroll/.test(getComputedStyle(scroller).overflowY))) {
+            scroller = scroller.parentElement;
+        }
+        if (!el || !scroller || scroller === this.dropdown.parentElement) return;
+        const box = scroller.getBoundingClientRect();
+        const row = el.getBoundingClientRect();
+        scroller.scrollTop += (row.top - box.top) - (box.height - row.height) / 2;
+    }
+
+    /** `tab-behavior`, resolved: unset = `select-highlighted` (single) / `close` (multi). */
+    private getTabBehavior(): TabBehavior {
+        return this.options.tabBehavior ?? (this.options.isMultipleEnabled ? 'close' : 'select-highlighted');
+    }
+
+    /** `should-keep-search-on-close`, resolved: unset = keep in multi-select, clear in single-select. */
+    private shouldKeepSearchOnClose(): boolean {
+        return this.options.shouldKeepSearchOnClose ?? !!this.options.isMultipleEnabled;
+    }
+
+    /**
+     * Tab / Shift+Tab with the dropdown open: select the highlighted option per `tab-behavior`
+     * before the dropdown closes and focus moves on. Only ever adds — an already-selected option
+     * is left alone (Tab must never un-pick in multi-select). A veto (`beforeSelectCallback`)
+     * simply leaves the value unchanged.
+     */
+    private commitOnTab(): void {
+        const behavior = this.getTabBehavior();
+        if (behavior === 'close' || this.focusedIndex < 0) return;
+        if (behavior === 'select-navigated' && !this.isFocusNavigated) return;
+        const option = this.filteredOptions[this.focusedIndex];
+        if (!option || this.selectedValues.has(String(this.getItemValue(option)))) return;
+        interactionLogger.debug(`[${this.instanceId}] Tab commits highlighted option`, { behavior, index: this.focusedIndex });
+        this.toggleOption(option);
+    }
+
     private focusAddNewPrompt(): void {
         if (this.addNewFocused) return;
         this.addNewFocused = true;
@@ -3630,11 +3654,17 @@ export class WebMultiSelect<T = any> {
             this.enterFullscreen();
         }
 
+        // Single-select: keyboard navigation starts at the current value, like a native
+        // <select> — ArrowUp from the selected row 30 goes to 29, not from the top.
+        const startIndex = this.getOpenFocusIndex();
+        if (startIndex >= 0) this.focusedIndex = startIndex;
+
         this.renderDropdown();
 
         if (this.presentationMode !== 'fullscreen') {
             this.positionDropdown();
         }
+        if (startIndex >= 0) requestAnimationFrame(() => this.revealFocusedOnOpen());
 
         // Dismiss option tooltips immediately on scroll (see field comment).
         this.dropdown.addEventListener('scroll', this.onDropdownScroll, true);
@@ -3663,8 +3693,8 @@ export class WebMultiSelect<T = any> {
             this.hint.classList.remove('ms__hint--visible');
         }
 
-        // Only clear search if shouldKeepSearchOnClose is false
-        if (!this.options.shouldKeepSearchOnClose) {
+        // Clear the search unless it is kept (default: kept in multi-select, cleared in single-select)
+        if (!this.shouldKeepSearchOnClose()) {
             this.searchTerm = '';
             // Only clear input in multi-select mode or when search is enabled
             if (this.options.isMultipleEnabled || this.options.isSearchEnabled) {
@@ -3675,6 +3705,7 @@ export class WebMultiSelect<T = any> {
         }
 
         this.focusedIndex = -1;
+        this.isFocusNavigated = false;
 
         // Tear down option tooltips so they don't linger while the dropdown is hidden.
         this.dropdown.removeEventListener('scroll', this.onDropdownScroll, true);
@@ -4974,7 +5005,7 @@ export class WebMultiSelect<T = any> {
         if (searchRulesChanged) {
             if ('searchBehavior' in partial) this.preparedSearchValues.clear();
             this.activeTermFor = null;
-            this.lastValidSearchRegex = null;
+            this.searchRegex.reset();
         }
 
         // Tree-affecting config keys — a change to any of these means the

@@ -175,8 +175,12 @@
   /* Selected + focused read the SHARED item-state tokens (--base-selected-* /
      --base-focused-*) so a selected / keyboard-focused option looks identical to a
      selected / focused row in the Keenmate tree components on the same page.
-     Focus is marked by the inset ring alone (transparent bg) — no grey fill. */
-  --ms-option-bg-focused: var(--base-focused-bg, transparent);
+     EXCEPTION — focused bg: in a tree, focus is a cursor and the inset ring alone marks it
+     (--base-focused-bg is transparent). In a combobox the focused row is what Enter / Tab
+     will pick, and with a single result its 1px ring sits on the panel border and vanishes,
+     so the focused option keeps the hover fill under the ring and does NOT read
+     --base-focused-bg. Override --ms-option-bg-focused to change it. */
+  --ms-option-bg-focused: var(--ms-option-bg-hover);
   --ms-option-color-focused: var(--base-focused-text-color, currentColor);
   --ms-option-outline-color-focused: var(--ms-accent-color);
   --ms-option-bg-selected: var(--base-selected-bg, color-mix(in srgb, var(--ms-accent-color) 10%, transparent));

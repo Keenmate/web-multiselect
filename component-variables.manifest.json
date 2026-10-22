@@ -84,11 +84,6 @@
       "usage": "Shared selected-item ring, outline shorthand drawn inset (drives --ms-option-outline-selected)"
     },
     {
-      "name": "base-focused-bg",
-      "required": false,
-      "usage": "Shared keyboard-focused item background (drives --ms-option-bg-focused)"
-    },
-    {
       "name": "base-focused-text-color",
       "required": false,
       "usage": "Shared keyboard-focused item text color (drives --ms-option-color-focused)"
@@ -823,7 +818,7 @@
     {
       "name": "ms-option-bg-focused",
       "category": "option",
-      "usage": "Option focused (keyboard) background; reads --base-focused-bg (default transparent — the ring marks focus)"
+      "usage": "Option focused (keyboard) background; the hover fill under the focus ring. Deliberately does not read --base-focused-bg (transparent in the contract): the focused row is what Enter / Tab picks and must stand out"
     },
     {
       "name": "ms-option-outline-focused",

@@ -100,11 +100,17 @@ Change `--base-primary-color` once → all components update automatically.
 
 **Shared item states** — an option's selected and keyboard-focused looks read the
 shared `--base-selected-bg` / `--base-selected-bg-hover` / `--base-selected-text-color` /
-`--base-selected-outline` and `--base-focused-bg` / `--base-focused-text-color` /
-`--base-focused-outline` tokens (borders are outline shorthands drawn inset), so a
-selected / focused option matches a selected / focused row in the Keenmate tree
-components. Defaults: selected = 10% accent tint, no ring; focused = transparent
-background + `1px solid` accent inset ring.
+`--base-selected-outline` and `--base-focused-text-color` / `--base-focused-outline`
+tokens (borders are outline shorthands drawn inset), so a selected / focused option matches a
+selected / focused row in the Keenmate tree components. Defaults: selected = 10% accent tint,
+no ring; focused = hover fill + `1px solid` accent inset ring.
+
+**Exception — the focused background.** The contract marks focus with the ring alone
+(`--base-focused-bg: transparent`), which suits a tree, where focus is a cursor. In a
+combobox the focused option is what Enter / Tab will pick, and with a single result its 1px
+ring lands on the panel border and disappears. So `--ms-option-bg-focused` uses the hover fill
+(`--ms-option-bg-hover`) and does not read `--base-focused-bg`; set `--ms-option-bg-focused`
+to change it.
 
 ### Unified variable naming
 
@@ -282,7 +288,7 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-option-color-selected` | `var(--base-selected-text-color, currentColor)` | Selected option text color |
 | `--ms-option-outline-selected` | `var(--base-selected-outline, none)` | Selected option ring (outline shorthand, drawn inset) |
 | `--ms-option-bg-selected-focused` | `var(--ms-option-bg-selected)` | Selected + focused background (focus ring drawn on top) |
-| `--ms-option-bg-focused` | `var(--base-focused-bg, transparent)` | Focused option background (keyboard) — the ring alone marks focus |
+| `--ms-option-bg-focused` | `var(--ms-option-bg-hover)` | Focused option background (keyboard) — the hover fill under the ring; deliberately not `--base-focused-bg` (see the exception above) |
 | `--ms-option-color-focused` | `var(--base-focused-text-color, currentColor)` | Focused option text color |
 | `--ms-option-outline-focused` | `var(--base-focused-outline, 1px solid <accent>)` | Focused option ring (outline shorthand, drawn inset) |
 | `--ms-option-focus-outline-offset` | `calc(-1 * var(--base-outline-width, 1px))` | Inset offset for the focus/selected ring (keep = minus the ring width; follows `--base-outline-width`) |

@@ -45,10 +45,20 @@ Escape: Close dropdown
 - Preserves current selections
 - Clears search if any
 
-Tab: Close and move focus
-- Closes dropdown
-- Moves to next focusable element
-- Preserves selections
+Opening (Tab in, click): single-select with a value and no search term starts
+the highlight on the selected option (scrolled to the middle), like native <select>;
+ArrowUp/Down move from there. Multi-select: no initial highlight.
+
+Tab / Shift+Tab: select per tab-behavior, close, move focus
+- tab-behavior="select-highlighted" (single-select default): selects the highlighted
+  option first, including the first match highlighted while typing
+  (type "cesky kru", Tab -> Cesky Krumlov selected, select + change fired)
+- tab-behavior="select-navigated": only an option moved to with arrows /
+  PageUp/PageDown / Home/End (typing resets it)
+- tab-behavior="close" (multi-select default): selects nothing
+- Never deselects; beforeSelectCallback can veto
+- Closes dropdown, focus moves to the next / previous field (not prevented)
+- Single-select clears its search on close (should-keep-search-on-close unset)
 
 QUICK JUMPS
 -----------
@@ -274,7 +284,7 @@ Ctrl+↑      Previous match
 
 Control:
 Esc         Close dropdown
-Tab         Close and next focus
+Tab         Select per tab-behavior, close, next focus
 
 MOBILE KEYBOARD
 ---------------
