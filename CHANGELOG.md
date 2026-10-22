@@ -73,6 +73,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gesture: the gesture's `click` consumes it, and the next `pointerdown` clears it if no click
   arrives.
 
+- **The per-group count chip no longer looks squashed.** It had no vertical padding (so the
+  row height wouldn't change when it appears), so the `[N]` brackets touched its top and
+  bottom edges. Most visible in the phone overlay. The chip now has
+  `0.2 × --ms-rem` of vertical padding, cancelled by an equal negative margin, so it extends
+  into the header's padding without changing the row height. To leave room for it,
+  `--ms-group-label-padding` grows from `0.4` to `0.6 × --ms-rem` vertically, so every group
+  header is about 4px taller (about 5px in the overlay). The chip also stops inheriting the
+  header's uppercase and letter-spacing, which pushed the count off-centre.
+
 ### Internal
 
 - **e2e runs on Firefox and WebKit too.** New Playwright projects: `firefox`, `webkit`
