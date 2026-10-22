@@ -92,35 +92,35 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'selectedPopoverWidth',    attribute: 'selected-popover-width',      converter: toText({ isNullable: true }),            on: 'update', description: 'Selected-items popover width; mirrored to `--ms-selected-popover-width`.' },
 
   // ── Member properties (structural → reinit; optional → nullable) ─────────
-  { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name on an option object that holds its value.' },
-  { configKey: 'displayValueMember',      attribute: 'display-value-member',        converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name that holds an option display label.' },
-  { configKey: 'searchValueMember',       attribute: 'search-value-member',         converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name searched against (falls back to the display value).' },
-  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name that holds an option icon.' },
-  { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name that holds an option subtitle.' },
-  { configKey: 'fullTitleMember',         attribute: 'full-title-member',           converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name that holds an option full/long title.' },
-  { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name used to group options under headers.' },
-  { configKey: 'disabledMember',          attribute: 'disabled-member',             converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name that marks an option disabled.' },
+  { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name on an option object that holds its value.' },
+  { configKey: 'displayValueMember',      attribute: 'display-value-member',        converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option display label.' },
+  { configKey: 'searchValueMember',       attribute: 'search-value-member',         converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name searched against (falls back to the display value).' },
+  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option icon.' },
+  { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option subtitle.' },
+  { configKey: 'fullTitleMember',         attribute: 'full-title-member',           converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option full/long title.' },
+  { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name used to group options under headers.' },
+  { configKey: 'disabledMember',          attribute: 'disabled-member',             converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that marks an option disabled.' },
 
   // ── Tree of options (structural → reinit; optional → nullable) ───────────
-  { configKey: 'pathMember',              attribute: 'path-member',                 converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name holding a node materialized tree path.' },
-  { configKey: 'parentPathMember',        attribute: 'parent-path-member',          converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name holding a node parent path.' },
-  { configKey: 'levelMember',             attribute: 'level-member',                converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name holding a node depth level.' },
-  { configKey: 'hasChildrenMember',       attribute: 'has-children-member',         converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name flagging that a node has children.' },
-  { configKey: 'isSelectableMember',      attribute: 'is-selectable-member',        converter: toText({ isNullable: true }), reflect: true, on: 'reinit', description: 'Property name marking whether a node can be selected.' },
-  { configKey: 'treePathSeparator',       attribute: 'tree-path-separator',         converter: toText({ default: '.' }), reflect: true, on: 'reinit', description: 'Separator between segments in a materialized tree path.' },
+  { configKey: 'pathMember',              attribute: 'path-member',                 converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name holding a node materialized tree path.' },
+  { configKey: 'parentPathMember',        attribute: 'parent-path-member',          converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name holding a node parent path.' },
+  { configKey: 'levelMember',             attribute: 'level-member',                converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name holding a node depth level.' },
+  { configKey: 'hasChildrenMember',       attribute: 'has-children-member',         converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name flagging that a node has children.' },
+  { configKey: 'isSelectableMember',      attribute: 'is-selectable-member',        converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name marking whether a node can be selected.' },
+  { configKey: 'treePathSeparator',       attribute: 'tree-path-separator',         converter: toText({ default: '.' }), shouldReflect: true, on: 'reinit', description: 'Separator between segments in a materialized tree path.' },
   { configKey: 'isTreeEnabled',           converter: toBool('tristate'), on: 'reinit', type: 'boolean', description: 'Force tree mode on/off. Property-only; when unset (null) tree mode auto-enables if a path source (path-member / getPathCallback) is present.' },
-  { configKey: 'checkboxMode',            attribute: 'checkbox-mode',               converter: toEnum(['independent', 'cascade'] as const, { default: 'cascade' }), reflect: true, on: 'update',
+  { configKey: 'checkboxMode',            attribute: 'checkbox-mode',               converter: toEnum(['independent', 'cascade'] as const, { default: 'cascade' }), shouldReflect: true, on: 'update',
     description: `Tree checkbox interaction.
 - \`cascade\` (default) — checks a node's whole subtree and shows a tristate (checked / indeterminate / unchecked) box on branches. This is what most tree-select UIs do, so it's the default.
 - \`independent\` — toggles only the clicked node, ignoring ancestors/descendants.
 
 Tree + multiple only — has no effect on flat lists or single-select (there is no subtree to cascade into).` },
-  { configKey: 'cascadeSelectPolicy',     attribute: 'cascade-select-policy',       converter: toEnum(['rolled-up', 'leaves', 'all'] as const, { default: 'rolled-up' }), reflect: true, on: 'update',
+  { configKey: 'cascadeSelectPolicy',     attribute: 'cascade-select-policy',       converter: toEnum(['rolled-up', 'leaves', 'all'] as const, { default: 'rolled-up' }), shouldReflect: true, on: 'update',
     description: `In \`cascade\` mode, which values a selection emits (badges / form / change):
 - \`rolled-up\` (default) — minimal cover: a fully-selected subtree collapses to its root; partially-selected branches emit their individually-checked descendants.
 - \`leaves\` — only the checked leaf-level nodes.
 - \`all\` — every fully-checked node (branches and leaves).` },
-  { configKey: 'groupSelectMode',         attribute: 'group-select-mode',           converter: toEnum(['none', 'cascade'] as const, { default: 'none' }), reflect: true, on: 'update',
+  { configKey: 'groupSelectMode',         attribute: 'group-select-mode',           converter: toEnum(['none', 'cascade'] as const, { default: 'none' }), shouldReflect: true, on: 'update',
     description: `Group-header selection in a FLAT (non-tree) grouped, multi-select list.
 - \`none\` (default) — group headers are inert labels.
 - \`cascade\` — each header shows a tristate checkbox that checks/unchecks all of that group's currently-visible members; a partially-selected group reads indeterminate. The group itself is never a selected value (getValue / badges / form carry member values only).
@@ -131,13 +131,13 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'badgesDisplayMode',       attribute: 'badges-display-mode',         converter: toEnum(['badges', 'count', 'compact', 'partial', 'none'] as const, { default: 'badges' }), on: 'update', description: 'How the current selection is shown in the control.' },
   { configKey: 'badgesPosition',          attribute: 'badges-position',             converter: toEnum(['top', 'bottom', 'left', 'right'] as const, { default: 'bottom' }), on: 'update', description: 'Where the badges/selection appear relative to the input.' },
   { configKey: 'badgesThresholdMode',     attribute: 'badges-threshold-mode',       converter: toEnum(['count', 'partial'] as const, { default: 'count' }), on: 'update', description: 'How `badgesThreshold` is interpreted: collapse to a count badge, or keep partial badges + a "more" badge.' },
-  { configKey: 'selectedOrder',           attribute: 'selected-order',              converter: toEnum(['as-selected', 'label-asc', 'label-desc', 'member', 'custom'] as const, { default: 'as-selected' }), reflect: true, on: 'update',
+  { configKey: 'selectedOrder',           attribute: 'selected-order',              converter: toEnum(['as-selected', 'label-asc', 'label-desc', 'member', 'custom'] as const, { default: 'as-selected' }), shouldReflect: true, on: 'update',
     description: `Order of the CURRENTLY-SELECTED items where they are displayed — badges, partial mode (which items sit behind the "+N more" badge), and the selected-items popover. Display only: \`getValue()\`, the form output, and \`getSelected()\` keep as-selected (insertion) order, and the options dropdown is never reordered.
 - \`as-selected\` (default) — the order items were picked.
 - \`label-asc\` / \`label-desc\` — by the badge label, A→Z / Z→A (locale-aware).
 - \`member\` — by the \`selected-order-member\` property (or \`getSelectedOrderCallback\`); numeric keys sort numerically, everything else with a locale string compare.
 - \`custom\` — delegate to \`selectedOrderCompareCallback\`.` },
-  { configKey: 'selectedOrderMember',     attribute: 'selected-order-member',       converter: toText({ isNullable: true }), reflect: true, on: 'update', description: 'Property name used as the sort key when `selected-order="member"`. Sorts the SELECTED-items display only (not the dropdown). Overridden by `getSelectedOrderCallback`.' },
+  { configKey: 'selectedOrderMember',     attribute: 'selected-order-member',       converter: toText({ isNullable: true }), shouldReflect: true, on: 'update', description: 'Property name used as the sort key when `selected-order="member"`. Sorts the SELECTED-items display only (not the dropdown). Overridden by `getSelectedOrderCallback`.' },
   { configKey: 'searchInputMode',         attribute: 'search-input-mode',           converter: toEnum(['normal', 'readonly', 'hidden'] as const, { default: 'normal' }), on: 'reinit', description: 'Search field mode: editable, read-only, or hidden.' },
   { configKey: 'searchMode',              attribute: 'search-mode',                 converter: toEnum(['filter', 'navigate'] as const, { default: 'filter' }), on: 'reinit', description: 'Whether typing filters the list or navigates it.' },
   { configKey: 'searchBehavior',          attribute: 'search-behavior',             converter: toEnum(['normalized', 'case-insensitive', 'exact'] as const, { default: 'normalized' }), on: 'update', description: 'How internal search normalizes text: `normalized` ignores case and diacritics, `case-insensitive` ignores case only, `exact` matches both. Live: re-runs the current search. Not applied to `searchCallback` or `regex` matching.' },
@@ -150,7 +150,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'valueFormat',             attribute: 'value-format',                converter: toEnum(['json', 'csv', 'array'] as const, { default: 'json' }), on: 'reinit', description: 'Serialization format the control emits its value in.' },
   { configKey: 'badgeTooltipPlacement',   attribute: 'badge-tooltip-placement',     converter: toEnum(PLACEMENTS, { default: 'top' }), on: 'update', description: 'Preferred placement of a badge tooltip relative to its badge (floating-ui placement).' },
   { configKey: 'optionTooltipPlacement',  attribute: 'option-tooltip-placement',    converter: toEnum(PLACEMENTS, { default: 'top-start' }), on: 'update', description: 'Preferred placement of an option tooltip (floating-ui placement).' },
-  { configKey: 'mobilePresentation',      attribute: 'mobile-presentation',         converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), reflect: true, on: 'update',
+  { configKey: 'mobilePresentation',      attribute: 'mobile-presentation',         converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), shouldReflect: true, on: 'update',
     description: 'How the open dropdown is presented on phones. `auto` (default) keeps the floating panel on desktop/tablet and switches to a full-screen overlay on phone-sized touch devices (touch primary + shorter viewport side < 600px, orientation-robust); `floating` forces the anchored panel everywhere; `fullscreen` forces the full-screen overlay on any device (handy for previews/testing). Resolved reactively from the device/viewport environment.' },
   { configKey: 'fullscreenAutofocus',     attribute: 'fullscreen-autofocus',        converter: toBool('default-false'), on: 'update',
     description: 'In the phone fullscreen overlay, auto-focus the search field on open (pops the soft keyboard immediately). Default `false`: the sheet opens with the list visible and the keyboard closed, appearing only when the user taps the search. Set `true` to type-to-filter right away. No effect in the floating presentation.' },
@@ -158,7 +158,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   // ── Numbers ──────────────────────────────────────────────────────────────
   { configKey: 'badgesThreshold',         attribute: 'badges-threshold',            converter: toInt(),               on: 'update', description: 'Threshold at which badges collapse to a count/compact view.' },
   { configKey: 'badgesMaxVisible',        attribute: 'badges-max-visible',          converter: toInt(),               on: 'update', description: 'Maximum number of badges rendered before overflow.' },
-  { configKey: 'collapseBadgesBelow',     attribute: 'collapse-badges-below',       converter: toInt(),               on: 'update', description: 'Container-responsive opt-in (off by default). When set to a px width, the control watches its OWN border box (not the window, via the core `resized` hook / a shared ResizeObserver) and collapses `badges-display-mode` to `count` ("N selected") while the box is narrower than this — so a picker in a narrow column/sidebar never overflows with pills, even on a wide monitor. Widening past the threshold restores the configured badges mode. Element-only: the override is applied to the live picker, never to your `badges-display-mode` config.' },
+  { configKey: 'collapseBadgesBelow',     attribute: 'collapse-badges-below',       converter: toInt(),               on: 'update', description: 'Container-responsive opt-in (off by default). When set to a px width, the control watches its OWN border box (not the window, via the core `sizeChanged` hook / a shared ResizeObserver) and collapses `badges-display-mode` to `count` ("N selected") while the box is narrower than this — so a picker in a narrow column/sidebar never overflows with pills, even on a wide monitor. Widening past the threshold restores the configured badges mode. Element-only: the override is applied to the live picker, never to your `badges-display-mode` config.' },
   { configKey: 'minSearchLength',         attribute: 'min-search-length',           converter: toInt({ default: 0 }), on: 'update', description: 'Minimum characters before searching/filtering starts.' },
   { configKey: 'searchDebounce',          attribute: 'search-debounce',             converter: toInt({ default: 0 }), on: 'update', description: 'Debounce delay in ms applied to the search input.' },
   { configKey: 'virtualScrollThreshold',  attribute: 'virtual-scroll-threshold',    converter: toInt({ default: 100 }), on: 'reinit', description: 'Option count above which virtual scrolling turns on.' },
@@ -426,7 +426,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     if ('mobilePresentation' in partial) this.#applyPresentation(getEnvironment());
 
     // `collapseBadgesBelow` is element-only too — re-evaluate against the current
-    // box when the threshold is set/changed/cleared (the `resized` hook only fires
+    // box when the threshold is set/changed/cleared (the `sizeChanged` hook only fires
     // on a box change, not an attribute change).
     if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.getBoundingClientRect().width);
   }
@@ -474,20 +474,20 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     this.#picker?.setPresentation(resolved === 'modal' ? 'fullscreen' : resolved);
   }
 
-  // ── container-responsive badge collapse (core §12.9 `resized`) ─────────────
+  // ── container-responsive badge collapse (core §12.9 `sizeChanged`) ─────────────
 
   /** Whether the live picker is currently forced to the collapsed count view. */
   #badgesCollapsed = false;
 
   /**
-   * This element's own border box changed (core §12.9 `resized`). Overriding the
+   * This element's own border box changed (core §12.9 `sizeChanged`). Overriding the
    * hook opts us into a shared page-wide ResizeObserver, subscribed on connect and
    * dropped on disconnect. Unlike `environmentChanged`/`viewportChanged` (the
    * WINDOW), this is our OWN box — a picker in a 400px sidebar on a 2560px monitor
    * reflows on its width, not the viewport's. We only act when `collapse-badges-
    * below` is set; otherwise it's a cheap no-op.
    */
-  protected override resized({ width }: ElementSize): void {
+  protected override sizeChanged({ width }: ElementSize): void {
     this.#applyBadgeCollapse(width);
   }
 
@@ -575,7 +575,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     this.#applyPresentation(getEnvironment());
     // Likewise re-assert the container-responsive badge collapse: the fresh picker
     // is at the base badges mode, so reset our flag and re-evaluate the current box
-    // (the throttled `resized` hook would otherwise leave it uncollapsed until the
+    // (the throttled `sizeChanged` hook would otherwise leave it uncollapsed until the
     // next box change). getBoundingClientRect is the synchronous read core suggests.
     this.#badgesCollapsed = false;
     this.#applyBadgeCollapse(this.getBoundingClientRect().width);

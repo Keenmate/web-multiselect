@@ -4,14 +4,14 @@
  */
 
 // Positioning runs entirely on the core /positioning module. The dropdown/popover
-// use `anchor`'s first-class `fixedContainingBlock` + `onDrift` options — core owns
+// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `onDrift` options — core owns
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
 import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
+import { lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
 import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchCallbackContext, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
 
 /** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
@@ -416,7 +416,7 @@ export class WebMultiSelect<T = any> {
             behavior: this.options.searchBehavior || 'normalized',
             match: this.options.searchMatch || 'contains',
             regex: this.searchRegex,
-            prepare: callback ? (t) => callback(t, this.searchTermContext('internal')) : undefined,
+            getSearchTermCallback: callback ? (t) => callback(t, this.searchTermContext('internal')) : undefined,
             onObjectTerm: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
@@ -1327,7 +1327,7 @@ export class WebMultiSelect<T = any> {
                             // `info` is exactly the selection half of GroupLabelRenderContext, so
                             // spread it rather than re-listing every field (can't drift).
                             const context = {
-                                ...presentationContext(this.presentationMode),
+                                ...createPresentationContext(this.presentationMode),
                                 groupName,
                                 ...info
                             };
@@ -1672,7 +1672,7 @@ export class WebMultiSelect<T = any> {
                 isFocused,
                 isMatched,
                 isDisabled: disabled,
-                ...presentationContext(this.presentationMode),
+                ...createPresentationContext(this.presentationMode),
                 isTreeNode: false
             };
             html += this.toHtml(this.options.renderOptionContentCallback(option, context));
@@ -1779,7 +1779,7 @@ export class WebMultiSelect<T = any> {
                 isFocused,
                 isMatched,
                 isDisabled: disabled,
-                ...presentationContext(this.presentationMode),
+                ...createPresentationContext(this.presentationMode),
                 // Tree metadata — lets the callback branch on depth / branch-vs-leaf /
                 // tristate without re-deriving any of it from the raw data item.
                 isTreeNode: true,
@@ -1974,7 +1974,7 @@ export class WebMultiSelect<T = any> {
                 if (this.options.renderSelectedContentCallback) {
                     selectedLabel = this.options.renderSelectedContentCallback(
                         selectedOptions[0],
-                        presentationContext(this.presentationMode)
+                        createPresentationContext(this.presentationMode)
                     );
                 } else {
                     selectedLabel = this.getItemDisplayValue(selectedOptions[0]);
@@ -3069,7 +3069,7 @@ export class WebMultiSelect<T = any> {
             searchTerm: this.searchTerm,
             controller: this.getKeyboardController(),
             element: this.hostEl() as HTMLElement & Record<string, any>,
-            ...presentationContext(this.presentationMode),
+            ...createPresentationContext(this.presentationMode),
         };
     }
 
@@ -3782,7 +3782,7 @@ export class WebMultiSelect<T = any> {
             offset: 4,
             shift: 8,
             // Locked → flip once to where it fits, then pin (core 'freeze'). Unlocked
-            // → re-flip every frame (default flip:true, no lock).
+            // → re-flip every frame (default shouldFlip:true, no lock).
             lockPlacement: locked ? 'freeze' : false,
             // Narrow floating-ui's fixed-position containing-block heuristic to what browsers
             // reliably honour (transform/perspective/filter/backdrop-filter/will-change),
@@ -3792,16 +3792,16 @@ export class WebMultiSelect<T = any> {
             // For other CB-establishing properties (contain, container-type) the browser keeps
             // fixed elements viewport-anchored, so `onDrift` catches the inverse edge case and
             // warns, pointing at the likely culprit.
-            fixedContainingBlock: true,
+            shouldUseFixedContainingBlock: true,
             // Viewport-safety cap (core rc03): core's size() middleware sets the panel's
             // inline max-width to the space available on the resolved side (so long content
             // wraps instead of overflowing the viewport edge). We COMPOSE it with the
-            // author-chosen fixed `dropdownMaxWidth` in onPlaced (not beforeCompute): this
+            // author-chosen fixed `dropdownMaxWidth` in onPlaced (not onBeforeCompute): this
             // middleware runs during positioning and would otherwise clobber a fixed cap set
             // earlier. onPlaced runs after it, so it gets the final say.
             maxWidth: { padding: 8 },
             onDrift: (report) => this.warnDrift(report),
-            beforeCompute: () => {
+            onBeforeCompute: () => {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
                 // defaults to the field width, which CSS can't measure — so we publish the live field
@@ -4473,7 +4473,7 @@ export class WebMultiSelect<T = any> {
         }
 
         // Hint sits opposite the dropdown: if the dropdown is on the bottom, the hint
-        // goes on top and vice versa. flip:false keeps it there — it must not flip
+        // goes on top and vice versa. shouldFlip:false keeps it there — it must not flip
         // back over the dropdown. Re-derived (and re-anchored) whenever the dropdown
         // placement changes (afterPosition calls this).
         let hintPlacement: Placement = 'top-start';
@@ -4490,7 +4490,7 @@ export class WebMultiSelect<T = any> {
             placement: hintPlacement,
             offset: 4,
             shift: 8,
-            flip: false
+            shouldFlip: false
         });
         this.hintCleanup = () => handle.destroy();
     }
@@ -4775,7 +4775,7 @@ export class WebMultiSelect<T = any> {
         return {
             displayMode: this.options.badgesDisplayMode ?? 'badges',
             isInPopover,
-            ...presentationContext(this.presentationMode),
+            ...createPresentationContext(this.presentationMode),
         };
     }
 
@@ -4795,7 +4795,7 @@ export class WebMultiSelect<T = any> {
         // consumer callback (call sites only supply displayMode + isInPopover).
         const renderCtx: BadgeContentRenderContext = {
             ...ctx,
-            ...presentationContext(this.presentationMode),
+            ...createPresentationContext(this.presentationMode),
         };
 
         // Whole-badge override (main badges area only). The consumer owns the entire markup;
@@ -5214,7 +5214,7 @@ export class WebMultiSelect<T = any> {
         /** Visibility-toggle CSS class (default: badge tooltip visible class). */
         visibleClass?: string;
         /** Anchor to and follow the mouse pointer. */
-        followCursor?: boolean;
+        shouldFollowCursor?: boolean;
     }): void {
         this.tooltips.get(spec.id)?.destroy();
         // Prefer the shadow root over document.body so portaled tooltips inherit
@@ -5234,7 +5234,7 @@ export class WebMultiSelect<T = any> {
             // defaulted to (option tooltips override with ms__option-tooltip).
             cssClass: spec.cssClass ?? 'ms__badge-tooltip',
             visibleClass: spec.visibleClass ?? 'ms__badge-tooltip--visible',
-            followCursor: spec.followCursor,
+            shouldFollowCursor: spec.shouldFollowCursor,
             onBeforeShow: spec.onBeforeShow
         });
         this.tooltips.set(spec.id, tooltip);
@@ -5355,7 +5355,7 @@ export class WebMultiSelect<T = any> {
                 isFocused: index === this.focusedIndex,
                 isMatched: this.matchingIndices.has(index),
                 isDisabled: this.getItemDisabled(option),
-                ...presentationContext(this.presentationMode),
+                ...createPresentationContext(this.presentationMode),
                 isTreeNode: false
             };
 
@@ -5372,7 +5372,7 @@ export class WebMultiSelect<T = any> {
                 showDelay: this.options.optionTooltipDelay ?? this.options.badgeTooltipDelay ?? 100,
                 cssClass: 'ms__option-tooltip',
                 visibleClass: 'ms__option-tooltip--visible',
-                followCursor: this.options.isOptionTooltipFollowCursor
+                shouldFollowCursor: this.options.isOptionTooltipFollowCursor
             });
         });
     }
@@ -5660,7 +5660,7 @@ export class WebMultiSelect<T = any> {
         }
 
         // Leave the single-active-overlay group.
-        this.overlayCoord?.dispose();
+        this.overlayCoord?.destroy();
         this.overlayCoord = null;
 
         // Clean up virtual scroll

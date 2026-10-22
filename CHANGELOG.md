@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0-rc04] - 2026-10-22
+
+### Internal
+
+- **Built on `@keenmate/web-components-core` 1.0.0-rc15** — its naming-review renames:
+  `shouldReflect` in the input table, `sizeChanged()` for the container-responsive badge
+  collapse, `createPresentationContext()`, `OverlayHandle.destroy()`, and the positioning options
+  `shouldFlip` / `shouldFollowCursor` / `shouldUseFixedContainingBlock` / `onBeforeCompute`;
+  `getSearchTermCallback` is passed to core's `prepareSearchTerm` under its own name. No change
+  to the element's attributes, properties or events.
+
 ## [2.6.0-rc03] - 2026-10-22 [PUBLISHED]
 
 ### Added
