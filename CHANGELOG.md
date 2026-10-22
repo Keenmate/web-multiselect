@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0-rc03] - 2026-10-22 [PUBLISHED]
+
+### Added
+
+- **`tab-behavior` — Tab can select.** Tab (and Shift+Tab) with the dropdown open used to close it
+  and move on, dropping the highlighted option: type `cesky kru`, Tab, and the field stayed empty.
+  `tab-behavior` decides what Tab selects before focus moves on:
+  `select-highlighted` (the highlighted option, including the first match highlighted while
+  typing), `select-navigated` (only an option the user moved to with the arrows, PageUp/PageDown or
+  Home/End; typing resets it), or `close` (nothing — the 2.5 behaviour). Unset: `select-highlighted`
+  in single-select, `close` in multi-select. Tab only ever adds — an already-selected option stays
+  selected, so it never un-picks in multi-select — and a `beforeSelectCallback` veto still applies.
+  A Tab selection fires `select` / `change` and updates the form value like Enter does. New
+  `TabBehavior` type export. Examples: DA05 cascade gets the controls and before/after fields to
+  tab through.
+
+- **Single-select opens at its value.** Opening a single-select (Tab, click) with no search term
+  now puts the keyboard highlight on the selected option and scrolls it to the middle of the
+  list, like a native `<select>`: with Item 30 of 50 selected, ArrowUp goes to 29 instead of
+  starting from the top. The scroll is instant and moves only the list (not the page); virtual
+  scrolling renders the row first. Typing still highlights the first match, and tabbing straight
+  through changes nothing (the highlighted option is already selected). Multi-select is unchanged.
+
+### Changed
+
+- **Single-select clears its search when it closes.** `should-keep-search-on-close` is now
+  tristate: unset keeps the search in multi-select (as before) but clears it in single-select,
+  where the term is finished once a value is picked or focus leaves the field. Before, tabbing
+  out of a single-select after typing `cesk` and coming back with Shift+Tab reopened it with
+  `cesk` still in the box and the list still filtered. **Behaviour change:** set
+  `should-keep-search-on-close="true"` to keep the old single-select behaviour.
+
+- **The keyboard-focused option has a background fill again** — an exception to the shared
+  item-state contract. 2.6.0-rc01 switched focus to `--base-focused-bg` (transparent) with a 1px
+  inset ring, as in the tree components. In a combobox the focused option is what Enter / Tab
+  will pick, and with a single result (type `globex`) its ring sits on the panel border, so
+  nothing looked highlighted. `--ms-option-bg-focused` now uses the hover fill
+  (`--ms-option-bg-hover`) under the ring and no longer reads `--base-focused-bg`; override
+  `--ms-option-bg-focused` to change it.
+
+### Internal
+
+- **Search primitives come from `@keenmate/web-components-core/search`** (core `1.0.0-rc14`), the
+  module the 2.6.0-rc02 search model moved into so other Keenmate components (web-treeview next)
+  match and highlight the same way. `src/search.ts` is gone; term preparation (incl. keep-last-valid
+  regex), matching and the highlight index mapping now call core. No API or behaviour change:
+  `normalizeSearchText` and the search types (`SearchBehavior`, `SearchMatch`,
+  `SearchTermContext`, `PreparedSearchTerm`, `SearchEntry`, `SearchCallbackContext`) are
+  re-exported from core under the same names; the e2e suite passed unchanged and the bundle size
+  is flat.
+
 ## [2.6.0-rc02] - 2026-10-22 [PUBLISHED]
 
 ### Changed
