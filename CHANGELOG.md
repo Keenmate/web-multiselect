@@ -22,6 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the placeholder simply follows the token; `--ms-hint-color` now uses step 3 like the contract's
   hints.
 
+- **Dark / light from the page works in Firefox and Safari.** The component no longer uses
+  `:host-context()` (Firefox doesn't support it, Safari only partly). It reads the
+  `data-context-theme` attribute that `@keenmate/web-components-core` 1.0.0-rc13 sets on the host:
+  the page's theme (`data-theme`, `data-bs-theme`, `.dark` / `.light` on `<html>` or `<body>`) is
+  detected once and shared by every Keenmate component. A per-instance `data-theme` still wins.
+  **Behaviour change:** a theme signal on a wrapper `<div>` (not `<html>` / `<body>`) is no longer
+  picked up on its own — add `theme-source="closest"` (nearest ancestor with a signal) or
+  `theme-source="<selector>"` to the element. Core dependency bumped to `1.0.0-rc13`.
+
+### Added
+
+- **Theme API re-exported:** `setThemeMode('light' | 'dark' | 'auto')`, `getThemeMode()`,
+  `getThemeContext()`, `observeThemeContext()` and their types, from the core. `setThemeMode`
+  forces every Keenmate component on the page at once.
+
 ### Fixed
 
 - **`mobile-presentation="fullscreen"` closed itself on open in Firefox and Safari.** The
@@ -37,9 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **e2e runs on Firefox and WebKit too.** New Playwright projects: `firefox`, `webkit`
   (desktop) and `mobile-webkit` (iPhone 14). Three specs that clicked a badge hidden under an
   open popover or dropdown (only Chromium's hit-test let those clicks through) now close the
-  panel first, as a user would. The ancestor-class dark-mode specs (`data-bs-theme`, `.dark`,
-  `data-theme` on an ancestor) still fail on Firefox / WebKit: `:host-context()` isn't supported
-  there; the fix is planned for `@keenmate/web-components-core`.
+  panel first, as a user would. The ancestor dark-mode specs now pass in all three engines
+  (theme context, above); a new spec covers page detection from `<html class="dark">`.
 
 ## [2.6.0-rc01] - 2026-10-20 [PUBLISHED]
 

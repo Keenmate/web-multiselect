@@ -217,7 +217,9 @@ Fire-and-forget notifications are **events** — available both as bubbling DOM 
 | Global scaling | css | `--ms-rem` | Default `10px`; scale whole component | | |
 | Theme-designer integration | css | `--base-*` variables | Reads page-level typography/colors if present | | |
 | Dark mode — class on host | css | `.dark` / `:host(.dark)` | One of 5 dark-mode activation paths | | |
-| Dark mode — ancestor theme class | css | `:host-context([data-theme="dark"])` | Framework theme class | | |
+| Dark mode — page theme signal | css/core | `data-theme` / `data-bs-theme` / `.dark` on `<html>`/`<body>` → host `data-context-theme` | Detected once by web-components-core; all browsers | | |
+| Dark mode — section source | attr | `theme-source="closest"` / `"<selector>"` | Follow a wrapper element's signal | | |
+| Dark mode — global force | js | `setThemeMode('light' \| 'dark' \| 'auto')` | Forces every Keenmate component | | |
 | Dark mode — per-instance attribute | attr/css | `data-theme="dark"` / `"light"` | Highest specificity, per-element | | |
 | RTL support | attr | `dir="rtl"` (on host or ancestor) | Auto-detected; mirrors layout | | |
 | Empty/loading state min-height | css | `--ms-state-min-height` | Shared footprint so dropdown doesn't jump between "No data" and "Loading" | | |

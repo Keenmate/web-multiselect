@@ -24,7 +24,7 @@
 </head>
 <body>
     <h1>dark-mode signals on a light page</h1>
-    <p>Targeted by <code>e2e/dark-mode.spec.ts</code>. Each multiselect below is asked to render dark by one specific signal (framework class on an ancestor, or <code>data-theme</code> attribute on itself). The page itself is light, so any picker that ignores its signal will render light — visually distinct and asserted in tests.</p>
+    <p>Targeted by <code>e2e/dark-mode.spec.ts</code>. Each multiselect below is asked to render dark by one specific signal (the page's &lt;html&gt; class, a framework class on an ancestor read via <code>theme-source="closest"</code>, or <code>data-theme</code> on itself). The page itself is light, so any picker that ignores its signal will render light — visually distinct and asserted in tests.</p>
 
     <div class="fixture-section">
         <h2>signal #5 — per-instance <code>data-theme="dark"</code></h2>
@@ -40,11 +40,24 @@
     </div>
 
     <div class="fixture-section">
+        <h2>page signal — no signal of its own (dark only when &lt;html&gt; / &lt;body&gt; says so)</h2>
+        <div class="fixture">
+            <div class="fixture-label">No data-theme, no theme-source: follows the page</div>
+            <web-multiselect
+                id="ms-page"
+                value-member="value"
+                display-value-member="label">
+            </web-multiselect>
+        </div>
+    </div>
+
+    <div class="fixture-section">
         <h2>signal #4 — Bootstrap 5.3+ <code>data-bs-theme="dark"</code> on ancestor</h2>
         <div class="fixture ancestor-bs-dark" data-bs-theme="dark">
             <div class="fixture-label" style="color: #d4d4d4;">data-bs-theme="dark" on the wrapping div</div>
             <web-multiselect
                 id="ms-ancestor-bs-dark"
+                theme-source="closest"
                 value-member="value"
                 display-value-member="label">
             </web-multiselect>
@@ -57,6 +70,7 @@
             <div class="fixture-label" style="color: #d4d4d4;">class="dark" on the wrapping div</div>
             <web-multiselect
                 id="ms-ancestor-tailwind-dark"
+                theme-source="closest"
                 value-member="value"
                 display-value-member="label">
             </web-multiselect>
@@ -69,6 +83,7 @@
             <div class="fixture-label" style="color: #d4d4d4;">data-theme="dark" on the wrapping div</div>
             <web-multiselect
                 id="ms-ancestor-data-theme-dark"
+                theme-source="closest"
                 value-member="value"
                 display-value-member="label">
             </web-multiselect>
@@ -81,6 +96,7 @@
             <div class="fixture-label" style="color: #d4d4d4;">data-theme="dark" on wrapper, data-theme="light" on host</div>
             <web-multiselect
                 id="ms-precedence-light"
+                theme-source="closest"
                 data-theme="light"
                 value-member="value"
                 display-value-member="label">

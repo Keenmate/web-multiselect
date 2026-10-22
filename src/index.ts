@@ -29,6 +29,18 @@ export {
   configureBreakpoints,
   TABLET_MIN_SHORT_SIDE,
 } from '@keenmate/web-components-core';
+// Theme context — re-exported from the core. Every Keenmate component on the page
+// shares one detection (data-theme / data-bs-theme / .dark / .light on <html> or
+// <body>, or a `theme-source` element); setThemeMode() forces all of them at once:
+//   import { setThemeMode } from '@keenmate/web-multiselect';
+//   setThemeMode('dark');   // 'light' | 'dark' | 'auto'
+export {
+  getThemeMode,
+  setThemeMode,
+  getThemeContext,
+  observeThemeContext,
+} from '@keenmate/web-components-core';
+export type { ColorScheme, ThemeMode, ThemeSource } from '@keenmate/web-components-core';
 export type {
   EnvironmentSnapshot,
   DeviceClass,

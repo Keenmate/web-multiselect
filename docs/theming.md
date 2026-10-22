@@ -165,17 +165,37 @@ You can customize the component using CSS variables even with just a `<script>` 
 
 ## Dark mode — supported signals
 
-Since v1.12.0 the multiselect honors **five different signals** for switching to dark mode. Pick whichever fits your app; you don't need to wire them all up.
+The multiselect honors **five different signals** for switching to dark mode. Pick whichever fits your app; you don't need to wire them all up. Signals #3 and #4 are detected by `@keenmate/web-components-core` once per page and shared by every Keenmate component (no `:host-context()`, so they work in Firefox and Safari too).
 
 | # | Signal | Set by | Example |
 |---|--------|--------|---------|
 | 1 | OS preference + page `color-scheme` | App author | `html { color-scheme: light dark }` — multiselect picks the OS branch automatically. |
 | 2 | Page-level `color-scheme: dark` | App author | `body { color-scheme: dark }` — flips every multiselect on the page to dark. |
-| 3 | Framework data-attribute on ancestor | Bootstrap, Pure Admin, custom apps | `<html data-bs-theme="dark">` or `<div data-theme="dark">…</div>` |
-| 4 | Framework class on ancestor | Tailwind, hand-rolled toggles | `<html class="dark">` |
+| 3 | Framework data-attribute on `<html>` / `<body>` | Bootstrap, Pure Admin, custom apps | `<html data-bs-theme="dark">`, `<body data-theme="dark">` |
+| 4 | Framework class on `<html>` / `<body>` | Tailwind, hand-rolled toggles | `<html class="dark">` |
 | 5 | Per-instance attribute on host | App author, for one widget | `<web-multiselect data-theme="dark">` |
 
-**Precedence** (highest wins): per-instance (#5) → framework ancestor (#3, #4) → page color-scheme (#1, #2).
+**Precedence** (highest wins): per-instance (#5) → `setThemeMode()` → `theme-source` element → page signal (#3, #4) → page color-scheme (#1, #2).
+
+### A themed section inside the page
+
+A signal on a wrapper element (not `<html>` / `<body>`) is only read when the picker is pointed at it with `theme-source`:
+
+```html
+<div class="panel" data-theme="dark">
+  <web-multiselect theme-source="closest"></web-multiselect>   <!-- nearest ancestor with a signal -->
+  <web-multiselect theme-source=".panel"></web-multiselect>    <!-- or a selector -->
+</div>
+```
+
+Alternatively set `color-scheme: dark` on the wrapper — the picker inherits it (signal #2).
+
+### Forcing every component at once
+
+```js
+import { setThemeMode } from '@keenmate/web-multiselect';
+setThemeMode('dark');   // 'light' | 'dark' | 'auto' — applies to every Keenmate component on the page
+```
 
 ### Forcing a single widget back to light
 

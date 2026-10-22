@@ -239,10 +239,26 @@ test.describe('framework class + per-instance signals', () => {
         expect(lum, `input bg luminance was ${lum.toFixed(3)} — expected dark (< 0.2)`).toBeLessThan(0.2);
     });
 
+    test('a picker with no signal of its own follows <html class="dark"> (page detection)', async ({ page }) => {
+        const p = picker(page, 'ms-page');
+        expect(await inputBgLuminance(p), 'light page → light picker').toBeGreaterThan(0.8);
+
+        // Core detects the page once and re-detects on a signal change; the host
+        // gets data-context-theme and its color-scheme flips.
+        await page.evaluate(() => document.documentElement.classList.add('dark'));
+        await expect(p).toHaveAttribute('data-context-theme', 'dark');
+        const lum = await inputBgLuminance(p);
+        expect(lum, `input bg luminance was ${lum.toFixed(3)} — expected dark (< 0.2)`).toBeLessThan(0.2);
+
+        await page.evaluate(() => document.documentElement.classList.remove('dark'));
+        await expect(p).not.toHaveAttribute('data-context-theme', /.*/);
+    });
+
     test('per-instance data-theme="light" wins over ancestor data-theme="dark"', async ({ page }) => {
-        // The host has data-theme="light" inside a wrapper with data-theme="dark".
-        // Per-instance attribute has higher specificity than :host-context, so the
-        // host should render light. If the precedence is wrong, this picker renders dark.
+        // The host has data-theme="light" inside a wrapper with data-theme="dark"
+        // (read via theme-source="closest"). The per-instance rule is declared after
+        // the data-context-theme rule, so the host renders light. If the precedence
+        // is wrong, this picker renders dark.
         const p = picker(page, 'ms-precedence-light');
         const lum = await inputBgLuminance(p);
         expect(lum, `input bg luminance was ${lum.toFixed(3)} — expected light (> 0.8)`).toBeGreaterThan(0.8);

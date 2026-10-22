@@ -24,26 +24,25 @@
    that don't (Tailwind `.dark`, hand-rolled toggles) get filled in.
 
    Signals handled:
-     #4 Framework theme class on an ancestor — `:host-context([data-theme="dark"])`,
-        `:host-context([data-bs-theme="dark"])`, `:host-context(.dark)`.
+     #4 Framework theme signal on the page — detected ONCE per page by
+        @keenmate/web-components-core (`data-theme`, `data-bs-theme`, `.dark` /
+        `.light` on <html> then <body>; or the element named by `theme-source`;
+        or forced with `setThemeMode()`) and mirrored onto the host as
+        `data-context-theme`. Replaces `:host-context()`, which Firefox doesn't
+        support and Safari only partly.
      #5 Per-instance attribute on the host — `:host([data-theme="dark"])`,
-        `:host([data-theme="light"])`. Highest specificity, wins over any
-        framework class on an ancestor.
+        `:host([data-theme="light"])`. Declared last, so it wins over #4.
 
    See [color-scheme.md](BlissFramework guidelines) for the full pattern. */
 
-/* DARK — framework class on ancestor (signal #4) */
-:host-context([data-theme="dark"]),
-:host-context([data-bs-theme="dark"]),
-:host-context(.dark) {
+/* DARK — page / theme-source signal (signal #4) */
+:host([data-context-theme="dark"]) {
   color-scheme: dark;
 }
 
-/* LIGHT — framework class on ancestor (signal #4, safety net for
+/* LIGHT — page / theme-source signal (signal #4, safety net for
    "force one section back to light on a dark page"). */
-:host-context([data-theme="light"]),
-:host-context([data-bs-theme="light"]),
-:host-context(.light) {
+:host([data-context-theme="light"]) {
   color-scheme: light;
 }
 

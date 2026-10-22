@@ -521,7 +521,7 @@
            passes to the picker, so the whole panel flips coherently:
            - Auto  → JS sets `color-scheme: light dark` (no data-theme); light-dark() below
                      resolves per the OS, and the picker inherits that color-scheme.
-           - Light → data-theme="light"  (ancestor signal, matched by :host-context in dark-mode.css)
+           - Light → data-theme="light"  (section signal, read via theme-source="closest" on the picker)
            - Dark  → data-theme="dark"
            No component color overrides here (no --ms- or --base- vars): dark styling is 100%
            the component built-in light-dark() fallbacks, driven only by color-scheme. */
@@ -594,8 +594,10 @@
             <ul>
                 <li><strong>Per-instance</strong> — <code>data-theme="dark"</code> / <code>"light"</code> on the
                     <code>&lt;web-multiselect&gt;</code> itself (highest priority; overrides any ancestor).</li>
-                <li><strong>Framework class on an ancestor</strong> — <code>.dark</code> (Tailwind),
-                    <code>[data-bs-theme="dark"]</code> (Bootstrap 5.3+), or <code>[data-theme="dark"]</code>.</li>
+                <li><strong>Page signal</strong> — <code>.dark</code> (Tailwind), <code>[data-bs-theme="dark"]</code>
+                    (Bootstrap 5.3+) or <code>[data-theme="dark"]</code> on <code>&lt;html&gt;</code> / <code>&lt;body&gt;</code>,
+                    detected once for every Keenmate component. For a themed <em>section</em> (like the card below),
+                    add <code>theme-source="closest"</code> to the picker.</li>
                 <li><strong>Follow the OS</strong> — set no explicit signal and let the page opt into
                     <code>color-scheme: light dark</code>; both the page and the picker track the system setting.</li>
             </ul>
@@ -611,7 +613,7 @@
                 <div class="form-group" style="max-width: 420px;">
                     <label for="scheme-select" style="display:block; margin-bottom:.4rem; font-weight:600;">Select technologies</label>
                     <web-multiselect id="scheme-select" multiple="true" show-checkboxes="true"
-                        badges-display-mode="badges"></web-multiselect>
+                        badges-display-mode="badges" theme-source="closest"></web-multiselect>
                     <span class="form-text">Open the dropdown — the panel, options, checkboxes, badges and scrollbar all flip with the scheme. No per-instance color overrides in play.</span>
                 </div>
             </div>
@@ -621,10 +623,11 @@
 <pre><code>&lt;!-- 1. Per-instance (wins over everything) --&gt;
 &lt;web-multiselect data-theme="dark"&gt;&lt;/web-multiselect&gt;
 
-&lt;!-- 2. Framework class on an ancestor --&gt;
+&lt;!-- 2. Page signal (detected once for every Keenmate component) --&gt;
 &lt;html class="dark"&gt;                    &lt;!-- Tailwind --&gt;
 &lt;html data-bs-theme="dark"&gt;           &lt;!-- Bootstrap 5.3+ --&gt;
-&lt;div data-theme="dark"&gt; … &lt;web-multiselect&gt;&lt;/web-multiselect&gt; … &lt;/div&gt;
+&lt;!-- …or a themed section: point the picker at it --&gt;
+&lt;div data-theme="dark"&gt; … &lt;web-multiselect theme-source="closest"&gt;&lt;/web-multiselect&gt; … &lt;/div&gt;
 
 &lt;!-- 3. Follow the OS: opt the page into system switching --&gt;
 &lt;style&gt; html { color-scheme: light dark; } &lt;/style&gt;
@@ -677,7 +680,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 &lt;/web-multiselect&gt;
 
 &lt;!-- Theme it exactly like everything else: just signal the scheme. --&gt;
-&lt;div data-theme="dark"&gt; … &lt;/div&gt;   // or data-theme="light", or OS-auto</code></pre>
+&lt;html data-theme="dark"&gt;   // or data-theme="light", or OS-auto</code></pre>
             </details>
         </section>
 
