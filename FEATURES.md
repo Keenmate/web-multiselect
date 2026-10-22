@@ -43,7 +43,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Disabled member | attr/prop | `disabled-member` / `disabledMember` | — | Property name for disabled flag | | |
 | Value extraction callback | callback | `getValueCallback` | — | Complex value extraction | | |
 | Display value callback | callback | `getDisplayValueCallback` | — | Complex label extraction | | |
-| Search value callback | callback | `getSearchValueCallback` | — | Build searchable text per item | | |
+| Search value callback | callback | `getSearchValueCallback` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
 | Icon callback | callback | `getIconCallback` | — | Computed icon per item | | |
 | Subtitle callback | callback | `getSubtitleCallback` | — | Computed subtitle per item | | |
 | Group callback | callback | `getGroupCallback` | — | Computed group per item | | |
@@ -55,11 +55,13 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Async search callback | callback | `searchCallback(term, signal)` | — | `Promise<options[]>`; 2nd arg is `AbortSignal` | | |
+| Custom search callback | callback | `searchCallback(term, signal, context)` | — | Sync or async `options[]`; `signal` is an `AbortSignal`; `context` = `{ searchTerm, entries }` | | |
 | In-flight request cancellation | callback arg | `signal` on `searchCallback` | — | Aborted when superseded / min-length / destroy | | |
 | Search debounce | attr/prop | `search-debounce` / `searchDebounce` | `0` | ms; coalesces keystroke bursts (async path only) | | |
 | Minimum search length | attr/prop | `min-search-length` / `minSearchLength` | `0` | Below threshold = no async call | | |
 | Pre-process search term | callback | `beforeSearchCallback(term)` | — | Transform/validate; return `null` to block | | |
+| Prepare search term | callback | `getSearchTermCallback(term, context)` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `context.searchTerm`) | | |
+| Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
 | Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `isKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
 | Loading message | attr/prop | `loading-message` / `loadingMessage` | `'Loading...'` | Shown during async fetch | | |
 | Empty / no-results message | attr/prop | `empty-message` / `emptyMessage` | `'No results found'` | Shown when filtered list empty | | |
@@ -71,6 +73,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Enable / disable search | attr/prop | `enable-search` / `isSearchEnabled` | `bool(true)` | Turns input into a plain picker when off | | |
 | Search input mode | attr/prop | `search-input-mode` / `searchInputMode` | `'normal'` | `normal` \| `readonly` \| `hidden` | | |
 | Search mode | attr/prop | `search-mode` / `searchMode` | `'filter'` | `filter` (hide non-matches) \| `navigate` (jump) | | |
+| Search behavior | attr/prop | `search-behavior` / `searchBehavior` | `'normalized'` | `normalized` (ignore case + diacritics) \| `case-insensitive` \| `exact`; internal search only | | |
+| Search match | attr/prop | `search-match` / `searchMatch` | `'contains'` | `contains` \| `equals` \| `starts-with` \| `word-starts-with` \| `ends-with` \| `word-ends-with` \| `regex` (raw value, no normalization) | | |
 | Search placeholder | attr/prop | `search-placeholder` / `searchPlaceholder` | `'Search...'` | Shown while search is usable | | |
 | Select placeholder | attr/prop | `select-placeholder` / `selectPlaceholder` | `'Pick an option...'` | Shown when search disabled (picker mode) | | |
 | No-data placeholder | attr/prop | `no-data-placeholder` / `noDataPlaceholder` | — | Opt-in; shown when option list empty (cascades) | | |

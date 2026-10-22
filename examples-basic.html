@@ -384,6 +384,113 @@ el.scrollToValue('jp');</code></pre>
             </div>
         </div>
 
+        <!-- ============================================================= -->
+        <!-- BU07 · Search matching                                          -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>BU07 · Search matching — <code>search-behavior</code> &amp; <code>search-match</code></h2>
+            <p>
+                Two independent switches for the built-in search. <code>search-behavior</code> decides how text
+                is <strong>normalized</strong>: <code>normalized</code> (the default) ignores case and accents, so
+                <code>cesky</code> finds <em>Český Krumlov</em>; <code>case-insensitive</code> ignores case only;
+                <code>exact</code> ignores nothing. <code>search-match</code> decides <strong>where</strong> the
+                term must appear. Both are live: flip them with a term typed and the list re-filters in place.
+                Each option's search value is normalized once and cached, not on every keystroke.
+            </p>
+
+            <div class="controls">
+                <span><code>search-behavior</code>:</span>
+                <label><input type="radio" name="sm-behavior" value="normalized" checked> normalized</label>
+                <label><input type="radio" name="sm-behavior" value="case-insensitive"> case-insensitive</label>
+                <label><input type="radio" name="sm-behavior" value="exact"> exact</label>
+            </div>
+            <div class="controls">
+                <label><code>search-match</code>:
+                    <select id="sm-match">
+                        <option value="contains" selected>contains</option>
+                        <option value="equals">equals</option>
+                        <option value="starts-with">starts-with</option>
+                        <option value="word-starts-with">word-starts-with</option>
+                        <option value="ends-with">ends-with</option>
+                        <option value="word-ends-with">word-ends-with</option>
+                        <option value="regex">regex</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-search-match"
+                    value-member="value"
+                    display-value-member="label"
+                    search-placeholder="Try cesky, nad, kralove, ^(Ústí|Nové)…">
+                </web-multiselect>
+            </div>
+            <div class="note">
+                <p><strong>Things to try:</strong></p>
+                <ul>
+                    <li><code>cesky</code>: matches under <code>normalized</code>; switch to <code>case-insensitive</code> and it's gone (<code>česk</code> still works).</li>
+                    <li><code>brno</code> with <code>equals</code>: only the whole value counts (and case doesn't), so <code>brn</code> finds nothing.</li>
+                    <li><code>nad</code>: <code>contains</code> / <code>word-starts-with</code> find the "…nad Labem" towns; <code>starts-with</code> finds nothing.</li>
+                    <li><code>kralove</code>: <code>ends-with</code> finds <em>Hradec Králové</em>; <code>word-ends-with</code> adds <em>Dvůr Králové nad Labem</em>.</li>
+                    <li><code>^(Ústí|Nové)</code> with <code>regex</code>. Keep typing an unfinished pattern like <code>^(Ústí</code> and the last valid result stays.</li>
+                </ul>
+                <p><strong>Regex skips normalization:</strong> the pattern runs against the raw text, so
+                <code>search-behavior</code> doesn't apply. <code>^ces</code> finds nothing; <code>^Čes</code> does.</p>
+            </div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>&lt;web-multiselect search-behavior="normalized" search-match="word-starts-with"&gt;&lt;/web-multiselect&gt;
+
+// live, e.g. from a page-level switch
+el.searchBehavior = 'case-insensitive';
+el.searchMatch = 'regex';
+
+// the same normalization, for your own code
+import { normalizeSearchText } from '@keenmate/web-multiselect';
+normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
+            </details>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- BU08 · Preparing the term                                       -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>BU08 · Preparing the term — <code>getSearchTermCallback</code></h2>
+            <p>
+                <code>getSearchTermCallback</code> turns what the user typed into what search should look for.
+                Return a string (used as-is) or a <code>RegExp</code>. Here part numbers are written with all sorts
+                of separators; the callback turns <code>ha-324/56</code> into a pattern that ignores them, so it
+                finds <em>HA 324-56</em>, <em>HA32456</em> and <em>HA-324/56</em>. Untick it to compare:
+                plain search finds only the one written exactly that way.
+            </p>
+
+            <div class="controls">
+                <label><input type="checkbox" id="pn-term-cb" checked> <code>getSearchTermCallback</code> (separator-agnostic regex)</label>
+            </div>
+
+            <div class="demo-area">
+                <web-multiselect
+                    id="ex-part-numbers"
+                    value-member="value"
+                    display-value-member="label"
+                    subtitle-member="subtitle"
+                    search-placeholder="Try ha-324/56, xk 100 2, ha32…">
+                </web-multiselect>
+            </div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>el.getSearchTermCallback = (term) =&gt;
+    new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+// "ha-324/56" → /ha[^a-z0-9]*324[^a-z0-9]*56/i
+
+// A returned RegExp is tested against the raw search value. A returned string is used
+// as-is, so normalize it yourself (normalizeSearchText) to match the prepared values.</code></pre>
+            </details>
+        </div>
+
     </div>
 
     <script type="module">
@@ -636,6 +743,31 @@ el.scrollToValue('jp');</code></pre>
                 exSearch.setAttribute('min-search-length', e.target.value));
             document.getElementById('srch-deb').addEventListener('change', (e) =>
                 exSearch.setAttribute('search-debounce', e.target.value));
+
+            // ── BU07 · Search matching ───────────────────────────────────
+            const exMatch = document.getElementById('ex-search-match');
+            exMatch.options = [
+                'Praha', 'Brno', 'Ostrava', 'Plzeň', 'Olomouc', 'České Budějovice', 'Český Krumlov',
+                'Český Těšín', 'Hradec Králové', 'Ústí nad Labem', 'Ústí nad Orlicí', 'Dvůr Králové nad Labem',
+                'Nové Město na Moravě', 'Nové Město nad Metují', 'Kraków', 'Łódź', 'Gdańsk', 'Zürich', 'München'
+            ].map((label, i) => ({ value: String(i), label }));
+            document.querySelectorAll('input[name="sm-behavior"]').forEach((r) =>
+                r.addEventListener('change', (e) => { if (e.target.checked) exMatch.setAttribute('search-behavior', e.target.value); }));
+            document.getElementById('sm-match').addEventListener('change', (e) =>
+                exMatch.setAttribute('search-match', e.target.value));
+
+            // ── BU08 · Preparing the term ────────────────────────────────
+            const exParts = document.getElementById('ex-part-numbers');
+            exParts.options = [
+                ['HA 324-56', 'Hydraulic adapter'], ['HA32456', 'Hydraulic adapter (old label)'],
+                ['HA-324/56', 'Hydraulic adapter (supplier B)'], ['HA 324-57', 'Hydraulic adapter, long'],
+                ['HB 324-56', 'Hose bracket'], ['XK 100/20', 'Coupling'], ['XK-100-21', 'Coupling, reinforced']
+            ].map(([label, subtitle], i) => ({ value: String(i), label, subtitle }));
+            const separatorAgnostic = (term) =>
+                new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+            const applyTermCb = (on) => { exParts.getSearchTermCallback = on ? separatorAgnostic : null; };
+            applyTermCb(true);
+            document.getElementById('pn-term-cb').addEventListener('change', (e) => applyTermCb(e.target.checked));
 
             // Persist all control switches to localStorage and restore them on
             // reload — re-applies to every picker via the listeners wired above.

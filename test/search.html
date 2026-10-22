@@ -87,8 +87,24 @@
         <web-multiselect id="before-search" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">search-behavior: default (normalized) / case-insensitive / exact — accented data</div>
+        <web-multiselect id="sb-default" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sb-ci" search-behavior="case-insensitive" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sb-exact" search-behavior="exact" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sb-index" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">search-match (set live by the spec) / getSearchTermCallback part numbers / object search value + searchCallback / object without searchCallback</div>
+        <web-multiselect id="sm" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sm-term" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sm-callback" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="sm-object" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
-        import '/src/index.ts';
+        import { normalizeSearchText } from '/src/index.ts';
 
         const fruits = [
             { value: 'apple',      label: 'Apple' },
@@ -105,6 +121,70 @@
             ]) {
                 document.getElementById(id).options = fruits;
             }
+
+            // search-behavior fixtures: accents, mixed case, a decomposed (NFD) label.
+            const accented = [
+                { value: 'cesky',  label: 'Český Krumlov' },
+                { value: 'muller', label: 'Müller' },
+                { value: 'lodz',   label: 'Łódź' },
+                { value: 'nfd',    label: 'Zlín' }, // Zlín, decomposed (i + combining acute)
+                { value: 'york',   label: 'New York' }
+            ];
+            for (const id of ['sb-default', 'sb-ci', 'sb-exact']) {
+                document.getElementById(id).options = accented;
+            }
+
+            // sb-index: 2000 items with a counting getSearchValueCallback, so the spec can assert
+            // each item's search value is prepared once, not on every keystroke.
+            const indexed = document.getElementById('sb-index');
+            window.__searchValueCalls = 0;
+            indexed.getSearchValueCallback = (item) => { window.__searchValueCalls++; return item.label; };
+            indexed.options = Array.from({ length: 2000 }, (_, i) => ({ value: String(i), label: `Položka ${i}` }));
+
+            // sm: search-match modes.
+            document.getElementById('sm').options = [
+                { value: 'ck',  label: 'Český Krumlov' },
+                { value: 'k',   label: 'Krumlov' },
+                { value: 'ot',  label: 'Old Town' },
+                { value: 'ts',  label: 'Townsend' }
+            ];
+
+            // sm-term: getSearchTermCallback turns "ha-324/56" into a separator-agnostic regex.
+            const term = document.getElementById('sm-term');
+            term.getSearchTermCallback = (t) =>
+                new RegExp(t.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+            term.options = [
+                { value: '1', label: 'HA 324-56' },
+                { value: '2', label: 'HA32456' },
+                { value: '3', label: 'HB 324-56' },
+                { value: '4', label: 'HA 324-57' }
+            ];
+
+            // sm-callback: object search values + object search term, searched by our own callback.
+            const cities = [
+                { value: 'ck', label: 'Český Krumlov', zip: '381 01' },
+                { value: 'cb', label: 'České Budějovice', zip: '370 01' },
+                { value: 'pr', label: 'Praha', zip: '110 00' }
+            ];
+            const cb = document.getElementById('sm-callback');
+            window.__entriesRefs = [];
+            window.__callbackTerms = [];
+            cb.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+            cb.getSearchTermCallback = (t, ctx) =>
+                ctx.target === 'callback' ? { zip: t.replace(/\s/g, ''), text: normalizeSearchText(t) } : t;
+            cb.searchCallback = (t, signal, { searchTerm, entries }) => {
+                window.__entriesRefs.push(entries);
+                window.__callbackTerms.push(searchTerm);
+                return entries
+                    .filter(e => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+                    .map(e => e.item);
+            };
+            cb.options = cities;
+
+            // sm-object: object search value WITHOUT searchCallback → internal search uses the label.
+            const obj = document.getElementById('sm-object');
+            obj.getSearchValueCallback = (c) => ({ zip: c.zip });
+            obj.options = cities;
 
             // popover-fs: preselect a few so the count badge (data-action="show-selected")
             // is present and opens a non-empty fullscreen selected-items popover.

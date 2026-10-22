@@ -12,7 +12,7 @@ import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, des
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
 import { lockBodyScroll, observeKeyboardInset, presentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
-import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
+import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, SearchEntry, SearchCallbackContext, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
 
 /** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -30,6 +30,14 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     nextMatch: 'Next match',
 };
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
+import { normalizeSearchText, matchesText, findTextMatches, findRegexMatches, statelessRegex } from './search';
+
+/** The internal-search term, prepared once per keystroke. */
+type ActiveSearchTerm =
+    | { kind: 'none' }
+    | { kind: 'text'; text: string }
+    | { kind: 'regex'; re: RegExp };
+const NO_SEARCH_TERM: ActiveSearchTerm = { kind: 'none' };
 import { VirtualScroll } from './virtual-scroll';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './tree/ltree-node';
@@ -73,6 +81,24 @@ export class WebMultiSelect<T = any> {
     private keyboardController: MultiSelectKeyboardController<T> | null = null;
     private matchingIndices: Set<number> = new Set();
     private searchTerm = '';
+    /*
+     * Search-value pipeline, cached per option (keyed by item identity) so a keystroke costs
+     * one lookup per item — no member/callback call, no re-normalization:
+     *   rawSearchValues      searchValueMember / getSearchValueCallback → display value (any type)
+     *   preparedSearchValues raw string → normalizeSearchText per searchBehavior (internal search)
+     *   searchEntries        { item, searchValue } list handed to searchCallback (built on demand)
+     * Filled lazily; dropped by invalidateSearchValues() when the options or a pipeline input change.
+     */
+    private rawSearchValues = new Map<T, unknown>();
+    private preparedSearchValues = new Map<T, string>();
+    private searchEntries: ReadonlyArray<SearchEntry<T>> | null = null;
+    /** Internal-search term for `activeTermFor` (the searchTerm it was prepared from); see currentSearchTerm(). */
+    private activeTerm: ActiveSearchTerm = NO_SEARCH_TERM;
+    private activeTermFor: string | null = null;
+    /** search-match="regex": the last pattern that compiled, kept while the user types an invalid one. */
+    private lastValidSearchRegex: RegExp | null = null;
+    private hasWarnedObjectSearchValue = false;
+    private hasWarnedObjectSearchTerm = false;
     /** Keyboard focus sits on the empty-state "add new" prompt (arrow-navigated). */
     private addNewFocused = false;
     /** An async addNewCallback is in flight — the prompt shows a spinner + pending text. */
@@ -306,13 +332,129 @@ export class WebMultiSelect<T = any> {
         });
     }
 
-    private getItemSearchValue(item: T): string {
-        return this.extractField<string>(item, {
+    /** Raw search value (member / callback / display-value fallback), computed once per item. */
+    private getRawSearchValue(item: T): unknown {
+        if (this.rawSearchValues.has(item)) return this.rawSearchValues.get(item);
+        const raw = this.extractField<unknown>(item, {
             member: this.options.searchValueMember,
             callback: this.options.getSearchValueCallback,
-            transform: String,
+            // Keep objects (they're for searchCallback); stringify scalars.
+            transform: (v) => (v !== null && typeof v === 'object') ? v : String(v),
             fallback: () => this.getItemDisplayValue(item)
         });
+        this.rawSearchValues.set(item, raw);
+        return raw;
+    }
+
+    /**
+     * The string internal search works on. An object search value is meant for a custom
+     * `searchCallback`, so internal search falls back to the display value (warning once).
+     */
+    private getSearchString(item: T): string {
+        const raw = this.getRawSearchValue(item);
+        if (typeof raw === 'string') return raw;
+        if (raw !== null && typeof raw === 'object') {
+            if (!this.hasWarnedObjectSearchValue) {
+                this.hasWarnedObjectSearchValue = true;
+                console.warn('[web-multiselect] getSearchValueCallback returned an object: internal search needs a string, so it falls back to the display value. Object search values are for a custom searchCallback (context.entries).');
+            }
+            return this.getItemDisplayValue(item);
+        }
+        return raw == null ? '' : String(raw);
+    }
+
+    /** Search string normalized per `searchBehavior`, computed once per item. */
+    private getPreparedSearchValue(item: T): string {
+        let prepared = this.preparedSearchValues.get(item);
+        if (prepared === undefined) {
+            prepared = normalizeSearchText(this.getSearchString(item), this.options.searchBehavior || 'normalized');
+            this.preparedSearchValues.set(item, prepared);
+        }
+        return prepared;
+    }
+
+    /** Drop every cached search value (options replaced/mutated, or a pipeline input changed). */
+    private invalidateSearchValues(): void {
+        this.rawSearchValues.clear();
+        this.preparedSearchValues.clear();
+        this.searchEntries = null;
+    }
+
+    /** `{ item, searchValue }` for every option — searchCallback's `context.entries`. */
+    private getSearchEntries(): ReadonlyArray<SearchEntry<T>> {
+        if (!this.searchEntries) {
+            this.searchEntries = Object.freeze(this.allOptions.map(item => Object.freeze({
+                item,
+                searchValue: this.getRawSearchValue(item)
+            })));
+        }
+        return this.searchEntries;
+    }
+
+    private searchTermContext(target: SearchTermContext['target']): SearchTermContext {
+        return {
+            target,
+            behavior: this.options.searchBehavior || 'normalized',
+            match: this.options.searchMatch || 'contains'
+        };
+    }
+
+    /**
+     * Prepare a term for internal matching: `getSearchTermCallback` when set (and `useCallback`),
+     * else trim + normalizeSearchText — or compile it as a pattern for search-match="regex".
+     * `useCallback` is false on the searchCallback path, where this only drives highlighting.
+     */
+    private prepareSearchTerm(term: string, useCallback: boolean): ActiveSearchTerm {
+        const match = this.options.searchMatch || 'contains';
+        const callback = useCallback ? this.options.getSearchTermCallback : null;
+        if (callback) {
+            const prepared = callback(term, this.searchTermContext('internal'));
+            if (prepared instanceof RegExp) return { kind: 'regex', re: statelessRegex(prepared) };
+            if (prepared == null || prepared === '') return NO_SEARCH_TERM;
+            if (typeof prepared !== 'string') {
+                if (!this.hasWarnedObjectSearchTerm) {
+                    this.hasWarnedObjectSearchTerm = true;
+                    console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
+                }
+                return NO_SEARCH_TERM;
+            }
+            return match === 'regex' ? this.compileSearchRegex(prepared) : { kind: 'text', text: prepared };
+        }
+        const trimmed = term.trim();
+        if (!trimmed) return NO_SEARCH_TERM;
+        if (match === 'regex') return this.compileSearchRegex(trimmed);
+        return { kind: 'text', text: normalizeSearchText(trimmed, this.options.searchBehavior || 'normalized') };
+    }
+
+    /** Compile a typed pattern; an invalid one (mid-typing) reuses the last valid pattern. */
+    private compileSearchRegex(pattern: string): ActiveSearchTerm {
+        try {
+            this.lastValidSearchRegex = new RegExp(pattern);
+        } catch {
+            // keep lastValidSearchRegex
+        }
+        return this.lastValidSearchRegex ? { kind: 'regex', re: this.lastValidSearchRegex } : NO_SEARCH_TERM;
+    }
+
+    /**
+     * The prepared term for the current `searchTerm`. handleSearch sets it (with the
+     * beforeSearchCallback result); any other change of searchTerm (clearing, closing)
+     * re-derives it here, so the tree rebuild and highlighting never read a stale term.
+     */
+    private currentSearchTerm(): ActiveSearchTerm {
+        if (this.activeTermFor !== this.searchTerm) {
+            this.activeTerm = this.prepareSearchTerm(this.searchTerm, !this.options.searchCallback);
+            this.activeTermFor = this.searchTerm;
+        }
+        return this.activeTerm;
+    }
+
+    /** Whether an option matches the prepared internal-search term. */
+    private matchesSearchTerm(item: T, term: ActiveSearchTerm): boolean {
+        if (term.kind === 'none') return true;
+        if (term.kind === 'regex') return term.re.test(this.getSearchString(item));
+        const match = this.options.searchMatch || 'contains';
+        return matchesText(this.getPreparedSearchValue(item), term.text, match === 'regex' ? 'contains' : match);
     }
 
     /** Sort key for `selectedOrder === 'member'` (member/callback pattern). */
@@ -446,6 +588,8 @@ export class WebMultiSelect<T = any> {
             loadingMessage: element.dataset.loadingMessage || 'Loading...',
             searchInputMode: (element.dataset.searchInputMode as SearchInputMode) || 'normal',
             searchMode: (element.dataset.searchMode as SearchMode) || 'filter',
+            searchBehavior: (element.dataset.searchBehavior as SearchBehavior) || 'normalized',
+            searchMatch: (element.dataset.searchMatch as SearchMatch) || 'contains',
 
             // Number options
             badgesThreshold: element.dataset.badgesThreshold ? parseInt(element.dataset.badgesThreshold) : undefined,
@@ -663,17 +807,16 @@ export class WebMultiSelect<T = any> {
         }
 
         const all = this.tree.flatNodes;
-        const term = this.options.isSearchEnabled ? (this.searchTerm || '').trim().toLowerCase() : '';
+        const term = this.options.isSearchEnabled ? this.currentSearchTerm() : NO_SEARCH_TERM;
 
         let nodes: LTreeNode<T>[];
-        if (!term) {
+        if (term.kind === 'none') {
             nodes = all;
         } else {
             const sep = this.tree.treePathSeparator;
             const required = new Set<string>();
             for (const node of all) {
-                const searchValue = this.getItemSearchValue(node.data as T).toLowerCase();
-                if (searchValue.includes(term)) {
+                if (this.matchesSearchTerm(node.data as T, term)) {
                     // Keep this node and every ancestor on its path.
                     const segments = node.path.split(sep);
                     for (let i = 1; i <= segments.length; i++) {
@@ -758,13 +901,12 @@ export class WebMultiSelect<T = any> {
         this.treeNodes = all;
         this.filteredOptions = all.map(node => node.data as T);
 
-        const term = (this.searchTerm || '').trim().toLowerCase();
-        if (!term) return -1;
+        const term = this.currentSearchTerm();
+        if (term.kind === 'none') return -1;
 
         let firstMatchIndex = -1;
         all.forEach((node, index) => {
-            const searchValue = this.getItemSearchValue(node.data as T).toLowerCase();
-            if (searchValue.includes(term)) {
+            if (this.matchesSearchTerm(node.data as T, term)) {
                 this.matchingIndices.add(index);
                 if (firstMatchIndex === -1) firstMatchIndex = index;
             }
@@ -1557,7 +1699,7 @@ export class WebMultiSelect<T = any> {
             }
 
             html += '<div class="ms__option-text">';
-            html += `<div class="ms__option-title">${this.highlightMatch(displayValue, this.searchTerm)}</div>`;
+            html += `<div class="ms__option-title">${this.highlightMatch(displayValue)}</div>`;
 
             if (subtitle) {
                 html += `<div class="ms__option-subtitle">${subtitle}</div>`;
@@ -1673,7 +1815,7 @@ export class WebMultiSelect<T = any> {
                 html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
             }
             html += '<div class="ms__option-text">';
-            html += `<div class="ms__option-title">${this.highlightMatch(displayValue, this.searchTerm)}</div>`;
+            html += `<div class="ms__option-title">${this.highlightMatch(displayValue)}</div>`;
             if (subtitle) {
                 html += `<div class="ms__option-subtitle">${subtitle}</div>`;
             }
@@ -1748,11 +1890,53 @@ export class WebMultiSelect<T = any> {
             .replace(/'/g, '&#39;');
     }
 
-    private highlightMatch(text: string, searchTerm: string): string {
-        if (!searchTerm) return text;
+    /**
+     * Wrap the current term's matches in `<mark>`, under the same rules as the search itself
+     * (`ces` highlights `Čes` in `Český`; word modes only mark word starts/ends; a regex marks
+     * its own matches). For text terms the label is normalized one code point at a time while
+     * recording where each normalized character came from, so ranges map back onto the
+     * original text.
+     */
+    private highlightMatch(text: string): string {
+        const term = this.currentSearchTerm();
+        if (term.kind === 'none' || !text) return text;
 
-        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
+        let ranges: Array<[number, number]>;
+        if (term.kind === 'regex') {
+            ranges = findRegexMatches(text, term.re);
+        } else {
+            const behavior = this.options.searchBehavior || 'normalized';
+            const match = this.options.searchMatch || 'contains';
+            text = text.normalize('NFC');
+            let folded = '';
+            const start: number[] = []; // original start index of each folded char's source char
+            const end: number[] = [];   // ...and its end index
+            for (let i = 0; i < text.length;) {
+                const ch = String.fromCodePoint(text.codePointAt(i)!);
+                const f = normalizeSearchText(ch, behavior);
+                for (let k = 0; k < f.length; k++) {
+                    start.push(i);
+                    end.push(i + ch.length);
+                }
+                folded += f;
+                i += ch.length;
+            }
+            ranges = findTextMatches(folded, term.text, match === 'regex' ? 'contains' : match).map(([a, b]) => {
+                // Extend over any following characters that folded to nothing (combining marks).
+                const next = b < folded.length ? start[b] : text.length;
+                return [start[a], Math.max(end[b - 1], next)] as [number, number];
+            });
+        }
+
+        let out = '';
+        let last = 0;
+        for (const [a, b] of ranges) {
+            const from = Math.max(a, last);
+            if (b <= from) continue;
+            out += text.slice(last, from) + '<mark>' + text.slice(from, b) + '</mark>';
+            last = b;
+        }
+        return out + text.slice(last);
     }
 
     private groupOptions(options: T[]): Record<string, T[]> {
@@ -2118,6 +2302,8 @@ export class WebMultiSelect<T = any> {
             if (result === null) {
                 // beforeSearchCallback returned null - don't search, show all options
                 dataLogger.debug(`[${this.instanceId}] beforeSearchCallback blocked search for term:`, value);
+                this.activeTerm = NO_SEARCH_TERM;
+                this.activeTermFor = value;
                 this.abortInFlightSearch();
                 this.matchingIndices.clear();
                 if (this.isTreeMode()) {
@@ -2135,10 +2321,22 @@ export class WebMultiSelect<T = any> {
             }
         }
 
+        // Prepare the internal term once for this keystroke (on the searchCallback path it only
+        // drives highlighting, so the default preparation is used — not getSearchTermCallback).
+        this.activeTerm = this.prepareSearchTerm(processedValue, !this.options.searchCallback);
+        this.activeTermFor = value;
+
         if (this.options.searchCallback) {
             // ASYNC SEARCH PATH
+            // The term for the consumer's search: getSearchTermCallback's result (any shape),
+            // else the plain term. An empty result means no search (like a too-short term).
+            let callbackTerm: unknown = processedValue;
+            if (this.options.getSearchTermCallback) {
+                callbackTerm = this.options.getSearchTermCallback(processedValue, this.searchTermContext('callback'));
+            }
+            const noCallbackTerm = callbackTerm == null || callbackTerm === '';
             // Check minimum search length
-            if (processedValue.length < this.options.minSearchLength) {
+            if (processedValue.length < this.options.minSearchLength || noCallbackTerm) {
                 this.abortInFlightSearch(); // No longer want any in-flight results
                 this.isLoading = false; // Stop loading state
                 if (this.options.isKeepOptionsOnSearch) {
@@ -2169,11 +2367,11 @@ export class WebMultiSelect<T = any> {
                     this.searchDebounceTimer = undefined;
                     // Drop this run if a newer keystroke superseded the value while we waited.
                     if (this.searchTerm === value) {
-                        void this.performAsyncSearch(value, processedValue);
+                        void this.performAsyncSearch(value, processedValue, callbackTerm as SearchCallbackContext<T>['searchTerm']);
                     }
                 }, debounceMs);
             } else {
-                await this.performAsyncSearch(value, processedValue);
+                await this.performAsyncSearch(value, processedValue, callbackTerm as SearchCallbackContext<T>['searchTerm']);
             }
         } else {
             // LOCAL SEARCH PATH
@@ -2182,7 +2380,7 @@ export class WebMultiSelect<T = any> {
                     // NAVIGATE MODE: keep the whole tree visible and jump between matches
                     // (parity with the flat-list navigate branch below).
                     const firstMatchIndex = this.rebuildTreeVisibleForNavigate();
-                    if (!this.searchTerm.trim()) {
+                    if (this.currentSearchTerm().kind === 'none') {
                         this.focusedIndex = -1; // empty box: nothing focused (parity with open())
                     } else if (firstMatchIndex >= 0) {
                         this.focusedIndex = firstMatchIndex;
@@ -2198,12 +2396,13 @@ export class WebMultiSelect<T = any> {
                 this.matchingIndices.clear();
                 // Auto-focus the first row only once there's a term (parity with open() and
                 // the flat branches) — an empty box leaves nothing focused.
-                this.focusedIndex = this.searchTerm.trim() && this.filteredOptions.length > 0 ? 0 : -1;
+                this.focusedIndex = this.currentSearchTerm().kind !== 'none' && this.filteredOptions.length > 0 ? 0 : -1;
                 this.renderDropdown();
                 return;
             }
-            if (!processedValue) {
-                // Empty search - show all options. Leave nothing focused (focusedIndex -1),
+            const term = this.currentSearchTerm();
+            if (term.kind === 'none') {
+                // Empty (or whitespace-only) search - show all options. Leave nothing focused (focusedIndex -1),
                 // matching a fresh open(): auto-focusing the first row is only meaningful once
                 // the user types (so Enter picks the top result). Without this, calling
                 // handleSearch('') — e.g. the search-mode toggle, or clearing the box — would
@@ -2213,14 +2412,10 @@ export class WebMultiSelect<T = any> {
                 this.focusedIndex = -1;
             } else {
                 const searchMode = this.options.searchMode || 'filter';
-                const lowerSearch = processedValue.toLowerCase();
 
                 if (searchMode === 'filter') {
                     // FILTER MODE: Hide non-matching options (current behavior)
-                    this.filteredOptions = this.allOptions.filter(option => {
-                        const searchValue = this.getItemSearchValue(option).toLowerCase();
-                        return searchValue.includes(lowerSearch);
-                    });
+                    this.filteredOptions = this.allOptions.filter(option => this.matchesSearchTerm(option, term));
                     this.matchingIndices.clear(); // Not used in filter mode
                     // Auto-focus first result
                     this.focusedIndex = this.filteredOptions.length > 0 ? 0 : -1;
@@ -2233,8 +2428,7 @@ export class WebMultiSelect<T = any> {
                     // Find all matching indices and first match
                     let firstMatchIndex = -1;
                     this.allOptions.forEach((option, index) => {
-                        const searchValue = this.getItemSearchValue(option).toLowerCase();
-                        if (searchValue.includes(lowerSearch)) {
+                        if (this.matchesSearchTerm(option, term)) {
                             this.matchingIndices.add(index);
                             if (firstMatchIndex === -1) {
                                 firstMatchIndex = index;
@@ -2280,7 +2474,7 @@ export class WebMultiSelect<T = any> {
      * into their fetch get the request actually cancelled, not just ignored. The
      * `aborted` / `searchTerm === value` guards drop superseded or out-of-order responses.
      */
-    private async performAsyncSearch(value: string, processedValue: string): Promise<void> {
+    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: SearchCallbackContext<T>['searchTerm']): Promise<void> {
         // Cancel any previous in-flight request; only the latest query should win.
         this.abortInFlightSearch();
         const controller = new AbortController();
@@ -2291,7 +2485,12 @@ export class WebMultiSelect<T = any> {
         dataLogger.debug(`[${this.instanceId}] Loading data for search term:`, processedValue);
 
         try {
-            const results = await this.options.searchCallback!(processedValue, controller.signal);
+            const self = this;
+            const context: SearchCallbackContext<T> = {
+                searchTerm: callbackTerm,
+                get entries() { return self.getSearchEntries(); }
+            };
+            const results = await this.options.searchCallback!(processedValue, controller.signal, context);
 
             // Ignore results from a request that was aborted or superseded by a newer term.
             if (controller.signal.aborted || this.searchTerm !== value) return;
@@ -4764,6 +4963,20 @@ export class WebMultiSelect<T = any> {
 
         Object.assign(this.options, partial);
 
+        // Inputs to the search-value pipeline — cached values are stale if any changed.
+        if ('options' in partial || 'searchValueMember' in partial || 'getSearchValueCallback' in partial
+            || 'displayValueMember' in partial || 'getDisplayValueCallback' in partial) {
+            this.invalidateSearchValues();
+        }
+        // Search rules (a page-level switch, say): re-prepare and re-run the current term in place.
+        const searchRulesChanged = 'searchBehavior' in partial || 'searchMatch' in partial
+            || 'getSearchTermCallback' in partial;
+        if (searchRulesChanged) {
+            if ('searchBehavior' in partial) this.preparedSearchValues.clear();
+            this.activeTermFor = null;
+            this.lastValidSearchRegex = null;
+        }
+
         // Tree-affecting config keys — a change to any of these means the
         // hierarchy must be rebuilt from `allOptions`.
         const treeConfigChanged = 'pathMember' in partial || 'getPathCallback' in partial
@@ -4869,6 +5082,10 @@ export class WebMultiSelect<T = any> {
         this.renderDropdown({ preserveScroll: optionsChanged });
         this.renderBadges();
         this.updateHiddenInput();
+        // Internal search only — re-running would re-fire a consumer's searchCallback.
+        if (searchRulesChanged && this.searchTerm && !this.options.searchCallback) {
+            void this.handleSearch(this.searchTerm);
+        }
         return true;
     }
 
@@ -4885,6 +5102,7 @@ export class WebMultiSelect<T = any> {
      * inputs. Silent: fires no select/deselect/change — a pure view recompute, not a user gesture.
      */
     public refresh(): void {
+        this.invalidateSearchValues(); // option objects may have been mutated in place
         this.reconcileSelectedOptions();
         if (this.options.isPruneMissingSelectionEnabled) this.pruneMissingSelection();
         if (this.isTreeMode()) {

@@ -40,6 +40,59 @@ export type BadgesDisplayMode = 'badges' | 'count' | 'compact' | 'partial' | 'no
 export type SearchMode = 'filter' | 'navigate';
 
 /**
+ * How internal search normalizes text before matching (see `normalizeSearchText`).
+ *
+ * - `normalized` (default) — ignores case and diacritics: `ces` matches `Český`, `muller` matches `Müller`
+ * - `case-insensitive` — ignores case only: `čes` matches `Český`, `ces` does not
+ * - `exact` — case- and diacritic-sensitive
+ */
+export type SearchBehavior = 'normalized' | 'case-insensitive' | 'exact';
+
+/**
+ * Where in an option's search value internal search looks for the term.
+ *
+ * - `contains` (default) — anywhere
+ * - `equals` — the whole value (codes: `haxkl324` finds `HAxKL324` but not `HAxKL3245`;
+ *   case/accents per `searchBehavior`)
+ * - `starts-with` / `ends-with` — at the start / end of the whole value
+ * - `word-starts-with` / `word-ends-with` — at the start / end of any word
+ * - `regex` — the term is a regular expression, tested against the RAW search value
+ *   (`searchBehavior` does not apply)
+ */
+export type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 'ends-with' | 'word-ends-with' | 'regex';
+
+/** Context passed to `getSearchTermCallback`. */
+export interface SearchTermContext {
+    /** Which search the term is being prepared for: internal matching, or your `searchCallback`. */
+    target: 'internal' | 'callback';
+    /** The current `searchBehavior`. */
+    behavior: SearchBehavior;
+    /** The current `searchMatch`. */
+    match: SearchMatch;
+}
+
+/** What `getSearchTermCallback` may return. `null` / `undefined` / `''` = no search. */
+export type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
+
+/** One option paired with its search value (the raw `searchValueMember` / `getSearchValueCallback` output). */
+export interface SearchEntry<T = any> {
+    item: T;
+    searchValue: unknown;
+}
+
+/** Context passed to `searchCallback` as its third argument. */
+export interface SearchCallbackContext<T = any> {
+    /** The term as prepared by `getSearchTermCallback` (or the plain term when it isn't set). */
+    searchTerm: string | RegExp | Record<string, unknown>;
+    /**
+     * Every current option with its search value. Built on first access; each value is
+     * computed once and the array is the SAME reference until the options change, so a
+     * search engine can key its index on it.
+     */
+    readonly entries: ReadonlyArray<SearchEntry<T>>;
+}
+
+/**
  * Visual tone of a transient message shown via `showMessage()` (or a veto callback's
  * returned reason string). Each maps to a `.ms__message--{variant}` theming hook.
  */
@@ -455,8 +508,13 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for search value extraction */
     searchValueMember?: string;
-    /** Callback to extract search value from item */
-    getSearchValueCallback?: (item: T) => string;
+    /**
+     * Callback to extract the search value from an item. Internal search needs a **string**;
+     * an object (e.g. `{ title, zip }`) is for your own `searchCallback`, which receives it via
+     * `context.entries` — internal search then falls back to the display value. Called once
+     * per item; the result is cached until the options change.
+     */
+    getSearchValueCallback?: (item: T) => string | object;
 
     /** Member property name for icon extraction */
     iconMember?: string;
@@ -805,6 +863,23 @@ export interface MultiSelectConfig<T = any> {
      */
     searchMode?: SearchMode;
     /**
+     * How internal search normalizes text. Default `normalized`.
+     *
+     * - `normalized` — ignores case and diacritics (`ces` matches `Český`)
+     * - `case-insensitive` — ignores case only (the pre-2.6 behavior)
+     * - `exact` — case- and diacritic-sensitive
+     *
+     * Every mode compares Unicode-normalized (NFC) text and the match highlight follows the
+     * same rules. Internal search only — no effect on `searchCallback`, nor on `regex` matching.
+     */
+    searchBehavior?: SearchBehavior;
+    /**
+     * Where internal search looks for the term. Default `contains`. See `SearchMatch`.
+     * `regex` tests the raw search value, ignoring `searchBehavior`; an invalid pattern keeps
+     * the last valid result. Internal search only.
+     */
+    searchMatch?: SearchMatch;
+    /**
      * Show a clickable mode toggle in the phone fullscreen overlay's search header that
      * flips `searchMode` between `filter` and `navigate` live (no reopen). Default `false`.
      *
@@ -870,8 +945,23 @@ export interface MultiSelectConfig<T = any> {
     // CALLBACK FUNCTIONS
     // ========================================================================
 
-    /** Pre-process search term before calling searchCallback. Return null to prevent search. Use for accent removal, validation, etc. */
+    /** Pre-process the search term before any search (internal or `searchCallback`). Return a rewritten term, or null to prevent the search. */
     beforeSearchCallback?: ((searchTerm: string) => string | null) | null;
+    /**
+     * Prepare the term for matching (runs after `beforeSearchCallback`). Replaces the default
+     * preparation (trim + `normalizeSearchText` per `searchBehavior`, or compiling a pattern
+     * for `searchMatch: 'regex'`).
+     *
+     * - `context.target === 'internal'`: return a **string** (used as-is — normalize it to
+     *   match the prepared option values, e.g. with `normalizeSearchText`) or a **RegExp**
+     *   (tested against the raw search value, whatever `searchMatch` is). E.g. turn `ha-324/56`
+     *   into `/ha\W*324\W*56/i`.
+     * - `context.target === 'callback'`: return anything — it reaches `searchCallback` as
+     *   `context.searchTerm`, objects included.
+     *
+     * `null` / `undefined` / `''` means no search.
+     */
+    getSearchTermCallback?: ((term: string, context: SearchTermContext) => PreparedSearchTerm) | null;
     /**
      * Interceptor: runs before an option is selected via user interaction.
      * Receives the option about to be added and the current selection (before the change).
@@ -893,12 +983,18 @@ export interface MultiSelectConfig<T = any> {
      */
     beforeDeselectCallback?: ((option: T, selectedOptions: T[]) => boolean | string | void) | null;
     /**
-     * Async function to load data: `(searchTerm, signal) => Promise<options[]>`.
-     * The optional second argument is an `AbortSignal` that fires when a newer search
-     * supersedes this one (or the component is destroyed). Wire it into your `fetch`
-     * to cancel the in-flight request; ignoring it is fine — stale results are discarded.
+     * Your own search (a search engine like FlexSearch, a server, …), sync or async:
+     * `(searchTerm, signal, context) => options[] | Promise<options[]>`. Replaces internal
+     * search; `searchBehavior` / `searchMatch` don't apply.
+     *
+     * - `searchTerm` — the typed term (after `beforeSearchCallback`).
+     * - `signal` — an `AbortSignal` that fires when a newer search supersedes this one (or the
+     *   component is destroyed). Wire it into your `fetch`; ignoring it is fine — stale results
+     *   are discarded.
+     * - `context.searchTerm` — the term from `getSearchTermCallback` (may be an object).
+     * - `context.entries` — every option with its raw search value, built on first access.
      */
-    searchCallback?: ((searchTerm: string, signal?: AbortSignal) => Promise<T[]>) | null;
+    searchCallback?: ((searchTerm: string, signal: AbortSignal, context: SearchCallbackContext<T>) => T[] | Promise<T[]>) | null;
     /**
      * Callback to create the new option object from the typed text when `isAddNewAllowed` is on.
      * Return (or resolve to) the new option — it is appended to the list and auto-selected. The

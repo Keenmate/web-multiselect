@@ -19,11 +19,13 @@
         <section class="example-section">
             <h2>ES01 · Fuzzy &amp; Accent-Insensitive (flat list)</h2>
             <p class="description">
-                The component's built-in search is a plain case-insensitive <strong>substring</strong> match
-                (<code>String.includes</code>) — deliberately lean, since that covers most multiselects. When you
-                need <strong>fuzzy / partial-token / accent-insensitive / ranked</strong> matching, don't bloat the
-                library: <strong>externalize the whole search</strong> via <code>searchCallback</code> and back it
-                with your own engine. Here that engine is
+                The component's built-in search ignores case and accents by default and can match anywhere, at
+                word starts/ends, or by regex (<code>search-behavior</code> / <code>search-match</code>, see
+                <a href="examples-basic.html">Basic Usage BU07</a>). That covers most multiselects. When you need
+                <strong>fuzzy / partial-token / ranked</strong> matching, don't bloat the library:
+                <strong>externalize the whole search</strong> via <code>searchCallback</code> and back it with your
+                own engine. <code>search-behavior</code> and <code>search-match</code> don't apply then; the engine
+                decides. Here that engine is
                 <a href="https://github.com/nextapps-de/flexsearch" target="_blank">FlexSearch</a>
                 (the same indexer <code>@keenmate/web-treeview</code> uses), wrapped in a small batched
                 <code>FlexIndexer</code> (a trimmed port of the treeview indexer) that builds the index off the main
@@ -41,8 +43,8 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
                 <code>Charset.Normalize</code> folds accents and <code>tokenize: "full"</code> matches partial tokens
                 anywhere, with results in relevance order. Try <code>zurich</code> → <em>Zürich</em>,
                 <code>sao</code> → <em>São Paulo</em>, <code>krak</code> → <em>Kraków</em>,
-                <code>muenchen</code>/<code>munch</code> → <em>München</em>. The built-in substring search would miss
-                all of these.
+                <code>muenchen</code>/<code>munch</code> → <em>München</em>. The built-in search finds the first
+                three too, but not <code>muenchen</code>, and it doesn't rank results.
             </p>
             <div class="demo-area">
                 <label class="demo-label">Search accent-free — it still matches:</label>
@@ -95,6 +97,44 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
                 <web-multiselect id="async-langs" multiple="true" enable-search="true"
                     placeholder="Search languages…"
                     search-placeholder="Try beam, jvm, functional, rust…"></web-multiselect>
+            </div>
+        </section>
+
+        <!-- Demo D: object search values + context.entries -->
+        <section class="example-section">
+            <h2>ES04 · Your own search over prepared values — <code>context.entries</code></h2>
+            <p class="description">
+                <code>searchCallback</code> gets a third argument, <code>context</code>. Its <code>entries</code> pair
+                every option with its <strong>search value</strong>, and that value may be an object. Here
+                <code>getSearchValueCallback</code> returns <code>{ title, zip }</code> per city, and
+                <code>getSearchTermCallback</code> (with <code>target: 'callback'</code>) prepares the typed term
+                the same way, so one box searches by name or by postal code. Try <code>381</code>,
+                <code>38101</code>, <code>370 0</code>, <code>cesk</code> or <code>kralove</code>.
+            </p>
+            <p class="description">
+                Each search value is computed <strong>once</strong>, and <code>entries</code> is the <strong>same
+                array</strong> on every call until the options change, so a search engine can build its index once
+                and key it on that array. It's also built lazily: a server-backed callback that never reads it pays
+                nothing. <code>normalizeSearchText</code> is the built-in normalization, exported for exactly this.
+            </p>
+            <div class="code-block"><pre>import { normalizeSearchText } from '@keenmate/web-multiselect';
+
+el.getSearchValueCallback = (c) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+el.getSearchTermCallback = (term, ctx) =&gt;
+    ctx.target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+
+el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
+    entries
+        .filter((e) =&gt; e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+        .map((e) =&gt; e.item);</pre></div>
+            <div class="demo-area">
+                <label class="demo-label">Search by city name or postal code:</label>
+                <web-multiselect id="zip-search" multiple="true" enable-search="true"
+                    search-placeholder="Try 381, 370 0, cesk, kralove…"></web-multiselect>
+                <div class="output">
+                    <div class="output-label">Last call:</div>
+                    <pre id="zip-search-out">type to search…</pre>
+                </div>
             </div>
         </section>
     </div>
@@ -238,6 +278,49 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
                         resolve(languages.filter((l) => fold(l.label).includes(t) || fold(l.subtitle).includes(t)));
                     }, 200);
                 });
+            } catch (err) {
+                fail(section, err);
+            }
+        })();
+
+        // --- Demo D: object search values + context.entries --------------------
+        (async () => {
+            const section = document.querySelector('#zip-search')?.closest('.example-section');
+            try {
+                const { normalizeSearchText } = await import('/src/index.ts');
+                const cities = [
+                    ['Praha', '110 00'], ['Brno', '602 00'], ['Ostrava', '702 00'], ['Plzeň', '301 00'],
+                    ['Olomouc', '779 00'], ['Liberec', '460 01'], ['České Budějovice', '370 01'],
+                    ['Český Krumlov', '381 01'], ['Hradec Králové', '500 02'], ['Dvůr Králové nad Labem', '544 01'],
+                    ['Ústí nad Labem', '400 01'], ['Pardubice', '530 02'], ['Zlín', '760 01'], ['Jihlava', '586 01']
+                ].map(([label, zip], i) => ({ value: String(i), label, zip }));
+
+                await ready;
+                const el = document.querySelector('#zip-search');
+                const out = document.querySelector('#zip-search-out');
+                el.valueMember = 'value';
+                el.displayValueMember = 'label';
+                el.subtitleMember = 'zip';
+                el.options = cities;
+
+                el.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+                el.getSearchTermCallback = (term, ctx) =>
+                    ctx.target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+
+                let firstEntries = null;
+                let calls = 0;
+                el.searchCallback = (term, signal, { searchTerm, entries }) => {
+                    firstEntries ??= entries;
+                    calls++;
+                    const results = entries
+                        .filter((e) => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+                        .map((e) => e.item);
+                    out.textContent =
+                        `searchTerm: ${JSON.stringify(searchTerm)}\n` +
+                        `results:    ${results.length} of ${entries.length}\n` +
+                        `entries is the same array as on call 1: ${entries === firstEntries} (call ${calls})`;
+                    return results;
+                };
             } catch (err) {
                 fail(section, err);
             }

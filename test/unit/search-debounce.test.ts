@@ -60,7 +60,7 @@ describe('searchDebounce > 0', () => {
 
         await vi.advanceTimersByTimeAsync(200);
         expect(searchCallback).toHaveBeenCalledTimes(1);
-        expect(searchCallback).toHaveBeenCalledWith('abc', expect.any(AbortSignal));
+        expect(searchCallback).toHaveBeenCalledWith('abc', expect.any(AbortSignal), expect.objectContaining({ searchTerm: 'abc' }));
     });
 
     it('resets the timer on each keystroke (no early fire)', async () => {
@@ -75,7 +75,7 @@ describe('searchDebounce > 0', () => {
 
         await vi.advanceTimersByTimeAsync(50);   // now the full window elapses
         expect(searchCallback).toHaveBeenCalledTimes(1);
-        expect(searchCallback).toHaveBeenCalledWith('ab', expect.any(AbortSignal));
+        expect(searchCallback).toHaveBeenCalledWith('ab', expect.any(AbortSignal), expect.objectContaining({ searchTerm: 'ab' }));
     });
 
     it('does not debounce local (non-async) filtering', async () => {

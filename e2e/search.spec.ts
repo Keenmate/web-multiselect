@@ -590,3 +590,196 @@ test.describe('beforeSearchCallback', () => {
         await expect(visibleOptions(p).first()).toContainText(/Cherry/i);
     });
 });
+
+test.describe('search-behavior', () => {
+    test('default (normalized) ignores case and diacritics', async ({ page }) => {
+        const p = picker(page, 'sb-default');
+        await openDropdown(p);
+
+        await input(p).fill('cesky');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await expect(visibleOptions(p).first()).toContainText('Český Krumlov');
+
+        await input(p).fill('MULLER');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await expect(visibleOptions(p).first()).toContainText('Müller');
+
+        // ł has no Unicode decomposition: folded by hand.
+        await input(p).fill('lodz');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await expect(visibleOptions(p).first()).toContainText('Łódź');
+    });
+
+    test('default matches decomposed data with a composed term, and trims the term', async ({ page }) => {
+        const p = picker(page, 'sb-default');
+        await openDropdown(p);
+
+        await input(p).fill('zlín');
+        await expect(visibleOptions(p)).toHaveCount(1);
+
+        await input(p).fill('york ');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await expect(visibleOptions(p).first()).toContainText('New York');
+    });
+
+    test('highlight marks the original accented text', async ({ page }) => {
+        const p = picker(page, 'sb-default');
+        await openDropdown(p);
+
+        await input(p).fill('cesk');
+        await expect(p.locator('.ms__option mark').first()).toHaveText('Česk');
+    });
+
+    test('case-insensitive ignores case but not diacritics', async ({ page }) => {
+        const p = picker(page, 'sb-ci');
+        await openDropdown(p);
+
+        await input(p).fill('ČES');
+        await expect(visibleOptions(p)).toHaveCount(1);
+
+        await input(p).fill('ces');
+        await expect(visibleOptions(p)).toHaveCount(0);
+    });
+
+    test('exact is case- and diacritic-sensitive', async ({ page }) => {
+        const p = picker(page, 'sb-exact');
+        await openDropdown(p);
+
+        await input(p).fill('Čes');
+        await expect(visibleOptions(p)).toHaveCount(1);
+
+        await input(p).fill('čes');
+        await expect(visibleOptions(p)).toHaveCount(0);
+    });
+});
+
+test.describe('search-behavior: prepared search values', () => {
+    test('each item is prepared once, not per keystroke; replacing options re-prepares', async ({ page }) => {
+        const p = picker(page, 'sb-index');
+        await openDropdown(p);
+        const calls = () => page.evaluate(() => (window as any).__searchValueCalls as number);
+
+        for (const term of ['p', 'po', 'pol', 'polo', 'polozka 19']) {
+            await input(p).fill(term);
+        }
+        await expect(p.locator('.ms__option mark').first()).toBeVisible();
+        expect(await calls()).toBe(2000);
+
+        // New option objects → the index is dropped and rebuilt on the next search.
+        await p.evaluate((el: any) => {
+            el.options = Array.from({ length: 2000 }, (_, i) => ({ value: String(i), label: `Item ${i}` }));
+        });
+        await input(p).fill('item 7');
+        await expect(p.locator('.ms__option').first()).toContainText('Item 7');
+        expect(await calls()).toBe(4000);
+    });
+});
+
+test.describe('search-match', () => {
+    const setMatch = (p: Locator, match: string) =>
+        p.evaluate((el: any, m) => { el.searchMatch = m; }, match);
+
+    const cases: Array<[string, string, string[]]> = [
+        ['contains',         'krumlov', ['Český Krumlov', 'Krumlov']],
+        ['equals',           'KRUMLOV', ['Krumlov']],
+        ['equals',           'krum',    []],
+        ['equals',           'cesky krumlov', ['Český Krumlov']], // whole value, normalized
+        ['starts-with',      'krumlov', ['Krumlov']],
+        ['ends-with',        'krumlov', ['Český Krumlov', 'Krumlov']],
+        ['starts-with',      'town',    ['Townsend']],
+        ['word-starts-with', 'town',    ['Old Town', 'Townsend']],
+        ['ends-with',        'own',     ['Old Town']],
+        ['word-ends-with',   'town',    ['Old Town']],
+        ['word-starts-with', 'ces',     ['Český Krumlov']], // still normalized
+    ];
+    for (const [match, term, expected] of cases) {
+        test(`${match}: "${term}"`, async ({ page }) => {
+            const p = picker(page, 'sm');
+            await setMatch(p, match);
+            await openDropdown(p);
+            await input(p).fill(term);
+            await expect(p.locator('.ms__option:visible .ms__option-title')).toHaveText(expected);
+        });
+    }
+
+    test('word-starts-with highlights only the word start', async ({ page }) => {
+        const p = picker(page, 'sm');
+        await setMatch(p, 'word-starts-with');
+        await openDropdown(p);
+        await input(p).fill('town');
+        await expect(p.locator('.ms__option mark')).toHaveText(['Town', 'Town']);
+    });
+
+    test('regex runs on the raw value (no normalization) and keeps the last valid pattern', async ({ page }) => {
+        const p = picker(page, 'sm');
+        await setMatch(p, 'regex');
+        await openDropdown(p);
+
+        await input(p).fill('^(Old|Kr)');
+        await expect(visibleOptions(p)).toHaveCount(2);
+        // Mid-typing invalid pattern: last valid result stays.
+        await input(p).fill('^(Old|Kr');
+        await expect(visibleOptions(p)).toHaveCount(2);
+
+        await input(p).fill('^Čes');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await input(p).fill('^ces');
+        await expect(visibleOptions(p)).toHaveCount(0);
+    });
+
+    test('live switch re-runs the open search in place', async ({ page }) => {
+        const p = picker(page, 'sb-default');
+        await openDropdown(p);
+        await input(p).fill('ces');
+        await expect(visibleOptions(p)).toHaveCount(1);
+
+        await p.evaluate((el: any) => { el.searchBehavior = 'case-insensitive'; });
+        await expect(visibleOptions(p)).toHaveCount(0);
+        await p.evaluate((el: any) => { el.searchBehavior = 'normalized'; });
+        await expect(visibleOptions(p)).toHaveCount(1);
+    });
+});
+
+test.describe('getSearchTermCallback', () => {
+    test('internal: a returned RegExp matches part numbers regardless of separators', async ({ page }) => {
+        const p = picker(page, 'sm-term');
+        await openDropdown(p);
+        await input(p).fill('ha-324/56');
+        await expect(visibleOptions(p)).toHaveCount(2);
+        await expect(p.locator('.ms__option mark').first()).toHaveText('HA 324-56');
+    });
+
+    test('callback: searchCallback gets the object term and entries with object search values', async ({ page }) => {
+        const p = picker(page, 'sm-callback');
+        await openDropdown(p);
+
+        await input(p).fill('381 0');      // zip, typed with a space
+        await expect(visibleOptions(p)).toHaveCount(1);
+        await expect(visibleOptions(p).first()).toContainText('Český Krumlov');
+
+        await input(p).fill('cesk');       // title, accent-free
+        await expect(visibleOptions(p)).toHaveCount(2);
+
+        const info = await page.evaluate(() => {
+            const w = window as any;
+            return {
+                sameEntries: w.__entriesRefs.every((e: unknown) => e === w.__entriesRefs[0]),
+                calls: w.__entriesRefs.length,
+                lastTerm: w.__callbackTerms[w.__callbackTerms.length - 1],
+            };
+        });
+        expect(info.calls).toBeGreaterThanOrEqual(2);
+        expect(info.sameEntries).toBe(true);
+        expect(info.lastTerm).toEqual({ zip: 'cesk', text: 'cesk' });
+    });
+
+    test('object search value without searchCallback falls back to the display value (with a warning)', async ({ page }) => {
+        const warnings: string[] = [];
+        page.on('console', m => { if (m.type() === 'warning') warnings.push(m.text()); });
+        const p = picker(page, 'sm-object');
+        await openDropdown(p);
+        await input(p).fill('praha');
+        await expect(visibleOptions(p)).toHaveCount(1);
+        expect(warnings.some(w => w.includes('getSearchValueCallback returned an object'))).toBe(true);
+    });
+});

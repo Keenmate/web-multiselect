@@ -13,6 +13,7 @@ export { WebMultiSelect } from './multiselect';
 
 // data-options authoring formats (data-options-format)
 export { parseOptionsData, OPTIONS_FORMATS } from './option-formats';
+export { normalizeSearchText } from './search';
 export type { OptionsFormat, ParsedOptions } from './option-formats';
 
 // Device / viewport detection — re-exported from the core so consumers get the
@@ -60,6 +61,12 @@ export type {
   BadgesThresholdMode,
   SearchInputMode,
   SearchMode,
+  SearchBehavior,
+  SearchMatch,
+  SearchTermContext,
+  PreparedSearchTerm,
+  SearchEntry,
+  SearchCallbackContext,
   ValueFormat,
   OptionContentRenderContext,
   BadgeContentRenderContext,

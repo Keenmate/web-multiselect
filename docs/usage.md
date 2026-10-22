@@ -171,6 +171,8 @@ multiselect.setSelected(['js', 'ts']);
 | `enable-search` | `boolean` | `true` | Enable/disable search functionality |
 | `search-input-mode` | `'normal' \| 'readonly' \| 'hidden'` | `'normal'` | Search input display mode |
 | `search-mode` | `'filter' \| 'navigate'` | `'filter'` | Search behavior: `filter` hides non-matches, `navigate` jumps to matches |
+| `search-behavior` | `'normalized' \| 'case-insensitive' \| 'exact'` | `'normalized'` | How internal search normalizes text. `normalized` ignores case and diacritics (`ces` finds `Český`), `case-insensitive` ignores case only, `exact` matches both. Live: changing it re-runs the current search. Not applied to `searchCallback` or `regex` matching. See [How search works](#how-search-works) |
+| `search-match` | `'contains' \| 'equals' \| 'starts-with' \| 'word-starts-with' \| 'ends-with' \| 'word-ends-with' \| 'regex'` | `'contains'` | Where internal search looks for the term: anywhere, the whole value, at the start/end of the whole value, at the start/end of any word, or as a regular expression. Live. See [How search works](#how-search-works) |
 | `overlay-group` | `string` | — | Scope the "one overlay open at a time" coordination to a named group. Overlays (multiselects, datepickers, external popovers) sharing a group dismiss each other when one opens; different groups are independent. Unset = the default (ungrouped) group |
 | `show-search-mode-toggle` | `boolean` | `false` | In the phone fullscreen overlay, show a leading icon in the search bar that flips `search-mode` between `filter` and `navigate` live (no reopen). Fullscreen-only |
 | `mobile-presentation` | `'auto' \| 'floating' \| 'fullscreen'` | `'auto'` | How the open dropdown is presented on phones. `auto`: floating panel on desktop/tablet, full-screen overlay on phone-sized touch devices. `floating`: anchored panel everywhere. `fullscreen`: full-screen overlay on any device (handy for previews/testing) |
@@ -236,6 +238,80 @@ multiselect.beforeSearchCallback = (searchTerm) => {
   return normalized; // Return transformed term
 };
 
+```
+
+### How search works
+
+There are two ways to search, and they don't mix:
+
+**Internal search** (no `searchCallback`). Each option's search value is the string from
+`search-value-member` / `getSearchValueCallback` (else the display value), normalized per
+`search-behavior` and **prepared once per option** — a keystroke is one lookup per option,
+not a re-normalization. The typed term goes through:
+
+```
+term → beforeSearchCallback → getSearchTermCallback (or: trim + normalize) → match per search-match
+```
+
+| `search-match` | `kru` vs `Český Krumlov` | `town` vs `Old Town` / `Townsend` |
+|---|---|---|
+| `contains` (default) | ✅ | both |
+| `equals` | ❌ | neither |
+| `starts-with` | ❌ | `Townsend` |
+| `word-starts-with` | ✅ | both |
+| `ends-with` | ❌ | `Old Town` |
+| `word-ends-with` | ❌ | `Old Town` |
+
+`equals` is for codes: with the default `normalized` behavior, `haxkl324` finds `HAxKL324` but
+not `HAxKL3245`. Use `search-behavior="case-insensitive"` if accents must still count.
+
+> **`regex` skips normalization.** With `search-match="regex"` (or a `RegExp` returned from
+> `getSearchTermCallback`) the pattern is tested against the **raw** search value —
+> `search-behavior` does not apply, so case and accents are up to your pattern (use the `i`
+> flag, character classes, …). Mixing a regex with expectations of normalized matching can give
+> unexpected results. A typed pattern that doesn't compile (e.g. mid-typing `(`) keeps the last
+> valid result.
+
+`getSearchTermCallback` lets you prepare the term yourself — e.g. make part numbers match
+whatever separators the user types:
+
+```javascript
+// "ha-324/56" finds "HA 324-56" and "HA32456"
+multiselect.getSearchTermCallback = (term) =>
+  new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+```
+
+A string it returns is used as-is (normalize it yourself — `normalizeSearchText` is exported —
+to match the prepared option values). `null` / `''` means no search.
+
+**Your own search** (`searchCallback`) — FlexSearch, a server, anything, sync or async.
+`search-behavior` / `search-match` don't apply; you normalize however you want. The third
+argument gives you the term from `getSearchTermCallback` (any shape, with
+`context.target === 'callback'`) and every option paired with its raw search value — which may
+be an object:
+
+```javascript
+import { normalizeSearchText } from '@keenmate/web-multiselect';
+
+multiselect.getSearchValueCallback = (city) => ({
+  title: normalizeSearchText(city.name),     // optional: the standard normalization
+  zip: city.zip.replace(/\s/g, ''),
+});
+multiselect.getSearchTermCallback = (term, { target }) =>
+  target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+
+multiselect.searchCallback = (term, signal, { searchTerm, entries }) =>
+  entries
+    .filter(e => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+    .map(e => e.item);
+```
+
+`entries` is built on first access (a server-backed callback that ignores it pays nothing),
+each value is computed once, and it's the **same array** until the options change — key your
+search-engine index on it. Internal search needs a string: an object search value without a
+`searchCallback` falls back to the display value, with a console warning.
+
+```typescript
 // Interceptors — veto a selection/deselection before it happens.
 // Return false to block silently; return a string to block AND show it as a
 // warning message (see showMessage()); return true/undefined to allow. No event fires on a veto.

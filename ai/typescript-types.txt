@@ -76,6 +76,8 @@ interface MultiSelectConfig<T = any> {
   enableSearch?: boolean;
   searchPlaceholder?: string;
   searchMode?: SearchMode;
+  searchBehavior?: SearchBehavior;
+  searchMatch?: SearchMatch;
   closeOnSelect?: boolean;
   showCheckboxes?: boolean;
   allowGroups?: boolean;
@@ -122,6 +124,12 @@ Enum-like string types:
 
 type BadgesDisplayMode = 'pills' | 'count' | 'compact' | 'partial' | 'none';
 type SearchMode = 'filter' | 'navigate';
+type SearchBehavior = 'normalized' | 'case-insensitive' | 'exact';
+type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 'ends-with' | 'word-ends-with' | 'regex';
+interface SearchTermContext { target: 'internal' | 'callback'; behavior: SearchBehavior; match: SearchMatch; }
+type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
+interface SearchEntry<T> { item: T; searchValue: unknown; }
+interface SearchCallbackContext<T> { searchTerm: string | RegExp | Record<string, unknown>; readonly entries: ReadonlyArray<SearchEntry<T>>; }
 type BadgesPosition = 'top' | 'bottom' | 'left' | 'right';
 type BadgesThresholdMode = 'count' | 'partial';
 type SearchInputMode = 'normal' | 'readonly' | 'hidden';

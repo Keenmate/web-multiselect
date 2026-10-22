@@ -75,6 +75,59 @@ Use when:
 - Users need to see all options
 - Dropdown has contextual grouping
 
+INTERNAL SEARCH vs YOUR OWN SEARCH
+----------------------------------
+Two separate paths:
+- Internal search (no searchCallback): search-behavior + search-match + getSearchTermCallback.
+- Own search (searchCallback): you normalize/match however you want; search-behavior and
+  search-match do NOT apply.
+
+Internal pipeline:
+  option: searchValueMember / getSearchValueCallback (string) → else display value
+          → normalizeSearchText per search-behavior — PREPARED ONCE per option (cached)
+  term:   beforeSearchCallback → getSearchTermCallback (or trim + normalize) → match per search-match
+
+SEARCH BEHAVIOR (NORMALIZATION)
+<web-multiselect search-behavior="normalized">   <!-- default -->
+- Ignores case AND diacritics: "ces" finds "Český", "muller" finds "Müller", "lodz" finds "Łódź"
+<web-multiselect search-behavior="case-insensitive">
+- Ignores case only: "čes" finds "Český", "ces" does not
+<web-multiselect search-behavior="exact">
+- Case- and diacritic-sensitive
+All modes compare Unicode NFC text; the <mark> highlight follows the same rules.
+
+SEARCH MATCH
+<web-multiselect search-match="contains">          <!-- default: anywhere -->
+<web-multiselect search-match="equals">            <!-- whole value, e.g. codes: "haxkl324" finds "HAxKL324" -->
+<web-multiselect search-match="starts-with">       <!-- start of the whole value -->
+<web-multiselect search-match="word-starts-with">  <!-- start of any word: "kru" finds "Český Krumlov" -->
+<web-multiselect search-match="ends-with">         <!-- end of the whole value -->
+<web-multiselect search-match="word-ends-with">    <!-- end of any word -->
+<web-multiselect search-match="regex">             <!-- term is a pattern -->
+WARNING: regex is tested against the RAW search value — search-behavior is NOT applied, so
+case/accents are up to the pattern. An invalid typed pattern keeps the last valid result.
+
+Both search-behavior and search-match are live: changing them re-runs the current search.
+
+getSearchTermCallback(term, { target, behavior, match }):
+- target 'internal': return a string (used as-is; normalize it yourself) or a RegExp
+  (tested against the raw value). null / '' = no search.
+    select.getSearchTermCallback = (t) =>
+      new RegExp(t.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+    // "ha-324/56" finds "HA 324-56", "HA32456"
+- target 'callback': return anything (objects too) — arrives as context.searchTerm.
+
+searchCallback(term, signal, { searchTerm, entries }) — sync or async:
+- entries: [{ item, searchValue }] with the RAW getSearchValueCallback output (may be an
+  object). Built on first access, each value computed once, SAME array until options change.
+    select.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.name), zip: c.zip });
+    select.searchCallback = (t, signal, { searchTerm, entries }) =>
+      entries.filter(e => e.searchValue.zip.startsWith(searchTerm.zip)).map(e => e.item);
+- An object search value WITHOUT searchCallback: internal search uses the display value (warns).
+
+normalizeSearchText(text, behavior = 'normalized') is exported for custom search:
+    import { normalizeSearchText } from '@keenmate/web-multiselect';
+
 SEARCH INPUT MODES
 ------------------
 Control search input behavior:
