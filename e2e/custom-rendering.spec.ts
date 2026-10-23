@@ -33,7 +33,7 @@ test('renderBadgeContentCallback overrides badge markup', async ({ page }) => {
     await select(p, 'apple');
 
     await expect(p.locator('.js-badge-tag')).toBeVisible();
-    await expect(p.locator('.ms__badge:not([data-action])')).toContainText(/\[badge\]Apple/);
+    await expect(p.locator('.ms__badge:not([data-ms-action])')).toContainText(/\[badge\]Apple/);
 });
 
 test('getBadgeClassCallback adds custom class to badge', async ({ page }) => {
@@ -43,7 +43,7 @@ test('getBadgeClassCallback adds custom class to badge', async ({ page }) => {
     await expect(p.locator('.ms__badge.js-cherry-class')).toBeVisible();
 });
 
-test('customStylesCallback injects styles into shadow DOM', async ({ page }) => {
+test('getCustomStylesCallback injects styles into shadow DOM', async ({ page }) => {
     const p = picker(page, 'custom-styles');
     await openDropdown(p);
 
@@ -61,7 +61,7 @@ test('icon-member and subtitle-member render in option content', async ({ page }
     await expect(firstOption).toContainText(/red fruit/);
 });
 
-test('renderSelectedContentCallback receives the presentation context (2nd arg)', async ({ page }) => {
+test('renderSelectedContentCallback receives the presentation context', async ({ page }) => {
     const p = picker(page, 'sel-content'); // single-select
     await select(p, 'apple');
     await page.mouse.click(0, 0); // close so the label lands in the input
@@ -76,7 +76,7 @@ test('renderSelectedItemContentCallback receives a popover context (isInPopover=
     await page.mouse.click(0, 0);
 
     // Open the selected-items popover from the count badge.
-    await p.locator('.ms__badge[data-action="show-selected"]').click();
+    await p.locator('.ms__badge[data-ms-action="show-selected"]').click();
     await expect(p.locator('.ms__selected-popover')).toBeVisible();
 
     const item = p.locator('.ms__selected-popover .js-sel-item').first();

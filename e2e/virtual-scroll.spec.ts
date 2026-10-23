@@ -111,7 +111,7 @@ test.describe('popover virtual scroll', () => {
         await expect(p.locator('.ms__dropdown')).not.toBeVisible();
 
         // Open popover via the count badge.
-        await p.locator('.ms__badge[data-action="show-selected"]').click();
+        await p.locator('.ms__badge[data-ms-action="show-selected"]').click();
         await expect(p.locator('.ms__selected-popover')).toBeVisible();
 
         const firstBadge = p.locator('.ms__selected-popover-body--virtual .ms__badge').first();

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { WebMultiSelect } from '../../src/multiselect';
+import { MultiSelectEngine } from '../../src/multiselect';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -8,11 +8,11 @@ import type { MultiSelectConfig } from '../../src/types';
  */
 
 let host: HTMLDivElement;
-let instance: WebMultiSelect<any> | undefined;
+let instance: MultiSelectEngine<any> | undefined;
 let searchCallback: ReturnType<typeof vi.fn>;
 
 function make(debounce: number): void {
-    searchCallback = vi.fn(async (term: string) => [{ value: term, label: term }]);
+    searchCallback = vi.fn(async ({ term }: { term: string }) => [{ value: term, label: term }]);
     const opts: Partial<MultiSelectConfig<any>> = {
         valueMember: 'value',
         displayValueMember: 'label',
@@ -20,7 +20,7 @@ function make(debounce: number): void {
         searchDebounce: debounce,
         minSearchLength: 0
     };
-    instance = new WebMultiSelect(host, opts);
+    instance = new MultiSelectEngine(host, opts);
 }
 
 // handleSearch is private; reach it directly to drive the search path without DOM event plumbing.
@@ -60,7 +60,7 @@ describe('searchDebounce > 0', () => {
 
         await vi.advanceTimersByTimeAsync(200);
         expect(searchCallback).toHaveBeenCalledTimes(1);
-        expect(searchCallback).toHaveBeenCalledWith('abc', expect.any(AbortSignal), expect.objectContaining({ searchTerm: 'abc' }));
+        expect(searchCallback).toHaveBeenCalledWith(expect.objectContaining({ term: 'abc', signal: expect.any(AbortSignal), searchTerm: 'abc' }));
     });
 
     it('resets the timer on each keystroke (no early fire)', async () => {
@@ -75,12 +75,12 @@ describe('searchDebounce > 0', () => {
 
         await vi.advanceTimersByTimeAsync(50);   // now the full window elapses
         expect(searchCallback).toHaveBeenCalledTimes(1);
-        expect(searchCallback).toHaveBeenCalledWith('ab', expect.any(AbortSignal), expect.objectContaining({ searchTerm: 'ab' }));
+        expect(searchCallback).toHaveBeenCalledWith(expect.objectContaining({ term: 'ab', signal: expect.any(AbortSignal), searchTerm: 'ab' }));
     });
 
     it('does not debounce local (non-async) filtering', async () => {
         // No searchCallback → local path runs synchronously regardless of searchDebounce.
-        instance = new WebMultiSelect(host, {
+        instance = new MultiSelectEngine(host, {
             valueMember: 'value',
             displayValueMember: 'label',
             options: [{ value: 'apple', label: 'Apple' }, { value: 'banana', label: 'Banana' }],

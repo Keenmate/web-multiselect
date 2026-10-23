@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { WebMultiSelect } from '../../src/multiselect';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { MultiSelectEngine } from '../../src/multiselect';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
  * Unit tests for the beforeSelectCallback / beforeDeselectCallback interceptors.
  *
- * Exercised against the core WebMultiSelect class on a plain <div>, driving the
+ * Exercised against the core MultiSelectEngine class on a plain <div>, driving the
  * interactive choke point directly via the private `toggleOption` (the same path
  * a click or keyboard Enter takes). `setSelected` is the programmatic path and is
  * asserted to bypass the veto.
@@ -27,10 +27,10 @@ const BASE: Partial<MultiSelectConfig<Item>> = {
 };
 
 let host: HTMLDivElement;
-let instance: WebMultiSelect<Item> | undefined;
+let instance: MultiSelectEngine<Item> | undefined;
 
-function make(opts: Partial<MultiSelectConfig<Item>> = {}): WebMultiSelect<Item> {
-    instance = new WebMultiSelect<Item>(host, { ...BASE, ...opts });
+function make(opts: Partial<MultiSelectConfig<Item>> = {}): MultiSelectEngine<Item> {
+    instance = new MultiSelectEngine<Item>(host, { ...BASE, ...opts });
     return instance;
 }
 
@@ -57,8 +57,8 @@ describe('beforeSelectCallback', () => {
     it('blocks a selection when the callback returns false', () => {
         // Block selecting item1 while item2 is already selected.
         make({
-            beforeSelectCallback: (option, selected) =>
-                !(option.value === 'item1' && selected.some(o => o.value === 'item2'))
+            beforeSelectCallback: ({ option, selectedOptions }) =>
+                (option.value === 'item1' && selectedOptions.some(o => o.value === 'item2')) ? false : undefined
         });
 
         toggle(ITEMS[1]); // item2 → allowed
@@ -71,10 +71,10 @@ describe('beforeSelectCallback', () => {
         expect(selectedValues()).toEqual(['item2', 'item3']);
     });
 
-    it('allows the selection when the callback returns true/undefined', () => {
+    it('allows the selection when the callback returns nothing', () => {
         const calls: string[] = [];
         make({
-            beforeSelectCallback: (option) => { calls.push(option.value); /* undefined → allow */ }
+            beforeSelectCallback: ({ option }) => { calls.push(option.value); /* undefined → allow */ }
         });
 
         toggle(ITEMS[0]);
@@ -85,7 +85,7 @@ describe('beforeSelectCallback', () => {
     it('receives the current selection BEFORE the change', () => {
         let seen: string[] | null = null;
         make({
-            beforeSelectCallback: (_option, selected) => { seen = selected.map(o => o.value); }
+            beforeSelectCallback: ({ selectedOptions }) => { seen = selectedOptions.map(o => o.value); }
         });
 
         toggle(ITEMS[1]);          // select item2 (selection was empty)
@@ -100,7 +100,7 @@ describe('beforeDeselectCallback', () => {
     it('blocks a deselection when the callback returns false', () => {
         // item1 is "required" — cannot be removed once selected.
         make({
-            beforeDeselectCallback: (option) => option.value !== 'item1'
+            beforeDeselectCallback: ({ option }) => (option.value === 'item1' ? false : undefined)
         });
 
         toggle(ITEMS[0]); // select item1
@@ -119,7 +119,7 @@ describe('single-select mode', () => {
     it('blocked selection keeps the previous value (no clobber)', () => {
         make({
             isMultipleEnabled: false,
-            beforeSelectCallback: (option) => option.value !== 'item3'
+            beforeSelectCallback: ({ option }) => (option.value === 'item3' ? false : undefined)
         });
 
         toggle(ITEMS[0]); // item1 → allowed
@@ -133,7 +133,7 @@ describe('single-select mode', () => {
 describe('beforeDeselectCallback covers the badge remove (×) button', () => {
     it('blocks removing a required item via its badge ×, allows others', () => {
         make({
-            beforeDeselectCallback: (option) => option.value !== 'item1'
+            beforeDeselectCallback: ({ option }) => (option.value === 'item1' ? false : undefined)
         });
         instance!.setSelected(['item1', 'item2']); // programmatic — bypasses veto
 
@@ -158,5 +158,73 @@ describe('programmatic setSelected bypasses the veto', () => {
         instance!.setSelected(['item1', 'item2']);
         expect(selectedValues()).toEqual(['item1', 'item2']);
         expect(called).toBe(false);
+    });
+});
+
+describe('the before-hook ctx and contract', () => {
+    it('gets one ctx: option, selection, source, controller and element', () => {
+        let ctx: any = null;
+        make({ beforeSelectCallback: (c) => { ctx = c; } });
+        toggle(ITEMS[0]);
+        expect(ctx.option.value).toBe('item1');
+        expect(ctx.selectedOptions).toEqual([]);
+        expect(ctx.selectedValues).toEqual([]);
+        expect(ctx.source).toBe('option');
+        expect(typeof ctx.controller.selectAll).toBe('function');
+        expect(ctx.element).toBeInstanceOf(HTMLElement);
+        // controller / element are non-enumerable — JSON sees only the data.
+        expect(Object.keys(ctx)).not.toContain('controller');
+        expect(Object.keys(ctx)).not.toContain('element');
+    });
+
+    it('a truthy non-false return (e.g. true or a string) does not veto — only false does', () => {
+        make({ beforeSelectCallback: () => true as any });
+        toggle(ITEMS[0]);
+        expect(selectedValues()).toEqual(['item1']);
+    });
+
+    it('an async veto is awaited', async () => {
+        make({ beforeSelectCallback: async ({ option }) => (option.value === 'item2' ? false : undefined) });
+        toggle(ITEMS[0]);
+        toggle(ITEMS[1]);
+        expect(selectedValues()).toEqual([]); // nothing applied yet — the hooks are pending
+        await new Promise(r => setTimeout(r, 0));
+        expect(selectedValues()).toEqual(['item1']);
+    });
+
+    it('a throwing hook vetoes (and is logged)', () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        make({ beforeSelectCallback: () => { throw new Error('boom'); } });
+        toggle(ITEMS[0]);
+        expect(selectedValues()).toEqual([]);
+        expect(error).toHaveBeenCalled();
+        error.mockRestore();
+    });
+});
+
+describe('bulk gestures go through the per-option veto', () => {
+    it('select-all skips vetoed options and applies the rest in one change', () => {
+        const changes: any[] = [];
+        make({
+            beforeSelectCallback: ({ option, source }) => (option.value === 'item2' && source === 'select-all' ? false : undefined),
+            onChange: (d) => changes.push(d),
+        });
+        instance!.getController().selectAll();
+        expect(selectedValues()).toEqual(['item1', 'item3']);
+        expect(changes.length).toBe(1);
+    });
+
+    it('clear-all keeps vetoed options', () => {
+        make({ beforeDeselectCallback: ({ option, source }) => (option.value === 'item1' && source === 'clear-all' ? false : undefined) });
+        instance!.setSelected(['item1', 'item2', 'item3']);
+        instance!.getController().clearAll();
+        expect(selectedValues()).toEqual(['item1']);
+    });
+
+    it('the programmatic clearAll() (form reset) bypasses the veto', () => {
+        make({ beforeDeselectCallback: () => false });
+        instance!.setSelected(['item1']);
+        instance!.clearAll();
+        expect(selectedValues()).toEqual([]);
     });
 });

@@ -28,7 +28,7 @@ test('custom-styles attribute injects the CSS verbatim and it applies', async ({
     await expect.poll(() => borderColor(p)).toBe('rgb(255, 0, 0)');
 });
 
-test('customStylesCallback wins when both it and the attribute are set', async ({ page }) => {
+test('getCustomStylesCallback wins when both it and the attribute are set', async ({ page }) => {
     const p = picker(page, 'cs-precedence');
     // Green from the callback, not red from the attribute.
     expect(await slotText(p)).toContain('rgb(0, 128, 0)');

@@ -13,7 +13,7 @@
     <p>Targeted by <code>e2e/add-new.spec.ts</code>.</p>
 
     <div class="fixture">
-        <div class="fixture-label">allow-add-new + addNewCallback</div>
+        <div class="fixture-label">allow-add-new + beforeAddCallback</div>
         <web-multiselect id="adder" allow-add-new="true" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
@@ -29,9 +29,9 @@
             const adder = document.getElementById('adder');
             adder.options = items;
             window.__addedNames = [];
-            adder.addNewCallback = (name) => {
-                window.__addedNames.push(name);
-                return { value: name.toLowerCase(), label: name };
+            adder.beforeAddCallback = ({ value }) => {
+                window.__addedNames.push(value);
+                return { value: value.toLowerCase(), label: value };
             };
         });
     </script>

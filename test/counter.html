@@ -39,7 +39,7 @@
             }
 
             // Format function with pluralization
-            document.getElementById('counter-cb').getCounterCallback = (count) =>
+            document.getElementById('counter-cb').getCounterCallback = ({ count }) =>
                 count === 1 ? '1 item' : `${count} items`;
         });
     </script>

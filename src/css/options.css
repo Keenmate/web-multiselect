@@ -522,7 +522,7 @@
 }
 
 /* "Add new" prompt — replaces the empty message when isAddNewAllowed is on and the
-   user has typed a term with no matches. Clickable (data-action="add-new" → handleAddNew);
+   user has typed a term with no matches. Clickable (data-ms-action="add-new" → handleAddNew);
    styled like an accent-coloured option row so it reads as an action. */
 .ms__add-new {
   display: flex;
@@ -555,7 +555,7 @@
 }
 
 /* Pending state — an async addNewCallback is in flight (spinner + "Adding …"). Not
-   clickable (no data-action on the row), so drop the pointer cursor. */
+   clickable (no data-ms-action on the row), so drop the pointer cursor. */
 .ms__add-new--loading {
   cursor: default;
 }

@@ -76,8 +76,8 @@ test.describe('selected-items popover', () => {
         const p = picker(page, 'popover-picker');
 
         // The count badge in count-mode is rendered as a clickable badge with
-        // data-action="show-selected". Clicking it toggles the popover.
-        await p.locator('.ms__badge[data-action="show-selected"]').click();
+        // data-ms-action="show-selected". Clicking it toggles the popover.
+        await p.locator('.ms__badge[data-ms-action="show-selected"]').click();
 
         const popover = p.locator('.ms__selected-popover');
         await expect(popover).toBeVisible();

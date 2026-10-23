@@ -87,7 +87,7 @@ test('group header height does not shift when the count chip appears/disappears'
 });
 
 test('getCountLabelCallback formats both the in-input counter and the group count (x/y)', async ({ page }) => {
-    const p = picker(page, 'group-count-callback'); // getCountLabelCallback = (s,t) => `${s}/${t}`
+    const p = picker(page, 'group-count-callback'); // getCountLabelCallback = ({ selectedCount, totalCount }) => …
     await openDropdown(p);
 
     await p.locator('.ms__option[data-value="a1"]').click(); // Apple  (Fruits)

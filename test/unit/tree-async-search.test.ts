@@ -42,7 +42,7 @@ beforeEach(() => {
     document.body.appendChild(el);
     el.options = TREE;
     // Externalized search: return matches by value from a trivial "index".
-    el.searchCallback = async (term: string) => {
+    el.searchCallback = async ({ term }: { term: string }) => {
         const t = term.toLowerCase();
         return TREE.filter(o => o.label.toLowerCase().includes(t));
     };

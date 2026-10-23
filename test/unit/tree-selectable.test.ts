@@ -8,7 +8,7 @@ import '../../src/web-component'; // registers <web-multiselect>
  * A non-selectable node is NOT the same as a disabled one: it renders normally
  * (no grey/`--disabled` styling) but carries no checkbox, is skipped by keyboard
  * focus, and cannot be toggled by click/Enter or picked by Select-All. The classic
- * use case is a leaves-only tree (`(node) => !node.hasChildren`), where branches
+ * use case is a leaves-only tree (`({ node }) => !node.hasChildren`), where branches
  * are pure structure.
  */
 
@@ -94,7 +94,7 @@ describe('tree selectability — via callback (leaves only)', () => {
         el.setAttribute('multiple', 'true');
         el.setAttribute('show-checkboxes', 'true');
         // Only leaves are selectable — the callback sees derived hasChildren.
-        el.getIsSelectableCallback = (node: any) => !node.hasChildren;
+        el.getIsSelectableCallback = ({ node }: any) => !node.hasChildren;
         document.body.appendChild(el);
         el.options = TREE;
     });

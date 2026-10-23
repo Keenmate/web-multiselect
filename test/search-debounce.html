@@ -28,7 +28,7 @@
         window.__calls = { 'ms-immediate': 0, 'ms-debounced': 0 };
 
         function makeCallback(id) {
-            return async (term) => {
+            return async ({ term }) => {
                 window.__calls[id] += 1;
                 // Resolve quickly with a single synthetic result for the term.
                 return term ? [{ value: term, label: term.toUpperCase() }] : [];

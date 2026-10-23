@@ -91,10 +91,10 @@
                 document.getElementById(id).options = items;
             }
 
-            document.getElementById('custom-tt').getBadgeTooltipCallback = (item) =>
+            document.getElementById('custom-tt').getBadgeTooltipCallback = ({ item }) =>
                 `${item.label}: ${item.description}`;
 
-            document.getElementById('option-custom-tt').getOptionTooltipCallback = (item) =>
+            document.getElementById('option-custom-tt').getOptionTooltipCallback = ({ item }) =>
                 `${item.label} — ${item.description}`;
 
             // Long list to exercise scrolling (virtual scroll auto-enables past ~100 rows).

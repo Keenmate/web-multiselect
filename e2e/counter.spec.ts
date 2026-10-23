@@ -47,6 +47,6 @@ test('getCounterCallback formats the count-mode badge text', async ({ page }) =>
     await page.mouse.click(0, 0);
 
     // Count-mode badge in the badges area uses getCounterCallback.
-    const countBadge = p.locator('.ms__badges .ms__badge[data-action="show-selected"]');
+    const countBadge = p.locator('.ms__badges .ms__badge[data-ms-action="show-selected"]');
     await expect(countBadge).toContainText('2 items');
 });

@@ -307,6 +307,23 @@
   transform: scale(var(--ms-transform-scale-active));
 }
 
+/* Icon + label (action items with `icon`) */
+.ms__action-btn-icon + .ms__action-btn-label {
+  margin-inline-start: var(--ms-action-button-icon-gap);
+}
+
+/* `isDanger` — destructive action */
+.ms__action-btn--danger {
+  color: var(--ms-action-button-danger-color);
+  border-color: var(--ms-action-button-danger-color);
+}
+
+/* `isActive` — toggle state ("pressed"), rendered with aria-pressed="true" */
+.ms__action-btn--active {
+  color: var(--ms-action-button-active-color);
+  border-color: var(--ms-action-button-active-color);
+}
+
 .ms__action-btn:disabled,
 .ms__action-btn[disabled] {
   opacity: var(--ms-disabled-opacity);

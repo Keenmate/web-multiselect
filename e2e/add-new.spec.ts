@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
     await page.goto(PAGE);
 });
 
-test('Enter on a no-match search term invokes addNewCallback and selects the result', async ({ page }) => {
+test('Enter on a no-match search term invokes beforeAddCallback and selects the result', async ({ page }) => {
     const p = picker(page, 'adder');
     await p.locator('.ms__input').click();
     await p.locator('.ms__input').fill('Mango'); // no matches in [Apple, Banana]
@@ -24,7 +24,7 @@ test('Enter on a no-match search term invokes addNewCallback and selects the res
     expect(value).toEqual(['mango']);
 });
 
-test('Enter on a search term that matches does NOT invoke addNewCallback', async ({ page }) => {
+test('Enter on a search term that matches does NOT invoke beforeAddCallback', async ({ page }) => {
     const p = picker(page, 'adder');
     await p.locator('.ms__input').click();
     await p.locator('.ms__input').fill('Ap'); // matches Apple

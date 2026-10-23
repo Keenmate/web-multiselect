@@ -23,7 +23,7 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">#cb — getDisabledCallback reading window.disabledIds (callback-state + refresh())</div>
+        <div class="fixture-label">#cb — getIsDisabledCallback reading window.disabledIds (callback-state + refresh())</div>
         <web-multiselect id="cb" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
@@ -72,7 +72,7 @@
 
             // #cb: disabled derived purely from external state (no `disabled` field on data).
             const cb = document.getElementById('cb');
-            cb.getDisabledCallback = (item) => window.disabledIds.has(item.value);
+            cb.getIsDisabledCallback = ({ item }) => window.disabledIds.has(item.value);
             cb.options = window.makeItems(6, 'opt');
 
             // #vs: start SMALL (below threshold → normal render); tests grow it in place.

@@ -54,7 +54,7 @@
                 document.getElementById(id).options = items;
             }
 
-            document.getElementById('custom-fmt').getValueFormatCallback = (values) => values.join('|');
+            document.getElementById('custom-fmt').getValueFormatCallback = ({ selectedValues }) => selectedValues.join('|');
         });
     </script>
 </body>

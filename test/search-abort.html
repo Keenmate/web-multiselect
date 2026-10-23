@@ -23,7 +23,7 @@
         window.__aborted = 0;
 
         // Resolve after `delay` ms, but reject early (and count) if the signal aborts.
-        function slowSearch(term, signal) {
+        function slowSearch({ term, signal }) {
             return new Promise((resolve, reject) => {
                 const timer = setTimeout(() => {
                     resolve(term ? [{ value: term, label: term.toUpperCase() }] : []);

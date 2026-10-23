@@ -6,7 +6,7 @@ import { test, expect, Page, Locator } from './fixtures';
  * then the gate is released (imperatively via `ready()`, or by removing the
  * attribute) and the picker is built ONCE with everything already applied.
  *
- * The load-bearing case is flash-freedom: a `customStylesCallback` set WHILE
+ * The load-bearing case is flash-freedom: a `getCustomStylesCallback` set WHILE
  * deferred must be in effect at the first paint, so the pre-selected badges appear
  * already styled — never with the default badge background for a frame.
  *
@@ -47,7 +47,7 @@ test('ready() builds once, reflects is-ready, and fires ready exactly once', asy
     await expect(page.locator('#ready-count')).toHaveText('1');
 });
 
-test('the deferred customStylesCallback is in effect at first paint (no flash)', async ({ page }) => {
+test('the deferred getCustomStylesCallback is in effect at first paint (no flash)', async ({ page }) => {
     await page.locator('#btn-ready').click();
 
     // The pre-selected (initial-values) badges render immediately with the custom

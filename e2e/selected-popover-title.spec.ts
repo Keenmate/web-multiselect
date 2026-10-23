@@ -13,7 +13,7 @@ const PAGE = '/test/floating-panels.html';
 test('selected-popover-title translates the header and interpolates {count}', async ({ page }) => {
     await page.goto(PAGE);
     const p = page.locator('#popover-picker');
-    const badge = p.locator('.ms__badge[data-action="show-selected"]');
+    const badge = p.locator('.ms__badge[data-ms-action="show-selected"]');
     const header = p.locator('.ms__selected-popover-header span');
 
     // Default (English) header.

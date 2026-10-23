@@ -5,6 +5,111 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — BREAKING (interaction model, web-components-core rc15)
+
+Callbacks, events and action buttons follow the shared KeenMate interaction model
+(web-components-core `/actions`). No aliases — rename on upgrade.
+
+**Every callback takes ONE `ctx` argument.** The option a per-option callback is about is
+`ctx.item`. Every `ctx` (and every event detail) also carries `controller` (the public facade,
+also `el.controller`), `element` (the host) — both non-enumerable, so `JSON.stringify` / logs /
+LiveView `pushEvent` see only the data — and the presentation flags (`presentation`,
+`isFullscreen`, `isModal`).
+
+| Old | New |
+|---|---|
+| `getValueCallback(item)`, `getDisplayValueCallback(item)`, `getIconCallback(item)`, `getSubtitleCallback(item)`, `getGroupCallback(item)`, `getFullTitleCallback(item)`, `getSearchValueCallback(item)`, `getSelectedOrderCallback(item)`, `getPathCallback(item)` | same names, `(ctx)` → read `ctx.item` |
+| `getDisabledCallback(item)` | `getIsDisabledCallback({ item })` |
+| `getIsSelectableCallback(node)` | `getIsSelectableCallback({ item, node })` |
+| `getBadgeDisplayCallback(item, ctx?)`, `getBadgeClassCallback`, `getSelectedItemClassCallback`, `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback` | `(ctx)` — `{ item, displayMode, isInPopover }` (always complete now; outside a render `displayMode` is the configured mode, `isInPopover` false) |
+| `renderOptionContentCallback(item, ctx)`, `getOptionTooltipCallback(item, ctx?)` | `(ctx)` — `{ item, index, isSelected, … }` |
+| `renderBadgeContentCallback(item, ctx)`, `renderBadgeCallback(item, ctx)`, `renderSelectedItemContentCallback(item, ctx)` | `(ctx)` — `{ item, displayMode, isInPopover }` |
+| `renderSelectedContentCallback(item, ctx)` | `(ctx)` — `{ item }` |
+| `renderGroupLabelContentCallback(groupName, ctx)` | `(ctx)` — `ctx.groupName` |
+| `getCounterCallback(count, moreCount?)` | `getCounterCallback({ count, moreCount? })` |
+| `getCountLabelCallback(selected, total)` | `getCountLabelCallback({ selectedCount, totalCount, groupName? })` |
+| `getValueFormatCallback(values)` | `getValueFormatCallback({ selectedValues, selectedOptions })` |
+| `getAddNewTextCallback(value)` | `getAddNewTextCallback({ value })` |
+| `getSearchTermCallback(term, { target, behavior, match })` | `getSearchTermCallback({ term, target, behavior, match })` |
+| `searchCallback(term, signal, { searchTerm, entries })` | `searchCallback({ term, signal, searchTerm, entries })` |
+| `customStylesCallback()` | `getCustomStylesCallback(ctx)` |
+| `selectedOrderCompareCallback(a, b)` | unchanged — the one positional exception (handed to `Array.prototype.sort`) |
+
+**Before-hooks — one contract:** `false` cancels, nothing continues, a value replaces; may be
+async (except keydown); a throw cancels (logged).
+
+| Old | New |
+|---|---|
+| `beforeSelectCallback(option, selectedOptions)` → `false` / a string (veto + toast) | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` → `false` vetoes. Explain a veto with `ctx.controller.showMessage(text, { type: 'warning' })`; a returned string no longer vetoes. May be async. |
+| `beforeDeselectCallback(option, selectedOptions)` | `beforeDeselectCallback(ctx)` — same shape and contract |
+| bulk gestures (Select-All, Clear-All, group checkbox, tree-cascade toggle, inline ✕, count ×, "+N more" ×) bypassed the vetoes | each option goes through the veto (`ctx.source`: `select-all` / `clear-all` / `group` / `clear` / `badge` / `option`); vetoed ones are skipped, the rest apply in ONE change. `setSelected()` and form reset stay veto-free. |
+| `beforeSearchCallback(term)` → string / `null` | `beforeSearchCallback({ term })` → a string replaces the term, `false` skips the search (was `null`) |
+| `addNewCallback(value)` → option / `null` cancels | `beforeAddCallback({ value })` → the option (appended + selected), `false` cancels (was `null`), nothing → only the `add` event fires (create it yourself) |
+| `keydownCallback(ctx)` → `true` = handled | `beforeKeydownCallback(ctx)` → `false` suppresses the built-in handling (synchronous). `ctx.controller` is the one public controller (focus methods included); `ctx.selectedValues` holds the real values (was strings). |
+| — | `beforeActionCallback(detail)` → `false` cancels an action item (its `onClick`, the `action` event and the built-in) |
+
+**Action buttons** are core action items.
+
+| Old | New |
+|---|---|
+| `{ action: 'custom', text, onClick }` | `{ id: 'export', text, onClick }` (`action` is only for built-ins; custom items are identified by `id`) |
+| `onClick(multiselect, ctx)` | `onClick(detail)` — the `action` detail (ctx + `action`, `id`, `item`, `source`, `sourceEvent`, `triggerElement`, `dataset`) |
+| `getTextCallback(ms, ctx)`, `getIsVisibleCallback`, `getIsDisabledCallback`, `getClassCallback`, `getTooltipCallback` | `(ctx)` — the ctx is the selection snapshot (`selectedValues`, `selectedOptions`, `options`, `selectedCount`, `optionCount`, `isOpen`, `searchTerm`) |
+| `ctx.button` | gone — at activation the clicked item is `detail.item` |
+| `onClick` only ran for `custom` buttons | runs for built-ins too, before the built-in |
+| — | string shorthand: `actionButtons: ['select-all', 'clear-all']` (default text from `labels.selectAll` / `labels.clearAll`) |
+| — | `icon`, `isDanger`, `isActive` / `getIsActiveCallback` (`aria-pressed`), `getIconCallback` |
+| button text inserted as HTML | text and icon are inserted as text |
+| `data-button-index` on the button | `data-ms-item-index`; `data-action` = built-in name or `custom`, `data-id` = the item `id` |
+
+**Events**
+
+| Old | New |
+|---|---|
+| — | `action` event (+ `onAction`): every action button, built-in or custom, and every `data-action` element in rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` → `onClick` → `action` → built-in. |
+| `el.onSelect = (e) => e.detail.option` (all `on*` props got the CustomEvent) | `el.onSelect = (detail) => detail.option` — `onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady` receive the **detail** |
+| `ready` detail `undefined` | `{ controller, element, presentation… }` |
+| `MultiSelectEventDetail` (one catch-all type) | `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `ReadyEventDetail`, `MultiSelectActionEventDetail` |
+| events `composed: true` | `composed: false` (dispatched on the host and bubbling — listeners on the element or its ancestors are unaffected) |
+| remove-hidden ("+N more" ×) fired one `change` per removed item | one `change` |
+
+**Controller / API**
+
+| Old | New |
+|---|---|
+| `MultiSelectKeyboardController` (keydown only) + `MultiSelectController` | one `MultiSelectController` — `el.controller` and `ctx.controller` everywhere; adds `isOpen`, `refresh()`, the focus methods, `selectValue` / `deselectValue` / `toggleFocused`; `scrollTo*` return `boolean`; `setSearch` removed (use `search`) |
+| `showMessage(content, { variant, duration })` | `showMessage(content, { type, autoHideMs, placement })`; `MessageVariant` → `MessageType` |
+| `WebMultiSelect` export | `MultiSelectEngine` (standalone use only — drive the element through `el.controller`) |
+| engine options `onAddNew({ value, option })`, `onSelect(option)`, `onDeselect(option)`, `onChange(options)` | `onAdd(detail)`, `onSelect(detail)`, `onDeselect(detail)`, `onChange(detail)`, `onAction(detail)` |
+| `MultiSelectOptions` (legacy), `MultiSelectKeydownContext`, `ActionButton` | removed — `MultiSelectConfig`, `KeydownContext`, `MultiSelectActionItem` |
+
+**Internal controls use `data-ms-action`** (`data-action` / `data-id` are reserved for action
+items): the add-new prompt, `show-selected`, `clear-count`, `remove-hidden`. A
+`renderBadgeCallback` remove control is now `data-ms-action="remove"` (or `.ms__badge-remove`).
+CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action="show-selected"]`.
+
+### Added
+
+- `--ms-action-button-danger-color`, `--ms-action-button-active-color`,
+  `--ms-action-button-icon-gap`; `.ms__action-btn--danger`, `.ms__action-btn--active`,
+  `.ms__action-btn-icon`, `.ms__action-btn-label`.
+- `labels.selectAll` / `labels.clearAll` (default text of the built-in buttons).
+- Exported types for every callback ctx: `MultiSelectContext`, `ItemContext`, `TreeNodeContext`,
+  `CounterContext`, `CountLabelContext`, `ValueFormatContext`, `AddContext`,
+  `BeforeSearchContext`, `SearchTermCallbackContext`, `MultiSelectSearchContext`,
+  `BeforeSelectContext`, `SelectionSource`, `KeydownContext`, `MultiSelectAction`,
+  `MultiSelectActionItem`, `MultiSelectActionEventDetail`, `MessageType`, `MessageOptions`.
+
+### Fixed
+
+- `data-action` markup inside rendered option content was hijacked as an action button
+  (a `select-all` there ran Select-All, anything else did nothing); it now fires the `action`
+  event and never toggles the row.
+- The `actionButtons` description promised default Select-All / Clear buttons when unset; none
+  render (and none did).
+
 ## [2.6.0-rc04] - 2026-10-22
 
 ### Internal

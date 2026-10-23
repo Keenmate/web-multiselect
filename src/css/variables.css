@@ -160,6 +160,10 @@
   --ms-action-button-border-color: var(--ms-input-border-color);
   --ms-action-button-border-color-hover: var(--ms-accent-color);
   --ms-action-button-color: var(--ms-text-color-1);
+  /* `isDanger` items (destructive) and `isActive` items (toggle state, aria-pressed). */
+  --ms-action-button-danger-color: var(--base-danger-color, #dc2626);
+  --ms-action-button-active-color: var(--ms-accent-color);
+  --ms-action-button-icon-gap: calc(0.4 * var(--ms-rem));
 
   /* Group Semantic Variables */
   --ms-group-border-color: var(--ms-border-color);

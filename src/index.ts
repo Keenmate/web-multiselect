@@ -8,8 +8,8 @@ import { logging } from './logger';
 // Export the web component
 export { MultiSelectElement };
 
-// Export the base picker for users who want direct access
-export { WebMultiSelect } from './multiselect';
+// The dropdown engine, for standalone use only — element consumers use `el.controller`.
+export { MultiSelectEngine } from './multiselect';
 
 // data-options authoring formats (data-options-format)
 export { parseOptionsData, OPTIONS_FORMATS } from './option-formats';
@@ -54,8 +54,7 @@ export type {
 // Export types
 export type {
   MultiSelectOption,
-  MultiSelectOptions,
-  MultiSelectEventDetail,
+  MultiSelectConfig,
   BadgesDisplayMode,
   BadgesPosition,
   BadgesThresholdMode,
@@ -69,15 +68,37 @@ export type {
   SearchEntry,
   SearchCallbackContext,
   ValueFormat,
+  MessageType,
+  MessageOptions,
+  MultiSelectContext,
+  ItemContext,
+  TreeNodeContext,
   OptionContentRenderContext,
   BadgeContentRenderContext,
   GroupLabelRenderContext,
   SelectedContentRenderContext,
-  ActionButton,
+  CounterContext,
+  CountLabelContext,
+  ValueFormatContext,
+  AddContext,
+  BeforeSearchContext,
+  SearchTermCallbackContext,
+  MultiSelectSearchContext,
+  SelectionSource,
+  BeforeSelectContext,
+  BeforeDeselectContext,
+  KeydownContext,
   ActionContext,
+  MultiSelectAction,
+  MultiSelectActionItem,
+  MultiSelectActionEventDetail,
   MultiSelectController,
-  MultiSelectKeyboardController,
   MultiSelectLabels,
+  SelectEventDetail,
+  DeselectEventDetail,
+  ChangeEventDetail,
+  AddEventDetail,
+  ReadyEventDetail,
 } from './types';
 
 // Export logging utilities for runtime control

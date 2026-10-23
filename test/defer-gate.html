@@ -12,7 +12,7 @@
     <h1>defer / ready() render gate</h1>
     <p>Targeted by <code>e2e/defer-gate.spec.ts</code>. Each element carries the <code>defer</code>
     attribute, so it builds nothing on upgrade — options and a badge-coloring
-    <code>customStylesCallback</code> are wired while held, then released. The load-bearing case:
+    <code>getCustomStylesCallback</code> are wired while held, then released. The load-bearing case:
     the styled, pre-selected badges must appear in <em>one shot</em> on release (no default-style flash).</p>
 
     <!-- Released imperatively via ready(). -->
@@ -53,7 +53,7 @@
         customElements.whenDefined('web-multiselect').then(() => {
             const msReady = document.getElementById('ms-ready');
             msReady.options = data;
-            msReady.customStylesCallback = badgeCss;
+            msReady.getCustomStylesCallback = badgeCss;
             let count = 0;
             msReady.addEventListener('ready', () => {
                 count += 1;
@@ -62,7 +62,7 @@
 
             const msAttr = document.getElementById('ms-attr');
             msAttr.options = data;
-            msAttr.customStylesCallback = badgeCss;
+            msAttr.getCustomStylesCallback = badgeCss;
         });
     </script>
 </body>

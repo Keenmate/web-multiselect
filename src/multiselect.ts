@@ -11,8 +11,10 @@
 import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, type OverlayHandle } from '@keenmate/web-components-core';
-import type { MultiSelectConfig, BadgesPosition, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchCallbackContext, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectKeyboardController, MultiSelectKeydownContext, MessageOptions, ActionButton, ActionContext, MultiSelectLabels } from './types';
+import { lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+// Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
+import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
 
 /** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -28,7 +30,17 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     andMore: '…and {count} more',
     prevMatch: 'Previous match',
     nextMatch: 'Next match',
+    selectAll: 'Select all',
+    clearAll: 'Clear all',
 };
+
+/** Where a badge is rendered — the render-only half of {@link BadgeContentRenderContext}. */
+type BadgeRenderInfo = { displayMode: BadgesDisplayMode; isInPopover: boolean };
+
+/** `x` → `fn(x)`, or `x.then(fn)` when `x` is a Promise: keeps a sync path sync. */
+function then<A, B>(x: A | Promise<A>, fn: (a: A) => B): B | Promise<B> {
+    return x instanceof Promise ? x.then(fn) : fn(x);
+}
 import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import {
     NO_SEARCH_TERM,
@@ -54,7 +66,11 @@ import {
     type NodeCheckState
 } from './tree/cascade';
 
-export class WebMultiSelect<T = any> {
+/**
+ * The dropdown engine behind `<web-multiselect>`. Exported for standalone use only — consumers of
+ * the element drive it through `el.controller` (the public facade), never through this class.
+ */
+export class MultiSelectEngine<T = any> {
     private element: HTMLElement;
     private instanceId: string;
     private options: MultiSelectConfig<T>;
@@ -82,8 +98,17 @@ export class WebMultiSelect<T = any> {
     /** True when the user moved `focusedIndex` (arrows, PageUp/Down, Home/End) rather than search
      *  auto-highlighting a match; `tab-behavior="select-navigated"` only commits then. */
     private isFocusNavigated = false;
-    // Stable imperative facade handed to keydownCallback (built once, reused). See getKeyboardController().
-    private keyboardController: MultiSelectKeyboardController<T> | null = null;
+    // This engine's own public facade (built once) — used when no element passes `options.controller`.
+    private controller: MultiSelectController<T> | null = null;
+    // Shared prototype of the per-option ctx (controller / element / presentation getters). See itemCtx().
+    private itemCtxProto: object | null = null;
+    // Normalized `actionButtons` (string shorthand expanded), cached per source array so an item keeps
+    // its identity across renders (core's busy guard is keyed on it).
+    private actionItemsSource: MultiSelectConfig<T>['actionButtons'] | null = null;
+    private actionItemsCache: MultiSelectActionItem<T>[] = [];
+    // Consumer `data-action` triggers (rendered content / message HTML) → their synthetic item, so
+    // a trigger stays one item (busy guard) across clicks.
+    private syntheticActionItems = new WeakMap<HTMLElement, MultiSelectActionItem<T>>();
     private matchingIndices: Set<number> = new Set();
     private searchTerm = '';
     /*
@@ -107,7 +132,7 @@ export class WebMultiSelect<T = any> {
     private hasWarnedObjectSearchTerm = false;
     /** Keyboard focus sits on the empty-state "add new" prompt (arrow-navigated). */
     private addNewFocused = false;
-    /** An async addNewCallback is in flight — the prompt shows a spinner + pending text. */
+    /** An async beforeAddCallback is in flight — the prompt shows a spinner + pending text. */
     private addNewPending = false;
     private isLoading = false;
     private searchDebounceTimer?: ReturnType<typeof setTimeout>;
@@ -261,7 +286,7 @@ export class WebMultiSelect<T = any> {
      */
     private extractField<R>(item: T, opts: {
         member?: string;
-        callback?: (item: T) => R;
+        callback?: (ctx: ItemContext<T>) => R;
         tupleIndex?: 0 | 1;
         tupleSkip?: boolean;
         transform?: (raw: any) => R;
@@ -286,7 +311,7 @@ export class WebMultiSelect<T = any> {
         }
 
         if (opts.callback) {
-            return opts.callback(item);
+            return opts.callback(this.itemCtx(item));
         }
 
         return typeof opts.fallback === 'function' ? (opts.fallback as () => R)() : opts.fallback;
@@ -315,8 +340,8 @@ export class WebMultiSelect<T = any> {
      * Badge display falls back to the regular display value rather than '[N/A]', so consumers can override badge
      * text independently. Doesn't fit the extractField shape (no tuple/member layer of its own).
      */
-    private getItemBadgeDisplayValue(item: T, context?: BadgeContentRenderContext): string {
-        if (this.options.getBadgeDisplayCallback) return this.options.getBadgeDisplayCallback(item, context);
+    private getItemBadgeDisplayValue(item: T, info?: BadgeRenderInfo): string {
+        if (this.options.getBadgeDisplayCallback) return this.options.getBadgeDisplayCallback(this.badgeCtx(item, info));
         if (this.options.isBadgeFullTitleShown) {
             const fullTitle = this.getItemFullTitle(item);
             if (fullTitle) return fullTitle;
@@ -397,8 +422,9 @@ export class WebMultiSelect<T = any> {
         return this.searchEntries;
     }
 
-    private searchTermContext(target: SearchTermContext['target']): SearchTermContext {
+    private searchTermContext(term: string, target: SearchTermContext['target']): SearchTermContext {
         return {
+            term,
             target,
             behavior: this.options.searchBehavior || 'normalized',
             match: this.options.searchMatch || 'contains'
@@ -416,7 +442,7 @@ export class WebMultiSelect<T = any> {
             behavior: this.options.searchBehavior || 'normalized',
             match: this.options.searchMatch || 'contains',
             regex: this.searchRegex,
-            getSearchTermCallback: callback ? (t) => callback(t, this.searchTermContext('internal')) : undefined,
+            getSearchTermCallback: callback ? (t) => callback(this.ctx(this.searchTermContext(t, 'internal'))) : undefined,
             onObjectTerm: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
@@ -523,7 +549,7 @@ export class WebMultiSelect<T = any> {
         return this.extractField<boolean>(item, {
             tupleSkip: true,
             member: this.options.disabledMember,
-            callback: this.options.getDisabledCallback,
+            callback: this.options.getIsDisabledCallback,
             transform: Boolean,
             fallback: false
         });
@@ -659,12 +685,16 @@ export class WebMultiSelect<T = any> {
         this.tree = createLTree<T>({
             idMember: this.options.valueMember,
             pathMember: this.options.pathMember,
-            getPathCallback: this.options.getPathCallback,
+            getPathCallback: this.options.getPathCallback
+                ? (item: T) => this.options.getPathCallback!(this.itemCtx(item))
+                : undefined,
             parentPathMember: this.options.parentPathMember,
             levelMember: this.options.levelMember,
             hasChildrenMember: this.options.hasChildrenMember,
             isSelectableMember: this.options.isSelectableMember,
-            getIsSelectableCallback: this.options.getIsSelectableCallback,
+            getIsSelectableCallback: this.options.getIsSelectableCallback
+                ? (node: LTreeNode<T>) => this.options.getIsSelectableCallback!(Object.assign(this.itemCtx(node.data as T), { node }))
+                : undefined,
             treePathSeparator: this.options.treePathSeparator,
             treeId: this.instanceId,
             getDisplayValueCallback: (node) => this.getItemDisplayValue(node.data as T)
@@ -1201,15 +1231,19 @@ export class WebMultiSelect<T = any> {
      * Default `[selected]` (matches the historical in-input `[N]`); a `getCountLabelCallback` can
      * switch both to e.g. `selected/total`.
      */
-    private formatCountLabel(selected: number, total: number): string {
-        if (this.options.getCountLabelCallback) return this.options.getCountLabelCallback(selected, total);
+    private formatCountLabel(selected: number, total: number, groupName?: string): string {
+        if (this.options.getCountLabelCallback) {
+            return this.options.getCountLabelCallback(this.ctx(groupName === undefined
+                ? { selectedCount: selected, totalCount: total }
+                : { selectedCount: selected, totalCount: total, groupName }));
+        }
         return `[${selected}]`;
     }
 
     /** Trailing count chip for a group header — any grouped list (rendered only when >0 selected). */
-    private groupCountHtml(selectedCount: number, total: number): string {
+    private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
-        const label = this.formatCountLabel(selectedCount, total);
+        const label = this.formatCountLabel(selectedCount, total, groupName);
         return `<span class="ms__group-count" aria-label="${this.escapeHtml(this.resolveLabel('groupSelectedLabel', { count: selectedCount }))}">${this.escapeHtml(label)}</span>`;
     }
 
@@ -1326,12 +1360,7 @@ export class WebMultiSelect<T = any> {
                             // renders its own count (see BU03). We still inject the checkbox chrome.
                             // `info` is exactly the selection half of GroupLabelRenderContext, so
                             // spread it rather than re-listing every field (can't drift).
-                            const context = {
-                                ...createPresentationContext(this.presentationMode),
-                                groupName,
-                                ...info
-                            };
-                            const customContent = this.options.renderGroupLabelContentCallback(groupName, context);
+                            const customContent = this.options.renderGroupLabelContentCallback(this.ctx({ groupName, ...info }));
                             if (customContent instanceof HTMLElement) {
                                 // HTMLElement - wrap in group-label div
                                 const wrapper = document.createElement('div');
@@ -1352,7 +1381,7 @@ export class WebMultiSelect<T = any> {
                         } else {
                             // Default rendering: title + a trailing count of how many of the group's
                             // members are currently selected (any grouped list, cascade or not).
-                            const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount);
+                            const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount, groupName);
                             const labelClass = countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
                             html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${this.escapeHtml(groupName)}${countHtml}</div>`;
                         }
@@ -1552,30 +1581,46 @@ export class WebMultiSelect<T = any> {
     }
 
     /**
-     * Render the Select All / Clear All / custom action buttons row.
-     * Returns the empty string if multiple-select is off or no buttons are configured.
-     */
-    /**
-     * Default enabled/disabled state for the built-in actions, applied only when the consumer hasn't
-     * set an explicit `isDisabled` / `getIsDisabledCallback`:
+     * Built-in state of `select-all` / `clear-all` — the `defaults` layer under the consumer's
+     * static fields and `get*Callback`s (core `resolveActionItem`):
      * - `select-all` is disabled when it would add nothing (every selectable, non-disabled filtered
      *   option is already selected — this also covers an empty list).
      * - `clear-all` is disabled when nothing is selected.
+     * Text defaults come from `labels.selectAll` / `labels.clearAll`.
      */
-    private getBuiltInActionDisabled(action: string): boolean {
+    private getBuiltInActionDefaults(action: MultiSelectAction | 'custom'): { text?: string; isDisabled?: boolean } {
         if (action === 'select-all') {
-            return !this.filteredOptions.some(option =>
-                !this.getItemDisabled(option) && !this.selectedValues.has(String(this.getItemValue(option))));
+            return {
+                text: this.resolveLabel('selectAll'),
+                isDisabled: !this.filteredOptions.some(option =>
+                    !this.getItemDisabled(option) && !this.selectedValues.has(String(this.getItemValue(option)))),
+            };
         }
         if (action === 'clear-all') {
-            return this.selectedValues.size === 0;
+            return { text: this.resolveLabel('clearAll'), isDisabled: this.selectedValues.size === 0 };
         }
-        return false;
+        return {};
     }
 
+    /** `actionButtons` with the string shorthand expanded — same item objects until the array changes. */
+    private getActionItems(): MultiSelectActionItem<T>[] {
+        const source = this.options.actionButtons ?? null;
+        if (source !== this.actionItemsSource) {
+            this.actionItemsSource = source;
+            this.actionItemsCache = normalizeActionItems<MultiSelectActionItem<T>>(source);
+        }
+        return this.actionItemsCache;
+    }
+
+    /**
+     * Render the action buttons block (rows of `.ms__action-btn`). Each field resolves
+     * `get*Callback(ctx)` → static value → built-in default. A button carries `data-action`
+     * (the built-in name or `custom`), `data-id`, and its index in `actionButtons`
+     * (`data-ms-item-index`) so a click resolves to the same item object.
+     */
     private renderActionsHTML(): string {
-        const buttons = this.options.actionButtons;
-        if (!this.options.isMultipleEnabled || !buttons || buttons.length === 0) return '';
+        const items = this.getActionItems();
+        if (!this.options.isMultipleEnabled || items.length === 0) return '';
 
         const position = this.options.actionsPosition === 'bottom' ? 'bottom' : 'top';
         const align = this.options.actionsAlign ?? 'stretch';
@@ -1585,42 +1630,32 @@ export class WebMultiSelect<T = any> {
         const wrapClass = this.options.actionsLayout === 'wrap' ? ' ms__actions--wrap' : '';
         const alignClass = ` ms__actions--align-${align}`;
 
-        // Group visible buttons by 1-based row (default 1), preserving the original index for
-        // data-button-index so click/tooltip lookups still resolve to the right config entry.
+        // Render-time callbacks get the surface ctx only (the activation fields come at click).
+        const ctx = this.buildActionContext();
         const rows = new Map<number, string[]>();
-        buttons.forEach((button, buttonIndex) => {
-            // Typed context (state + controller), additive 2nd arg to every action callback.
-            const ctx = this.buildActionContext(button);
-            const isVisible = button.getIsVisibleCallback ? button.getIsVisibleCallback(this, ctx) : (button.isVisible ?? true);
-            if (!isVisible) return;
+        items.forEach((item, itemIndex) => {
+            const resolved = resolveActionItem(item, ctx, this.getBuiltInActionDefaults(item.action ?? 'custom'));
+            if (!resolved.isVisible) return;
 
-            // Precedence: explicit dynamic callback > explicit static isDisabled > built-in default
-            // (so the built-in select-all/clear-all enabled state only applies when the consumer
-            // hasn't said otherwise).
-            let isDisabled: boolean;
-            if (button.getIsDisabledCallback) {
-                isDisabled = button.getIsDisabledCallback(this, ctx);
-            } else if (button.isDisabled !== undefined) {
-                isDisabled = button.isDisabled;
-            } else {
-                isDisabled = this.getBuiltInActionDisabled(button.action);
-            }
-            const disabledAttr = isDisabled ? ' disabled' : '';
+            const classes = ['ms__action-btn'];
+            if (resolved.isDanger) classes.push('ms__action-btn--danger');
+            if (resolved.isActive) classes.push('ms__action-btn--active');
+            if (resolved.cssClass) classes.push(resolved.cssClass);
 
-            const text = button.getTextCallback ? button.getTextCallback(this, ctx) : button.text;
+            let attrs = ` class="${this.escapeHtml(classes.join(' '))}" data-action="${this.escapeHtml(resolved.action)}" data-ms-item-index="${itemIndex}"`;
+            if (resolved.id) attrs += ` data-id="${this.escapeHtml(resolved.id)}"`;
+            if (resolved.isDisabled) attrs += ' disabled';
+            if (resolved.isActive) attrs += ' aria-pressed="true"';
+            if (!resolved.text && resolved.tooltip) attrs += ` aria-label="${this.escapeHtml(resolved.tooltip)}"`;
 
-            let cssClass = '';
-            if (button.getClassCallback) {
-                const extra = this.classSuffix(button.getClassCallback(this, ctx));
-                if (extra) cssClass = ` ${extra}`;
-            } else if (button.cssClass) {
-                cssClass = ` ${button.cssClass}`;
-            }
+            // Icon + label are text, never HTML.
+            let inner = '';
+            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${this.escapeHtml(resolved.icon)}</span>`;
+            if (resolved.text) inner += `<span class="ms__action-btn-label">${this.escapeHtml(resolved.text)}</span>`;
 
-            const rowNum = Math.max(1, Math.floor(button.row ?? 1));
-            const btnHTML = `<button type="button"${disabledAttr} class="ms__action-btn${cssClass}" data-action="${button.action}" data-button-index="${buttonIndex}">${text}</button>`;
+            const rowNum = Math.max(1, Math.floor(item.row ?? 1));
             if (!rows.has(rowNum)) rows.set(rowNum, []);
-            rows.get(rowNum)!.push(btnHTML);
+            rows.get(rowNum)!.push(`<button type="button"${attrs}>${inner}</button>`);
         });
 
         if (rows.size === 0) return '';
@@ -1666,16 +1701,16 @@ export class WebMultiSelect<T = any> {
 
         // Check if custom render callback is provided
         if (this.options.renderOptionContentCallback) {
-            const context: OptionContentRenderContext = {
+            const context: OptionContentRenderContext<T> = this.ctx({
+                item: option,
                 index,
                 isSelected,
                 isFocused,
                 isMatched,
                 isDisabled: disabled,
-                ...createPresentationContext(this.presentationMode),
                 isTreeNode: false
-            };
-            html += this.toHtml(this.options.renderOptionContentCallback(option, context));
+            });
+            html += this.toHtml(this.options.renderOptionContentCallback(context));
         } else {
             // Default rendering
             if (icon) {
@@ -1773,13 +1808,13 @@ export class WebMultiSelect<T = any> {
         html += '<div class="ms__option-content">';
 
         if (this.options.renderOptionContentCallback) {
-            const context: OptionContentRenderContext = {
+            const context: OptionContentRenderContext<T> = this.ctx({
+                item: option,
                 index,
                 isSelected,
                 isFocused,
                 isMatched,
                 isDisabled: disabled,
-                ...createPresentationContext(this.presentationMode),
                 // Tree metadata — lets the callback branch on depth / branch-vs-leaf /
                 // tristate without re-deriving any of it from the raw data item.
                 isTreeNode: true,
@@ -1791,8 +1826,8 @@ export class WebMultiSelect<T = any> {
                 path: node.path,
                 isSelectable: selectable,
                 isIndeterminate
-            };
-            html += this.toHtml(this.options.renderOptionContentCallback(option, context));
+            });
+            html += this.toHtml(this.options.renderOptionContentCallback(context));
         } else {
             if (icon) {
                 html += `<span class="ms__option-icon">${icon}</span>`;
@@ -1826,7 +1861,7 @@ export class WebMultiSelect<T = any> {
     private renderEmptyStateHTML(): string {
         if (this.isAddNewPromptShown()) {
             const value = (this.searchTerm || '').trim();
-            // Pending: an async addNewCallback is running — spinner + "Adding …", not clickable.
+            // Pending: an async beforeAddCallback is running — spinner + "Adding …", not clickable.
             if (this.addNewPending) {
                 return `<div class="ms__add-new ms__add-new--loading" aria-busy="true">`
                     + `<span class="ms__add-new-spinner" aria-hidden="true"></span>`
@@ -1834,7 +1869,7 @@ export class WebMultiSelect<T = any> {
                     + `</div>`;
             }
             const focused = this.addNewFocused ? ' ms__add-new--focused' : '';
-            return `<div class="ms__add-new${focused}" role="button" data-action="add-new">`
+            return `<div class="ms__add-new${focused}" role="button" data-ms-action="add-new">`
                 + `<span class="ms__add-new-icon" aria-hidden="true"></span>`
                 + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
                 + `</div>`;
@@ -1856,13 +1891,13 @@ export class WebMultiSelect<T = any> {
      */
     private getAddNewText(value: string): string {
         if (this.options.getAddNewTextCallback) {
-            return this.escapeHtml(this.options.getAddNewTextCallback(value));
+            return this.escapeHtml(this.options.getAddNewTextCallback(this.ctx({ value })));
         }
         const template = this.options.addNewText ?? 'Add "{value}"';
         return template.replace(/\{value\}/g, this.escapeHtml(value));
     }
 
-    /** Pending-prompt label shown (with a spinner) while an async addNewCallback runs. */
+    /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
         const template = this.options.addNewPendingText ?? 'Adding "{value}"…';
         return template.replace(/\{value\}/g, this.escapeHtml(value));
@@ -1972,10 +2007,7 @@ export class WebMultiSelect<T = any> {
             if (selectedOptions[0]) {
                 // Check if custom render callback is provided
                 if (this.options.renderSelectedContentCallback) {
-                    selectedLabel = this.options.renderSelectedContentCallback(
-                        selectedOptions[0],
-                        createPresentationContext(this.presentationMode)
-                    );
+                    selectedLabel = this.options.renderSelectedContentCallback(this.ctx({ item: selectedOptions[0] }));
                 } else {
                     selectedLabel = this.getItemDisplayValue(selectedOptions[0]);
                 }
@@ -1999,8 +2031,7 @@ export class WebMultiSelect<T = any> {
 
         if (!this.#isOpen) {
             if (count > 0 && effectiveMode === 'count') {
-                const countText = this.options.getCounterCallback ? this.options.getCounterCallback(count) : `${count} selected`;
-                this.input.placeholder = countText;
+                this.input.placeholder = this.counterText(count);
             } else {
                 this.input.placeholder = this.getPlaceholderText();
             }
@@ -2045,14 +2076,12 @@ export class WebMultiSelect<T = any> {
 
             let moreBadgeHtml = '';
             if (remainingCount > 0) {
-                const moreText = this.options.getCounterCallback
-                    ? this.options.getCounterCallback(count, remainingCount)
-                    : `+${remainingCount} more`;
+                const moreText = this.counterText(count, remainingCount);
 
                 moreBadgeHtml = `
-                    <div class="ms__badge ms__badge--counter ms__badge--more" data-action="show-selected">
+                    <div class="ms__badge ms__badge--counter ms__badge--more" data-ms-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="remove-hidden" aria-label="${this.escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${this.escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
                     </div>
                 `;
             }
@@ -2069,16 +2098,14 @@ export class WebMultiSelect<T = any> {
                 // Build compact text: "FirstItem (+X more)" or just "FirstItem" if only one
                 let compactText = firstItemText;
                 if (remainingCount > 0) {
-                    const moreText = this.options.getCounterCallback
-                        ? this.options.getCounterCallback(count, remainingCount)
-                        : `+${remainingCount} more`;
+                    const moreText = this.counterText(count, remainingCount);
                     compactText = `${firstItemText} (${moreText})`;
                 }
 
                 this.badgesContainer.innerHTML = `
-                    <div class="ms__badge" data-action="show-selected">
+                    <div class="ms__badge" data-ms-action="show-selected">
                         <span class="ms__badge-text">${compactText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -2088,11 +2115,11 @@ export class WebMultiSelect<T = any> {
             // Count mode
             this.badgesContainer.className = `ms__badges ms__badges--${this.effectiveBadgesPosition}`;
             if (count > 0) {
-                const countText = this.options.getCounterCallback ? this.options.getCounterCallback(count) : `${count} selected`;
+                const countText = this.counterText(count);
                 this.badgesContainer.innerHTML = `
-                    <div class="ms__badge ms__badge--counter" data-action="show-selected">
+                    <div class="ms__badge ms__badge--counter" data-ms-action="show-selected">
                         <span class="ms__badge-text">${countText}</span>
-                        <button type="button" class="ms__badge-remove" data-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -2221,7 +2248,7 @@ export class WebMultiSelect<T = any> {
 
         // Prevent click propagation for show-selected action (in badges container)
         this.badgesContainer.addEventListener('mousedown', (e) => {
-            const showSelectedBtn = (e.target as HTMLElement).closest('[data-action="show-selected"]');
+            const showSelectedBtn = (e.target as HTMLElement).closest('[data-ms-action="show-selected"]');
             if (showSelectedBtn && !this.showSelectedPopover) {
                 e.stopPropagation();
             }
@@ -2254,12 +2281,19 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
-        // Apply beforeSearchCallback if provided (for BOTH async and local search)
+        // beforeSearchCallback (BOTH async and local search): `false` skips the search, a string
+        // replaces the term. A sync hook answers in this tick; an async one is awaited, and a
+        // keystroke that arrived meanwhile wins.
         let processedValue = value;
         if (this.options.beforeSearchCallback) {
-            const result = this.options.beforeSearchCallback(value);
-            if (result === null) {
-                // beforeSearchCallback returned null - don't search, show all options
+            let gate = runBeforeCallbackEager<object, unknown>(this.options.beforeSearchCallback as (ctx: object) => unknown,
+                this.ctx({ term: value }), 'beforeSearchCallback');
+            if (gate instanceof Promise) {
+                gate = await gate;
+                if (this.searchTerm !== value) return;
+            }
+            if (gate.isCancelled) {
+                // beforeSearchCallback returned false - don't search, show all options
                 dataLogger.debug(`[${this.instanceId}] beforeSearchCallback blocked search for term:`, value);
                 this.activeTerm = NO_SEARCH_TERM;
                 this.activeTermFor = value;
@@ -2274,7 +2308,7 @@ export class WebMultiSelect<T = any> {
                 this.renderDropdown();
                 return;
             }
-            processedValue = result;
+            if ('value' in gate && gate.value != null) processedValue = String(gate.value);
             if (processedValue !== value) {
                 dataLogger.debug(`[${this.instanceId}] beforeSearchCallback transformed: "${value}" -> "${processedValue}"`);
             }
@@ -2291,7 +2325,7 @@ export class WebMultiSelect<T = any> {
             // else the plain term. An empty result means no search (like a too-short term).
             let callbackTerm: unknown = processedValue;
             if (this.options.getSearchTermCallback) {
-                callbackTerm = this.options.getSearchTermCallback(processedValue, this.searchTermContext('callback'));
+                callbackTerm = this.options.getSearchTermCallback(this.ctx(this.searchTermContext(processedValue, 'callback')));
             }
             const noCallbackTerm = callbackTerm == null || callbackTerm === '';
             // Check minimum search length
@@ -2326,11 +2360,11 @@ export class WebMultiSelect<T = any> {
                     this.searchDebounceTimer = undefined;
                     // Drop this run if a newer keystroke superseded the value while we waited.
                     if (this.searchTerm === value) {
-                        void this.performAsyncSearch(value, processedValue, callbackTerm as SearchCallbackContext<T>['searchTerm']);
+                        void this.performAsyncSearch(value, processedValue, callbackTerm as MultiSelectSearchContext<T>['searchTerm']);
                     }
                 }, debounceMs);
             } else {
-                await this.performAsyncSearch(value, processedValue, callbackTerm as SearchCallbackContext<T>['searchTerm']);
+                await this.performAsyncSearch(value, processedValue, callbackTerm as MultiSelectSearchContext<T>['searchTerm']);
             }
         } else {
             // LOCAL SEARCH PATH
@@ -2433,7 +2467,7 @@ export class WebMultiSelect<T = any> {
      * into their fetch get the request actually cancelled, not just ignored. The
      * `aborted` / `searchTerm === value` guards drop superseded or out-of-order responses.
      */
-    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: SearchCallbackContext<T>['searchTerm']): Promise<void> {
+    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: MultiSelectSearchContext<T>['searchTerm']): Promise<void> {
         // Cancel any previous in-flight request; only the latest query should win.
         this.abortInFlightSearch();
         const controller = new AbortController();
@@ -2445,11 +2479,13 @@ export class WebMultiSelect<T = any> {
 
         try {
             const self = this;
-            const context: SearchCallbackContext<T> = {
+            const context: MultiSelectSearchContext<T> = this.ctx({
+                term: processedValue,
+                signal: controller.signal,
                 searchTerm: callbackTerm,
                 get entries() { return self.getSearchEntries(); }
-            };
-            const results = await this.options.searchCallback!(processedValue, controller.signal, context);
+            });
+            const results = await this.options.searchCallback!(context);
 
             // Ignore results from a request that was aborted or superseded by a newer term.
             if (controller.signal.aborted || this.searchTerm !== value) return;
@@ -2505,22 +2541,20 @@ export class WebMultiSelect<T = any> {
 
     private handleKeydown(e: KeyboardEvent): void {
         // Consumer keyboard hook: runs before ALL built-in handling (open or closed). Returning
-        // true marks the key fully handled — the consumer owns preventDefault and we run none of
-        // our own logic for it. Anything else falls through to the defaults below.
-        if (this.options.keydownCallback) {
-            const handled = this.options.keydownCallback({
+        // false suppresses the built-in handling of this key — the consumer owns preventDefault.
+        // Synchronous: preventDefault must happen in this tick.
+        if (this.options.beforeKeydownCallback) {
+            const gate = runBeforeCallbackSync(this.options.beforeKeydownCallback, this.ctx({
                 event: e,
                 key: e.key,
                 isOpen: this.#isOpen,
-                presentation: this.presentationMode,
                 searchTerm: this.searchTerm,
                 focusedIndex: this.focusedIndex,
                 focusedOption: (this.focusedIndex >= 0 ? this.filteredOptions[this.focusedIndex] : null) ?? null,
                 filteredOptions: this.filteredOptions,
-                selectedValues: [...this.selectedValues],
-                controller: this.getKeyboardController(),
-            });
-            if (handled === true) return;
+                selectedValues: this.getSelected().map(o => this.getItemValue(o)),
+            }), 'beforeKeydownCallback');
+            if (gate.isCancelled) return;
         }
 
         if (!this.#isOpen) {
@@ -2578,7 +2612,7 @@ export class WebMultiSelect<T = any> {
                     && (this.searchTerm || '').trim()
                 ) {
                     // No matches + typed text: commit the "add new" prompt (mirrors clicking it).
-                    // Works with or without addNewCallback — the `add` event fires either way, so a
+                    // Works with or without beforeAddCallback — the `add` event fires either way, so a
                     // consumer can handle creation themselves.
                     this.handleAddNew((this.searchTerm || '').trim());
                 }
@@ -2658,26 +2692,24 @@ export class WebMultiSelect<T = any> {
         // Any other tap inside the panel dismisses an open full-label reveal.
         this.hideLabelReveal();
 
-        const actionBtn = (e.target as HTMLElement).closest('[data-action]') as HTMLElement;
-        if (actionBtn) {
+        // Internal controls carry `data-ms-action` — never the `action` event.
+        const internal = (e.target as HTMLElement).closest('[data-ms-action]') as HTMLElement | null;
+        if (internal) {
             e.preventDefault();
-            const action = actionBtn.dataset.action;
-            interactionLogger.debug(`[${this.instanceId}] Action button clicked:`, action);
-            if (action === 'select-all') {
-                this.selectAll();
-            } else if (action === 'clear-all') {
-                this.clearAll();
-            } else if (action === 'add-new') {
+            if (internal.dataset.msAction === 'add-new') {
                 const value = (this.searchTerm || '').trim();
                 if (value) this.handleAddNew(value);
-            } else if (action === 'custom') {
-                // Look up the custom button by its rendered index (set as data-button-index)
-                const buttonIndex = parseInt(actionBtn.dataset.buttonIndex || '-1');
-                const button = this.options.actionButtons?.[buttonIndex];
-                if (button?.onClick) {
-                    button.onClick(this, this.buildActionContext(button));
-                }
             }
+            return;
+        }
+
+        // Action items: a configured action button, or a consumer `data-action` trigger inside
+        // rendered option content. Activating one never toggles the row it sits in.
+        const trigger = (e.target as HTMLElement).closest('[data-action]') as HTMLElement | null;
+        if (trigger) {
+            e.preventDefault();
+            interactionLogger.debug(`[${this.instanceId}] Action trigger clicked:`, trigger.dataset.action);
+            this.activateActionTrigger(trigger, e);
             return;
         }
 
@@ -2741,36 +2773,36 @@ export class WebMultiSelect<T = any> {
     }
 
     private handleBadgeClick(e: MouseEvent): void {
-        const clearCountBtn = (e.target as HTMLElement).closest('[data-action="clear-count"]');
+        const clearCountBtn = (e.target as HTMLElement).closest('[data-ms-action="clear-count"]');
         if (clearCountBtn) {
             e.preventDefault();
             e.stopPropagation();
             interactionLogger.debug(`[${this.instanceId}] Clear count button clicked`);
-            this.clearAll();
+            void this.userClearAll('clear');
             return;
         }
 
         // Remove buttons must be matched BEFORE `show-selected`: the "+N more" (and count/compact)
-        // badges carry `data-action="show-selected"` on the pill itself, and their X
+        // badges carry `data-ms-action="show-selected"` on the pill itself, and their X
         // (`.ms__badge-remove`) is a DESCENDANT of it — so checking `show-selected` first would
         // let a `closest()` walk from the X match the parent and open the popover instead of
         // removing. Matching the remove button first lets the X do its job; a click on the pill
         // body (not the X) still falls through to the `show-selected` branch below.
-        const removeBtn = (e.target as HTMLElement).closest('.ms__badge-remove, [data-action="remove"]') as HTMLElement;
+        const removeBtn = (e.target as HTMLElement).closest('.ms__badge-remove, [data-ms-action="remove"]') as HTMLElement;
         if (removeBtn) {
             e.preventDefault();
             e.stopPropagation();
 
             // Handle remove-hidden action (remove all hidden items in partial mode). "Hidden" =
             // the items sorted AFTER the visible slice, so it honours `selectedOrder`.
-            if (removeBtn.dataset.action === 'remove-hidden') {
+            if (removeBtn.dataset.msAction === 'remove-hidden') {
                 interactionLogger.debug(`[${this.instanceId}] Remove hidden items button clicked`);
                 const maxVisible = this.options.badgesMaxVisible || 3;
                 const selectedOptions = this.getOrderedSelectedOptions();
                 const hiddenOptions = selectedOptions.slice(maxVisible);
 
                 // Deselect all hidden options (respecting the deselect veto per item)
-                hiddenOptions.forEach(option => this.interactiveDeselect(option));
+                void this.bulkDeselect(hiddenOptions, 'badge');
                 return;
             }
 
@@ -2781,13 +2813,22 @@ export class WebMultiSelect<T = any> {
                 ?? '';
             const option = this.selectedOptions.get(value);
             if (option) {
-                this.interactiveDeselect(option);
+                this.interactiveDeselect(option, 'badge');
             }
             return;
         }
 
+        // A consumer `data-action` trigger inside rendered badge content → the `action` event.
+        const trigger = (e.target as HTMLElement).closest('[data-action]') as HTMLElement | null;
+        if (trigger) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.activateActionTrigger(trigger, e);
+            return;
+        }
+
         // Pill body (count / compact / "+N more" badges) opens the selected-items popover.
-        const showSelectedBtn = (e.target as HTMLElement).closest('[data-action="show-selected"]');
+        const showSelectedBtn = (e.target as HTMLElement).closest('[data-ms-action="show-selected"]');
         if (showSelectedBtn) {
             e.preventDefault();
             e.stopPropagation();
@@ -2805,7 +2846,7 @@ export class WebMultiSelect<T = any> {
                 el instanceof Node && (
                     this.selectedPopover.contains(el) ||
                     this.counter.contains(el) ||
-                    (el.closest && el.closest('[data-action="show-selected"]'))
+                    (el.closest && el.closest('[data-ms-action="show-selected"]'))
                 )
             );
 
@@ -2983,26 +3024,51 @@ export class WebMultiSelect<T = any> {
         interactionLogger.debug(`[${this.instanceId}] Jumped to previous match: index ${this.focusedIndex} (${currentIndex + 1} of ${matched.length})`);
     }
 
-    /** Lazily build (and cache) the imperative facade passed to `keydownCallback`. Bound to the
-     *  same private actions the built-in key handling uses, so consumer shortcuts behave identically. */
-    private getKeyboardController(): MultiSelectKeyboardController<T> {
-        if (this.keyboardController) return this.keyboardController;
-        this.keyboardController = {
-            // ── shared MultiSelectController surface (also used by ActionContext) ──
+    /**
+     * This engine's public facade (built once, cached). The element passes its own rebuild-proof
+     * `el.controller` as `options.controller`, which every ctx uses instead (see
+     * {@link publicController}); this one serves a standalone engine. Interactive methods route
+     * through the same funnels as the gestures, so vetoes apply.
+     */
+    public getController(): MultiSelectController<T> {
+        if (this.controller) return this.controller;
+        const self = this;
+        const byValue = (value: string | number): T | undefined =>
+            this.allOptions.find(o => String(this.getItemValue(o)) === String(value));
+        this.controller = {
             getSelected: () => this.getSelected(),
             getValue: () => this.getValue(),
             getOptions: () => this.allOptions,
+            get isOpen() { return self.isOpen; },
             setSelected: (values, opts) => this.setSelected(values, opts),
-            selectAll: () => this.selectAll(),
-            clearAll: () => this.clearAll(),
+            selectAll: () => { void this.userSelectAll(); },
+            clearAll: () => { void this.userClearAll('clear-all'); },
+            toggleValue: (value) => {
+                const opt = byValue(value);
+                if (opt) this.toggleOption(opt);
+            },
+            selectValue: (value) => {
+                if (this.selectedValues.has(String(value))) return; // already selected — no-op
+                const opt = byValue(value);
+                if (opt) this.toggleOption(opt);
+            },
+            deselectValue: (value) => {
+                if (!this.selectedValues.has(String(value))) return; // not selected — no-op
+                const opt = this.selectedOptions.get(String(value)) ?? byValue(value);
+                if (opt) this.toggleOption(opt);
+            },
+            toggleFocused: () => {
+                if (this.focusedIndex >= 0) this.toggleOption(this.filteredOptions[this.focusedIndex]);
+            },
+            open: () => this.open(),
+            close: () => this.close(),
             toggle: () => this.toggle(),
-            search: (term: string) => this.search(term),
-            scrollToValue: (value: string | number) => { this.scrollToValue(value); },
-            scrollToGroup: (group: string) => { this.scrollToGroup(group); },
-            scrollToIndex: (index: number) => { this.scrollToIndex(index); },
-            showMessage: (content, opts) => this.showMessage(content, opts),
-            hideMessage: () => this.hideMessage(),
-            // ── keyboard-navigation surface ──
+            search: (term) => this.search(term),
+            clearSearch: () => this.clearSearch(),
+            scrollToValue: (value) => this.scrollToValue(value),
+            scrollToGroup: (group) => this.scrollToGroup(group),
+            scrollToIndex: (index) => this.scrollToIndex(index),
+            refresh: () => this.refresh(),
             focusNext: () => this.focusNext(),
             focusPrevious: () => this.focusPrevious(),
             focusFirst: () => this.focusFirst(),
@@ -3011,66 +3077,150 @@ export class WebMultiSelect<T = any> {
             focusPageDown: () => this.focusPageDown(),
             focusNextMatch: () => this.focusNextMatch(),
             focusPreviousMatch: () => this.focusPreviousMatch(),
-            focusIndex: (index: number) => this.focusBy(() => index, 1),
-            toggleFocused: () => {
-                if (this.focusedIndex >= 0) this.toggleOption(this.filteredOptions[this.focusedIndex]);
-            },
-            toggleValue: (value: string | number) => {
-                const opt = this.allOptions.find(o => String(this.getItemValue(o)) === String(value));
-                if (opt) this.toggleOption(opt);
-            },
-            selectValue: (value: string | number) => {
-                if (this.selectedValues.has(String(value))) return; // already selected — no-op
-                const opt = this.allOptions.find(o => String(this.getItemValue(o)) === String(value));
-                if (opt) this.toggleOption(opt);
-            },
-            deselectValue: (value: string | number) => {
-                if (!this.selectedValues.has(String(value))) return; // not selected — no-op
-                const opt = this.selectedOptions.get(String(value))
-                    ?? this.allOptions.find(o => String(this.getItemValue(o)) === String(value));
-                if (opt) this.toggleOption(opt);
-            },
-            open: () => this.open(),
-            close: () => this.close(),
-            setSearch: (term: string) => {
-                this.input.value = term;
-                if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = term;
-                void this.handleSearch(term);
-            },
-            clearSearch: () => this.clearSearch(),
+            focusIndex: (index) => this.focusBy(() => index, 1),
+            showMessage: (content, opts) => this.showMessage(content, opts),
+            hideMessage: () => this.hideMessage(),
         };
-        return this.keyboardController;
+        return this.controller;
+    }
+
+    /** The facade every ctx carries: the element's (rebuild-proof) one, else this engine's own. */
+    private publicController(): MultiSelectController<T> {
+        return this.options.controller ?? this.getController();
     }
 
     /**
      * The host custom element — `this.element` is the internal `.ms` mount (inside the shadow
-     * root), so the host is its root node's `host` when shadowed, else the mount itself. Used as
-     * the {@link ActionContext} escape hatch (and where a wrapper hangs a server bridge).
+     * root), so the host is its root node's `host` when shadowed, else the mount itself. The
+     * element passes itself as `options.hostElement`; this is the standalone fallback.
      */
     private hostEl(): HTMLElement {
+        if (this.options.hostElement) return this.options.hostElement;
         const root = this.element.getRootNode();
         return (root instanceof ShadowRoot ? (root.host as HTMLElement) : this.element);
     }
 
+    /** The presentation flags of the current panel (`floating` / `fullscreen`). */
+    public presentationCtx(): PresentationContext {
+        return createPresentationContext(this.presentationMode);
+    }
+
     /**
-     * Build the {@link ActionContext} passed (as the additive 2nd arg) to every action-button
-     * callback and the `onClick` event: a snapshot of live state plus the shared controller.
+     * Attach the component context to `fields`: `controller` + `element` (non-enumerable —
+     * `JSON.stringify` / logs see only the data) and the presentation flags. Every callback ctx
+     * and event detail goes through here (or {@link itemCtx} on the hot per-option paths).
      */
-    private buildActionContext(button: ActionButton<T>): ActionContext<T> {
+    public ctx<F extends object>(fields: F): F & MultiSelectContext<T> {
+        return withComponentContext(fields, this.publicController(), this.hostEl(), this.presentationCtx()) as F & MultiSelectContext<T>;
+    }
+
+    /**
+     * The per-option ctx (`{ item }`) for the data accessors (`getValueCallback`, …), which run
+     * for every option on every pass: one shared prototype carries `controller` / `element` /
+     * the presentation flags as getters, so a call allocates one small object.
+     */
+    private itemCtx(item: T): ItemContext<T> {
+        if (!this.itemCtxProto) {
+            const self = this;
+            this.itemCtxProto = Object.create(Object.prototype, {
+                controller: { get() { return self.publicController(); } },
+                element: { get() { return self.hostEl(); } },
+                presentation: { get() { return self.presentationCtx().presentation; } },
+                isFullscreen: { get() { return self.presentationCtx().isFullscreen; } },
+                isModal: { get() { return self.presentationCtx().isModal; } },
+            });
+        }
+        const ctx = Object.create(this.itemCtxProto) as ItemContext<T>;
+        ctx.item = item;
+        return ctx;
+    }
+
+    /** The selection as values — scalar-or-array `getValue()` flattened to an array. */
+    private selectedValueList(): (string | number)[] {
+        const value = this.getValue();
+        if (value == null) return [];
+        return Array.isArray(value) ? value : [value];
+    }
+
+    /**
+     * The {@link ActionContext} — the surface ctx of the action-item callbacks (render time)
+     * and the base of the `action` detail (activation): a selection snapshot + the component context.
+     */
+    private buildActionContext(option?: T): ActionContext<T> {
         const selectedOptions = this.getSelected();
-        return {
-            button,
-            selectedValues: selectedOptions.map(o => this.getItemValue(o)),
+        return this.ctx({
+            selectedValues: this.selectedValueList(),
             selectedOptions,
             options: this.allOptions,
             selectedCount: selectedOptions.length,
             optionCount: this.allOptions.length,
-            isOpen: this.isOpen,
+            isOpen: this.#isOpen,
             searchTerm: this.searchTerm,
-            controller: this.getKeyboardController(),
-            element: this.hostEl() as HTMLElement & Record<string, any>,
-            ...createPresentationContext(this.presentationMode),
-        };
+            ...(option !== undefined ? { option } : {}),
+        });
+    }
+
+    /**
+     * Activate an action item (core `runAction`: `beforeActionCallback` → `onClick` → `action`
+     * event → built-in). `trigger` is a configured action button (`data-ms-item-index` → its
+     * item) or a consumer `data-action` element in rendered option / badge content or in a
+     * `showMessage` element (a synthetic item; `source` from where it sits, `dataset` = its
+     * other `data-*`).
+     */
+    private activateActionTrigger(trigger: HTMLElement, sourceEvent: Event): void {
+        const configuredIndex = trigger.dataset.msItemIndex;
+        const configured = configuredIndex !== undefined ? this.getActionItems()[Number(configuredIndex)] : undefined;
+
+        let source: ActionSource = 'action-buttons';
+        let option: T | undefined;
+        if (!configured) {
+            const row = trigger.closest<HTMLElement>('.ms__option');
+            const badge = trigger.closest<HTMLElement>('.ms__badge');
+            if (row) {
+                source = 'option';
+                option = this.filteredOptions[Number(row.dataset.index)];
+            } else if (badge) {
+                source = 'badge';
+                const value = badge.dataset.value ?? badge.querySelector<HTMLElement>('.ms__badge-remove')?.dataset.value;
+                option = value !== undefined ? this.selectedOptions.get(value) : undefined;
+            } else if (this.messageEl?.contains(trigger)) {
+                source = 'message';
+            }
+        }
+
+        let item = configured ?? this.syntheticActionItems.get(trigger);
+        if (!item) {
+            item = {
+                action: (trigger.dataset.action || 'custom') as MultiSelectAction | 'custom',
+                id: trigger.dataset.id,
+                text: trigger.textContent?.trim() ?? '',
+            };
+            this.syntheticActionItems.set(trigger, item);
+        }
+
+        const detail = Object.assign(this.buildActionContext(option), {
+            action: item.action ?? 'custom',
+            ...(item.id !== undefined ? { id: item.id } : {}),
+            item,
+            source,
+            sourceEvent,
+            triggerElement: trigger,
+            // Configured buttons carry no consumer data-*; HTML triggers bring their own.
+            dataset: configured ? {} : readActionDataset(trigger),
+        }) as MultiSelectActionEventDetail<T>;
+
+        void runAction({
+            detail,
+            beforeActionCallback: this.options.beforeActionCallback,
+            emitAction: (d) => this.options.onAction?.(d),
+            runBuiltIn: (d) => this.runBuiltInAction(d.action),
+        });
+    }
+
+    /** The built-in behaviour of `select-all` / `clear-all` (vetoes apply per option). */
+    private runBuiltInAction(action: string): void | Promise<void> {
+        if (action === 'select-all') return this.userSelectAll();
+        if (action === 'clear-all') return this.userClearAll('clear-all');
     }
 
     /** Clear the search box (both the main input and the fullscreen search) and reset the visible
@@ -3261,10 +3411,19 @@ export class WebMultiSelect<T = any> {
         // emitted values. Route through the dedicated path (which commits its own
         // added/removed diff) instead of the single-value select/deselect funnel.
         if (this.isCascadeMode() && this.cascadeIndex) {
-            const node = this.cascadeIndex.nodeByValue.get(valueKey);
+            const index = this.cascadeIndex;
+            const node = index.nodeByValue.get(valueKey);
             if (node) {
-                this.toggleTreeCascade(node);
-                if (this.options.isCloseOnSelect) this.close();
+                // The veto runs on the clicked node: a deselect when its subtree is fully
+                // checked, else a select (the cascade then flips the whole subtree).
+                const atoms = index.atomsUnder.get(node.path) ?? [];
+                const checked = new Set(expandToAtoms(index, this.selectedValues));
+                const isChecked = atoms.length > 0 && atoms.every(a => checked.has(a));
+                void then(this.vetoOne(isChecked ? 'deselect' : 'select', option, 'option'), (isAllowed) => {
+                    if (!isAllowed) return;
+                    this.toggleTreeCascade(node);
+                    if (this.options.isCloseOnSelect) this.close();
+                });
                 return;
             }
         }
@@ -3282,102 +3441,126 @@ export class WebMultiSelect<T = any> {
             return;
         }
 
-        const changed = wasSelected
-            ? this.interactiveDeselect(option)
-            : this.interactiveSelect(option);
+        const result = wasSelected
+            ? this.interactiveDeselect(option, 'option')
+            : this.interactiveSelect(option, 'option');
 
-        // A vetoed toggle changes nothing — leave the dropdown open so the user
-        // can pick something else (single-select otherwise closes on every pick).
-        if (!changed) return;
-
-        if (!this.options.isMultipleEnabled) {
-            this.close();
-        } else if (this.options.isCloseOnSelect) {
-            this.close();
-        }
+        void then(result, (changed) => {
+            // A vetoed toggle changes nothing — leave the dropdown open so the user
+            // can pick something else (single-select otherwise closes on every pick).
+            if (!changed) return;
+            if (!this.options.isMultipleEnabled) {
+                this.close();
+            } else if (this.options.isCloseOnSelect) {
+                this.close();
+            }
+        });
     }
 
     /**
-     * The single funnel for an interactive (user-initiated) selection. Consults
-     * `beforeSelectCallback` and only mutates state if allowed, so the veto can
-     * never be bypassed by a new UI entry point. Programmatic `setSelected` and
-     * the Select-All button deliberately do not route through here.
-     * Returns true if the option was selected, false if the veto blocked it.
+     * Run `beforeSelectCallback` / `beforeDeselectCallback` for one option (core contract:
+     * `false` vetoes). Answers synchronously for a sync hook; a Promise only for an async one.
      */
-    private interactiveSelect(option: T): boolean {
-        const veto = this.options.beforeSelectCallback?.(option, this.getSelected());
-        if (veto === false || typeof veto === 'string') {
-            if (typeof veto === 'string') this.showMessage(veto, { variant: 'warning' });
-            interactionLogger.debug(`[${this.instanceId}] Selection blocked by beforeSelectCallback`);
-            return false;
+    private vetoOne(kind: 'select' | 'deselect', option: T, source: SelectionSource): boolean | Promise<boolean> {
+        const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
+        if (!hook) return true;
+        const selectedOptions = this.getSelected();
+        const gate = runBeforeCallbackEager(hook as (ctx: object) => unknown,
+            this.ctx({ option, selectedOptions, selectedValues: this.selectedValueList(), source }),
+            kind === 'select' ? 'beforeSelectCallback' : 'beforeDeselectCallback');
+        return then(gate, (g: BeforeCallbackResult) => {
+            if (g.isCancelled) interactionLogger.debug(`[${this.instanceId}] ${kind} blocked by before${kind === 'select' ? 'Select' : 'Deselect'}Callback (${source})`);
+            return !g.isCancelled;
+        });
+    }
+
+    /** {@link vetoOne} over a bulk gesture → the allowed options (sync when every hook is). */
+    private vetoMany(kind: 'select' | 'deselect', options: T[], source: SelectionSource): T[] | Promise<T[]> {
+        const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
+        if (!hook || options.length === 0) return options;
+        const results = options.map(option => this.vetoOne(kind, option, source));
+        if (results.some(r => r instanceof Promise)) {
+            return Promise.all(results).then(rs => options.filter((_, i) => rs[i]));
         }
-        // Single-select replaces the current value. Clearing directly (rather
-        // than via deselectOption) preserves the documented replacement
-        // semantics: a replace fires select + change, but no deselect.
-        if (!this.options.isMultipleEnabled) {
-            this.selectedValues.clear();
-            this.selectedOptions.clear();
-        }
-        this.selectOption(option);
-        return true;
+        return options.filter((_, i) => results[i] as boolean);
     }
 
     /**
-     * The single funnel for an interactive (user-initiated) deselection. Every
-     * removal affordance — dropdown toggle, badge × button, selected-items
-     * popover × button, and the "remove hidden" badge — routes through here so
-     * the `beforeDeselectCallback` veto applies uniformly. Programmatic
-     * `setSelected` and the Clear-All button deliberately bypass it.
-     * Returns true if the option was deselected, false if the veto blocked it.
+     * The single funnel for an interactive (user-initiated) selection of one option. Consults
+     * `beforeSelectCallback` and only mutates state if allowed, so the veto can never be
+     * bypassed by a new UI entry point. Programmatic `setSelected` does not route through here.
+     * Resolves true if the option was selected, false if vetoed (sync for a sync hook).
      */
-    private interactiveDeselect(option: T): boolean {
-        const veto = this.options.beforeDeselectCallback?.(option, this.getSelected());
-        if (veto === false || typeof veto === 'string') {
-            if (typeof veto === 'string') this.showMessage(veto, { variant: 'warning' });
-            interactionLogger.debug(`[${this.instanceId}] Deselection blocked by beforeDeselectCallback`);
-            return false;
-        }
-        this.deselectOption(option);
-        return true;
+    private interactiveSelect(option: T, source: SelectionSource): boolean | Promise<boolean> {
+        return then(this.vetoOne('select', option, source), (isAllowed) => {
+            if (!isAllowed) return false;
+            const valueKey = String(this.getItemValue(option));
+            // An async veto may resolve after the state moved on.
+            if (this.selectedValues.has(valueKey)) return false;
+            // Single-select replaces the current value. Clearing directly (rather
+            // than via deselectOption) preserves the documented replacement
+            // semantics: a replace fires select + change, but no deselect.
+            if (!this.options.isMultipleEnabled) {
+                this.selectedValues.clear();
+                this.selectedOptions.clear();
+            }
+            this.selectOption(option);
+            return true;
+        });
     }
 
     /**
-     * Commit the "add new" affordance for the typed text. Two modes:
-     *  - `addNewCallback` set → create the option, append it, select it, clear the search.
-     *  - no callback → the consumer owns creation; we only notify (via the `add` event) so they
-     *    can open a modal / POST / add the option imperatively.
-     * The `add` event fires in BOTH modes (with `option` present only when one was created).
+     * The single funnel for an interactive (user-initiated) deselection of one option — the
+     * dropdown toggle, a badge × button, the selected-items popover × button. Consults
+     * `beforeDeselectCallback`. Resolves true if the option was deselected, false if vetoed.
+     */
+    private interactiveDeselect(option: T, source: SelectionSource): boolean | Promise<boolean> {
+        return then(this.vetoOne('deselect', option, source), (isAllowed) => {
+            if (!isAllowed) return false;
+            if (!this.selectedValues.has(String(this.getItemValue(option)))) return false;
+            this.deselectOption(option);
+            return true;
+        });
+    }
+
+    /**
+     * Commit the "add new" affordance for the typed text: `beforeAddCallback(ctx)` returns the
+     * created option (append + select + clear the search), `false` (cancel — nothing happens),
+     * or nothing (the consumer creates it). The `add` event fires unless cancelled, with
+     * `option` only when one was created here.
      */
     private async handleAddNew(value: string): Promise<void> {
         try {
             let newOption: T | undefined;
 
-            if (this.options.addNewCallback) {
+            if (this.options.beforeAddCallback) {
                 dataLogger.debug(`[${this.instanceId}] Adding new option:`, value);
 
-                // Show a pending state (spinner + "Adding …") while the callback runs — an async
+                // Show a pending state (spinner + "Adding …") while the hook runs — an async
                 // creation (validation / server round-trip) otherwise leaves the prompt frozen.
                 this.addNewFocused = false;
                 this.addNewPending = true;
                 this.renderDropdown();
 
-                let created: T | null | undefined;
+                let gate: BeforeCallbackResult<T>;
                 try {
-                    created = await this.options.addNewCallback(value);
+                    gate = await runBeforeCallbackEager<object, T>(this.options.beforeAddCallback as (ctx: object) => unknown,
+                        this.ctx({ value }), 'beforeAddCallback');
                 } finally {
                     this.addNewPending = false;
                 }
 
-                // Cancelable: a null/undefined return aborts the whole creation — no push, no select,
-                // no `add` event, search left intact so the user can adjust. Use `== null` (NOT a
-                // falsy check) so a valid primitive-mode option of 0 / false / "" still creates.
-                if (created == null) {
-                    dataLogger.debug(`[${this.instanceId}] addNewCallback canceled creation for:`, value);
+                // Cancel: no push, no select, no `add` event; the search stays so the user can adjust.
+                if (gate.isCancelled) {
+                    dataLogger.debug(`[${this.instanceId}] beforeAddCallback canceled creation for:`, value);
                     this.renderDropdown(); // clear the spinner, restore the clickable prompt
                     return;
                 }
-                newOption = created;
+                // `== null` (not falsy) so a valid primitive-mode option of 0 / "" still creates.
+                if ('value' in gate && gate.value != null) newOption = gate.value;
+            }
 
+            if (newOption !== undefined) {
                 // Append to the master list (selectOption + resetVisibleToAll read from it).
                 // `newOption` may be a rich option object — it renders via the same get*/render*
                 // callbacks as every other option.
@@ -3397,19 +3580,26 @@ export class WebMultiSelect<T = any> {
                 // Select the new option (commit() re-renders the now-full list + badges).
                 this.selectOption(newOption);
                 this.updateFullscreenSearchClear();
+            } else if (this.options.beforeAddCallback) {
+                this.renderDropdown(); // clear the spinner; the consumer creates the option
             }
 
-            // Notify the consumer that a creation was requested. Fires whether or not an option
-            // was materialized here — a callback-less consumer handles creation off this event.
-            this.options.onAddNew?.({ value, option: newOption });
+            // Notify the consumer that a creation was requested — whether or not an option was
+            // materialized here (a consumer that creates it themselves handles it off this event).
+            this.options.onAdd?.(this.ctx({
+                value,
+                ...(newOption !== undefined ? { option: newOption } : {}),
+                selectedOptions: this.getSelected(),
+                selectedValues: this.selectedValueList(),
+            }));
 
-            if (newOption && this.options.isCloseOnSelect) {
+            if (newOption !== undefined && this.options.isCloseOnSelect) {
                 this.close();
             }
         } catch (error) {
             this.addNewPending = false;
             dataLogger.error(`[${this.instanceId}] Error adding new option:`, error);
-            this.renderDropdown(); // clear the spinner if the callback threw
+            this.renderDropdown(); // clear the spinner if the hook threw
         }
     }
 
@@ -3447,36 +3637,87 @@ export class WebMultiSelect<T = any> {
         this.commit({ removed: [option] });
     }
 
-    private selectAll(): void {
-        // Cascade mode: check every selectable atom among the visible nodes, then
-        // project through the policy — so Select All emits the same rolled-up shape
-        // a click would (a fully-checked subtree collapses to its root), not a flat
-        // list of every node.
+    /**
+     * The `select-all` gesture (action button, `controller.selectAll()`): every selectable,
+     * non-disabled visible option, each through `beforeSelectCallback` (a vetoed one is skipped).
+     * Cascade mode checks the allowed atoms and projects through the policy — so Select All emits
+     * the same rolled-up shape a click would.
+     */
+    private userSelectAll(): void | Promise<void> {
+        if (this.isCascadeMode() && this.cascadeIndex) {
+            const index = this.cascadeIndex;
+            const checkedBefore = new Set(expandToAtoms(index, this.selectedValues));
+            const candidates = this.treeNodes
+                .filter(node => index.atomPaths.has(node.path) && !this.getItemDisabled(node.data as T)
+                    && !checkedBefore.has(String(this.getItemValue(node.data as T))))
+                .map(node => node.data as T);
+            return then(this.vetoMany('select', candidates, 'select-all'), (allowed) => {
+                const checkedAtoms = new Set(expandToAtoms(index, this.selectedValues));
+                for (const option of allowed) checkedAtoms.add(String(this.getItemValue(option)));
+                this.commitCascadeAtoms(checkedAtoms);
+            });
+        }
+
+        const candidates = this.filteredOptions.filter((option, index) =>
+            !this.getItemDisabled(option) && this.isIndexSelectable(index)
+            && !this.selectedValues.has(String(this.getItemValue(option))));
+        return then(this.vetoMany('select', candidates, 'select-all'), (allowed) => this.addOptions(allowed));
+    }
+
+    /** The clear gestures (`clear-all` action, inline ✕, count-badge ×): each option through `beforeDeselectCallback`. */
+    private userClearAll(source: 'clear-all' | 'clear'): void | Promise<void> {
+        return this.bulkDeselect(Array.from(this.selectedOptions.values()), source);
+    }
+
+    /** Deselect `options` in one change (one render, one `change`), each through `beforeDeselectCallback`. */
+    private bulkDeselect(options: T[], source: SelectionSource): void | Promise<void> {
+        return then(this.vetoMany('deselect', options, source), (allowed) => this.removeOptions(allowed));
+    }
+
+    /** Add `options` to the selection in one commit (skipping ones already selected). */
+    private addOptions(options: T[]): void {
+        const added: T[] = [];
+        for (const option of options) {
+            const valueKey = String(this.getItemValue(option));
+            if (this.selectedValues.has(valueKey)) continue;
+            this.selectedValues.add(valueKey);
+            this.selectedOptions.set(valueKey, option);
+            added.push(option);
+        }
+        this.commit({ added });
+    }
+
+    /**
+     * Remove `options` from the selection in one commit. Cascade mode unchecks each one's whole
+     * subtree and re-projects (a badge value is a policy projection, not a raw entry).
+     */
+    private removeOptions(options: T[]): void {
         if (this.isCascadeMode() && this.cascadeIndex) {
             const index = this.cascadeIndex;
             const checkedAtoms = new Set(expandToAtoms(index, this.selectedValues));
-            for (const node of this.treeNodes) {
-                if (!index.atomPaths.has(node.path)) continue;
-                if (this.getItemDisabled(node.data as T)) continue;
-                checkedAtoms.add(String(this.getItemValue(node.data as T)));
+            for (const option of options) {
+                const node = index.nodeByValue.get(String(this.getItemValue(option)));
+                if (!node) continue;
+                for (const atom of index.atomsUnder.get(node.path) ?? []) checkedAtoms.delete(atom);
             }
             this.commitCascadeAtoms(checkedAtoms);
             return;
         }
-
-        const added: T[] = [];
-        this.filteredOptions.forEach((option, index) => {
-            if (this.getItemDisabled(option)) return;
-            if (!this.isIndexSelectable(index)) return;
+        const removed: T[] = [];
+        for (const option of options) {
             const valueKey = String(this.getItemValue(option));
-            if (this.selectedValues.has(valueKey)) return;
-            this.selectedValues.add(valueKey);
-            this.selectedOptions.set(valueKey, option);
-            added.push(option);
-        });
-        this.commit({ added });
+            if (this.selectedValues.delete(valueKey)) {
+                this.selectedOptions.delete(valueKey);
+                removed.push(option);
+            }
+        }
+        this.commit({ removed });
     }
 
+    /**
+     * Clear the whole selection programmatically (form reset, standalone engine API) — no veto.
+     * Fires `deselect` per option + one `change`.
+     */
     public clearAll(): void {
         const removed = Array.from(this.selectedOptions.values());
         this.selectedValues.clear();
@@ -3485,54 +3726,36 @@ export class WebMultiSelect<T = any> {
     }
 
     /**
-     * Flat-group cascade toggle: check or uncheck every (visible) member of a group
-     * in one shot. If the group is fully checked → deselect all its members; else →
-     * select all its non-disabled members. Operates on the currently-filtered
-     * members (same scope as Select-All) and, like Select-All / Clear-All,
-     * batch-mutates then fires a single `commit` — so one render and one `change`
-     * event, and it deliberately bypasses the per-item beforeSelect/beforeDeselect
-     * veto. The group name itself is never added to the selection.
+     * Flat-group cascade toggle: check or uncheck every (visible) member of a group in one
+     * gesture. Fully checked → deselect its members; else → select its non-disabled members.
+     * Each member goes through the select / deselect veto (`source: 'group'`); the allowed ones
+     * apply in one commit (one render, one `change`). The group name itself is never selected.
      */
     private toggleGroup(groupName: string): void {
         const members = this.groupOptions(this.filteredOptions)[groupName];
         if (!members || members.length === 0) return;
 
         if (this.groupCheckState(members) === 'checked') {
-            const removed: T[] = [];
-            for (const option of members) {
-                const valueKey = String(this.getItemValue(option));
-                if (this.selectedValues.delete(valueKey)) {
-                    this.selectedOptions.delete(valueKey);
-                    removed.push(option);
-                }
-            }
-            this.commit({ removed });
+            void this.bulkDeselect(members.filter(o => this.selectedValues.has(String(this.getItemValue(o)))), 'group');
         } else {
-            const added: T[] = [];
-            for (const option of members) {
-                if (this.getItemDisabled(option)) continue;
-                const valueKey = String(this.getItemValue(option));
-                if (this.selectedValues.has(valueKey)) continue;
-                this.selectedValues.add(valueKey);
-                this.selectedOptions.set(valueKey, option);
-                added.push(option);
-            }
-            this.commit({ added });
+            const candidates = members.filter(o => !this.getItemDisabled(o) && !this.selectedValues.has(String(this.getItemValue(o))));
+            void then(this.vetoMany('select', candidates, 'group'), (allowed) => this.addOptions(allowed));
         }
     }
 
     /**
-     * Inline clear (✕) handler: wipe the whole selection and any search text, then
-     * restore focus to the input. clearAll() → commit() → renderBadges() already
-     * refreshes this button's visibility (it hides once nothing is selected).
+     * Inline clear (✕) handler: wipe the selection (each option through the deselect veto) and
+     * any search text, then restore focus to the input. The commit's renderBadges() refreshes
+     * this button's visibility (it hides once nothing is selected).
      */
     private clearClick(): void {
         interactionLogger.debug(`[${this.instanceId}] input clear (✕) clicked`);
-        this.clearAll();
+        void then(this.userClearAll('clear'), () => {
+            // Nothing is selected anymore — close the selected-items popover if it was open
+            // (it would otherwise linger showing "Selected Items (0)").
+            if (this.showSelectedPopover && this.selectedValues.size === 0) this.hideSelectedPopover();
+        });
         if (this.searchTerm || this.input.value) this.clearSearch();
-        // Nothing is selected anymore — close the selected-items popover if it was open
-        // (it would otherwise linger showing "Selected Items (0)").
-        if (this.showSelectedPopover) this.hideSelectedPopover();
         // Refocus for keyboard use, but guard the focus handler so clearing doesn't pop the
         // dropdown open (it opens on focus otherwise). Same one-tick guard the click-close uses.
         this.justClosedViaClick = true;
@@ -3566,16 +3789,18 @@ export class WebMultiSelect<T = any> {
 
         const added = delta.added ?? [];
         const removed = delta.removed ?? [];
+        if (added.length === 0 && removed.length === 0) return;
 
+        // One selection snapshot for every detail of this change (each detail gets the context).
+        const selectedOptions = this.getSelected();
+        const selectedValues = this.selectedValueList();
         if (this.options.onSelect) {
-            added.forEach(option => this.options.onSelect!(option));
+            for (const option of added) this.options.onSelect(this.ctx({ option, selectedOptions, selectedValues }));
         }
         if (this.options.onDeselect) {
-            removed.forEach(option => this.options.onDeselect!(option));
+            for (const option of removed) this.options.onDeselect(this.ctx({ option, selectedOptions, selectedValues }));
         }
-        if ((added.length > 0 || removed.length > 0) && this.options.onChange) {
-            this.options.onChange(this.getSelected());
-        }
+        this.options.onChange?.(this.ctx({ selectedOptions, selectedValues }));
     }
 
     /**
@@ -4767,16 +4992,23 @@ export class WebMultiSelect<T = any> {
     }
 
     /**
-     * Build the {@link BadgeContentRenderContext} handed to the sibling `get*` callbacks
-     * (badge display / class / tooltip), so they see the same context the `render*` badge
-     * callbacks get: `displayMode`, `isInPopover`, plus the shared presentation fields.
+     * Where a badge renders (`displayMode`, `isInPopover`) — shared by the badge render and the
+     * sibling `get*` callbacks (display / class / tooltip), so they all see the same context.
      */
-    private badgeRenderContext(isInPopover: boolean): BadgeContentRenderContext {
-        return {
-            displayMode: this.options.badgesDisplayMode ?? 'badges',
-            isInPopover,
-            ...createPresentationContext(this.presentationMode),
-        };
+    private badgeRenderContext(isInPopover: boolean): BadgeRenderInfo {
+        return { displayMode: this.options.badgesDisplayMode ?? 'badges', isInPopover };
+    }
+
+    /** The {@link BadgeContentRenderContext} for `item` — outside a render: configured mode, not in the popover. */
+    private badgeCtx(item: T, info?: BadgeRenderInfo): BadgeContentRenderContext<T> {
+        return this.ctx({ item, ...(info ?? this.badgeRenderContext(false)) });
+    }
+
+    /** Badges-area count text ("N selected" / "+X more") — `getCounterCallback(ctx)` or the default. */
+    private counterText(count: number, moreCount?: number): string {
+        const callback = this.options.getCounterCallback;
+        if (callback) return callback(this.ctx(moreCount === undefined ? { count } : { count, moreCount }));
+        return moreCount !== undefined ? `+${moreCount} more` : `${count} selected`;
     }
 
     /**
@@ -4788,27 +5020,23 @@ export class WebMultiSelect<T = any> {
      * - The `data-value` and aria-label both go through `getItemBadgeDisplayValue` so badge text and
      *   accessible name stay in sync.
      */
-    private renderBadgeHTML(option: T, ctx: Omit<BadgeContentRenderContext, 'presentation' | 'isFullscreen' | 'isModal'>): string {
+    private renderBadgeHTML(option: T, ctx: BadgeRenderInfo): string {
         const value = this.getItemValue(option);
 
-        // Enrich the caller's context with the current presentation before handing it to a
-        // consumer callback (call sites only supply displayMode + isInPopover).
-        const renderCtx: BadgeContentRenderContext = {
-            ...ctx,
-            ...createPresentationContext(this.presentationMode),
-        };
+        // The full callback ctx: the option + where it renders + the component context.
+        const renderCtx = this.badgeCtx(option, ctx);
 
         // Whole-badge override (main badges area only). The consumer owns the entire markup;
         // we only wrap it so removal + reconciliation keep working: the wrapper carries
-        // `data-value`, and the click handler deselects on any inner `[data-action="remove"]`
+        // `data-value`, and the click handler deselects on any inner `[data-ms-action="remove"]`
         // (or `.ms__badge-remove`). Falls back to the default pill when it returns nothing.
         if (!ctx.isInPopover && this.options.renderBadgeCallback) {
-            const customHtml = this.toHtml(this.options.renderBadgeCallback(option, renderCtx));
+            const customHtml = this.toHtml(this.options.renderBadgeCallback(renderCtx));
             if (customHtml.trim() !== '') {
                 const classCb = this.options.getBadgeClassCallback;
                 let wrapperClasses = 'ms__badge ms__badge--custom';
                 if (classCb) {
-                    const extra = this.classSuffix(classCb(option, renderCtx));
+                    const extra = this.classSuffix(classCb(renderCtx));
                     if (extra) wrapperClasses += ' ' + extra;
                 }
                 return `<div class="${wrapperClasses}" data-value="${value}">${customHtml}</div>`;
@@ -4819,11 +5047,11 @@ export class WebMultiSelect<T = any> {
         let badgeContent: string;
         const popoverCallback = ctx.isInPopover ? this.options.renderSelectedItemContentCallback : undefined;
         if (popoverCallback) {
-            badgeContent = this.toHtml(popoverCallback(option, renderCtx));
+            badgeContent = this.toHtml(popoverCallback(renderCtx));
         } else if (this.options.renderBadgeContentCallback) {
-            badgeContent = this.toHtml(this.options.renderBadgeContentCallback(option, renderCtx));
+            badgeContent = this.toHtml(this.options.renderBadgeContentCallback(renderCtx));
         } else {
-            badgeContent = this.getItemBadgeDisplayValue(option, renderCtx);
+            badgeContent = this.getItemBadgeDisplayValue(option, ctx);
         }
 
         // Resolve classes
@@ -4832,11 +5060,11 @@ export class WebMultiSelect<T = any> {
             : this.options.getBadgeClassCallback;
         let badgeClasses = 'ms__badge';
         if (classCallback) {
-            const extra = this.classSuffix(classCallback(option, renderCtx));
+            const extra = this.classSuffix(classCallback(renderCtx));
             if (extra) badgeClasses += ' ' + extra;
         }
 
-        const removeLabel = this.getItemBadgeDisplayValue(option, renderCtx);
+        const removeLabel = this.getItemBadgeDisplayValue(option, ctx);
         return `
             <div class="${badgeClasses}">
                 <span class="ms__badge-text">${badgeContent}</span>
@@ -4860,12 +5088,23 @@ export class WebMultiSelect<T = any> {
             e.preventDefault();
             const value = removeBtn.dataset.value!;
             const option = this.selectedOptions.get(value);
-            if (option && this.interactiveDeselect(option)) {
-                this.renderSelectedPopover();
-                if (this.selectedValues.size === 0) {
-                    this.hideSelectedPopover();
-                }
+            if (option) {
+                void then(this.interactiveDeselect(option, 'badge'), (removed) => {
+                    if (!removed) return;
+                    this.renderSelectedPopover();
+                    if (this.selectedValues.size === 0) {
+                        this.hideSelectedPopover();
+                    }
+                });
             }
+            return;
+        }
+
+        // A consumer `data-action` trigger inside popover item content → the `action` event.
+        const trigger = (e.target as HTMLElement).closest('[data-action]') as HTMLElement | null;
+        if (trigger) {
+            e.preventDefault();
+            this.activateActionTrigger(trigger, e);
         }
     }
 
@@ -4925,7 +5164,7 @@ export class WebMultiSelect<T = any> {
 
         // Custom callback takes precedence
         if (this.options.getValueFormatCallback) {
-            return this.options.getValueFormatCallback(values);
+            return this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.getSelected() }));
         }
 
         const format = this.options.valueFormat || 'json';
@@ -4970,7 +5209,7 @@ export class WebMultiSelect<T = any> {
         this.updateHiddenInput();
 
         if (opts.notify && this.options.onChange) {
-            this.options.onChange(this.getSelected());
+            this.options.onChange(this.ctx({ selectedOptions: this.getSelected(), selectedValues: this.selectedValueList() }));
         }
     }
 
@@ -5126,7 +5365,7 @@ export class WebMultiSelect<T = any> {
      *
      * Use when option OBJECTS were mutated in place (e.g. `opt.disabled = true` on an object the
      * component already holds) or when external state a render callback reads
-     * (`getDisabledCallback`, an i18n label map, `renderOptionContentCallback`) changed — there
+     * (`getIsDisabledCallback`, an i18n label map, `renderOptionContentCallback`) changed — there
      * is no new array to assign, so the `options` setter can't express it. Re-projects
      * filtered/tree from `allOptions` (honouring the current search term; does NOT re-fire an
      * async `searchCallback`), reconciles the selection, and repaints dropdown + badges + hidden
@@ -5246,16 +5485,16 @@ export class WebMultiSelect<T = any> {
     }
 
     /** Build the badge-text tooltip content (callback overrides; default = displayValue + optional subtitle on next line). */
-    private buildBadgeTooltipContent(option: T, context?: BadgeContentRenderContext): string | HTMLElement {
-        if (this.options.getBadgeTooltipCallback) return this.options.getBadgeTooltipCallback(option, context);
-        const displayValue = this.getItemBadgeDisplayValue(option, context);
+    private buildBadgeTooltipContent(option: T, info: BadgeRenderInfo): string | HTMLElement {
+        if (this.options.getBadgeTooltipCallback) return this.options.getBadgeTooltipCallback(this.badgeCtx(option, info));
+        const displayValue = this.getItemBadgeDisplayValue(option, info);
         const subtitle = this.getItemSubtitle(option);
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
     }
 
     /** Build the remove-button tooltip text (callback > format string with {0} > "Remove {name}"). */
-    private buildRemoveButtonTooltipText(itemName: string, option?: T, context?: BadgeContentRenderContext): string {
-        if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(option, context);
+    private buildRemoveButtonTooltipText(itemName: string, option?: T, info?: BadgeRenderInfo): string {
+        if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(this.badgeCtx(option, info));
         if (this.options.removeButtonTooltipText) return this.options.removeButtonTooltipText.replace('{0}', itemName);
         return `Remove ${itemName}`;
     }
@@ -5306,7 +5545,7 @@ export class WebMultiSelect<T = any> {
         if (!isPopover) {
             const moreBadge = this.badgesContainer.querySelector('.ms__badge--more');
             const removeBtn = moreBadge?.querySelector('.ms__badge-remove') as HTMLElement | null;
-            if (removeBtn && removeBtn.dataset.action === 'remove-hidden') {
+            if (removeBtn && removeBtn.dataset.msAction === 'remove-hidden') {
                 const maxVisible = this.options.badgesMaxVisible || 3;
                 const hiddenCount = this.selectedOptions.size - maxVisible;
                 this.spawnTooltip({
@@ -5319,8 +5558,8 @@ export class WebMultiSelect<T = any> {
     }
 
     /** Build the option tooltip content (callback overrides; default = displayValue + optional subtitle on next line). */
-    private buildOptionTooltipContent(option: T, context?: OptionContentRenderContext): string | HTMLElement {
-        if (this.options.getOptionTooltipCallback) return this.options.getOptionTooltipCallback(option, context);
+    private buildOptionTooltipContent(option: T, context: OptionContentRenderContext<T>): string | HTMLElement {
+        if (this.options.getOptionTooltipCallback) return this.options.getOptionTooltipCallback(context);
         const displayValue = this.getItemDisplayValue(option);
         const subtitle = this.getItemSubtitle(option);
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
@@ -5349,15 +5588,15 @@ export class WebMultiSelect<T = any> {
             // tooltip callback sees exactly the state its row shows. Flat shape (isTreeNode:false);
             // tree-only fields are left unset, matching the non-tree render path.
             const value = this.getItemValue(option);
-            const context: OptionContentRenderContext = {
+            const context: OptionContentRenderContext<T> = this.ctx({
+                item: option,
                 index,
                 isSelected: this.selectedValues.has(String(value)),
                 isFocused: index === this.focusedIndex,
                 isMatched: this.matchingIndices.has(index),
                 isDisabled: this.getItemDisabled(option),
-                ...createPresentationContext(this.presentationMode),
                 isTreeNode: false
-            };
+            });
 
             const content = this.buildOptionTooltipContent(option, context);
             if (!content) return;
@@ -5422,7 +5661,16 @@ export class WebMultiSelect<T = any> {
             : this.filteredOptions[index];
         if (!option) return;
 
-        const content = this.buildOptionTooltipContent(option);
+        const value = this.getItemValue(option);
+        const content = this.buildOptionTooltipContent(option, this.ctx({
+            item: option,
+            index,
+            isSelected: this.selectedValues.has(String(value)),
+            isFocused: index === this.focusedIndex,
+            isMatched: this.matchingIndices.has(index),
+            isDisabled: this.getItemDisabled(option),
+            isTreeNode: this.isTreeMode()
+        }));
         if (!content) return;
 
         // Build the reveal panel. Reuse the option-tooltip look; --fullscreen lifts it
@@ -5477,26 +5725,31 @@ export class WebMultiSelect<T = any> {
      * panel in BOTH presentations — anchored under the control when floating, pinned to the
      * bottom of the viewport (over the overlay) when fullscreen.
      *
-     * Content is a string (plain text) or an HTMLElement (rich markup). `opts.variant`
-     * (info | warning | error | success) picks the tone; `opts.duration` sets auto-dismiss
-     * (0 = sticky). Tapping the message dismisses it. Only one shows at a time — a new call
-     * replaces the previous. Also reached automatically when a veto callback returns a string.
+     * Content is a string (plain text) or an HTMLElement (rich markup). `opts.type`
+     * (info | warning | error | success) picks the tone; `opts.autoHideMs` sets auto-dismiss
+     * (0 = sticky). Tapping the message dismisses it; a `[data-action]` element inside fires the
+     * `action` event first (`source: 'message'`). Only one shows at a time — a new call replaces
+     * the previous.
      */
     public showMessage(content: string | HTMLElement, opts?: MessageOptions): void {
         this.hideMessage();
 
-        const variant = opts?.variant ?? 'info';
-        const duration = opts?.duration ?? 3000;
-        const urgent = variant === 'error' || variant === 'warning';
+        const type = opts?.type ?? 'info';
+        const duration = opts?.autoHideMs ?? 3000;
+        const urgent = type === 'error' || type === 'warning';
 
         const el = document.createElement('div');
-        el.className = `ms__message ms__message--${variant}`;
+        el.className = `ms__message ms__message--${type}`;
         // Announce to assistive tech; urgent tones interrupt, others are polite.
         el.setAttribute('role', urgent ? 'alert' : 'status');
         el.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
         if (typeof content === 'string') el.textContent = content;
         else el.appendChild(content);
-        el.addEventListener('click', () => this.hideMessage());
+        el.addEventListener('click', (e) => {
+            const trigger = (e.target as HTMLElement).closest?.('[data-action]') as HTMLElement | null;
+            if (trigger && el.contains(trigger)) this.activateActionTrigger(trigger, e);
+            this.hideMessage();
+        });
 
         const rootNode = this.element.getRootNode();
         const shadowContainer = rootNode instanceof ShadowRoot ? rootNode : null;
@@ -5568,26 +5821,16 @@ export class WebMultiSelect<T = any> {
     }
 
     private attachActionButtonTooltips(): void {
-        const actionButtons = this.dropdown.querySelectorAll('.ms__action-btn');
-
-        actionButtons.forEach((button: Element) => {
-            const buttonElement = button as HTMLElement;
-            const action = buttonElement.dataset.action;
-            if (!action) return;
-
-            const buttonIndex = parseInt(buttonElement.dataset.buttonIndex || '-1');
-            const actionConfig = buttonIndex >= 0
-                ? this.options.actionButtons?.[buttonIndex]
-                : this.options.actionButtons?.find(btn => btn.action === action);
-            if (!actionConfig) return;
-
-            const tooltipText = actionConfig.getTooltipCallback
-                ? actionConfig.getTooltipCallback(this, this.buildActionContext(actionConfig))
-                : actionConfig.tooltip;
-            if (!tooltipText) return;
-
-            const id = `action-${buttonIndex >= 0 ? buttonIndex : action}`;
-            this.spawnTooltip({ id, trigger: buttonElement, content: tooltipText });
+        const items = this.getActionItems();
+        if (items.length === 0) return;
+        const ctx = this.buildActionContext();
+        this.dropdown.querySelectorAll<HTMLElement>('.ms__action-btn[data-ms-item-index]').forEach((buttonElement) => {
+            const itemIndex = Number(buttonElement.dataset.msItemIndex);
+            const item = items[itemIndex];
+            if (!item) return;
+            const { tooltip } = resolveActionItem(item, ctx, this.getBuiltInActionDefaults(item.action ?? 'custom'));
+            if (!tooltip) return;
+            this.spawnTooltip({ id: `action-${itemIndex}`, trigger: buttonElement, content: tooltip });
         });
     }
 

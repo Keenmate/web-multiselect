@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '../../src/web-component'; // registers <web-multiselect>
-import { WebMultiSelect } from '../../src/multiselect';
+import { MultiSelectEngine } from '../../src/multiselect';
 
 /**
  * Unit tests for the core batching API on <web-multiselect> (v2, on BlissElement).
@@ -45,7 +45,7 @@ afterEach(() => {
 describe('setAttributes — typed property batch', () => {
     it('applies a multi-key set as a single picker.updateOptions call', async () => {
         await el.whenSettled(); // let the initial options reinit settle first
-        const spy = vi.spyOn(WebMultiSelect.prototype, 'updateOptions');
+        const spy = vi.spyOn(MultiSelectEngine.prototype, 'updateOptions');
         el.setAttributes({
             searchPlaceholder: 'Search…',
             selectPlaceholder: 'Pick…',

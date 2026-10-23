@@ -64,7 +64,7 @@ describe('badge full title', () => {
         el.setAttribute('full-title-member', 'fullTitle');
         el.setAttribute('show-badge-full-title', 'true');
         document.body.appendChild(el);
-        el.getBadgeDisplayCallback = (item: any) => `#${item.value}`;
+        el.getBadgeDisplayCallback = ({ item }: any) => `#${item.value}`;
         el.options = ITEMS;
         await el.whenSettled();
         el.setSelected(['apple']);

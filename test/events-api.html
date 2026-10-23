@@ -62,10 +62,10 @@
             // Callbacks
             window.__cb = { select: [], deselect: [], change: [] };
             const cb = document.getElementById('callbacks');
-            // v2: on* handler props receive the CustomEvent (read e.detail.*).
-            cb.onSelect   = e => window.__cb.select.push(e.detail.option.value);
-            cb.onDeselect = e => window.__cb.deselect.push(e.detail.option.value);
-            cb.onChange   = e => window.__cb.change.push(e.detail.selectedOptions.length);
+            // on* twins receive the event detail (the same object the event carries).
+            cb.onSelect   = d => window.__cb.select.push(d.option.value);
+            cb.onDeselect = d => window.__cb.deselect.push(d.option.value);
+            cb.onChange   = d => window.__cb.change.push(d.selectedOptions.length);
 
             // Replace-opts: helper exposes a function on window
             window.__replaceWithColors = () => {

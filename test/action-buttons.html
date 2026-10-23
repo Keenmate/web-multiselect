@@ -43,8 +43,13 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">action context (additive 2nd arg)</div>
+        <div class="fixture-label">action context (ctx / action detail)</div>
         <web-multiselect id="ctx" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">interaction model: action event, beforeActionCallback, icon / danger / active, data-action in content</div>
+        <web-multiselect id="interaction" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <script type="module">
@@ -61,16 +66,14 @@
             }
 
             // Built-ins
-            document.getElementById('builtins').actionButtons = [
-                { action: 'select-all', text: 'Select all' },
-                { action: 'clear-all',  text: 'Clear all'  }
-            ];
+            // String shorthand → built-ins with their default (labels.*) text.
+            document.getElementById('builtins').actionButtons = ['select-all', 'clear-all'];
 
             // Custom action — increments a counter on click
             window.__customClicks = 0;
             document.getElementById('custom').actionButtons = [
                 {
-                    action: 'custom',
+                    id: 'click-me',
                     text: 'Click me',
                     cssClass: 'js-custom',
                     onClick: () => { window.__customClicks++; }
@@ -82,14 +85,14 @@
             window.__dynamicDisabled = true;
             document.getElementById('dynamic').actionButtons = [
                 {
-                    action: 'custom',
+                    id: 'maybe-visible',
                     text: 'Maybe Visible',
                     cssClass: 'js-maybe-visible',
                     onClick: () => {},
                     getIsVisibleCallback: () => window.__dynamicVisible
                 },
                 {
-                    action: 'custom',
+                    id: 'maybe-disabled',
                     text: 'Maybe Disabled',
                     cssClass: 'js-maybe-disabled',
                     onClick: () => {},
@@ -107,10 +110,10 @@
             const manyButtons = [
                 { action: 'select-all', text: 'Select all' },
                 { action: 'clear-all',  text: 'Clear all'  },
-                { action: 'custom',     text: 'Button A', onClick: () => {} },
-                { action: 'custom',     text: 'Button B', onClick: () => {} },
-                { action: 'custom',     text: 'Button C', onClick: () => {} },
-                { action: 'custom',     text: 'Button D', onClick: () => {} }
+                { id: 'a', text: 'Button A', onClick: () => {} },
+                { id: 'b', text: 'Button B', onClick: () => {} },
+                { id: 'c', text: 'Button C', onClick: () => {} },
+                { id: 'd', text: 'Button D', onClick: () => {} }
             ];
             document.getElementById('wrap').actionButtons = manyButtons;
 
@@ -118,44 +121,77 @@
             const tracker = document.getElementById('tracker');
             window.__trackerSelected = [];
             window.__trackerDeselected = [];
-            // The on* properties are real listeners — each receives the CustomEvent.
-            tracker.onSelect = (e) => { window.__trackerSelected.push(e.detail.option.value); };
-            tracker.onDeselect = (e) => { window.__trackerDeselected.push(e.detail.option.value); };
+            // The on* twins receive the event detail.
+            tracker.onSelect = (d) => { window.__trackerSelected.push(d.option.value); };
+            tracker.onDeselect = (d) => { window.__trackerDeselected.push(d.option.value); };
             tracker.actionButtons = [
                 { action: 'select-all', text: 'Select all' },
                 { action: 'clear-all',  text: 'Clear all'  }
             ];
 
-            // Action context — callbacks read the additive 2nd arg (state + controller).
+            // Action context — callbacks read the ctx (state + controller + element).
             window.__ctxSeen = null;
             const ctxEl = document.getElementById('ctx');
             ctxEl.actionButtons = [
                 {
                     action: 'select-all',
-                    // Dynamic text driven entirely by the 2nd-arg context's live counts.
-                    text: 'Select all',
-                    getTextCallback: (_ms, ctx) => `Selected ${ctx.selectedCount}/${ctx.optionCount}`
+                    // Dynamic text driven entirely by the ctx's live counts.
+                    getTextCallback: (ctx) => `Selected ${ctx.selectedCount}/${ctx.optionCount}`
                 },
                 {
-                    action: 'custom',
+                    id: 'ctx',
                     text: 'Ctx',
                     cssClass: 'js-ctx',
-                    onClick: (_ms, ctx) => {
-                        // Snapshot the context shape, then drive the picker through the controller.
+                    onClick: (d) => {
+                        // Snapshot the detail shape, then drive the picker through the controller.
                         window.__ctxSeen = {
-                            selectedCount: ctx.selectedCount,
-                            optionCount: ctx.optionCount,
-                            isOpen: ctx.isOpen,
-                            presentation: ctx.presentation,
-                            searchTerm: ctx.searchTerm,
-                            buttonAction: ctx.button?.action,
-                            hasController: typeof ctx.controller?.setSelected === 'function',
-                            elementIsHost: ctx.element === ctxEl
+                            selectedCount: d.selectedCount,
+                            optionCount: d.optionCount,
+                            isOpen: d.isOpen,
+                            presentation: d.presentation,
+                            searchTerm: d.searchTerm,
+                            action: d.action,
+                            id: d.id,
+                            source: d.source,
+                            hasController: typeof d.controller?.setSelected === 'function',
+                            elementIsHost: d.element === ctxEl
                         };
-                        ctx.controller.setSelected(['item-0', 'item-1'], { notify: true });
+                        d.controller.setSelected(['item-0', 'item-1'], { notify: true });
                     }
                 }
             ];
+
+            // Interaction model: icon / isDanger / isActive / tooltip on items, the action event
+            // + onAction + beforeActionCallback, and data-action triggers in rendered content.
+            const im = document.getElementById('interaction');
+            im.options = items;
+            window.__im = { log: [], details: [], vetoBuiltIns: false };
+            im.actionButtons = [
+                'select-all',
+                { id: 'export', text: 'Export', icon: '⇩', tooltip: 'Export the selection', onClick: () => window.__im.log.push('onClick') },
+                { id: 'danger', text: 'Danger', isDanger: true },
+                { id: 'active', text: 'Active', getIsActiveCallback: () => true },
+                { id: 'hidden', text: 'Hidden', isVisible: false }
+            ];
+            im.beforeActionCallback = (d) => {
+                window.__im.log.push('before:' + d.action);
+                if (window.__im.vetoBuiltIns && d.action !== 'custom') return false;
+            };
+            im.onAction = (d) => window.__im.log.push('onAction:' + d.action);
+            im.addEventListener('action', (e) => {
+                window.__im.log.push('event:' + e.detail.action);
+                window.__im.details.push({
+                    json: JSON.parse(JSON.stringify(e.detail, (k, v) => (k === 'sourceEvent' || k === 'triggerElement' || k === 'item') ? undefined : v)),
+                    hasController: typeof e.detail.controller?.selectAll === 'function',
+                    elementIsHost: e.detail.element === im,
+                    selectedAtEvent: im.getValue().length,
+                    composed: e.composed,
+                });
+            });
+            // A data-action trigger inside rendered option content: fires `action` (source "option")
+            // with the row's option, and does NOT toggle the row.
+            im.renderOptionContentCallback = (ctx) =>
+                `<span>${ctx.item.label}</span> <button type="button" class="js-row-btn" data-action="custom" data-id="edit" data-kind="row">edit</button>`;
         });
     </script>
 </body>

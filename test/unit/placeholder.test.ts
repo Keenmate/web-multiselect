@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { WebMultiSelect } from '../../src/multiselect';
+import { MultiSelectEngine } from '../../src/multiselect';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -8,7 +8,7 @@ import type { MultiSelectConfig } from '../../src/types';
  *   - selectPlaceholder        when search is disabled / readonly / hidden
  *   - noDataPlaceholder        when the option list is empty (opt-in, highest priority)
  *
- * Exercised against the core WebMultiSelect class on a plain <div> so no dropdown
+ * Exercised against the core MultiSelectEngine class on a plain <div> so no dropdown
  * is ever opened (Floating UI / positioning stay out of the way).
  */
 
@@ -23,10 +23,10 @@ const BASE: Partial<MultiSelectConfig<any>> = {
 };
 
 let host: HTMLDivElement;
-let instance: WebMultiSelect<any> | undefined;
+let instance: MultiSelectEngine<any> | undefined;
 
 function make(opts: Partial<MultiSelectConfig<any>> = {}): HTMLInputElement {
-    instance = new WebMultiSelect(host, { ...BASE, ...opts });
+    instance = new MultiSelectEngine(host, { ...BASE, ...opts });
     return host.querySelector('.ms__input') as HTMLInputElement;
 }
 

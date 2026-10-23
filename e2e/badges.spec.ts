@@ -41,7 +41,7 @@ test.describe('display modes', () => {
         await closeDropdown(page, p);
 
         // Filter to the main badges container (not popover badges)
-        const badges = p.locator('.ms__badges > .ms__badge:not([data-action])');
+        const badges = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
         await expect(badges).toHaveCount(2);
     });
 
@@ -50,7 +50,7 @@ test.describe('display modes', () => {
         await select(p, 'apple', 'cherry', 'date');
         await closeDropdown(page, p);
 
-        const countBadge = p.locator('.ms__badge[data-action="show-selected"]');
+        const countBadge = p.locator('.ms__badge[data-ms-action="show-selected"]');
         await expect(countBadge).toHaveCount(1);
         await expect(countBadge).toContainText(/3/);
     });
@@ -61,7 +61,7 @@ test.describe('display modes', () => {
         await closeDropdown(page, p);
 
         // One named badge + one "+N more" affordance
-        const moreBadge = p.locator('.ms__badge[data-action="show-selected"]');
+        const moreBadge = p.locator('.ms__badge[data-ms-action="show-selected"]');
         await expect(moreBadge).toBeVisible();
         await expect(moreBadge).toContainText(/2/); // "+2 more" for 3 selected (1 shown + 2 more)
     });
@@ -71,10 +71,10 @@ test.describe('display modes', () => {
         await select(p, 'apple', 'banana', 'cherry', 'date');
         await closeDropdown(page, p);
 
-        const namedBadges = p.locator('.ms__badges > .ms__badge:not([data-action])');
+        const namedBadges = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
         await expect(namedBadges).toHaveCount(2);
 
-        const moreBadge = p.locator('.ms__badge[data-action="show-selected"]');
+        const moreBadge = p.locator('.ms__badge[data-ms-action="show-selected"]');
         await expect(moreBadge).toBeVisible();
     });
 
@@ -134,13 +134,13 @@ test.describe('threshold', () => {
         // Two selected — still under threshold, badges visible.
         await select(p, 'apple', 'banana');
         await closeDropdown(page, p);
-        await expect(p.locator('.ms__badges > .ms__badge:not([data-action])')).toHaveCount(2);
+        await expect(p.locator('.ms__badges > .ms__badge:not([data-ms-action])')).toHaveCount(2);
 
         // Three selected — over threshold, switches to count badge.
         await openDropdown(p);
         await p.locator('.ms__option[data-value="cherry"]').click();
         await closeDropdown(page, p);
-        const countBadge = p.locator('.ms__badge[data-action="show-selected"]');
+        const countBadge = p.locator('.ms__badge[data-ms-action="show-selected"]');
         await expect(countBadge).toBeVisible();
         await expect(countBadge).toContainText(/3/);
     });
@@ -150,9 +150,9 @@ test.describe('threshold', () => {
         await select(p, 'apple', 'banana', 'cherry', 'date');
         await closeDropdown(page, p);
 
-        const namedBadges = p.locator('.ms__badges > .ms__badge:not([data-action])');
+        const namedBadges = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
         await expect(namedBadges).toHaveCount(2);
-        await expect(p.locator('.ms__badge[data-action="show-selected"]')).toBeVisible();
+        await expect(p.locator('.ms__badge[data-ms-action="show-selected"]')).toBeVisible();
     });
 });
 
@@ -162,9 +162,9 @@ test.describe('badge interaction', () => {
         await select(p, 'apple', 'cherry');
         await closeDropdown(page, p);
 
-        await p.locator('.ms__badge:not([data-action])').first().locator('.ms__badge-remove').click();
+        await p.locator('.ms__badge:not([data-ms-action])').first().locator('.ms__badge-remove').click();
 
-        const remaining = p.locator('.ms__badges > .ms__badge:not([data-action])');
+        const remaining = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
         await expect(remaining).toHaveCount(1);
         expect(await p.evaluate((el: any) => el.getValue())).toEqual(['cherry']);
     });
@@ -174,7 +174,7 @@ test.describe('badge interaction', () => {
         await select(p, 'apple', 'cherry');
         await closeDropdown(page, p);
 
-        await p.locator('.ms__badge[data-action="show-selected"]').click();
+        await p.locator('.ms__badge[data-ms-action="show-selected"]').click();
         await expect(p.locator('.ms__selected-popover')).toBeVisible();
     });
 });
@@ -182,7 +182,7 @@ test.describe('badge interaction', () => {
 test.describe('selected-order', () => {
     // Read the visible badge labels in DOM order (named badges only, not the "+N more").
     async function badgeLabels(p: Locator): Promise<string[]> {
-        return p.locator('.ms__badges > .ms__badge:not([data-action]) .ms__badge-text').allInnerTexts();
+        return p.locator('.ms__badges > .ms__badge:not([data-ms-action]) .ms__badge-text').allInnerTexts();
     }
 
     // Select in DATA order so "as-selected" == insertion order: Mango, Apricot, Plum.

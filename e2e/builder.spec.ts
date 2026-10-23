@@ -61,7 +61,7 @@ test('builder add-new actually creates the option (callback is wired)', async ({
     await demo.locator('.ms__add-new').click();
 
     expect(await demo.evaluate((el: any) => el.getValue())).toContain('hroch');
-    await expect(page.locator('#markup')).toContainText('addNewCallback');
+    await expect(page.locator('#markup')).toContainText('beforeAddCallback');
 });
 
 test('builder wires member + comparator dependencies so every control bites', async ({ page }) => {

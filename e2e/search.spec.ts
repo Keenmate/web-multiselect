@@ -244,8 +244,8 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
     const popover = (p: Locator) => p.locator('.ms__selected-popover--fullscreen');
 
     async function openPopoverFullscreen(p: Locator): Promise<void> {
-        // count mode renders a counter badge carrying data-action="show-selected".
-        await p.locator('[data-action="show-selected"]').first().click();
+        // count mode renders a counter badge carrying data-ms-action="show-selected".
+        await p.locator('[data-ms-action="show-selected"]').first().click();
         await expect(popover(p)).toBeVisible();
     }
 

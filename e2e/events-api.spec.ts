@@ -52,7 +52,7 @@ test.describe('events', () => {
 });
 
 test.describe('event handler props (on*)', () => {
-    test('onSelect fires with item on each selection', async ({ page }) => {
+    test('onSelect receives the detail on each selection', async ({ page }) => {
         const p = picker(page, 'callbacks');
         await openDropdown(p);
         await p.locator('.ms__option[data-value="apple"]').click();
@@ -61,7 +61,7 @@ test.describe('event handler props (on*)', () => {
         expect(calls).toEqual(['apple']);
     });
 
-    test('onChange receives the full selection array', async ({ page }) => {
+    test('onChange receives the detail with the full selection', async ({ page }) => {
         const p = picker(page, 'callbacks');
         await openDropdown(p);
         await p.locator('.ms__option[data-value="apple"]').click();

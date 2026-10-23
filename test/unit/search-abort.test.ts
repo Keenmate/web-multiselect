@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { WebMultiSelect } from '../../src/multiselect';
+import { MultiSelectEngine } from '../../src/multiselect';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -19,7 +19,7 @@ function deferred<T>(): Deferred<T> {
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 let host: HTMLDivElement;
-let instance: WebMultiSelect<any> | undefined;
+let instance: MultiSelectEngine<any> | undefined;
 let signals: AbortSignal[];
 let deferreds: Deferred<any>[];
 let searchCallback: ReturnType<typeof vi.fn>;
@@ -27,7 +27,7 @@ let searchCallback: ReturnType<typeof vi.fn>;
 function make(): void {
     signals = [];
     deferreds = [];
-    searchCallback = vi.fn((_term: string, signal: AbortSignal) => {
+    searchCallback = vi.fn(({ signal }: { signal: AbortSignal }) => {
         signals.push(signal);
         const d = deferred<any>();
         deferreds.push(d);
@@ -39,7 +39,7 @@ function make(): void {
         searchCallback: searchCallback as any,
         minSearchLength: 0
     };
-    instance = new WebMultiSelect(host, opts);
+    instance = new MultiSelectEngine(host, opts);
 }
 
 function type(value: string): Promise<void> {
@@ -106,13 +106,13 @@ describe('searchCallback AbortSignal', () => {
     it('aborts the in-flight request when the term drops below min-search-length', () => {
         signals = [];
         deferreds = [];
-        searchCallback = vi.fn((_term: string, signal: AbortSignal) => {
+        searchCallback = vi.fn(({ signal }: { signal: AbortSignal }) => {
             signals.push(signal);
             const d = deferred<any>();
             deferreds.push(d);
             return d.promise;
         });
-        instance = new WebMultiSelect(host, {
+        instance = new MultiSelectEngine(host, {
             valueMember: 'value',
             displayValueMember: 'label',
             searchCallback: searchCallback as any,

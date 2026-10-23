@@ -16,7 +16,7 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
     });
 
     // Open the selected-items popover (count mode).
-    await p.locator('.ms__badge[data-action="show-selected"]').click();
+    await p.locator('.ms__badge[data-ms-action="show-selected"]').click();
     await expect(p.locator('.ms__selected-popover')).toBeVisible();
 
     // Close button aria-label translated.

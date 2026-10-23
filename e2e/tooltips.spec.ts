@@ -28,7 +28,7 @@ test('badge tooltip becomes visible on hover (default content)', async ({ page }
     const p = picker(page, 'default-tt');
     await selectFirst(p, 'apple');
 
-    await p.locator('.ms__badge:not([data-action])').hover();
+    await p.locator('.ms__badge:not([data-ms-action])').hover();
 
     // Tooltip lives in the document body (light DOM), positioned outside shadow root.
     const tooltip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
@@ -40,7 +40,7 @@ test('getBadgeTooltipCallback overrides tooltip content', async ({ page }) => {
     const p = picker(page, 'custom-tt');
     await selectFirst(p, 'banana');
 
-    await p.locator('.ms__badge:not([data-action])').hover();
+    await p.locator('.ms__badge:not([data-ms-action])').hover();
 
     const tooltip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
     await expect(tooltip).toBeVisible({ timeout: 2000 });
@@ -62,7 +62,7 @@ test('tooltip uses position:fixed', async ({ page }) => {
     const p = picker(page, 'default-tt');
     await selectFirst(p, 'apple');
 
-    await p.locator('.ms__badge:not([data-action])').hover();
+    await p.locator('.ms__badge:not([data-ms-action])').hover();
     const tooltip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
     await expect(tooltip).toBeVisible({ timeout: 2000 });
 

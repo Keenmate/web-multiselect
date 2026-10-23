@@ -28,7 +28,7 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">customStylesCallback</div>
+        <div class="fixture-label">getCustomStylesCallback</div>
         <web-multiselect id="custom-styles" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
@@ -65,25 +65,25 @@
                 document.getElementById(id).options = items;
             }
 
-            document.getElementById('opt-content').renderOptionContentCallback = (item) =>
+            document.getElementById('opt-content').renderOptionContentCallback = ({ item }) =>
                 `<span class="js-opt-tag">[opt]</span>${item.label}`;
 
-            document.getElementById('badge-content').renderBadgeContentCallback = (item) =>
+            document.getElementById('badge-content').renderBadgeContentCallback = ({ item }) =>
                 `<span class="js-badge-tag">[badge]</span>${item.label}`;
 
-            document.getElementById('badge-class').getBadgeClassCallback = (item) =>
+            document.getElementById('badge-class').getBadgeClassCallback = ({ item }) =>
                 `js-${item.value}-class`;
 
-            document.getElementById('custom-styles').customStylesCallback = () =>
+            document.getElementById('custom-styles').getCustomStylesCallback = () =>
                 `.ms__option { outline: 2px dashed magenta; }`;
 
-            // Single-select: 2nd arg carries the presentation context — encode it into the label.
-            document.getElementById('sel-content').renderSelectedContentCallback = (item, ctx) =>
-                `${item.label}·${ctx.presentation}`;
+            // Single-select: the ctx carries the presentation — encode it into the label.
+            document.getElementById('sel-content').renderSelectedContentCallback = ({ item, presentation }) =>
+                `${item.label}·${presentation}`;
 
-            // Popover item: 2nd arg is a BadgeContentRenderContext — surface isInPopover.
-            document.getElementById('sel-item').renderSelectedItemContentCallback = (item, ctx) =>
-                `<span class="js-sel-item" data-pop="${ctx.isInPopover}">${item.label}</span>`;
+            // Popover item: the ctx is a BadgeContentRenderContext — surface isInPopover.
+            document.getElementById('sel-item').renderSelectedItemContentCallback = ({ item, isInPopover }) =>
+                `<span class="js-sel-item" data-pop="${isInPopover}">${item.label}</span>`;
         });
     </script>
 </body>

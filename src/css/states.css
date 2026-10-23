@@ -38,7 +38,7 @@
    in-input counter still show the tally, but their click is inert (gated in JS), so
    drop the pointer cursor that would otherwise advertise them as openable. */
 .ms--no-selected-popover .ms__counter,
-.ms--no-selected-popover .ms__badge[data-action="show-selected"],
+.ms--no-selected-popover .ms__badge[data-ms-action="show-selected"],
 .ms--no-selected-popover .ms__badge--counter,
 .ms--no-selected-popover .ms__badge--more {
   cursor: default;

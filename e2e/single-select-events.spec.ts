@@ -55,11 +55,13 @@ test.describe('single-select event semantics', () => {
         expect(ev.change[1].selectedValues).toEqual(['banana']);
     });
 
-    // Pins the bubbles+composed fix on web-component.ts dispatchEvent sites.
-    // If a future change drops those flags, framework delegation (Svelte 5
-    // onchange, React onChange, Vue @change) breaks again — see
-    // svelte-test/e2e/single-select.spec.ts for the framework-level repro.
-    test('events bubble to ancestor + carry composed flag', async ({ page }) => {
+    // Pins `bubbles: true` on the dispatch sites: framework delegation (Svelte 5 onchange,
+    // React onChange, Vue @change) listens on an ancestor — see
+    // svelte-test/e2e/single-select.spec.ts for the framework-level repro. Events are
+    // dispatched on the host (light DOM), so they reach the document without `composed`;
+    // `composed: false` keeps a picker nested in another component's shadow root from
+    // leaking its events past that component (core interaction model, decision 10).
+    test('events bubble to ancestor and are not composed', async ({ page }) => {
         const p = picker(page, 'single');
 
         await page.evaluate(() => {
@@ -86,14 +88,14 @@ test.describe('single-select event semantics', () => {
         const bubbled = await page.evaluate(() => (window as any).__bubbled);
 
         expect(bubbled.select).toHaveLength(1);
-        expect(bubbled.select[0]).toEqual({ bubbles: true, composed: true });
+        expect(bubbled.select[0]).toEqual({ bubbles: true, composed: false });
 
         expect(bubbled.deselect).toHaveLength(1);
-        expect(bubbled.deselect[0]).toEqual({ bubbles: true, composed: true });
+        expect(bubbled.deselect[0]).toEqual({ bubbles: true, composed: false });
 
         expect(bubbled.change).toHaveLength(2);
-        expect(bubbled.change[0]).toEqual({ bubbles: true, composed: true });
-        expect(bubbled.change[1]).toEqual({ bubbles: true, composed: true });
+        expect(bubbled.change[0]).toEqual({ bubbles: true, composed: false });
+        expect(bubbled.change[1]).toEqual({ bubbles: true, composed: false });
     });
 
     // Single-select must NOT toggle off on a re-click: a single-select always keeps

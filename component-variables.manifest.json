@@ -736,6 +736,21 @@
       "usage": "Semantic action button color"
     },
     {
+      "name": "ms-action-button-danger-color",
+      "category": "action-button",
+      "usage": "Text + border color of an isDanger (destructive) action item"
+    },
+    {
+      "name": "ms-action-button-active-color",
+      "category": "action-button",
+      "usage": "Text + border color of an isActive (pressed toggle) action item"
+    },
+    {
+      "name": "ms-action-button-icon-gap",
+      "category": "action-button",
+      "usage": "Gap between an action item's icon and its label"
+    },
+    {
       "name": "ms-options-padding",
       "category": "options",
       "usage": "Options container padding"

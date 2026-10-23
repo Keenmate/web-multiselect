@@ -83,16 +83,16 @@
 
             // Shared count formatter: "selected/total" — used by both the in-input counter and
             // each group header's count chip.
-            document.getElementById('group-count-callback').getCountLabelCallback = (s, t) => `${s}/${t}`;
+            document.getElementById('group-count-callback').getCountLabelCallback = ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}`;
 
-            // Non-cascade custom label: single-arg (proves the old signature still works).
+            // Non-cascade custom label: only the group name.
             document.getElementById('custom-label').renderGroupLabelContentCallback =
-                (name) => `<strong class="js-custom-label">[${name.toUpperCase()}]</strong>`;
-            // Cascade custom label: reads the 2nd-arg context to render its own count, and
+                ({ groupName }) => `<strong class="js-custom-label">[${groupName.toUpperCase()}]</strong>`;
+            // Cascade custom label: reads the ctx selection to render its own count, and
             // surfaces `isFullscreen` (data-fs) so the mobile spec can prove the presentation
             // context reaches the callback inside the fullscreen overlay.
             document.getElementById('group-cascade-custom').renderGroupLabelContentCallback =
-                (name, ctx) => `<strong class="js-custom-label" data-fs="${ctx.isFullscreen}">[${name.toUpperCase()}]</strong>` +
+                (ctx) => `<strong class="js-custom-label" data-fs="${ctx.isFullscreen}">[${ctx.groupName.toUpperCase()}]</strong>` +
                     (ctx && ctx.selectedCount > 0
                         ? `<span class="js-custom-count">${ctx.selectedCount}/${ctx.selectableCount}</span>`
                         : '');

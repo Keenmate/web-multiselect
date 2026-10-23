@@ -2,7 +2,7 @@
    BADGES
    ==============================================================================
    Selected-item badges (.ms__badges container + individual .ms__badge), the
-   counter / "+X more" variants, and the data-action badge cursor.
+   counter / "+X more" variants, and the data-ms-action badge cursor.
    Count-display mode (a single counter badge instead of one-per-item) lives
    in count-display.css.
 */
@@ -200,6 +200,6 @@
 
 /* Any badge whose container itself opens the selected-items popover (compact mode, count mode,
    "+X more" partial badge) should show a pointer cursor. */
-.ms__badge[data-action="show-selected"] {
+.ms__badge[data-ms-action="show-selected"] {
   cursor: pointer;
 }

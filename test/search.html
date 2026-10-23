@@ -138,7 +138,7 @@
             // each item's search value is prepared once, not on every keystroke.
             const indexed = document.getElementById('sb-index');
             window.__searchValueCalls = 0;
-            indexed.getSearchValueCallback = (item) => { window.__searchValueCalls++; return item.label; };
+            indexed.getSearchValueCallback = ({ item }) => { window.__searchValueCalls++; return item.label; };
             indexed.options = Array.from({ length: 2000 }, (_, i) => ({ value: String(i), label: `Položka ${i}` }));
 
             // sm: search-match modes.
@@ -151,7 +151,7 @@
 
             // sm-term: getSearchTermCallback turns "ha-324/56" into a separator-agnostic regex.
             const term = document.getElementById('sm-term');
-            term.getSearchTermCallback = (t) =>
+            term.getSearchTermCallback = ({ term: t }) =>
                 new RegExp(t.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
             term.options = [
                 { value: '1', label: 'HA 324-56' },
@@ -169,10 +169,10 @@
             const cb = document.getElementById('sm-callback');
             window.__entriesRefs = [];
             window.__callbackTerms = [];
-            cb.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
-            cb.getSearchTermCallback = (t, ctx) =>
-                ctx.target === 'callback' ? { zip: t.replace(/\s/g, ''), text: normalizeSearchText(t) } : t;
-            cb.searchCallback = (t, signal, { searchTerm, entries }) => {
+            cb.getSearchValueCallback = ({ item: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+            cb.getSearchTermCallback = ({ term: t, target }) =>
+                target === 'callback' ? { zip: t.replace(/\s/g, ''), text: normalizeSearchText(t) } : t;
+            cb.searchCallback = ({ searchTerm, entries }) => {
                 window.__entriesRefs.push(entries);
                 window.__callbackTerms.push(searchTerm);
                 return entries
@@ -183,20 +183,20 @@
 
             // sm-object: object search value WITHOUT searchCallback → internal search uses the label.
             const obj = document.getElementById('sm-object');
-            obj.getSearchValueCallback = (c) => ({ zip: c.zip });
+            obj.getSearchValueCallback = ({ item: c }) => ({ zip: c.zip });
             obj.options = cities;
 
-            // popover-fs: preselect a few so the count badge (data-action="show-selected")
+            // popover-fs: preselect a few so the count badge (data-ms-action="show-selected")
             // is present and opens a non-empty fullscreen selected-items popover.
             document.getElementById('popover-fs').setSelected(['apple', 'banana', 'cherry']);
 
             // keep-options picker — async; below threshold, the initial options stay.
             const keepOptions = document.getElementById('keep-options');
-            keepOptions.searchCallback = async (term) => fruits.filter(f => f.label.toLowerCase().includes(term.toLowerCase()));
+            keepOptions.searchCallback = async ({ term }) => fruits.filter(f => f.label.toLowerCase().includes(term.toLowerCase()));
 
             // Async search picker — searchCallback returns 1 item after 50ms.
             const async = document.getElementById('async-search');
-            async.searchCallback = async (term) => {
+            async.searchCallback = async ({ term }) => {
                 await new Promise(r => setTimeout(r, 50));
                 return fruits.filter(f => f.label.toLowerCase().includes(term.toLowerCase()));
             };
@@ -204,14 +204,14 @@
             // min-len picker tracks calls so the spec can assert it didn't fire below threshold.
             const minLen = document.getElementById('min-len');
             window.__minLenCalls = [];
-            minLen.searchCallback = async (term) => {
+            minLen.searchCallback = async ({ term }) => {
                 window.__minLenCalls.push(term);
                 return fruits.filter(f => f.label.toLowerCase().includes(term.toLowerCase()));
             };
 
             // beforeSearchCallback strips spaces.
             const before = document.getElementById('before-search');
-            before.beforeSearchCallback = (term) => term.replace(/\s+/g, '');
+            before.beforeSearchCallback = ({ term }) => term.replace(/\s+/g, '');
 
             // Many-option navigate/fullscreen picker for the focus-into-view test:
             // zero-padded labels so "Item 25" is a unique substring deep in the list.

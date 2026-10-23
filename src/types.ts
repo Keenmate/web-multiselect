@@ -3,7 +3,8 @@
  */
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
-import type { PresentationContext } from '@keenmate/web-components-core';
+import type { PresentationContext, ComponentContext } from '@keenmate/web-components-core';
+import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './tree/ltree-node';
 import type {
     SearchBehavior,
@@ -66,10 +67,10 @@ export type SearchMode = 'filter' | 'navigate';
 export type TabBehavior = 'select-highlighted' | 'select-navigated' | 'close';
 
 /**
- * Visual tone of a transient message shown via `showMessage()` (or a veto callback's
- * returned reason string). Each maps to a `.ms__message--{variant}` theming hook.
+ * Visual tone of a transient message shown via `controller.showMessage()`. Each maps to a
+ * `.ms__message--{type}` theming hook.
  */
-export type MessageVariant = 'info' | 'warning' | 'error' | 'success';
+export type MessageType = 'info' | 'warning' | 'error' | 'success';
 
 /**
  * Options for `showMessage()` — the transient toast the component can surface on top of
@@ -78,9 +79,9 @@ export type MessageVariant = 'info' | 'warning' | 'error' | 'success';
  */
 export interface MessageOptions {
     /** Visual tone. Default `'info'`. */
-    variant?: MessageVariant;
+    type?: MessageType;
     /** Auto-dismiss after this many ms. `0` keeps it until replaced, tapped, or the panel closes. Default `3000`. */
-    duration?: number;
+    autoHideMs?: number;
     /**
      * Where the message anchors relative to the control in the **floating/anchored** case
      * (a floating-ui `Placement`, e.g. `'top'`, `'bottom-start'`, `'right'`). Default
@@ -120,6 +121,10 @@ export interface MultiSelectLabels {
     prevMatch?: string;
     /** Fullscreen navigate-mode "next match" button. Default: `Next match`. */
     nextMatch?: string;
+    /** Text of the built-in `select-all` action button. Default: `Select all`. */
+    selectAll?: string;
+    /** Text of the built-in `clear-all` action button. Default: `Clear all`. */
+    clearAll?: string;
 }
 
 /**
@@ -134,15 +139,31 @@ export type ActionsPosition = 'top' | 'bottom';
 export type ActionsAlign = 'stretch' | 'left' | 'right' | 'center' | 'space-between';
 
 /**
- * Context provided to renderOptionContentCallback.
- *
- * Extends the shared {@link PresentationContext} from `@keenmate/web-components-core`, so it
- * also carries `presentation` (`'floating' | 'modal' | 'fullscreen'` — this component only ever
- * emits `floating`/`fullscreen`), `isFullscreen`, and `isModal`. Branch on `isFullscreen` to
- * render leaner content in the phone overlay. Reactive: swapping presentation re-renders and
- * re-invokes the callback with the new value.
+ * Base of every callback `ctx` and every event detail: the public {@link MultiSelectController}
+ * (`controller`) and the host element (`element`) — both non-enumerable, so `JSON.stringify` /
+ * logs / LiveView `pushEvent(…, e.detail)` see only the data — plus the shared
+ * {@link PresentationContext} fields (`presentation`: `'floating' | 'fullscreen'` here,
+ * `isFullscreen`, `isModal`), so any callback can render leaner in the phone overlay.
  */
-export interface OptionContentRenderContext extends PresentationContext {
+export interface MultiSelectContext<T = any> extends ComponentContext<MultiSelectController<T>>, PresentationContext {}
+
+/** `ctx` of the per-option callbacks (`getValueCallback`, `getIconCallback`, …): the option is `item`. */
+export interface ItemContext<T = any> extends MultiSelectContext<T> {
+    /** The option this call is about. */
+    item: T;
+}
+
+/** `ctx` of `getIsSelectableCallback` — the option plus its built tree node. */
+export interface TreeNodeContext<T = any> extends ItemContext<T> {
+    /** The built tree node (`node.hasChildren`, `node.level`, `node.path`, …). */
+    node: LTreeNode<T>;
+}
+
+/**
+ * `ctx` of `renderOptionContentCallback` / `getOptionTooltipCallback` — one dropdown row.
+ * Reactive: swapping presentation re-renders and re-invokes the callback with the new value.
+ */
+export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
     /** Index of the option in the filtered list */
     index: number;
     /** Whether the option is currently selected */
@@ -176,36 +197,31 @@ export interface OptionContentRenderContext extends PresentationContext {
 }
 
 /**
- * Context provided to renderBadgeContentCallback
+ * `ctx` of the badge callbacks (`renderBadgeContentCallback`, `renderBadgeCallback`,
+ * `renderSelectedItemContentCallback`, `getBadgeDisplayCallback`, `getBadgeClassCallback`,
+ * `getSelectedItemClassCallback`, `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback`).
+ * Outside a badge render (selected-order sorting, the counter tooltip) `displayMode` is the
+ * configured mode and `isInPopover` is `false`.
  */
-export interface BadgeContentRenderContext extends PresentationContext {
+export interface BadgeContentRenderContext<T = any> extends ItemContext<T> {
     /** Current badges display mode */
     displayMode: BadgesDisplayMode;
     /** Whether the badge is being rendered in the selected items popover */
     isInPopover: boolean;
 }
 
-/**
- * Context handed to `renderSelectedContentCallback` (single-select selected-value display). Carries
- * only the shared {@link PresentationContext} fields (`presentation` / `isFullscreen` / `isModal`),
- * so the single-select label can render leaner in the phone fullscreen overlay.
- */
-export type SelectedContentRenderContext = PresentationContext;
+/** `ctx` of `renderSelectedContentCallback` (the single-select selected-value display). */
+export type SelectedContentRenderContext<T = any> = ItemContext<T>;
 
 /**
- * Context handed to `renderGroupLabelContentCallback` as its second argument, so a custom group
- * header can reflect the selection — e.g. render a "3 / 8" count next to the title. The fields are
- * populated for every group header; the selection fields are meaningful mainly under
- * `groupSelectMode: 'cascade'` (a flat multi-select grouped list). Under the default rendering
- * (no callback) the component draws the count itself; with a callback, YOU own the content and can
- * render the count however you like from these fields.
- *
- * Like {@link OptionContentRenderContext} / {@link BadgeContentRenderContext}, it extends the
- * shared {@link PresentationContext} (`presentation` / `isFullscreen` / `isModal`), so a group
- * header can also render leaner in the phone fullscreen overlay.
+ * `ctx` of `renderGroupLabelContentCallback`, so a custom group header can reflect the
+ * selection — e.g. render a "3 / 8" count next to the title. The selection fields are
+ * meaningful mainly under `groupSelectMode: 'cascade'` (a flat multi-select grouped list).
+ * Under the default rendering (no callback) the component draws the count itself; with a
+ * callback, YOU own the content and can render the count however you like from these fields.
  */
-export interface GroupLabelRenderContext<T = any> extends PresentationContext {
-    /** The group name (identical to the callback's first argument). */
+export interface GroupLabelRenderContext<T = any> extends MultiSelectContext<T> {
+    /** The group name. */
     groupName: string;
     /** The group's currently-visible (filtered) members, in render order. */
     members: T[];
@@ -221,11 +237,78 @@ export interface GroupLabelRenderContext<T = any> extends PresentationContext {
     checkState: 'checked' | 'indeterminate' | 'unchecked';
 }
 
+/** `ctx` of `getCounterCallback` — the badges-area "N selected" / "+X more" text. */
+export interface CounterContext<T = any> extends MultiSelectContext<T> {
+    /** Number of selected items. */
+    count: number;
+    /** Partial / compact mode: the number of items behind the "+X more" badge. Absent for the plain count. */
+    moreCount?: number;
+}
+
+/** `ctx` of `getCountLabelCallback` — the small count chip (in-input counter, group headers). */
+export interface CountLabelContext<T = any> extends MultiSelectContext<T> {
+    /** Selected count. */
+    selectedCount: number;
+    /** In-input counter: the whole option list; group header: that group's member count. */
+    totalCount: number;
+    /** Set when the chip belongs to a group header. */
+    groupName?: string;
+}
+
+/** `ctx` of `getValueFormatCallback` — serialize the selection for the hidden form input. */
+export interface ValueFormatContext<T = any> extends MultiSelectContext<T> {
+    selectedValues: (string | number)[];
+    selectedOptions: T[];
+}
+
+/** `ctx` of `getAddNewTextCallback` and `beforeAddCallback` — the typed text. */
+export interface AddContext<T = any> extends MultiSelectContext<T> {
+    /** The typed text (trimmed). */
+    value: string;
+}
+
+/** `ctx` of `beforeSearchCallback`. */
+export interface BeforeSearchContext<T = any> extends MultiSelectContext<T> {
+    /** The term as typed. */
+    term: string;
+}
+
+/** `ctx` of `getSearchTermCallback` (`term`, `target`, `behavior`, `match` from core `/search`). */
+export interface SearchTermCallbackContext<T = any> extends SearchTermContext, MultiSelectContext<T> {}
+
+/** `ctx` of `searchCallback` (`term`, `signal`, `searchTerm`, `entries` from core `/search`). */
+export interface MultiSelectSearchContext<T = any> extends SearchCallbackContext<T>, MultiSelectContext<T> {}
+
 /**
- * Imperative facade for driving a live picker from a callback without reaching into internals.
- * Shared base of the callback controllers: {@link MultiSelectKeyboardController} (handed to
- * `keydownCallback`) extends it with focus-navigation, and {@link ActionContext} exposes it to
- * the action-button callbacks. Every method mirrors a public element method.
+ * Which gesture is about to change the selection — `source` on {@link BeforeSelectContext}.
+ * `option` = a dropdown row (click, Enter, Tab, `controller.toggleValue` …); `badge` = a badge /
+ * popover remove (×) or the "+N more" remove; `group` = a group-header checkbox; `select-all` /
+ * `clear-all` = those built-in actions (and `controller.selectAll()` / `clearAll()`); `clear` =
+ * the inline ✕ or the count badge's ×.
+ */
+export type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear';
+
+/**
+ * `ctx` of `beforeSelectCallback` / `beforeDeselectCallback`. Called once per option, also
+ * for bulk gestures (Select-All, a group checkbox, Clear-All) — a vetoed option is skipped
+ * and the rest still apply.
+ */
+export interface BeforeSelectContext<T = any> extends MultiSelectContext<T> {
+    /** The option about to be selected / deselected. */
+    option: T;
+    /** The selection before the change. */
+    selectedOptions: T[];
+    selectedValues: (string | number)[];
+    /** The gesture behind the change. */
+    source: SelectionSource;
+}
+export type BeforeDeselectContext<T = any> = BeforeSelectContext<T>;
+
+/**
+ * The public facade — `el.controller`, and `controller` on every callback `ctx` and event
+ * detail. Delegates to the live picker, so it survives rebuilds. Interactive methods
+ * (`toggleValue`, `selectValue`, `selectAll`, …) behave like the matching gesture, vetoes
+ * included; `setSelected` is the programmatic, veto-free path.
  */
 export interface MultiSelectController<T = any> {
     // ── read current state ───────────────────────────────────────────────
@@ -235,16 +318,24 @@ export interface MultiSelectController<T = any> {
     getValue(): string | number | (string | number)[] | null;
     /** All available options (post assignment, pre-filter). */
     getOptions(): ReadonlyArray<T>;
+    /** Whether the dropdown is open. */
+    readonly isOpen: boolean;
 
     // ── mutate the selection ─────────────────────────────────────────────
-    /** Replace the selection. Silent by default; pass `{ notify: true }` to emit ONE aggregate `change`. */
+    /** Replace the selection. Silent by default; pass `{ notify: true }` to emit ONE aggregate `change`. Bypasses the vetoes. */
     setSelected(values: (string | number)[], opts?: { notify?: boolean }): void;
-    /** Select every selectable option. */
+    /** Select every selectable visible option (like the `select-all` action; vetoes apply per option). */
     selectAll(): void;
-    /** Clear the whole selection. */
+    /** Clear the whole selection (like the `clear-all` action; vetoes apply per option). */
     clearAll(): void;
     /** Toggle a single option by its value (select ⇄ deselect). */
     toggleValue(value: string | number): void;
+    /** Select a specific option by its value (no-op if already selected). */
+    selectValue(value: string | number): void;
+    /** Deselect a specific option by its value (no-op if not selected). */
+    deselectValue(value: string | number): void;
+    /** Toggle the currently focused option (no-op if nothing is focused). */
+    toggleFocused(): void;
 
     // ── drive the dropdown ───────────────────────────────────────────────
     open(): void;
@@ -254,24 +345,14 @@ export interface MultiSelectController<T = any> {
     search(term: string): void;
     /** Clear the search box and restore the full list (does not touch the selection). */
     clearSearch(): void;
-    /** Scroll a specific option / group / index into view. */
-    scrollToValue(value: string | number): void;
-    scrollToGroup(group: string): void;
-    scrollToIndex(index: number): void;
+    /** Scroll a specific option / group / index into view. `false` when it isn't in the visible list. */
+    scrollToValue(value: string | number): boolean;
+    scrollToGroup(group: string): boolean;
+    scrollToIndex(index: number): boolean;
+    /** Re-render from the current option set (after mutating options in place). */
+    refresh(): void;
 
-    // ── feedback ─────────────────────────────────────────────────────────
-    /** Surface a transient message ("toast"), visible even in the fullscreen overlay. */
-    showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
-    /** Dismiss the transient message, if any. */
-    hideMessage(): void;
-}
-
-/**
- * Imperative facade handed to `keydownCallback`: the shared {@link MultiSelectController} plus the
- * focus-navigation methods that only make sense mid-keystroke. Every method mirrors a built-in
- * keyboard action.
- */
-export interface MultiSelectKeyboardController<T = any> extends MultiSelectController<T> {
+    // ── keyboard focus (open dropdown) ───────────────────────────────────
     /** Move focus to the next / previous option. */
     focusNext(): void;
     focusPrevious(): void;
@@ -286,27 +367,44 @@ export interface MultiSelectKeyboardController<T = any> extends MultiSelectContr
     focusPreviousMatch(): void;
     /** Focus a specific index in the filtered list (ignored if out of range). */
     focusIndex(index: number): void;
-    /** Toggle the currently focused option (no-op if nothing is focused). */
-    toggleFocused(): void;
-    /** Select a specific option by its value (no-op if already selected). */
-    selectValue(value: string | number): void;
-    /** Deselect a specific option by its value (no-op if not selected). */
-    deselectValue(value: string | number): void;
-    /** @deprecated Alias of {@link MultiSelectController.search}. */
-    setSearch(term: string): void;
+
+    // ── feedback ─────────────────────────────────────────────────────────
+    /** Surface a transient message ("toast"), visible even in the fullscreen overlay. */
+    showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
+    /** Dismiss the transient message, if any. */
+    hideMessage(): void;
 }
 
 /**
- * Context handed (as the additive 2nd argument) to the action-button callbacks —
- * {@link ActionButton.getTextCallback} / `getIsVisibleCallback` / `getIsDisabledCallback` /
- * `getClassCallback` / `getTooltipCallback` — and to the `onClick` event. A typed snapshot of
- * live state plus a {@link MultiSelectController} facade, replacing reliance on the untyped picker
- * instance passed as the first argument. Extends {@link PresentationContext}, so a callback can
- * branch on how the panel is presented (floating vs fullscreen), consistent with the render callbacks.
+ * `ctx` of `beforeKeydownCallback`, which runs before all built-in keyboard handling.
+ * Return `false` to suppress the built-in handling of the key (you own `preventDefault`);
+ * return nothing to fall through to the defaults. Must answer synchronously.
  */
-export interface ActionContext<T = any> extends PresentationContext {
-    /** The action button config entry this callback belongs to. */
-    button: ActionButton<T>;
+export interface KeydownContext<T = any> extends MultiSelectContext<T> {
+    /** The raw keyboard event — call `preventDefault()` yourself if you handle the key. */
+    event: KeyboardEvent;
+    /** `event.key`, for convenience. */
+    key: string;
+    /** Whether the dropdown is currently open. */
+    isOpen: boolean;
+    /** The current search term. */
+    searchTerm: string;
+    /** Index of the focused option in the filtered list (`-1` when nothing is focused). */
+    focusedIndex: number;
+    /** The focused option object, or `null`. */
+    focusedOption: T | null;
+    /** The options currently visible (after filtering). */
+    filteredOptions: ReadonlyArray<T>;
+    /** The currently selected values. */
+    selectedValues: (string | number)[];
+}
+
+/**
+ * `ctx` of the action-item callbacks (`getTextCallback`, `getIsVisibleCallback`, …): a
+ * snapshot of the selection. At activation (`onClick`, `beforeActionCallback`, `onAction` /
+ * the `action` event) the core action fields are added — see {@link MultiSelectActionEventDetail}.
+ */
+export interface ActionContext<T = any> extends MultiSelectContext<T> {
     /** Currently selected scalar values. */
     selectedValues: (string | number)[];
     /** Currently selected option objects, in selection order. */
@@ -321,52 +419,22 @@ export interface ActionContext<T = any> extends PresentationContext {
     isOpen: boolean;
     /** The current search term. */
     searchTerm: string;
-    /** Imperative facade — drive the picker (selection / dropdown / search / messages). */
-    controller: MultiSelectController<T>;
-    /** Escape hatch: the host custom element, for anything not on the controller. */
-    element: HTMLElement & Record<string, any>;
+    /**
+     * For a `data-action` trigger rendered inside an option row or a badge (`source`
+     * `'option'` / `'badge'`): that option.
+     */
+    option?: T;
 }
 
-/**
- * Context passed to `keydownCallback`, which runs before all built-in keyboard handling.
- * Return `true` to mark the key fully handled (the component then runs none of its own
- * key logic — you own `preventDefault`); return `false`/`undefined` to fall through to the
- * defaults. Mirrors the veto-hook shape used across KM components.
- */
-export interface MultiSelectKeydownContext<T = any> {
-    /** The raw keyboard event — call `preventDefault()` yourself if you handle the key. */
-    event: KeyboardEvent;
-    /** `event.key`, for convenience. */
-    key: string;
-    /** Whether the dropdown is currently open. */
-    isOpen: boolean;
-    /** How the open panel is presented (`floating` / `fullscreen`). */
-    presentation: 'floating' | 'fullscreen';
-    /** The current search term. */
-    searchTerm: string;
-    /** Index of the focused option in the filtered list (`-1` when nothing is focused). */
-    focusedIndex: number;
-    /** The focused option object, or `null`. */
-    focusedOption: T | null;
-    /** The options currently visible (after filtering). */
-    filteredOptions: ReadonlyArray<T>;
-    /** The currently selected values. */
-    selectedValues: ReadonlyArray<string>;
-    /** Imperative actions mirroring the built-in keyboard behavior. */
-    controller: MultiSelectKeyboardController<T>;
-}
+/** The built-in action names. */
+export type MultiSelectAction = 'select-all' | 'clear-all';
 
 /**
- * Action button configuration for dropdown actions (Select All, Clear All, custom actions)
- * @template T The type of data items
+ * One action button (core `ActionItem`): a built-in (`{ action: 'select-all' }`, or the string
+ * shorthand `'select-all'`) or a custom item (`{ id: 'export', text: 'Export', onClick }`).
+ * Every dynamic field is a static value plus a `get*Callback(ctx)` that wins when set.
  */
-export interface ActionButton<T = any> {
-    /** Action identifier ('select-all', 'clear-all', or 'custom' for custom actions) */
-    action: 'select-all' | 'clear-all' | 'custom';
-    /** Button text label */
-    text: string;
-    /** Optional CSS class(es) to add to the button */
-    cssClass?: string;
+export interface MultiSelectActionItem<T = any> extends ActionItem<ActionContext<T>, MultiSelectAction> {
     /**
      * 1-based row this button belongs to (default `1`). Buttons sharing a `row` render on the same
      * horizontal line; different values stack into multiple rows. Row 1 sits at the panel's outer edge
@@ -374,29 +442,15 @@ export interface ActionButton<T = any> {
      * the topmost line, and with `actions-position="bottom"` row 1 is the bottommost line.
      */
     row?: number;
-    /** Optional tooltip text */
-    tooltip?: string;
-    /** Static visibility - set to false to hide button */
-    isVisible?: boolean;
-    /** Static disabled state - set to true to disable button */
-    isDisabled?: boolean;
-    /**
-     * Custom click handler (required for 'custom' action). The 1st arg is the live picker
-     * instance (as before); the additive 2nd arg is a typed {@link ActionContext} (state +
-     * controller). One-argument handlers keep working.
-     */
-    onClick?: (multiselect: any, context?: ActionContext<T>) => void | Promise<void>;
-    /** Dynamic visibility callback - return false to hide button (takes priority over isVisible). Additive 2nd arg: {@link ActionContext}. */
-    getIsVisibleCallback?: (multiselect: any, context?: ActionContext<T>) => boolean;
-    /** Dynamic disabled state callback - return true to disable button (takes priority over isDisabled). Additive 2nd arg: {@link ActionContext}. */
-    getIsDisabledCallback?: (multiselect: any, context?: ActionContext<T>) => boolean;
-    /** Dynamic text callback - return button text (takes priority over text). Additive 2nd arg: {@link ActionContext}. */
-    getTextCallback?: (multiselect: any, context?: ActionContext<T>) => string;
-    /** Dynamic CSS class callback - return class name(s) (takes priority over cssClass). Additive 2nd arg: {@link ActionContext}. */
-    getClassCallback?: (multiselect: any, context?: ActionContext<T>) => string | string[];
-    /** Dynamic tooltip callback - return tooltip text (takes priority over tooltip). Additive 2nd arg: {@link ActionContext}. */
-    getTooltipCallback?: (multiselect: any, context?: ActionContext<T>) => string;
 }
+
+/**
+ * Detail of the `action` event, and the argument of `onAction`, an item's `onClick` and
+ * `beforeActionCallback`: the {@link ActionContext} plus `action`, `id`, `item`, `source`
+ * (`'action-buttons'` | `'option'` | `'badge'` | `'message'`), `sourceEvent`,
+ * `triggerElement`, `dataset`.
+ */
+export type MultiSelectActionEventDetail<T = any> = ActionEventDetail<ActionContext<T>, MultiSelectAction>;
 
 /**
  * Generic configuration options for the MultiSelect component
@@ -416,22 +470,20 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for value/ID extraction */
     valueMember?: string;
-    /** Callback to extract value/ID from item */
-    getValueCallback?: (item: T) => string | number;
+    /** Callback to extract value/ID from an option (`ctx.item`) */
+    getValueCallback?: (ctx: ItemContext<T>) => string | number;
 
     /** Member property name for display value extraction */
     displayValueMember?: string;
-    /** Callback to extract display value from item */
-    getDisplayValueCallback?: (item: T) => string;
+    /** Callback to extract the display value from an option (`ctx.item`) */
+    getDisplayValueCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Callback to customize badge display text (defaults to display value if not provided).
-     * The second argument is additive: when the value is computed while rendering a specific
-     * badge/popover item it receives that item's {@link BadgeContentRenderContext} (`displayMode`,
-     * `isInPopover`, and the shared presentation fields); it is **absent** when the value is needed
-     * outside a render (e.g. selected-order sorting, the counter chip's title), so one-argument
-     * callbacks keep working. Treat `context` as optional.
+     * `ctx` is the {@link BadgeContentRenderContext} (`item`, `displayMode`, `isInPopover`,
+     * presentation); outside a badge render (selected-order sorting, the counter tooltip)
+     * `displayMode` is the configured mode and `isInPopover` is `false`.
      */
-    getBadgeDisplayCallback?: (item: T, context?: BadgeContentRenderContext) => string;
+    getBadgeDisplayCallback?: (ctx: BadgeContentRenderContext<T>) => string;
 
     /**
      * Order of the CURRENTLY-SELECTED items *where they are displayed* — badges, partial mode
@@ -449,8 +501,11 @@ export interface MultiSelectConfig<T = any> {
     /** Property name used as the sort key when `selectedOrder === 'member'` (selected-items display only). */
     selectedOrderMember?: string;
     /** Extract the sort key when `selectedOrder === 'member'` (overrides `selectedOrderMember`). */
-    getSelectedOrderCallback?: (item: T) => string | number;
-    /** Comparator used when `selectedOrder === 'custom'`; standard `(a,b) => number` contract. */
+    getSelectedOrderCallback?: (ctx: ItemContext<T>) => string | number;
+    /**
+     * Comparator used when `selectedOrder === 'custom'`; the standard `Array.prototype.sort`
+     * `(a, b) => number` contract (the one positional exception — it is handed to `sort`).
+     */
     selectedOrderCompareCallback?: (a: T, b: T) => number;
 
     /**
@@ -460,22 +515,22 @@ export interface MultiSelectConfig<T = any> {
      * value (falling back to the display value when an option has none).
      */
     fullTitleMember?: string;
-    /** Callback to extract the full title from an item (takes precedence over `fullTitleMember`). */
-    getFullTitleCallback?: (item: T) => string;
+    /** Callback to extract the full title from an option (takes precedence over `fullTitleMember`). */
+    getFullTitleCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Callback to add custom CSS classes to badges - return string or array of class names.
-     * Additive 2nd arg: receives the badge's {@link BadgeContentRenderContext} when invoked during
-     * a badge render (the same context {@link renderBadgeContentCallback} gets), so classes can react
-     * to `displayMode` / `isInPopover` / presentation. Optional — one-argument callbacks keep working.
+     * `ctx` is the badge's {@link BadgeContentRenderContext} (the same one
+     * {@link renderBadgeContentCallback} gets), so classes can react to `displayMode` /
+     * `isInPopover` / presentation.
      */
-    getBadgeClassCallback?: (item: T, context?: BadgeContentRenderContext) => string | string[];
+    getBadgeClassCallback?: (ctx: BadgeContentRenderContext<T>) => string | string[];
     /** Callback to inject custom CSS into Shadow DOM - return CSS string for styling custom classes */
-    customStylesCallback?: () => string;
+    getCustomStylesCallback?: (ctx: MultiSelectContext<T>) => string | null;
     /**
      * Static CSS string injected into the Shadow DOM (attribute alternative to
-     * `customStylesCallback`, via the `custom-styles` attribute). The value is a
+     * `getCustomStylesCallback`, via the `custom-styles` attribute). The value is a
      * raw stylesheet — selectors and all — dropped verbatim into the same
-     * replaceable style slot. `customStylesCallback` wins when both are set.
+     * replaceable style slot. `getCustomStylesCallback` wins when both are set.
      */
     customStyles?: string;
 
@@ -484,15 +539,15 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Callback to extract the search value from an item. Internal search needs a **string**;
      * an object (e.g. `{ title, zip }`) is for your own `searchCallback`, which receives it via
-     * `context.entries` — internal search then falls back to the display value. Called once
+     * `ctx.entries` — internal search then falls back to the display value. Called once
      * per item; the result is cached until the options change.
      */
-    getSearchValueCallback?: (item: T) => string | object;
+    getSearchValueCallback?: (ctx: ItemContext<T>) => string | object;
 
     /** Member property name for icon extraction */
     iconMember?: string;
-    /** Callback to extract icon from item */
-    getIconCallback?: (item: T) => string;
+    /** Callback to extract the icon from an option (`ctx.item`) */
+    getIconCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Reserve a fixed-width icon gutter on every option row, even rows that have no
      * icon. Off by default (icon-less rows pull their label into the gutter). Turn it
@@ -504,8 +559,8 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for subtitle extraction */
     subtitleMember?: string;
-    /** Callback to extract subtitle from item */
-    getSubtitleCallback?: (item: T) => string;
+    /** Callback to extract the subtitle from an option (`ctx.item`) */
+    getSubtitleCallback?: (ctx: ItemContext<T>) => string;
 
     // ========================================================================
     // TREE OF OPTIONS (hierarchical, always fully expanded)
@@ -521,7 +576,7 @@ export interface MultiSelectConfig<T = any> {
     /** Member property name holding each option's materialized dot-path (e.g. "1.2.3"). */
     pathMember?: string;
     /** Callback returning an option's materialized dot-path (takes precedence over pathMember). */
-    getPathCallback?: (item: T) => string;
+    getPathCallback?: (ctx: ItemContext<T>) => string;
     /** Member holding an option's parent path (otherwise derived from its path). */
     parentPathMember?: string;
     /** Member holding an option's depth/level (otherwise derived from its path). */
@@ -539,11 +594,11 @@ export interface MultiSelectConfig<T = any> {
     isSelectableMember?: string;
     /**
      * Callback deciding whether a tree node is selectable (takes precedence over
-     * `isSelectableMember`). Receives the built tree node, so `node.hasChildren` /
-     * `node.level` are available — e.g. `(node) => !node.hasChildren` for a
+     * `isSelectableMember`). `ctx.node` is the built tree node, so `node.hasChildren` /
+     * `node.level` are available — e.g. `({ node }) => !node.hasChildren` for a
      * leaves-only tree. Tree mode only.
      */
-    getIsSelectableCallback?: (node: LTreeNode<T>) => boolean;
+    getIsSelectableCallback?: (ctx: TreeNodeContext<T>) => boolean;
 
     /**
      * Tree checkbox interaction. `cascade` (default) checks a node's whole subtree
@@ -566,15 +621,14 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for group extraction */
     groupMember?: string;
-    /** Callback to extract group from item */
-    getGroupCallback?: (item: T) => string;
+    /** Callback to extract the group from an option (`ctx.item`) */
+    getGroupCallback?: (ctx: ItemContext<T>) => string;
     /**
-     * Callback to customize group label content (can return HTML). Receives the group name and a
-     * {@link GroupLabelRenderContext} with the group's members and selection (e.g. `selectedCount`),
-     * so a custom header can show a per-group count. The second argument is additive — existing
-     * one-argument callbacks keep working.
+     * Callback to customize group label content (can return HTML). `ctx` is a
+     * {@link GroupLabelRenderContext}: `groupName` plus the group's members and selection
+     * (e.g. `selectedCount`), so a custom header can show a per-group count.
      */
-    renderGroupLabelContentCallback?: (groupName: string, context: GroupLabelRenderContext<T>) => string | HTMLElement;
+    renderGroupLabelContentCallback?: (ctx: GroupLabelRenderContext<T>) => string | HTMLElement;
     /**
      * Group-header selection in a flat (non-tree) grouped, multi-select list.
      * - `none` (default) — group headers are inert labels.
@@ -588,49 +642,50 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for disabled state extraction */
     disabledMember?: string;
-    /** Callback to extract disabled state from item */
-    getDisabledCallback?: (item: T) => boolean;
+    /** Callback deciding whether an option (`ctx.item`) is disabled (overrides `disabledMember`) */
+    getIsDisabledCallback?: (ctx: ItemContext<T>) => boolean;
 
     // ========================================================================
     // CUSTOM RENDERING CALLBACKS
     // ========================================================================
 
-    /** Custom renderer for dropdown option content - return HTML string or HTMLElement */
-    renderOptionContentCallback?: (item: T, context: OptionContentRenderContext) => string | HTMLElement;
+    /**
+     * Custom renderer for dropdown option content - return HTML string or HTMLElement. A
+     * `[data-action]` element inside fires the `action` event (`source: 'option'`, `option`)
+     * instead of toggling the row.
+     */
+    renderOptionContentCallback?: (ctx: OptionContentRenderContext<T>) => string | HTMLElement;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */
-    renderBadgeContentCallback?: (item: T, context: BadgeContentRenderContext) => string | HTMLElement;
+    renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
     /**
      * Custom renderer for the WHOLE badge (main badges area) — return HTML string or HTMLElement
      * for the entire pill/card, not just its content. Unlike renderBadgeContentCallback (which fills
      * the built-in pill), this replaces the badge markup entirely. The component wraps your output in
      * a `.ms__badge.ms__badge--custom` element carrying `data-value`, and delegates removal to any
-     * element inside it with `data-action="remove"` (or the built-in `.ms__badge-remove` class) — so
-     * put a remove control in your markup and the component handles the deselect. Falls back to the
+     * element inside it with `data-ms-action="remove"` (or the built-in `.ms__badge-remove` class) — so
+     * put a remove control in your markup and the component handles the deselect. A `[data-action]`
+     * element inside fires the `action` event (`source: 'badge'`, `option`). Falls back to the
      * default pill for a given item if the callback returns null/empty. Main badges area only (the
      * selected-items popover keeps using renderSelectedItemContentCallback).
      */
-    renderBadgeCallback?: (item: T, context: BadgeContentRenderContext) => string | HTMLElement | null | undefined;
+    renderBadgeCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined;
     /**
      * Custom renderer for selected item content in the selected-items popover — return HTML string
-     * or HTMLElement. Receives a {@link BadgeContentRenderContext} (2nd arg) since a popover item
-     * is rendered through the same badge path: `isInPopover` is `true`, plus the shared
-     * presentation fields. The second argument is additive; one-argument callbacks keep working.
+     * or HTMLElement. `ctx` is a {@link BadgeContentRenderContext} (a popover item is rendered
+     * through the same badge path): `isInPopover` is `true`.
      */
-    renderSelectedItemContentCallback?: (item: T, context: BadgeContentRenderContext) => string | HTMLElement;
+    renderSelectedItemContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
     /**
      * Callback to add custom CSS classes to selected items in popover - return string or array of
-     * class names. Additive 2nd arg: receives the {@link BadgeContentRenderContext} for the popover
-     * item (`isInPopover` is `true`) — the same context {@link renderSelectedItemContentCallback}
-     * gets. Optional — one-argument callbacks keep working.
+     * class names. `ctx` is the popover item's {@link BadgeContentRenderContext} (`isInPopover`
+     * is `true`) — the same one {@link renderSelectedItemContentCallback} gets.
      */
-    getSelectedItemClassCallback?: (item: T, context?: BadgeContentRenderContext) => string | string[];
+    getSelectedItemClassCallback?: (ctx: BadgeContentRenderContext<T>) => string | string[];
     /**
      * Custom renderer for the selected item display in single-select mode — return plain text (it
-     * becomes the input value). Receives a {@link SelectedContentRenderContext} (2nd arg) carrying
-     * the shared presentation fields. The second argument is additive; one-argument callbacks keep
-     * working.
+     * becomes the input value). `ctx.item` is the selected option.
      */
-    renderSelectedContentCallback?: (item: T, context: SelectedContentRenderContext) => string;
+    renderSelectedContentCallback?: (ctx: SelectedContentRenderContext<T>) => string;
 
     // ========================================================================
     // FORM INTEGRATION & VALUE FORMATTING
@@ -646,8 +701,8 @@ export interface MultiSelectConfig<T = any> {
      * - `array` — one hidden input per value (`name[]` entries)
      */
     valueFormat?: ValueFormat;
-    /** Custom callback to format value */
-    getValueFormatCallback?: (selectedValues: (string | number)[]) => string;
+    /** Custom callback to format the submitted value (`ctx.selectedValues`, `ctx.selectedOptions`) */
+    getValueFormatCallback?: (ctx: ValueFormatContext<T>) => string;
 
     // ========================================================================
     // BOOLEAN OPTIONS (internal names with 'is' prefix)
@@ -659,8 +714,20 @@ export interface MultiSelectConfig<T = any> {
     isSearchEnabled?: boolean;
     /** Allow grouping of options (internal: isGroupsAllowed) */
     isGroupsAllowed?: boolean;
-    /** Action buttons configuration (Select All, Clear All, custom actions) */
-    actionButtons?: ActionButton<T>[];
+    /**
+     * Action buttons (core `ActionItem`s): built-ins as strings or items
+     * (`['select-all', 'clear-all']`, `{ action: 'select-all', text: 'All' }`) and custom items
+     * (`{ id: 'export', text: 'Export', onClick: (d) => … }`). None when unset.
+     */
+    actionButtons?: (MultiSelectAction | MultiSelectActionItem<T>)[];
+    /**
+     * Runs before any action item (button or `data-action` trigger) is activated: return
+     * `false` to cancel its `onClick`, the `action` event and the built-in behaviour. May be async
+     * (the item is busy meanwhile).
+     */
+    beforeActionCallback?: ((detail: MultiSelectActionEventDetail<T>) => void | false | Promise<void | false>) | null;
+    /** Twin of the `action` event (engine use; on the element, assign `el.onAction`). */
+    onAction?: ((detail: MultiSelectActionEventDetail<T>) => void) | null;
     /** Show checkboxes next to options (internal: isCheckboxesShown) */
     isCheckboxesShown?: boolean;
     /** Keep Select All/Clear All buttons fixed at top while scrolling (internal: isActionsSticky) */
@@ -690,8 +757,8 @@ export interface MultiSelectConfig<T = any> {
      * Allow adding new options not in the list (internal: isAddNewAllowed).
      * When on and a search yields no matches, the empty dropdown shows a clickable
      * "add new" prompt (text from `addNewText` / `getAddNewTextCallback`) instead of
-     * the `emptyMessage`; choosing it (click or Enter) fires the `add` event and, if
-     * `addNewCallback` is set, materializes + selects the created option.
+     * the `emptyMessage`; choosing it (click or Enter) runs `beforeAddCallback` and fires
+     * the `add` event.
      */
     isAddNewAllowed?: boolean;
     /**
@@ -701,13 +768,13 @@ export interface MultiSelectConfig<T = any> {
      */
     addNewText?: string;
     /**
-     * Dynamically compute the "add new" prompt label from the typed text. Takes precedence
-     * over `addNewText`. Returns plain text (inserted as text, not HTML). Use it for i18n or
-     * context-aware wording, e.g. `(v) => \`Add new member: ${v}\``.
+     * Dynamically compute the "add new" prompt label from the typed text (`ctx.value`). Takes
+     * precedence over `addNewText`. Returns plain text (inserted as text, not HTML). Use it for
+     * i18n or context-aware wording, e.g. `({ value }) => \`Add new member: ${value}\``.
      */
-    getAddNewTextCallback?: ((value: string) => string) | null;
+    getAddNewTextCallback?: ((ctx: AddContext<T>) => string) | null;
     /**
-     * Template for the pending prompt shown (spinner + this text) while an async `addNewCallback`
+     * Template for the pending prompt shown (spinner + this text) while an async `beforeAddCallback`
      * is in flight. `{value}` is replaced with the (HTML-escaped) typed text. Default:
      * `Adding "{value}"…`. (internal: addNewPendingText)
      */
@@ -927,110 +994,99 @@ export interface MultiSelectConfig<T = any> {
     // CALLBACK FUNCTIONS
     // ========================================================================
 
-    /** Pre-process the search term before any search (internal or `searchCallback`). Return a rewritten term, or null to prevent the search. */
-    beforeSearchCallback?: ((searchTerm: string) => string | null) | null;
+    /**
+     * Runs before any search (internal or `searchCallback`) with `ctx.term`. Return a rewritten
+     * term (string) to search for that instead, `false` to skip the search (the full list shows),
+     * or nothing to continue.
+     */
+    beforeSearchCallback?: ((ctx: BeforeSearchContext<T>) => string | false | void) | null;
     /**
      * Prepare the term for matching (runs after `beforeSearchCallback`). Replaces the default
      * preparation (trim + `normalizeSearchText` per `searchBehavior`, or compiling a pattern
      * for `searchMatch: 'regex'`).
      *
-     * - `context.target === 'internal'`: return a **string** (used as-is — normalize it to
+     * - `ctx.target === 'internal'`: return a **string** (used as-is — normalize it to
      *   match the prepared option values, e.g. with `normalizeSearchText`) or a **RegExp**
      *   (tested against the raw search value, whatever `searchMatch` is). E.g. turn `ha-324/56`
      *   into `/ha\W*324\W*56/i`.
-     * - `context.target === 'callback'`: return anything — it reaches `searchCallback` as
-     *   `context.searchTerm`, objects included.
+     * - `ctx.target === 'callback'`: return anything — it reaches `searchCallback` as
+     *   `ctx.searchTerm`, objects included.
      *
-     * `null` / `undefined` / `''` means no search.
+     * `ctx.term` is the term to prepare. `null` / `undefined` / `''` means no search.
      */
-    getSearchTermCallback?: ((term: string, context: SearchTermContext) => PreparedSearchTerm) | null;
+    getSearchTermCallback?: ((ctx: SearchTermCallbackContext<T>) => PreparedSearchTerm) | null;
     /**
-     * Interceptor: runs before an option is selected via user interaction.
-     * Receives the option about to be added and the current selection (before the change).
-     * Return `false` to block the selection; return `true`/`undefined` to allow. Return a
-     * **string** to block AND surface it as a message (see `showMessage`) — the touch-safe
-     * way to explain a veto in the fullscreen overlay, where page-level UI is hidden behind
-     * it. Silent otherwise — a blocked action fires no event. Bypassed by programmatic
-     * `setSelected` and the Select-All action button.
+     * Runs before an option is selected by a user gesture (`ctx.source`: a row, a group checkbox,
+     * Select-All, …) — once per option, also for bulk gestures. Return `false` to block it (a
+     * vetoed option fires no event; the rest of a bulk change still applies); return nothing to
+     * allow. Explain a veto with `ctx.controller.showMessage(…)` — the touch-safe way, visible
+     * in the fullscreen overlay. May be async. Bypassed by programmatic `setSelected`.
      */
-    beforeSelectCallback?: ((option: T, selectedOptions: T[]) => boolean | string | void) | null;
+    beforeSelectCallback?: ((ctx: BeforeSelectContext<T>) => void | false | Promise<void | false>) | null;
     /**
-     * Interceptor: runs before an option is deselected via user interaction — the dropdown
-     * option toggle, a badge's remove (×) button, the selected-items popover's remove button,
-     * and the "remove hidden" badge (checked per item). Receives the option about to be
-     * removed and the current selection (before the change). Return `false` to block the
-     * deselection; return `true`/`undefined` to allow. Return a **string** to block AND
-     * surface it as a message (see `showMessage`). Silent otherwise — a blocked action fires
-     * no event. Bypassed by programmatic `setSelected` and the Clear-All action button.
+     * Runs before an option is deselected by a user gesture — the dropdown row toggle, a badge /
+     * popover remove (×), the "+N more" remove, a group checkbox, Clear-All, the inline ✕ —
+     * once per option. Return `false` to block it; nothing to allow. May be async. Bypassed by
+     * programmatic `setSelected` and form reset.
      */
-    beforeDeselectCallback?: ((option: T, selectedOptions: T[]) => boolean | string | void) | null;
+    beforeDeselectCallback?: ((ctx: BeforeDeselectContext<T>) => void | false | Promise<void | false>) | null;
     /**
      * Your own search (a search engine like FlexSearch, a server, …), sync or async:
-     * `(searchTerm, signal, context) => options[] | Promise<options[]>`. Replaces internal
-     * search; `searchBehavior` / `searchMatch` don't apply.
+     * `(ctx) => options[] | Promise<options[]>`. Replaces internal search; `searchBehavior` /
+     * `searchMatch` don't apply.
      *
-     * - `searchTerm` — the typed term (after `beforeSearchCallback`).
-     * - `signal` — an `AbortSignal` that fires when a newer search supersedes this one (or the
+     * - `ctx.term` — the typed term (after `beforeSearchCallback`).
+     * - `ctx.signal` — an `AbortSignal` that fires when a newer search supersedes this one (or the
      *   component is destroyed). Wire it into your `fetch`; ignoring it is fine — stale results
      *   are discarded.
-     * - `context.searchTerm` — the term from `getSearchTermCallback` (may be an object).
-     * - `context.entries` — every option with its raw search value, built on first access.
+     * - `ctx.searchTerm` — the term from `getSearchTermCallback` (may be an object).
+     * - `ctx.entries` — every option with its raw search value, built on first access.
      */
-    searchCallback?: ((searchTerm: string, signal: AbortSignal, context: SearchCallbackContext<T>) => T[] | Promise<T[]>) | null;
+    searchCallback?: ((ctx: MultiSelectSearchContext<T>) => T[] | Promise<T[]>) | null;
     /**
-     * Callback to create the new option object from the typed text when `isAddNewAllowed` is on.
-     * Return (or resolve to) the new option — it is appended to the list and auto-selected. The
-     * returned `T` can be a rich option object (icon/subtitle/custom-render fields and all): it flows
-     * through the same `get*` / `render*` callbacks as any other option, so the created row and its
-     * badge render exactly like the rest.
+     * Runs when the user chooses to create an option from the typed text (`ctx.value`) — the
+     * "add new" row or Enter, with `isAddNewAllowed` on. May be async (the prompt shows a spinner).
      *
-     * **Cancelable (async):** return `null` or `undefined` (or a Promise of either) to abort — nothing
-     * is added or selected, the search is left intact, and the `add` event does NOT fire. Use it for
-     * async validation, a confirm dialog, or a server round-trip that may say no. The cancel sentinel
-     * is strictly `null`/`undefined` (checked with `== null`), so a falsy-but-valid option in
-     * primitive mode (`0`, `false`, `""`) still creates normally.
-     *
-     * Omit the callback entirely to handle creation yourself via the `add` event / `onAddNew` (e.g.
-     * open a modal, POST to a server, then add the option imperatively).
+     * - return the new option → it is appended to the list, selected, and the `add` event fires
+     *   with it. A rich option object renders through the same `get*` / `render*` callbacks.
+     * - return `false` → cancel: nothing is added, the search stays, no `add` event.
+     * - return nothing (or omit the callback) → only the `add` event fires (without `option`),
+     *   so you can create the option yourself (open a modal, POST, then assign `options`).
      */
-    addNewCallback?: ((value: string) => T | null | undefined | Promise<T | null | undefined>) | null;
-    /**
-     * Event handler: the user chose to create a new option from the typed text (via the "add new"
-     * row or Enter). `value` is the typed text; `option` is the created item when `addNewCallback`
-     * produced one (absent otherwise). Mirrors the bubbling `add` CustomEvent on the element.
-     */
-    onAddNew?: ((detail: { value: string; option?: T }) => void) | null;
+    beforeAddCallback?: ((ctx: AddContext<T>) => T | false | void | Promise<T | false | void>) | null;
+    /** Twin of the `add` event (engine use; on the element, assign `el.onAdd`). */
+    onAdd?: ((detail: AddEventDetail<T>) => void) | null;
     /**
      * Intercept keyboard input before the built-in handling. Runs on every keydown (open or
-     * closed) with a {@link MultiSelectKeydownContext} carrying the event, current state, and a
-     * {@link MultiSelectKeyboardController}. Return `true` to mark the key fully handled — the
-     * component then runs none of its own key logic (you own `preventDefault`); return
-     * `false`/`undefined` to fall through to the defaults. Use it to remap keys (Vim `j`/`k`),
-     * add shortcuts (Ctrl+A → select all), or suppress a default. Property-only.
+     * closed) with a {@link KeydownContext} carrying the event and current state; drive the picker
+     * through `ctx.controller` (`focusNext()`, `toggleFocused()`, `selectAll()`, …). Return `false`
+     * to suppress the built-in handling of the key (you own `preventDefault`); return nothing to
+     * fall through. Must answer synchronously. Use it to remap keys (Vim `j`/`k`), add shortcuts
+     * (Ctrl+A → select all), or suppress a default. Property-only.
      */
-    keydownCallback?: ((context: MultiSelectKeydownContext<T>) => boolean | void) | null;
-    /** Event handler: an option was selected (fire-and-forget; return value ignored). Mirrors the bubbling `select` CustomEvent on the element. */
-    onSelect?: ((option: T) => void) | null;
-    /** Event handler: an option was deselected (fire-and-forget). Mirrors the bubbling `deselect` CustomEvent on the element. */
-    onDeselect?: ((option: T) => void) | null;
-    /** Event handler: the selection set changed (fire-and-forget). Mirrors the bubbling `change` CustomEvent on the element. */
-    onChange?: ((selectedOptions: T[]) => void) | null;
+    beforeKeydownCallback?: ((ctx: KeydownContext<T>) => void | false) | null;
+    /** Twin of the `select` event (engine use; on the element, assign `el.onSelect`). */
+    onSelect?: ((detail: SelectEventDetail<T>) => void) | null;
+    /** Twin of the `deselect` event (engine use; on the element, assign `el.onDeselect`). */
+    onDeselect?: ((detail: DeselectEventDetail<T>) => void) | null;
+    /** Twin of the `change` event (engine use; on the element, assign `el.onChange`). */
+    onChange?: ((detail: ChangeEventDetail<T>) => void) | null;
     /**
      * Formats the badges-area count/summary text: the `count` mode badge ("N selected") and the
-     * partial-mode "+X more" badge (when `moreCount` is provided). NOT the small `[N]` chip — that's
+     * partial-mode "+X more" badge (when `ctx.moreCount` is set). NOT the small `[N]` chip — that's
      * {@link getCountLabelCallback}. For i18n/pluralization.
      */
-    getCounterCallback?: ((count: number, moreCount?: number) => string) | null;
+    getCounterCallback?: ((ctx: CounterContext<T>) => string) | null;
     /**
      * Formats the small count CHIP shared by the in-input counter (`show-counter`) and each group
      * header's per-group count. Distinct from {@link getCounterCallback}, which formats the
-     * badges-area "N selected" / "+X more" text. Receives `selected` and `total`: for the in-input
-     * counter `total` is the whole option list; for a group header it's that group's member count.
-     * Return the label as plain text. Default `[selected]` (e.g. `[3]`). Set it to
-     * `` (s, t) => `${s}/${t}` `` for an "x / y" style. One callback drives both so they always
-     * read the same way.
+     * badges-area "N selected" / "+X more" text. `ctx.selectedCount` / `ctx.totalCount`: for the
+     * in-input counter `totalCount` is the whole option list; for a group header it's that group's
+     * member count (and `ctx.groupName` is set). Return the label as plain text. Default
+     * `[selected]` (e.g. `[3]`). Set it to `` ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}` ``
+     * for an "x / y" style. One callback drives both so they always read the same way.
      */
-    getCountLabelCallback?: ((selected: number, total: number) => string) | null;
+    getCountLabelCallback?: ((ctx: CountLabelContext<T>) => string) | null;
 
     // ========================================================================
     // TOOLTIP OPTIONS
@@ -1039,16 +1095,12 @@ export interface MultiSelectConfig<T = any> {
     /** Enable tooltips on selected item badges (internal: isBadgeTooltipsEnabled) */
     isBadgeTooltipsEnabled?: boolean;
     /**
-     * Callback to generate custom tooltip content for a badge. Additive 2nd arg: receives the
-     * badge's {@link BadgeContentRenderContext} (`displayMode` / `isInPopover` / presentation), the
-     * same context {@link renderBadgeContentCallback} gets. Optional — one-argument callbacks keep working.
+     * Callback to generate custom tooltip content for a badge. `ctx` is the badge's
+     * {@link BadgeContentRenderContext} — the same one {@link renderBadgeContentCallback} gets.
      */
-    getBadgeTooltipCallback?: ((item: T, context?: BadgeContentRenderContext) => string | HTMLElement) | null;
-    /**
-     * Callback to generate custom tooltip text for a remove button. Additive 2nd arg: the badge's
-     * {@link BadgeContentRenderContext}. Optional — one-argument callbacks keep working.
-     */
-    getRemoveButtonTooltipCallback?: ((item: T, context?: BadgeContentRenderContext) => string) | null;
+    getBadgeTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string | HTMLElement) | null;
+    /** Callback to generate custom tooltip text for a remove button (`ctx`: the badge's {@link BadgeContentRenderContext}). */
+    getRemoveButtonTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string) | null;
     /** Format string for remove button tooltip text. Use {0} as placeholder for item name. Default: "Remove {0}" */
     removeButtonTooltipText?: string;
     /**
@@ -1067,12 +1119,11 @@ export interface MultiSelectConfig<T = any> {
     isOptionTooltipsEnabled?: boolean;
     /**
      * Callback to generate custom tooltip content for a dropdown option. Default: display value, plus
-     * subtitle on the next line when present. Additive 2nd arg: receives the row's
-     * {@link OptionContentRenderContext} (`index`, `isSelected`, `isFocused`, `isMatched`,
-     * `isDisabled`, presentation), the same context {@link renderOptionContentCallback} gets, so an
-     * option tooltip can match how the row itself was rendered. Optional — one-argument callbacks keep working.
+     * subtitle on the next line when present. `ctx` is the row's {@link OptionContentRenderContext}
+     * (`item`, `index`, `isSelected`, `isFocused`, `isMatched`, `isDisabled`, presentation), the
+     * same one {@link renderOptionContentCallback} gets.
      */
-    getOptionTooltipCallback?: ((item: T, context?: OptionContentRenderContext) => string | HTMLElement) | null;
+    getOptionTooltipCallback?: ((ctx: OptionContentRenderContext<T>) => string | HTMLElement) | null;
     /**
      * Option tooltip placement (Floating UI `Placement`). Default `top-start`
      * (anchored to the row's start edge, so it doesn't center on a full-width row).
@@ -1096,24 +1147,43 @@ export interface MultiSelectConfig<T = any> {
     /** Container element for dropdown/hint/popover (for Shadow DOM support) */
     container?: HTMLElement | null;
 
-    /** Host element for appending hidden inputs (for form integration with shadow DOM) */
+    /**
+     * Host element: hidden form inputs are appended to it, and it is `element` on every callback
+     * `ctx` / event detail.
+     */
     hostElement?: HTMLElement;
+    /** The public facade put on every callback `ctx` / event detail (the element passes its rebuild-proof `el.controller`). */
+    controller?: MultiSelectController<T>;
 }
 
-/**
- * Event detail structure for multiselect events
- * @template T The type of data items
- */
-export interface MultiSelectEventDetail<T = any> {
-    /** Currently selected options */
+/** Detail of the `select` / `deselect` events (and the `onSelect` / `onDeselect` twins). */
+export interface SelectEventDetail<T = any> extends MultiSelectContext<T> {
+    /** The option that was selected / deselected. */
+    option: T;
+    /** The full selection after the change. */
     selectedOptions: T[];
-    /** Selected values array */
     selectedValues: (string | number)[];
-    /** The option that triggered the event (for select/deselect/add) */
-    option?: T;
-    /** The typed text that triggered the `add` event (add only) */
-    value?: string;
 }
+export type DeselectEventDetail<T = any> = SelectEventDetail<T>;
+
+/** Detail of the `change` event (and `onChange`). */
+export interface ChangeEventDetail<T = any> extends MultiSelectContext<T> {
+    selectedOptions: T[];
+    selectedValues: (string | number)[];
+}
+
+/** Detail of the `add` event (and `onAdd`). */
+export interface AddEventDetail<T = any> extends MultiSelectContext<T> {
+    /** The typed text. */
+    value: string;
+    /** The created option, when `beforeAddCallback` returned one. */
+    option?: T;
+    selectedOptions: T[];
+    selectedValues: (string | number)[];
+}
+
+/** Detail of the `ready` event (and `onReady`): the context only. */
+export type ReadyEventDetail<T = any> = MultiSelectContext<T>;
 
 /**
  * Legacy interface for backward reference
@@ -1133,17 +1203,4 @@ export interface MultiSelectOption {
     group?: string;
     /** Whether the option is disabled */
     disabled?: boolean;
-}
-
-/**
- * Legacy options interface
- * @deprecated Use MultiSelectConfig<T> instead
- */
-export interface MultiSelectOptions extends MultiSelectConfig<MultiSelectOption> {
-    options?: MultiSelectOption[];
-    searchCallback?: ((searchTerm: string, signal?: AbortSignal) => Promise<MultiSelectOption[]>) | null;
-    addNewCallback?: ((value: string) => MultiSelectOption | Promise<MultiSelectOption>) | null;
-    onSelect?: ((option: MultiSelectOption) => void) | null;
-    onDeselect?: ((option: MultiSelectOption) => void) | null;
-    onChange?: ((selectedOptions: MultiSelectOption[]) => void) | null;
 }

@@ -193,13 +193,13 @@ test.describe('focused option scrolls into view', () => {
     });
 });
 
-test.describe('keydownCallback — consumer keyboard hook', () => {
+test.describe('beforeKeydownCallback — consumer keyboard hook', () => {
     test('a custom shortcut can navigate via the controller and suppress the default', async ({ page }) => {
         const p = picker(page, 'kb-filter');
         // Bind before opening: pressing "g" jumps to the last option and swallows the key.
         await p.evaluate((el: any) => {
-            el.keydownCallback = ({ key, event, controller }: any) => {
-                if (key === 'g') { event.preventDefault(); controller.focusLast(); return true; }
+            el.beforeKeydownCallback = ({ key, event, controller }: any) => {
+                if (key === 'g') { event.preventDefault(); controller.focusLast(); return false; }
             };
         });
         await openWithKeyboard(p);
@@ -210,11 +210,11 @@ test.describe('keydownCallback — consumer keyboard hook', () => {
         await expect(p.locator('.ms__input')).toHaveValue('');
     });
 
-    test('returning falsy lets the built-in handling run', async ({ page }) => {
+    test('returning nothing lets the built-in handling run', async ({ page }) => {
         const p = picker(page, 'kb-filter');
         // A hook that only cares about "g" — every other key falls through to defaults.
         await p.evaluate((el: any) => {
-            el.keydownCallback = ({ key }: any) => (key === 'g' ? true : undefined);
+            el.beforeKeydownCallback = ({ key }: any) => (key === 'g' ? false : undefined);
         });
         await openWithKeyboard(p);
 
@@ -227,11 +227,11 @@ test.describe('keydownCallback — consumer keyboard hook', () => {
     test('controller.selectValue is a true select-all (idempotent, not a toggle)', async ({ page }) => {
         const p = picker(page, 'kb-filter');
         await p.evaluate((el: any) => {
-            el.keydownCallback = ({ key, event, controller, filteredOptions }: any) => {
+            el.beforeKeydownCallback = ({ key, event, controller, filteredOptions }: any) => {
                 if ((event.ctrlKey || event.metaKey) && key.toLowerCase() === 'a') {
                     event.preventDefault();
                     filteredOptions.forEach((o: any) => controller.selectValue(o.value));
-                    return true;
+                    return false;
                 }
             };
         });

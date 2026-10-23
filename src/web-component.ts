@@ -9,9 +9,9 @@
  * plus an event table (`static events`). Core owns parsing, validation,
  * reactivity coalescing, reflection, and the managed `on<Name>` handler
  * properties. This file keeps only what is genuinely multiselect-specific: the
- * bridge from the merged `config` to the real dropdown engine (`WebMultiSelect`
- * in `multiselect.ts`), declarative `<option>` parsing, form association, the
- * CSS-var sugar, and the debug panel.
+ * bridge from the merged `config` to the real dropdown engine (`MultiSelectEngine`
+ * in `multiselect.ts`), the public `el.controller` facade, declarative `<option>`
+ * parsing, form association, the CSS-var sugar, and the debug panel.
  *
  * Reactivity is declared per input via `on:`:
  *   - `reinit`  — data shape / layout mode → rebuild the picker.
@@ -39,13 +39,18 @@ import {
   type ElementSize,
   type MobilePresentation,
 } from '@keenmate/web-components-core';
-import { WebMultiSelect } from './multiselect';
+import { MultiSelectEngine } from './multiselect';
 import type {
   MultiSelectConfig,
-  MultiSelectEventDetail,
-  OptionContentRenderContext,
-  BadgeContentRenderContext,
+  MultiSelectContext,
+  MultiSelectController,
   MessageOptions,
+  SelectEventDetail,
+  DeselectEventDetail,
+  ChangeEventDetail,
+  AddEventDetail,
+  ReadyEventDetail,
+  MultiSelectActionEventDetail,
 } from './types';
 import { toInitialValues } from './converters';
 import { parseOptionsData, OPTIONS_FORMATS, type OptionsFormat } from './option-formats';
@@ -80,12 +85,12 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'maxHeight',               attribute: 'max-height',                  converter: toText({ default: '20rem' }),          on: 'update', description: 'Maximum height of the dropdown list before it scrolls.' },
   { configKey: 'emptyMessage',            attribute: 'empty-message',               converter: toText({ default: 'No results found' }), on: 'update', description: 'Message shown when a search yields no matches.' },
   { configKey: 'addNewText',              attribute: 'add-new-text',                converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the clickable "add new" prompt shown (when `allow-add-new` is on) in place of the empty message once a search yields no matches. `{value}` is replaced with the typed text. Default: `Add "{value}"`. A `getAddNewTextCallback` wins.' },
-  { configKey: 'addNewPendingText',       attribute: 'add-new-pending-text',        converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the pending prompt (spinner + text) shown while an async `addNewCallback` runs. `{value}` is replaced with the typed text. Default: `Adding "{value}"…`.' },
+  { configKey: 'addNewPendingText',       attribute: 'add-new-pending-text',        converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the pending prompt (spinner + text) shown while an async `beforeAddCallback` runs. `{value}` is replaced with the typed text. Default: `Adding "{value}"…`.' },
   { configKey: 'loadingMessage',          attribute: 'loading-message',             converter: toText({ default: 'Loading...' }),     on: 'update', description: 'Message shown while options are loading.' },
   { configKey: 'removeButtonTooltipText', attribute: 'remove-button-tooltip-text',  converter: toText({ isNullable: true }),            on: 'update', description: 'Tooltip text for a badge remove (×) button.' },
   { configKey: 'selectedPopoverTitle',    attribute: 'selected-popover-title',      converter: toText({ default: 'Selected Items ({count})' }), on: 'update', description: 'Header text of the selected-items popover. Translatable; the `{count}` placeholder is replaced with the current selection count (e.g. `Vybrané položky ({count})`). Default: `Selected Items ({count})`.' },
   { configKey: 'formFieldId',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
-  { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `customStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `customStylesCallback` takes precedence when both are set.' },
+  { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `getCustomStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `getCustomStylesCallback` takes precedence when both are set.' },
 
   // ── CSS-var sugar (mirrored to a host style prop in reinit()/update()) ────
   { configKey: 'dropdownWidth',           attribute: 'dropdown-width',              converter: toText({ isNullable: true }),            on: 'update', description: 'Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable.' },
@@ -201,7 +206,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
 
   // ── Render gate (element-only; NON_PICKER) ───────────────────────────────
   { configKey: 'deferRender',             attribute: 'defer',                       converter: toBool('presence'), on: 'reinit',
-    description: 'Hold the initial render. When the `defer` attribute is present on upgrade the component builds nothing (it only reserves space) — so options, callbacks (e.g. `customStylesCallback`) and event listeners can all be wired first, then released with `el.ready()` (or by removing the `defer` attribute, for server-driven frameworks). The release builds the picker ONCE with everything already in place, avoiding the upgrade-then-restyle flash. Absent (default): builds immediately on connect. Latched — once released the gate never re-closes.' },
+    description: 'Hold the initial render. When the `defer` attribute is present on upgrade the component builds nothing (it only reserves space) — so options, callbacks (e.g. `getCustomStylesCallback`) and event listeners can all be wired first, then released with `el.ready()` (or by removing the `defer` attribute, for server-driven frameworks). The release builds the picker ONCE with everything already in place, avoiding the upgrade-then-restyle flash. Absent (default): builds immediately on connect. Latched — once released the gate never re-closes.' },
 
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
@@ -210,69 +215,71 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'optionsFormat', attribute: 'data-options-format',                     converter: toEnum(OPTIONS_FORMATS, { default: 'json' }), on: 'reinit', type: "'json' | 'csv' | 'plain'", description: 'How to parse the `data-options` attribute: `json` (a JSON array of objects or [value, label] tuples), `csv` (rows split on `data-options-row-splitter`, cells on `data-options-splitter`; the first row is a header — map columns via *-member), or `plain` (bare values split on both splitters -> [value, label] tuples, value === label). Default `json`.' },
   { configKey: 'optionsSplitter', attribute: 'data-options-splitter',                 converter: toText({ default: ',' }), on: 'reinit', type: 'string', description: 'Field/cell delimiter for the `csv` and `plain` `data-options` formats. Default `,`. Escapes `\\t` `\\n` `\\r` are honoured (e.g. `data-options-splitter="\\t"` for TSV). Ignored for `json`.' },
   { configKey: 'optionsRowSplitter', attribute: 'data-options-row-splitter',          converter: toText({ default: '\n' }), on: 'reinit', type: 'string', description: 'Row/record delimiter for the `csv` and `plain` `data-options` formats. Default newline. Escapes honoured (e.g. `data-options-row-splitter=";"` for single-line data). Ignored for `json`.' },
-  { configKey: 'actionButtons',                                                      converter: toValue({ validate: (v): v is unknown[] => Array.isArray(v) }), on: 'reinit', type: 'Array<Record<string, unknown>>', description: 'Custom action buttons for the dropdown footer/header. Property-only; when unset the default Select-All / Clear buttons apply.' },
-  { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
+  { configKey: 'actionButtons',                                                      converter: toValue({ validate: (v): v is unknown[] => Array.isArray(v) }), on: 'reinit', type: "Array<'select-all' | 'clear-all' | MultiSelectActionItem>", description: 'Action buttons (core action items) in the dropdown header/footer: built-ins as strings or items (`[\'select-all\', \'clear-all\']`) and custom items (`{ id, text, icon, onClick }`). Each activation fires the `action` event. Property-only; none when unset.' },
+  { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`, `selectAll`, `clearAll`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
 
-  // ── Callbacks: data shape (structural → reinit) ──────────────────────────
-  { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(item: unknown) => string | number', description: 'Extract an option value (overrides valueMember).' },
-  { configKey: 'getPathCallback',         converter: cb(), on: 'reinit', type: '(item: unknown) => string', description: 'Extract a node tree path (enables tree mode; overrides pathMember).' },
-  { configKey: 'getGroupCallback',        converter: cb(), on: 'reinit', type: '(item: unknown) => string', description: 'Extract the group name from an option (overrides groupMember).' },
-  { configKey: 'getDisabledCallback',     converter: cb(), on: 'reinit', type: '(item: unknown) => boolean', description: 'Whether an option is disabled (overrides disabledMember).' },
-  { configKey: 'getIsSelectableCallback', converter: cb(), on: 'reinit', type: '(node: unknown) => boolean', description: 'Whether a tree node can be selected (overrides is-selectable-member).' },
-  { configKey: 'getSearchValueCallback',  converter: cb(), on: 'reinit', type: '(item: unknown) => string | object', description: 'What an option is searched against (overrides searchValueMember). Internal search needs a string; an object is for a custom searchCallback (context.entries). Computed once per item.' },
-  { configKey: 'searchCallback',          converter: cb(), on: 'reinit', type: '(searchTerm: string, signal: AbortSignal, context: { searchTerm: unknown; entries: ReadonlyArray<{ item: unknown; searchValue: unknown }> }) => unknown[] | Promise<unknown[]>', description: 'Custom / async search; return the filtered options.' },
+  // ── Callbacks: data shape (structural → reinit). Every callback takes ONE ctx ─
+  { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.item` (overrides valueMember).' },
+  { configKey: 'getPathCallback',         converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract a node tree path from `ctx.item` (enables tree mode; overrides pathMember).' },
+  { configKey: 'getGroupCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract the group name from `ctx.item` (overrides groupMember).' },
+  { configKey: 'getIsDisabledCallback',   converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => boolean', description: 'Whether the option `ctx.item` is disabled (overrides disabledMember).' },
+  { configKey: 'getIsSelectableCallback', converter: cb(), on: 'reinit', type: '(ctx: TreeNodeContext) => boolean', description: 'Whether a tree node can be selected (`ctx.item`, `ctx.node`; overrides is-selectable-member).' },
+  { configKey: 'getSearchValueCallback',  converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | object', description: 'What `ctx.item` is searched against (overrides searchValueMember). Internal search needs a string; an object is for a custom searchCallback (ctx.entries). Computed once per item.' },
+  { configKey: 'searchCallback',          converter: cb(), on: 'reinit', type: '(ctx: MultiSelectSearchContext) => unknown[] | Promise<unknown[]>', description: 'Custom / async search. `ctx.term` (typed), `ctx.signal` (aborted when superseded), `ctx.searchTerm` (from getSearchTermCallback), `ctx.entries` (every option with its search value). Return the filtered options.' },
 
   // ── Callbacks: display / render (cosmetic → update) ──────────────────────
-  { configKey: 'getDisplayValueCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Compute the display label for an option (overrides displayValueMember).' },
-  { configKey: 'getBadgeDisplayCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Compute the text shown on an option badge.' },
-  { configKey: 'getBadgeClassCallback',          converter: cb(), on: 'update', type: '(item: unknown) => string | string[]', description: 'Extra CSS class(es) for an option badge.' },
-  { configKey: 'getSelectedOrderCallback',       converter: cb(), on: 'update', type: '(item: unknown) => string | number', description: 'Sort key for the selected-items display when `selected-order="member"` (overrides `selected-order-member`).' },
-  { configKey: 'selectedOrderCompareCallback',   converter: cb(), on: 'update', type: '(a: unknown, b: unknown) => number', description: 'Comparator for the selected-items display when `selected-order="custom"`.' },
-  { configKey: 'getIconCallback',                converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Icon for an option (overrides iconMember).' },
-  { configKey: 'getSubtitleCallback',            converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Subtitle for an option (overrides subtitleMember).' },
-  { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Full title for an option (used by badges when show-badge-full-title is on).' },
-  { configKey: 'getCounterCallback',             converter: cb(), on: 'update', type: '(count: number, moreCount?: number) => string', description: 'Render the selected-count label.' },
-  { configKey: 'getCountLabelCallback',          converter: cb(), on: 'update', type: '(selected: number, total: number) => string', description: 'Format the small count chip shared by the in-input counter and each group header count (default `[selected]`; e.g. `(s,t)=>`${s}/${t}``). One callback drives both.' },
-  { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(selectedValues: (string | number)[]) => string', description: 'Serialize the selected values for form submission.' },
-  { configKey: 'getBadgeTooltipCallback',        converter: cb(), on: 'update', type: '(item: unknown) => string | HTMLElement', description: 'Tooltip content for an option badge.' },
-  { configKey: 'getOptionTooltipCallback',       converter: cb(), on: 'update', type: '(item: unknown) => string | HTMLElement', description: 'Tooltip content for an option row.' },
-  { configKey: 'getRemoveButtonTooltipCallback', converter: cb(), on: 'update', type: '(item: unknown) => string', description: 'Tooltip text for a badge remove button.' },
-  { configKey: 'getSelectedItemClassCallback',   converter: cb(), on: 'update', type: '(item: unknown) => string | string[]', description: 'Extra CSS class(es) for a selected item.' },
-  { configKey: 'renderOptionContentCallback',    converter: cb(), on: 'update', type: '(item: unknown, context: OptionContentRenderContext) => string | HTMLElement', description: 'Custom render for an option row; may return HTML or an element.' },
-  { configKey: 'renderBadgeContentCallback',     converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for a badge content (fills the built-in pill); may return HTML or an element.' },
-  { configKey: 'renderBadgeCallback',            converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement | null', description: 'Custom render for the WHOLE badge (main area), not just its content — return the entire pill/card. The component wraps it in `.ms__badge.ms__badge--custom` with `data-value` and delegates removal to any inner element with `data-action="remove"` (or `.ms__badge-remove`). Return null/empty to fall back to the default pill for that item.' },
-  { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(groupName: string, context: GroupLabelRenderContext) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element. The second arg carries the group members + selection (e.g. `context.selectedCount`) so a custom header can show a per-group count.' },
-  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(item: unknown, context: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (2nd arg carries the presentation context).' },
-  { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(item: unknown, context: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for one selected item in the popover (2nd arg is a BadgeContentRenderContext; isInPopover=true).' },
-  { configKey: 'customStylesCallback',           converter: cb(), on: 'update', type: '() => string', description: 'Returns a CSS string injected into the component via a replaceable style slot (§12.8).' },
+  { configKey: 'getDisplayValueCallback',        converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Compute the display label for `ctx.item` (overrides displayValueMember).' },
+  { configKey: 'getBadgeDisplayCallback',        converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string', description: 'Compute the text shown on a badge.' },
+  { configKey: 'getBadgeClassCallback',          converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | string[]', description: 'Extra CSS class(es) for a badge.' },
+  { configKey: 'getSelectedOrderCallback',       converter: cb(), on: 'update', type: '(ctx: ItemContext) => string | number', description: 'Sort key for the selected-items display when `selected-order="member"` (overrides `selected-order-member`).' },
+  { configKey: 'selectedOrderCompareCallback',   converter: cb(), on: 'update', type: '(a: unknown, b: unknown) => number', description: 'Comparator for the selected-items display when `selected-order="custom"` (the standard `Array.prototype.sort` contract).' },
+  { configKey: 'getIconCallback',                converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Icon for `ctx.item` (overrides iconMember).' },
+  { configKey: 'getSubtitleCallback',            converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Subtitle for `ctx.item` (overrides subtitleMember).' },
+  { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Full title for `ctx.item` (used by badges when show-badge-full-title is on).' },
+  { configKey: 'getCounterCallback',             converter: cb(), on: 'update', type: '(ctx: CounterContext) => string', description: 'Render the badges-area count text: `ctx.count` ("N selected"), plus `ctx.moreCount` for the "+X more" badge.' },
+  { configKey: 'getCountLabelCallback',          converter: cb(), on: 'update', type: '(ctx: CountLabelContext) => string', description: 'Format the small count chip shared by the in-input counter and each group header count (`ctx.selectedCount`, `ctx.totalCount`, `ctx.groupName` on a header; default `[selected]`). One callback drives both.' },
+  { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(ctx: ValueFormatContext) => string', description: 'Serialize `ctx.selectedValues` for form submission.' },
+  { configKey: 'getBadgeTooltipCallback',        converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Tooltip content for a badge.' },
+  { configKey: 'getOptionTooltipCallback',       converter: cb(), on: 'update', type: '(ctx: OptionContentRenderContext) => string | HTMLElement', description: 'Tooltip content for an option row.' },
+  { configKey: 'getRemoveButtonTooltipCallback', converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string', description: 'Tooltip text for a badge remove button.' },
+  { configKey: 'getSelectedItemClassCallback',   converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | string[]', description: 'Extra CSS class(es) for a selected item in the popover.' },
+  { configKey: 'renderOptionContentCallback',    converter: cb(), on: 'update', type: '(ctx: OptionContentRenderContext) => string | HTMLElement', description: 'Custom render for an option row; may return HTML or an element. A `[data-action]` element inside fires the `action` event (source `option`) instead of toggling the row.' },
+  { configKey: 'renderBadgeContentCallback',     converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for a badge content (fills the built-in pill); may return HTML or an element.' },
+  { configKey: 'renderBadgeCallback',            converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement | null', description: 'Custom render for the WHOLE badge (main area), not just its content — return the entire pill/card. The component wraps it in `.ms__badge.ms__badge--custom` with `data-value` and delegates removal to any inner element with `data-ms-action="remove"` (or `.ms__badge-remove`); a `[data-action]` element fires the `action` event (source `badge`). Return null/empty to fall back to the default pill for that item.' },
+  { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(ctx: GroupLabelRenderContext) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element. `ctx` carries `groupName` plus the group members + selection (e.g. `ctx.selectedCount`) so a custom header can show a per-group count.' },
+  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(ctx: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (`ctx.item`).' },
+  { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for one selected item in the popover (`ctx.isInPopover` is true).' },
+  { configKey: 'getCustomStylesCallback',        converter: cb(), on: 'update', type: '(ctx: MultiSelectContext) => string | null', description: 'Return a CSS string injected into the component via a replaceable style slot (§12.8). Takes precedence over the `custom-styles` attribute when both are set.' },
 
-  // ── Callbacks: before-hooks (behavior-shaping) ───────────────────────────
-  { configKey: 'beforeSearchCallback',    converter: cb(), on: 'update', type: '(searchTerm: string) => string | null', description: 'Runs before a search; return a rewritten term or null to veto.' },
-  { configKey: 'getSearchTermCallback',   converter: cb(), on: 'update', type: "(term: string, context: { target: 'internal' | 'callback'; behavior: string; match: string }) => string | RegExp | object | null", description: 'Prepare the search term (after beforeSearchCallback). For internal search return a string (used as-is) or RegExp; for searchCallback return anything — it arrives as context.searchTerm. Live: re-runs the current search.' },
-  { configKey: 'beforeSelectCallback',    converter: cb(), on: 'update', type: '(option: unknown, selectedOptions: unknown[]) => boolean | string | void', description: 'Runs before selecting; return false to veto, or a string to veto and show it as a message.' },
-  { configKey: 'beforeDeselectCallback',  converter: cb(), on: 'update', type: '(option: unknown, selectedOptions: unknown[]) => boolean | string | void', description: 'Runs before deselecting; return false to veto, or a string to veto and show it as a message.' },
-  { configKey: 'addNewCallback',          converter: cb(), on: 'update', type: '(value: string) => unknown | null | undefined | Promise<unknown | null | undefined>', description: 'Create a new option from the typed text. May return a rich option object (renders via the same get*/render* callbacks as any option). Async + cancelable: return null/undefined to abort (no add, no `add` event). Omit entirely to handle creation yourself via the `add` event.' },
-  { configKey: 'getAddNewTextCallback',   converter: cb(), on: 'update', type: '(value: string) => string', description: 'Dynamically compute the "add new" prompt label from the typed text (returns plain text). Takes precedence over `add-new-text`.' },
-  { configKey: 'keydownCallback',         converter: cb(), on: 'update', type: '(context: MultiSelectKeydownContext) => boolean | void', description: 'Intercept keydown before built-in handling; return true to suppress the default. Gets the event, current state, and an imperative controller.' },
+  // ── Callbacks: before-hooks (`false` cancels; a value replaces) ──────────
+  { configKey: 'beforeSearchCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSearchContext) => string | false | void | Promise<string | false | void>', description: 'Runs before a search with `ctx.term`: return a rewritten term, `false` to skip the search (the full list shows), or nothing to continue.' },
+  { configKey: 'getSearchTermCallback',   converter: cb(), on: 'update', type: "(ctx: SearchTermCallbackContext) => string | RegExp | object | null", description: 'Prepare `ctx.term` for matching (after beforeSearchCallback). For internal search (`ctx.target === "internal"`) return a string (used as-is) or RegExp; for searchCallback return anything — it arrives as ctx.searchTerm. Live: re-runs the current search.' },
+  { configKey: 'beforeSelectCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSelectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture selects an option (`ctx.option`, `ctx.source`) — once per option, also for Select-All / group checkboxes. Return `false` to veto (explain it with `ctx.controller.showMessage`). May be async.' },
+  { configKey: 'beforeDeselectCallback',  converter: cb(), on: 'update', type: '(ctx: BeforeDeselectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture deselects an option (row, badge ×, Clear-All, inline ✕, …) — once per option. Return `false` to veto. May be async.' },
+  { configKey: 'beforeAddCallback',       converter: cb(), on: 'update', type: '(ctx: AddContext) => unknown | false | void | Promise<unknown | false | void>', description: 'Runs when the user creates an option from the typed text (`ctx.value`). Return the new option (appended + selected), `false` to cancel (no `add` event), or nothing to only fire `add` and create it yourself. May be async (a spinner shows).' },
+  { configKey: 'getAddNewTextCallback',   converter: cb(), on: 'update', type: '(ctx: AddContext) => string', description: 'Compute the "add new" prompt label from `ctx.value` (returns plain text). Takes precedence over `add-new-text`.' },
+  { configKey: 'beforeKeydownCallback',   converter: cb(), on: 'update', type: '(ctx: KeydownContext) => void | false', description: 'Runs before the built-in keyboard handling (`ctx.event`, `ctx.key`, state; drive the picker via `ctx.controller`). Return `false` to suppress the built-in handling of the key. Synchronous.' },
+  { configKey: 'beforeActionCallback',    converter: cb(), on: 'update', type: '(detail: MultiSelectActionEventDetail) => void | false | Promise<void | false>', description: 'Runs before an action item (button or `data-action` trigger) activates: return `false` to cancel its onClick, the `action` event and the built-in. May be async.' },
 ];
 
-// Outward events (core §12.5). These install managed `onSelect`/`onDeselect`/
-// `onChange` handler properties — each receives the CustomEvent, exactly like
-// addEventListener. NOTE: this replaces the old bare-arg `onSelect(option)`
-// callbacks; consumers now read `e.detail.option` (breaking, rides the 2.0 bump).
+// Outward events (core §12.5). Each installs a camelCase `on<Name>` twin that core
+// calls with the detail (not the CustomEvent) right before dispatching. Details carry
+// `controller` / `element` (non-enumerable) and the presentation flags.
 type MultiSelectEvents = {
-  select: MultiSelectEventDetail;
-  deselect: MultiSelectEventDetail;
-  change: MultiSelectEventDetail;
-  add: MultiSelectEventDetail;
-  ready: undefined;
+  select: SelectEventDetail;
+  deselect: DeselectEventDetail;
+  change: ChangeEventDetail;
+  add: AddEventDetail;
+  action: MultiSelectActionEventDetail;
+  ready: ReadyEventDetail;
 };
 const EVENTS = [
-  { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
-  { name: 'deselect', description: 'An option was removed from the selection. `detail.option` is that option.' },
-  { name: 'change', description: 'The selection changed. `detail.selectedOptions`/`detail.selectedValues` are the full selection.' },
-  { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `addNewCallback` produced one.' },
-  { name: 'ready', description: 'The picker was built and painted for the first time (once per element lifetime). Fires right after the first build — synchronously during upgrade for a normal element, or when the render gate is released (`el.ready()` / removing `defer`) for a deferred one. No detail.' },
+  { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onSelect(detail)`.' },
+  { name: 'deselect', description: 'An option was removed from the selection. `detail.option` is that option. Twin: `onDeselect(detail)`.' },
+  { name: 'change', description: 'The selection changed. `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onChange(detail)`.' },
+  { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `beforeAddCallback` returned one. Twin: `onAdd(detail)`.' },
+  { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-all` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick`, before the built-in behaviour. Twin: `onAction(detail)`.' },
+  { name: 'ready', description: 'The picker was built and painted for the first time (once per element lifetime). Fires right after the first build — synchronously during upgrade for a normal element, or when the render gate is released (`el.ready()` / removing `defer`) for a deferred one. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
 ] as const;
 
 /**
@@ -280,7 +287,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, debug panel, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles']);
+const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -288,7 +295,7 @@ const CSS_VARS: Record<string, string> = {
   selectedPopoverWidth: '--ms-selected-popover-width',
 };
 
-// customStylesCallback dev-mode lint (see #checkCustomStyleVars). The set of
+// getCustomStylesCallback dev-mode lint (see #checkCustomStyleVars). The set of
 // `--ms-*` variables the stylesheet reads is computed once from the (static)
 // bundled stylesheet. Empty when the CSS isn't inlined (e.g. under vitest),
 // which the check treats as "no ground truth" and skips.
@@ -308,10 +315,10 @@ const DECLARATIVE_MEMBER_DEFAULTS: ReadonlyArray<{ key: keyof MultiSelectConfig;
   { key: 'groupMember',        member: 'group',    callbackKey: 'getGroupCallback' },
   { key: 'iconMember',         member: 'icon',     callbackKey: 'getIconCallback' },
   { key: 'subtitleMember',     member: 'subtitle', callbackKey: 'getSubtitleCallback' },
-  { key: 'disabledMember',     member: 'disabled', callbackKey: 'getDisabledCallback' },
+  { key: 'disabledMember',     member: 'disabled', callbackKey: 'getIsDisabledCallback' },
 ];
 
-export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents> {
+export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents, MultiSelectController<T>> {
   // Opt into the form-associated custom element lifecycle so form.reset() and
   // form.elements see the control.
   static formAssociated = true;
@@ -319,15 +326,17 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   protected static override inputs = INPUTS;
   protected static override events = EVENTS;
 
-  // Type-only: core installs the managed accessors at runtime (§12.5).
-  declare onSelect: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
-  declare onDeselect: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
-  declare onChange: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
-  declare onAdd: ((e: CustomEvent<MultiSelectEventDetail<T>>) => void) | null;
-  declare onReady: ((e: CustomEvent<undefined>) => void) | null;
+  // Type-only: core installs the `on<Name>` twins at runtime (§12.5); each is
+  // called with the event detail (not the CustomEvent), right before the event.
+  declare onSelect: ((detail: SelectEventDetail<T>) => void) | null;
+  declare onDeselect: ((detail: DeselectEventDetail<T>) => void) | null;
+  declare onChange: ((detail: ChangeEventDetail<T>) => void) | null;
+  declare onAdd: ((detail: AddEventDetail<T>) => void) | null;
+  declare onAction: ((detail: MultiSelectActionEventDetail<T>) => void) | null;
+  declare onReady: ((detail: ReadyEventDetail<T>) => void) | null;
 
   #shadow: ShadowRoot;
-  #picker?: WebMultiSelect<T>;
+  #picker?: MultiSelectEngine<T>;
   #container?: HTMLDivElement;
   // The `initial-values` JSON applied at the last build. Lets a rebuild (reinit)
   // tell an explicit `initial-values` change (honour the new values) apart from a
@@ -337,7 +346,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   // the first build. Latched — the gate never re-closes. See #renderHeld().
   #released = false;
   #customStyles: StyleSlot | null = null;
-  // Dev-mode customStylesCallback lint: unknown --ms-* names already warned about.
+  // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
   #warnedCssVars = new Set<string>();
 
   // Declarative <option>/<optgroup> state (parsed once from light DOM).
@@ -403,7 +412,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /** Cosmetic change: mirror CSS vars / custom styles / debug, patch the picker in place. */
   protected override update(partial: Record<string, unknown>): void {
     this.#mirrorCssVars(partial);
-    if ('customStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
+    if ('getCustomStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
     if ('showDebugInfo' in partial) this.#syncDebugPanel();
 
     // Everything else goes to the live picker as an in-place patch. Forward `null`
@@ -567,7 +576,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
       delete this.#container!.dataset.initialValues;
     }
 
-    this.#picker = new WebMultiSelect<T>(this.#container!, cfg as any);
+    this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
     this.#applyCustomStyles();
     this.#syncDebugPanel();
     // A fresh picker starts 'floating'; re-assert the resolved presentation so a
@@ -598,7 +607,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     container.setAttribute('data-multiselect', '');
     if (this.className) container.className = this.className;
     this.#shadow.appendChild(container);
-    // Per-instance slot for customStylesCallback CSS, kept at the top of the
+    // Per-instance slot for getCustomStylesCallback CSS, kept at the top of the
     // root so consumer @import/@font-face rules work; re-setting replaces it.
     this.#customStyles = createStyleSlot(this.#shadow, { position: 'first', className: 'ms-custom-styles' });
     this.#container = container;
@@ -650,46 +659,19 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
       }
     }
 
-    // Counter callback default (matches the historical fallback text).
-    if (!cfg.getCounterCallback) {
-      cfg.getCounterCallback = (count: number, moreCount?: number) =>
-        moreCount !== undefined ? `+${moreCount} more` : `${count} selected`;
-    }
+    // Event bridges: the engine builds each detail (with the context) and reports it
+    // through its on* options; the element dispatches it (core calls the on<Name> twin).
+    cfg.onSelect = (detail: SelectEventDetail<T>) => this.emit('select', detail);
+    cfg.onDeselect = (detail: DeselectEventDetail<T>) => this.emit('deselect', detail);
+    cfg.onChange = (detail: ChangeEventDetail<T>) => this.emit('change', detail);
+    cfg.onAdd = (detail: AddEventDetail<T>) => this.emit('add', detail);
+    cfg.onAction = (detail: MultiSelectActionEventDetail<T>) => this.emit('action', detail);
 
-    // Event bridges: the picker fires these; we re-emit as bubbling/composed
-    // CustomEvents (the managed on<Name> handler properties fire as listeners).
-    cfg.onSelect = (option: T) => {
-      this.emit('select', {
-        option,
-        selectedOptions: this.#picker?.getSelected() ?? [],
-        selectedValues: this.#collectSelectedValues(),
-      });
-    };
-    cfg.onDeselect = (option: T) => {
-      this.emit('deselect', {
-        option,
-        selectedOptions: this.#picker?.getSelected() ?? [],
-        selectedValues: this.#collectSelectedValues(),
-      });
-    };
-    cfg.onChange = (selectedOptions: T[]) => {
-      this.emit('change', {
-        selectedOptions,
-        selectedValues: this.#collectSelectedValues(),
-      });
-    };
-    cfg.onAddNew = (detail: { value: string; option?: T }) => {
-      this.emit('add', {
-        value: detail.value,
-        option: detail.option,
-        selectedOptions: this.#picker?.getSelected() ?? [],
-        selectedValues: this.#collectSelectedValues(),
-      });
-    };
-
-    // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs.
+    // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
+    // carry THIS element and its (rebuild-proof) controller, not the engine's own.
     cfg.container = this.#shadow as unknown as HTMLElement;
     cfg.hostElement = this;
+    cfg.controller = this.controller;
     return cfg;
   }
 
@@ -714,7 +696,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
     if (!slot) return;
     // The JS callback wins when both are set; the `custom-styles` attribute is the
     // static fallback (raw CSS string). Neither → clear the slot.
-    const callback = this.config.customStylesCallback as (() => string | null | undefined) | null | undefined;
+    const callback = this.config.getCustomStylesCallback as ((ctx: MultiSelectContext<T>) => string | null | undefined) | null | undefined;
     const staticCss = (this.config.customStyles as string | null | undefined) ?? null;
     if (typeof callback !== 'function') {
       slot.set(staticCss);
@@ -722,18 +704,18 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
       return;
     }
     try {
-      const css = callback();
+      const css = callback(this.withContext({}) as unknown as MultiSelectContext<T>);
       slot.set(css);
       if (import.meta.env?.DEV && css) this.#checkCustomStyleVars(css);
     } catch (e) {
-      dataLogger.warn('[MultiSelectElement] customStylesCallback threw', e);
+      dataLogger.warn('[MultiSelectElement] getCustomStylesCallback threw', e);
       // Callback blew up — fall back to the static attribute CSS if present.
       slot.set(staticCss);
     }
   }
 
   /**
-   * Dev-only lint: warn when `customStylesCallback` *sets* a `--ms-*` variable
+   * Dev-only lint: warn when `getCustomStylesCallback` *sets* a `--ms-*` variable
    * that no web-multiselect style ever reads (`var(--ms-…)`) — a misspelled or
    * renamed variable fails silently otherwise (e.g. `--ms-badge-text-background`
    * instead of `--ms-badge-text-bg`). Guarded by `import.meta.env.DEV`, so it's
@@ -750,7 +732,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
       if (this.#warnedCssVars.has(name)) continue;
       this.#warnedCssVars.add(name);
       console.warn(
-        `[web-multiselect] customStylesCallback sets "${name}", which no ` +
+        `[web-multiselect] getCustomStylesCallback sets "${name}", which no ` +
           `web-multiselect style consumes — it will have no effect.` +
           (suggestions.length ? ` Did you mean: ${suggestions.join(', ')}?` : '') +
           ` (If it's for your own custom-rendered content, ignore this.)`
@@ -923,7 +905,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
    * `options` setter. Assign `el.options = …` when the SET changed (a new array, items
    * added/removed/reordered); call `refresh()` when the same objects were mutated in place
    * (e.g. toggling a `disabled` flag) or when external state a render callback reads
-   * (`getDisabledCallback`, an i18n label map, custom renderers) changed — there is nothing to
+   * (`getIsDisabledCallback`, an i18n label map, custom renderers) changed — there is nothing to
    * assign in that case. Silent: fires no select/deselect/change. No-op before the picker is
    * built (while a `defer` gate is held, options/callbacks are wired and land on release).
    */
@@ -935,9 +917,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /**
    * Surface a transient message ("toast") on top of the component — visible even in the
    * fullscreen overlay, where page-level UI is hidden behind the sheet. Content is text or
-   * an element; `opts.variant` sets the tone and `opts.duration` the auto-dismiss (0 =
-   * sticky). Also reached automatically when a `beforeSelect`/`beforeDeselect` callback
-   * returns a reason string.
+   * an element; `opts.type` sets the tone and `opts.autoHideMs` the auto-dismiss (0 =
+   * sticky). Same as `el.controller.showMessage` — the way a veto callback explains itself.
    */
   showMessage(content: string | HTMLElement, opts?: MessageOptions): void {
     this.flush();
@@ -1047,7 +1028,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
    * Release the `defer` render gate: build the picker now (once), with every
    * option, callback and listener wired while deferred already in place. No-op
    * when the element wasn't deferred or is already built. `flush()` first so a
-   * synchronous `el.options = …; el.customStylesCallback = …; el.ready()` lands
+   * synchronous `el.options = …; el.getCustomStylesCallback = …; el.ready()` lands
    * those pending writes in the single build rather than after it. Latched — the
    * gate never re-closes. Fires the `ready` event on the first build.
    */
@@ -1060,6 +1041,58 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents>
   /** Whether the picker has been built (the `ready` event has fired). False while a `defer` gate is still held. */
   get isReady(): boolean {
     return this.hasAttribute('is-ready');
+  }
+
+  /**
+   * The public facade (`el.controller`, and `controller` on every callback ctx and event
+   * detail). Delegates to the current engine, so it survives rebuilds; applies pending property
+   * writes first (`flush`). Reads return empty values before the first build.
+   */
+  protected override createController(): MultiSelectController<T> {
+    const engine = () => {
+      this.flush();
+      return this.#picker?.getController();
+    };
+    const call = <K extends keyof MultiSelectController<T>>(name: K) =>
+      ((...args: unknown[]) => (engine()?.[name] as ((...a: unknown[]) => unknown) | undefined)?.(...args)) as MultiSelectController<T>[K];
+    return {
+      getSelected: () => engine()?.getSelected() ?? [],
+      getValue: () => engine()?.getValue() ?? null,
+      getOptions: () => engine()?.getOptions() ?? [],
+      get isOpen() { return engine()?.isOpen ?? false; },
+      setSelected: call('setSelected'),
+      selectAll: call('selectAll'),
+      clearAll: call('clearAll'),
+      toggleValue: call('toggleValue'),
+      selectValue: call('selectValue'),
+      deselectValue: call('deselectValue'),
+      toggleFocused: call('toggleFocused'),
+      open: call('open'),
+      close: call('close'),
+      toggle: call('toggle'),
+      search: call('search'),
+      clearSearch: call('clearSearch'),
+      scrollToValue: (value) => engine()?.scrollToValue(value) ?? false,
+      scrollToGroup: (group) => engine()?.scrollToGroup(group) ?? false,
+      scrollToIndex: (index) => engine()?.scrollToIndex(index) ?? false,
+      refresh: call('refresh'),
+      focusNext: call('focusNext'),
+      focusPrevious: call('focusPrevious'),
+      focusFirst: call('focusFirst'),
+      focusLast: call('focusLast'),
+      focusPageUp: call('focusPageUp'),
+      focusPageDown: call('focusPageDown'),
+      focusNextMatch: call('focusNextMatch'),
+      focusPreviousMatch: call('focusPreviousMatch'),
+      focusIndex: call('focusIndex'),
+      showMessage: call('showMessage'),
+      hideMessage: call('hideMessage'),
+    };
+  }
+
+  /** Presentation flags on every event detail the element emits itself (e.g. `ready`). */
+  protected override eventContext(): object | undefined {
+    return this.#picker?.presentationCtx();
   }
 }
 
