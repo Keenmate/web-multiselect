@@ -126,3 +126,30 @@ describe('tree mode — selection', () => {
         expect(el.getValue()).not.toContain('apple');
     });
 });
+
+describe('tree cascade — the select / deselect veto runs on the toggled node', () => {
+    it('a vetoed branch toggle changes nothing; an allowed one cascades', async () => {
+        const seen: string[] = [];
+        el.beforeSelectCallback = ({ option, source }: any) => {
+            seen.push(`${option.value}:${source}`);
+            if (option.value === 'fruit') return false;
+        };
+        await el.whenSettled();
+        el.controller.toggleValue('fruit');
+        expect(el.getValue()).toEqual([]);
+        el.controller.toggleValue('veg');
+        expect(el.getValue()).toEqual(['veg']);
+        expect(seen).toEqual(['fruit:option', 'veg:option']);
+    });
+
+    it('unchecking a fully-checked branch asks beforeDeselectCallback', async () => {
+        const seen: string[] = [];
+        el.beforeDeselectCallback = ({ option }: any) => { seen.push(option.value); return false; };
+        await el.whenSettled();
+        el.controller.toggleValue('apple');   // checks apple + gala
+        expect(el.getValue()).toEqual(['apple']);
+        el.controller.toggleValue('apple');   // uncheck → vetoed
+        expect(seen).toEqual(['apple']);
+        expect(el.getValue()).toEqual(['apple']);
+    });
+});

@@ -3416,9 +3416,8 @@ export class MultiSelectEngine<T = any> {
             if (node) {
                 // The veto runs on the clicked node: a deselect when its subtree is fully
                 // checked, else a select (the cascade then flips the whole subtree).
-                const atoms = index.atomsUnder.get(node.path) ?? [];
                 const checked = new Set(expandToAtoms(index, this.selectedValues));
-                const isChecked = atoms.length > 0 && atoms.every(a => checked.has(a));
+                const isChecked = nodeCheckState(index, node, checked) === 'checked';
                 void then(this.vetoOne(isChecked ? 'deselect' : 'select', option, 'option'), (isAllowed) => {
                     if (!isAllowed) return;
                     this.toggleTreeCascade(node);
