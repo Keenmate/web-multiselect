@@ -43,12 +43,12 @@ Behavior:
 - Compact display
 
 Customize counter text:
-select.getCounterCallback = (count) => {
+select.getCounterCallback = ({ count }) => {
   return count === 1 ? '1 item' : `${count} items`;
 };
 
 Or with internationalization:
-select.getCounterCallback = (count) => {
+select.getCounterCallback = ({ count }) => {
   if (count === 0) return 'No items';
   if (count === 1) return '1 item selected';
   return `${count} items selected`;
@@ -76,8 +76,8 @@ Display:
 "JavaScript +2"
 
 Customize:
-select.getBadgeDisplayCallback = (option) => {
-  return option.label.substring(0, 10);  // Truncate
+select.getBadgeDisplayCallback = ({ item }) => {
+  return item.label.substring(0, 10);  // Truncate
 };
 
 Use when:
@@ -204,22 +204,22 @@ Tooltip placements:
 - bottom-start, bottom-end
 
 Customize tooltip content:
-select.getBadgeTooltipCallback = (option) => {
-  return `${option.label}: ${option.description}`;
+select.getBadgeTooltipCallback = ({ item }) => {
+  return `${item.label}: ${item.description}`;
 };
 
 Or return HTMLElement:
-select.getBadgeTooltipCallback = (option) => {
+select.getBadgeTooltipCallback = ({ item }) => {
   const div = document.createElement('div');
   div.innerHTML = `
-    <strong>${option.label}</strong><br>
-    ${option.description}
+    <strong>${item.label}</strong><br>
+    ${item.description}
   `;
   return div;
 };
 
 Tooltip for count/compact badge:
-select.getCounterCallback = (count, moreCount) => {
+select.getCounterCallback = ({ count, moreCount }) => {
   if (moreCount) {
     return `${count} total (${moreCount} more)`;
   }
@@ -241,11 +241,11 @@ Popover shows:
 - Custom rendering via callback
 
 Customize popover content:
-select.renderSelectedItemContentCallback = (option) => {
+select.renderSelectedItemContentCallback = ({ item }) => {
   return `
     <div class="custom-item">
-      <img src="${option.avatar}" />
-      <span>${option.label}</span>
+      <img src="${item.avatar}" />
+      <span>${item.label}</span>
     </div>
   `;
 };
@@ -281,15 +281,15 @@ CUSTOM BADGE CLASSES
 --------------------
 Add custom CSS classes to badges:
 
-select.getBadgeClassCallback = (option) => {
-  return `badge-${option.priority}`;
+select.getBadgeClassCallback = ({ item }) => {
+  return `badge-${item.priority}`;
 };
 
 Or multiple classes:
-select.getBadgeClassCallback = (option) => {
+select.getBadgeClassCallback = ({ item }) => {
   const classes = ['custom-badge'];
-  if (option.isNew) classes.push('badge-new');
-  if (option.priority === 'high') classes.push('badge-urgent');
+  if (item.isNew) classes.push('badge-new');
+  if (item.priority === 'high') classes.push('badge-urgent');
   return classes;
 };
 
@@ -301,19 +301,19 @@ Then style via CSS:
 </style>
 
 IMPORTANT: Shadow DOM prevents direct styling
-Use --ml-badge-* CSS variables or customStylesCallback
+Use --ms-badge-* CSS variables or getCustomStylesCallback
 
 CUSTOM BADGE DISPLAY
 --------------------
 Control badge text (different from dropdown display):
 
-select.getBadgeDisplayCallback = (option) => {
-  return option.shortName || option.label;
+select.getBadgeDisplayCallback = ({ item }) => {
+  return item.shortName || item.label;
 };
 
 Example (initials):
-select.getBadgeDisplayCallback = (option) => {
-  return option.label
+select.getBadgeDisplayCallback = ({ item }) => {
+  return item.label
     .split(' ')
     .map(word => word[0])
     .join('')
@@ -322,10 +322,10 @@ select.getBadgeDisplayCallback = (option) => {
 // "John Doe" → "JD"
 
 Example (truncate):
-select.getBadgeDisplayCallback = (option) => {
-  return option.label.length > 20
-    ? option.label.substring(0, 17) + '...'
-    : option.label;
+select.getBadgeDisplayCallback = ({ item }) => {
+  return item.label.length > 20
+    ? item.label.substring(0, 17) + '...'
+    : item.label;
 };
 
 BADGE REMOVAL
@@ -337,15 +337,14 @@ select.addEventListener('deselect', (e) => {
   console.log('Removed:', e.detail.option);
 });
 
-Prevent removal:
-select.deselectCallback = (option) => {
+Or via the property twin (receives the detail):
+select.onDeselect = ({ option }) => console.log('Removed:', option);
+
+Prevent removal (veto before it happens — ctx.source is 'badge' for the ×):
+select.beforeDeselectCallback = ({ option, controller }) => {
   if (option.required) {
-    alert('This item cannot be removed');
-    // Re-add (workaround)
-    setTimeout(() => {
-      const values = select.getValue();
-      select.setSelected([...values, option.value]);
-    }, 0);
+    controller.showMessage('This item cannot be removed', { type: 'warning' });
+    return false;
   }
 };
 
@@ -395,7 +394,7 @@ INTERNATIONALIZATION
 --------------------
 Localize badge text:
 
-select.getCounterCallback = (count) => {
+select.getCounterCallback = ({ count }) => {
   const locale = 'es';  // Spanish
   const translations = {
     en: (n) => n === 1 ? '1 selected' : `${n} selected`,
@@ -406,7 +405,7 @@ select.getCounterCallback = (count) => {
 };
 
 Partial mode "+X more":
-select.getCounterCallback = (count, moreCount) => {
+select.getCounterCallback = ({ count, moreCount }) => {
   if (moreCount) {
     return `+${moreCount} más`;  // Spanish
   }
@@ -458,8 +457,8 @@ Auto-switch at 5:
 Compact with custom text:
 <web-multiselect badges-display-mode="compact">
 </web-multiselect>
-select.getBadgeDisplayCallback = (option) => {
-  return option.code;
+select.getBadgeDisplayCallback = ({ item }) => {
+  return item.code;
 };
 
 Partial with tooltips:

@@ -13,9 +13,11 @@ How to use the matrix:
 - Names are the **exact** identifiers from the component source (`src/types.ts`,
   `src/web-component.ts` attribute table). Attributes are kebab-case; properties/callbacks are camelCase.
 
-> Component version this inventory was generated against: **v1.12.0-rc04**, plus the current
-> `[Unreleased]` changes (the callback→event rename — `onSelect`/`onDeselect`/`onChange`,
-> `ActionButton.onClick`, `getIs*Callback` — and the `beforeSelect`/`beforeDeselect` interceptors).
+> Component version this inventory was generated against: **v1.12.0-rc04**, updated for the
+> `[Unreleased]` interaction-model change (CHANGELOG): every callback takes ONE `ctx` argument
+> (per-option callbacks read `ctx.item`; `ctx.controller` / `ctx.element` are always present), `on*`
+> properties receive the event detail, before-hooks cancel with `false`, action buttons are core
+> action items (`MultiSelectActionItem`) and every activation fires the `action` event.
 > Re-check after each minor/feature release — new rows land in the attribute table
 > (`src/web-component.ts`) and `MultiSelectConfig` (`src/types.ts`).
 
@@ -41,26 +43,26 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Subtitle member | attr/prop | `subtitle-member` / `subtitleMember` | — | Property name for subtitle | | |
 | Group member | attr/prop | `group-member` / `groupMember` | — | Property name for group | | |
 | Disabled member | attr/prop | `disabled-member` / `disabledMember` | — | Property name for disabled flag | | |
-| Value extraction callback | callback | `getValueCallback` | — | Complex value extraction | | |
-| Display value callback | callback | `getDisplayValueCallback` | — | Complex label extraction | | |
-| Search value callback | callback | `getSearchValueCallback` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
-| Icon callback | callback | `getIconCallback` | — | Computed icon per item | | |
-| Subtitle callback | callback | `getSubtitleCallback` | — | Computed subtitle per item | | |
-| Group callback | callback | `getGroupCallback` | — | Computed group per item | | |
-| Disabled callback | callback | `getDisabledCallback` | — | Computed disabled state per item | | |
+| Value extraction callback | callback | `getValueCallback({ item })` | — | Complex value extraction | | |
+| Display value callback | callback | `getDisplayValueCallback({ item })` | — | Complex label extraction | | |
+| Search value callback | callback | `getSearchValueCallback({ item })` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
+| Icon callback | callback | `getIconCallback({ item })` | — | Computed icon per item | | |
+| Subtitle callback | callback | `getSubtitleCallback({ item })` | — | Computed subtitle per item | | |
+| Group callback | callback | `getGroupCallback({ item })` | — | Computed group per item | | |
+| Disabled callback | callback | `getIsDisabledCallback({ item })` | — | Computed disabled state per item | | |
 | Initial / pre-selected values | attr | `initial-values` (JSON array) | — | Consumed at init; or `<option selected>` | | |
-| Add-new (tag creation) | attr + callback | `allow-add-new` + `addNewCallback` | `bool(false)` | Create options not in the list | | |
+| Add-new (tag creation) | attr + callback | `allow-add-new` + `beforeAddCallback({ value })` | `bool(false)` | Create options not in the list — return the option (appended + selected), `false` cancels, nothing → only the `add` event | | |
 
 ## 2. Async / hybrid search
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Custom search callback | callback | `searchCallback(term, signal, context)` | — | Sync or async `options[]`; `signal` is an `AbortSignal`; `context` = `{ searchTerm, entries }` | | |
+| Custom search callback | callback | `searchCallback({ term, signal, searchTerm, entries })` | — | Sync or async `options[]`; `signal` is an `AbortSignal`; `searchTerm` = the prepared term, `entries` = options paired with their search values | | |
 | In-flight request cancellation | callback arg | `signal` on `searchCallback` | — | Aborted when superseded / min-length / destroy | | |
 | Search debounce | attr/prop | `search-debounce` / `searchDebounce` | `0` | ms; coalesces keystroke bursts (async path only) | | |
 | Minimum search length | attr/prop | `min-search-length` / `minSearchLength` | `0` | Below threshold = no async call | | |
-| Pre-process search term | callback | `beforeSearchCallback(term)` | — | Transform/validate; return `null` to block | | |
-| Prepare search term | callback | `getSearchTermCallback(term, context)` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `context.searchTerm`) | | |
+| Pre-process search term | callback | `beforeSearchCallback({ term })` | — | Return a string to replace the term, `false` to skip the search | | |
+| Prepare search term | callback | `getSearchTermCallback({ term, target, behavior, match })` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `ctx.searchTerm`) | | |
 | Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
 | Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `isKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
 | Loading message | attr/prop | `loading-message` / `loadingMessage` | `'Loading...'` | Shown during async fetch | | |
@@ -91,7 +93,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Badges threshold mode | attr/prop | `badges-threshold-mode` / `badgesThresholdMode` | `'count'` | `count` \| `partial` after threshold | | |
 | Max visible badges (partial) | attr/prop | `badges-max-visible` / `badgesMaxVisible` | — | Limit before "+X more" badge | | |
 | In-input counter badge | attr/prop | `show-counter` / `isCounterShown` | `bool(false)` | `[3]` next to toggle | | |
-| Counter text callback (i18n) | callback | `getCounterCallback(count, moreCount?)` | — | Pluralization / "+X more" text | | |
+| Counter text callback (i18n) | callback | `getCounterCallback({ count, moreCount })` | — | Pluralization / "+X more" text | | |
 | Read selected options | method | `getSelected()` | — | Returns option objects | | |
 | Read selected value(s) | method | `getValue()` | — | Single value or array | | |
 | Read selectedValue (single) | prop (get) | `selectedValue` | — | string \| number \| array \| null | | |
@@ -104,8 +106,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Enable badge tooltips | attr/prop | `enable-badge-tooltips` / `isBadgeTooltipsEnabled` | `bool(false)` | | | |
-| Custom badge tooltip content | callback | `getBadgeTooltipCallback(item)` | — | string or HTMLElement | | |
-| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback(item)` | — | Per-item remove tooltip text | | |
+| Custom badge tooltip content | callback | `getBadgeTooltipCallback({ item, displayMode, isInPopover })` | — | string or HTMLElement | | |
+| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ item })` | — | Per-item remove tooltip text | | |
 | Remove-button tooltip format | attr/prop | `remove-button-tooltip-text` / `removeButtonTooltipText` | `'Remove {0}'` | `{0}` = item name | | |
 | Tooltip placement | attr/prop | `badge-tooltip-placement` / `badgeTooltipPlacement` | `'top'` | Floating-UI placements | | |
 | Tooltip delay | attr/prop | `badge-tooltip-delay` / `badgeTooltipDelay` | `100` | ms before show | | |
@@ -115,15 +117,15 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|
-| Custom dropdown option content | callback | `renderOptionContentCallback(item, ctx)` | HTML string or HTMLElement; ctx has index/selected/focused/matched/disabled | | |
-| Custom badge content | callback | `renderBadgeContentCallback(item, ctx)` | ctx has displayMode/isInPopover | | |
-| Custom selected-item content (popover) | callback | `renderSelectedItemContentCallback(item)` | Popover row rendering | | |
-| Custom single-select display | callback | `renderSelectedContentCallback(item)` | Plain text, single-select | | |
-| Custom group label content | callback | `renderGroupLabelContentCallback(groupName)` | HTML allowed | | |
-| Custom badge display text | callback | `getBadgeDisplayCallback(item)` | Shorter badge text vs dropdown | | |
-| Custom badge CSS class | callback | `getBadgeClassCallback(item)` | string or string[] | | |
-| Custom selected-item CSS class | callback | `getSelectedItemClassCallback(item)` | Popover row classes | | |
-| Inject custom CSS into Shadow DOM | callback | `customStylesCallback()` | Returns CSS string | | |
+| Custom dropdown option content | callback | `renderOptionContentCallback(ctx)` | HTML string or HTMLElement; `ctx` has item/index/isSelected/isFocused/isMatched/isDisabled; `data-action` elements inside fire the `action` event | | |
+| Custom badge content | callback | `renderBadgeContentCallback(ctx)` | `ctx` has item/displayMode/isInPopover | | |
+| Custom selected-item content (popover) | callback | `renderSelectedItemContentCallback({ item })` | Popover row rendering | | |
+| Custom single-select display | callback | `renderSelectedContentCallback({ item })` | Plain text, single-select | | |
+| Custom group label content | callback | `renderGroupLabelContentCallback({ groupName, … })` | HTML allowed | | |
+| Custom badge display text | callback | `getBadgeDisplayCallback({ item })` | Shorter badge text vs dropdown | | |
+| Custom badge CSS class | callback | `getBadgeClassCallback({ item })` | string or string[] | | |
+| Custom selected-item CSS class | callback | `getSelectedItemClassCallback({ item })` | Popover row classes | | |
+| Inject custom CSS into Shadow DOM | callback | `getCustomStylesCallback(ctx)` | Returns CSS string | | |
 
 > ⚠️ Rendering callbacks accept **raw HTML** — the consumer (and wrapper) must sanitize
 > user-generated content. See `docs/examples.md → HTML Injection (XSS) notice`.
@@ -132,13 +134,16 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Action buttons config | prop | `actionButtons: ActionButton[]` | — | `select-all` / `clear-all` / `custom` | | |
-| Custom action onClick | callback | `ActionButton.onClick(ms)` | — | Required for `custom` | | |
-| Dynamic visibility | callback | `ActionButton.getIsVisibleCallback(ms)` | — | Overrides static `isVisible` | | |
-| Dynamic disabled | callback | `ActionButton.getIsDisabledCallback(ms)` | — | Overrides static `isDisabled` | | |
-| Dynamic text | callback | `ActionButton.getTextCallback(ms)` | — | | | |
-| Dynamic class | callback | `ActionButton.getClassCallback(ms)` | — | | | |
-| Dynamic tooltip | callback | `ActionButton.getTooltipCallback(ms)` | — | | | |
+| Action buttons config | prop | `actionButtons: (MultiSelectActionItem \| 'select-all' \| 'clear-all')[]` | — (none render when unset) | Built-ins `{ action: 'select-all' \| 'clear-all' }` or the string shorthand; custom items `{ id, text, onClick }` | | |
+| Action item fields | prop | `text`, `icon`, `tooltip`, `cssClass`, `row`, `isVisible`, `isDisabled`, `isDanger`, `isActive` | — | Text and icon are inserted as text (not HTML); `isActive` → `aria-pressed` | | |
+| Action onClick | callback | `MultiSelectActionItem.onClick(detail)` | — | The `action` detail (`controller`, `action`, `id`, `selectedCount`, …); runs for built-ins too, before the built-in | | |
+| Dynamic visibility | callback | `MultiSelectActionItem.getIsVisibleCallback(ctx)` | — | Overrides static `isVisible` | | |
+| Dynamic disabled | callback | `MultiSelectActionItem.getIsDisabledCallback(ctx)` | — | Overrides static `isDisabled` | | |
+| Dynamic active | callback | `MultiSelectActionItem.getIsActiveCallback(ctx)` | — | Overrides static `isActive` | | |
+| Dynamic text / icon | callback | `MultiSelectActionItem.getTextCallback(ctx)` / `getIconCallback(ctx)` | — | | | |
+| Dynamic class | callback | `MultiSelectActionItem.getClassCallback(ctx)` | — | | | |
+| Dynamic tooltip | callback | `MultiSelectActionItem.getTooltipCallback(ctx)` | — | | | |
+| Cancel an action | callback | `beforeActionCallback(detail)` | — | `false` cancels the item's `onClick`, the `action` event and the built-in | | |
 | Sticky actions | attr/prop | `sticky-actions` / `isActionsSticky` | `bool(true)` | Fixed at top while scrolling | | |
 | Actions layout | attr/prop | `actions-layout` / `actionsLayout` | `'nowrap'` | `nowrap` \| `wrap` | | |
 
@@ -149,7 +154,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Enable grouping | attr/prop | `allow-groups` / `isGroupsAllowed` | `bool(true)` | | | |
 | Show checkboxes | attr/prop | `show-checkboxes` / `isCheckboxesShown` | `bool(true)` | Multi-select only | | |
 | Checkbox alignment | attr/prop | `checkbox-align` / `checkboxAlign` | `'center'` | `top` \| `center` \| `bottom` | | |
-| Disabled-option behavior | behavior | `disabled-member` / `getDisabledCallback` | — | Disabled options are non-selectable + get `.ms__option--disabled` (e2e: `disabled.spec.ts`) | | |
+| Disabled-option behavior | behavior | `disabled-member` / `getIsDisabledCallback` | — | Disabled options are non-selectable + get `.ms__option--disabled` (e2e: `disabled.spec.ts`) | | |
 
 ## 9. Virtual scrolling
 
@@ -180,25 +185,30 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 |---|---|---|---|---|---|---|
 | Form field name | attr/prop | `name` / `formFieldId` | — | Creates hidden input(s) in light DOM | | |
 | Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `csv` \| `array` | | |
-| Custom value format | callback | `getValueFormatCallback(values)` | — | Custom serialization | | |
+| Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization | | |
 
 ## 12. Events & selection interceptors
 
-Fire-and-forget notifications are **events** — available both as bubbling DOM `CustomEvent`s and as
-`on*` event-handler properties (the property is the twin of the event; the return value is ignored).
-`before*Callback`s are **interceptors** — their return value *is* consumed, so they can veto an action.
+Fire-and-forget notifications are **events** — available both as bubbling DOM `CustomEvent`s
+(`composed: false`) and as `on*` event-handler properties (the property is the twin of the event and
+receives the event **detail**; the return value is ignored). `before*Callback`s are **interceptors** —
+their return value *is* consumed: `false` cancels, nothing continues.
 
 | Feature | Surface | Identifier | Detail | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Select event | event | `select` | `{ option, selectedOptions, selectedValues }` | bubbles + composed | | |
-| Deselect event | event | `deselect` | `{ option, selectedOptions, selectedValues }` | bubbles + composed | | |
-| Change event | event | `change` | `{ selectedOptions, selectedValues }` | bubbles + composed; fires on every selection change | | |
-| Ready event | event | `ready` | — | bubbles + composed; fires once, right after the first build (see §13 `defer`) | | ✓ `defer-gate` |
-| Select handler (event prop) | prop | `onSelect(option)` | — | Property twin of the `select` event (fire-and-forget) | | |
-| Deselect handler (event prop) | prop | `onDeselect(option)` | — | Property twin of the `deselect` event | | |
-| Change handler (event prop) | prop | `onChange(selectedOptions)` | — | Property twin of the `change` event | | |
-| Block a selection (interceptor) | callback | `beforeSelectCallback(option, selectedOptions)` | returns `boolean` \| `void` | `false` vetoes; silent (no event). Bypassed by `setSelected` / Select-All. (e2e: `before-select` unit) | | |
-| Block a deselection (interceptor) | callback | `beforeDeselectCallback(option, selectedOptions)` | returns `boolean` \| `void` | `false` vetoes; covers dropdown toggle + badge × + popover × + remove-hidden. Bypassed by `setSelected` / Clear-All | | |
+| Select event | event | `select` | `{ option, selectedOptions, selectedValues }` | bubbles | | |
+| Deselect event | event | `deselect` | `{ option, selectedOptions, selectedValues }` | bubbles | | |
+| Change event | event | `change` | `{ selectedOptions, selectedValues }` | bubbles; fires on every selection change | | |
+| Ready event | event | `ready` | `{ controller, element, presentation… }` | bubbles; fires once, right after the first build (see §13 `defer`) | | ✓ `defer-gate` |
+| Add event | event | `add` | `{ value, option?, selectedOptions, selectedValues }` | bubbles; after an add-new prompt was chosen | | |
+| Action event | event | `action` | `{ action, id, item, source, selectedCount, … }` | bubbles; every action button + every `data-action` element in option / badge content or a `showMessage` element | | |
+| Select handler (event prop) | prop | `onSelect(detail)` | — | Property twin of the `select` event (fire-and-forget) | | |
+| Deselect handler (event prop) | prop | `onDeselect(detail)` | — | Property twin of the `deselect` event | | |
+| Change handler (event prop) | prop | `onChange(detail)` | — | Property twin of the `change` event | | |
+| Add / action / ready handlers (event props) | prop | `onAdd(detail)`, `onAction(detail)`, `onReady(detail)` | — | Property twins of `add` / `action` / `ready` | | |
+| Block a selection (interceptor) | callback | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` | returns `false` \| `void` (may be async) | `false` vetoes, silently — explain with `ctx.controller.showMessage(…, { type: 'warning' })`. Applies per option to bulk gestures (Select-All, group checkbox); bypassed by `setSelected`. (e2e: `before-select` unit) | | |
+| Block a deselection (interceptor) | callback | `beforeDeselectCallback(ctx)` | returns `false` \| `void` (may be async) | `false` vetoes; covers dropdown toggle + badge × + popover × + remove-hidden + Clear-All (per option). Bypassed by `setSelected` | | |
+| Intercept a key (interceptor) | callback | `beforeKeydownCallback(ctx)` | returns `false` \| `void` (sync) | `false` suppresses the built-in handling of the key | | |
 
 ## 13. Public methods & lifecycle
 
@@ -208,6 +218,7 @@ Fire-and-forget notifications are **events** — available both as bubbling DOM 
 | Get selected options | method | `getSelected()` | | | |
 | Set selected | method | `setSelected(values[])` | | | |
 | Get value | method | `getValue()` | | | |
+| Public controller | prop | `el.controller` (also `ctx.controller` / `detail.controller`) | `MultiSelectController`: `selectAll`, `clearAll`, `toggleValue`, `selectValue`, `deselectValue`, `open`/`close`, `search`, `focusNext`…, `scrollTo*`, `refresh`, `showMessage(content, { type, autoHideMs, placement })` | | |
 | Destroy | method | `destroy()` | Cleanup / teardown | | |
 | Defer first render | attr | `defer` | Present = build nothing on upgrade (reserve space only); wire options/callbacks/listeners first, then release. Closes the upgrade-then-restyle flash | | ✓ `defer-gate` |
 | Release the render gate | method | `ready()` | Build once with everything in place; latched (never re-closes). Removing the `defer` attribute releases it too (server-driven) | | ✓ `defer-gate` |

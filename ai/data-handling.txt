@@ -42,8 +42,8 @@ select.displayValueMember = 'firstName';
 select.options = users;
 
 Option 2: Callback functions
-select.getValueCallback = (user) => user.id;
-select.getDisplayValueCallback = (user) => `${user.firstName} ${user.lastName}`;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
 select.options = users;
 
 MEMBER PROPERTIES
@@ -86,13 +86,13 @@ CALLBACK FUNCTIONS
 ------------------
 Maximum flexibility with callback functions:
 
-select.getValueCallback = (item) => string | number;
-select.getDisplayValueCallback = (item) => string;
-select.getSearchValueCallback = (item) => string;
-select.getIconCallback = (item) => string;
-select.getSubtitleCallback = (item) => string;
-select.getGroupCallback = (item) => string;
-select.getDisabledCallback = (item) => boolean;
+select.getValueCallback = ({ item }) => string | number;
+select.getDisplayValueCallback = ({ item }) => string;
+select.getSearchValueCallback = ({ item }) => string;
+select.getIconCallback = ({ item }) => string;
+select.getSubtitleCallback = ({ item }) => string;
+select.getGroupCallback = ({ item }) => string;
+select.getIsDisabledCallback = ({ item }) => boolean;
 
 Example:
 select.options = [
@@ -100,11 +100,11 @@ select.options = [
   { id: 2, first: 'Jane', last: 'Smith', active: false }
 ];
 
-select.getValueCallback = (user) => user.id;
-select.getDisplayValueCallback = (user) => `${user.first} ${user.last}`;
-select.getSearchValueCallback = (user) =>
-  `${user.first} ${user.last} ${user.id}`;
-select.getDisabledCallback = (user) => !user.active;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => `${item.first} ${item.last}`;
+select.getSearchValueCallback = ({ item }) =>
+  `${item.first} ${item.last} ${item.id}`;
+select.getIsDisabledCallback = ({ item }) => !item.active;
 
 PRIORITY ORDER
 --------------
@@ -116,7 +116,7 @@ Component checks in this order:
 
 Example (callbacks override members):
 select.valueMember = 'id';  // Ignored if callback exists
-select.getValueCallback = (item) => item.userId;  // Used
+select.getValueCallback = ({ item }) => item.userId;  // Used
 
 Example (members override defaults):
 select.displayValueMember = 'name';  // Used
@@ -181,9 +181,9 @@ select.options = [
 ];
 
 Callback:
-select.getIconCallback = (lang) => {
+select.getIconCallback = ({ item }) => {
   const icons = { js: '🟨', ts: '🔷', py: '🐍' };
-  return icons[lang.code];
+  return icons[item.code];
 };
 
 Icons can be:
@@ -213,8 +213,8 @@ select.options = [
 ];
 
 Callback:
-select.getSubtitleCallback = (user) => {
-  return `${user.email} • ${user.role}`;
+select.getSubtitleCallback = ({ item }) => {
+  return `${item.email} • ${item.role}`;
 };
 
 GROUPS
@@ -235,7 +235,7 @@ select.options = [
 ];
 
 Callback:
-select.getGroupCallback = (item) => {
+select.getGroupCallback = ({ item }) => {
   return item.type === 'fruit' ? 'Fruits' : 'Vegetables';
 };
 
@@ -268,8 +268,8 @@ select.options = [
 ];
 
 Callback (conditional):
-select.getDisabledCallback = (user) => {
-  return !user.isActive || user.suspended;
+select.getIsDisabledCallback = ({ item }) => {
+  return !item.isActive || item.suspended;
 };
 
 Declarative:
@@ -315,18 +315,18 @@ interface User {
 const users: User[] = [...];
 
 // Approach 1: Callbacks (most flexible)
-select.getValueCallback = (user) => user.userId;
-select.getDisplayValueCallback = (user) =>
-  `${user.firstName} ${user.lastName}`;
-select.getSearchValueCallback = (user) =>
+select.getValueCallback = ({ item }) => item.userId;
+select.getDisplayValueCallback = ({ item }) =>
+  `${item.firstName} ${item.lastName}`;
+select.getSearchValueCallback = ({ item }) =>
   `${user.firstName} ${user.lastName} ${user.email} ${user.role}`;
-select.getIconCallback = (user) => user.avatar;
-select.getSubtitleCallback = (user) =>
-  `${user.email} • ${user.role}`;
-select.getGroupCallback = (user) => user.department;
-select.getDisabledCallback = (user) => !user.isActive;
-select.getBadgeDisplayCallback = (user) =>
-  `${user.firstName} ${user.isPremium ? '⭐' : ''}`;
+select.getIconCallback = ({ item }) => item.avatar;
+select.getSubtitleCallback = ({ item }) =>
+  `${item.email} • ${item.role}`;
+select.getGroupCallback = ({ item }) => item.department;
+select.getIsDisabledCallback = ({ item }) => !item.isActive;
+select.getBadgeDisplayCallback = ({ item }) =>
+  `${item.firstName} ${item.isPremium ? '⭐' : ''}`;
 
 select.options = users;
 
@@ -342,18 +342,18 @@ COMPUTED PROPERTIES
 -------------------
 Use callbacks for computed values:
 
-select.getDisplayValueCallback = (product) => {
-  const discount = product.discount ? ` (-${product.discount}%)` : '';
-  return `${product.name} - $${product.price}${discount}`;
+select.getDisplayValueCallback = ({ item }) => {
+  const discount = item.discount ? ` (-${item.discount}%)` : '';
+  return `${item.name} - $${item.price}${discount}`;
 };
 
-select.getSubtitleCallback = (product) => {
-  const inStock = product.stock > 0 ? 'In Stock' : 'Out of Stock';
-  return `${inStock} • ${product.category}`;
+select.getSubtitleCallback = ({ item }) => {
+  const inStock = item.stock > 0 ? 'In Stock' : 'Out of Stock';
+  return `${inStock} • ${item.category}`;
 };
 
-select.getDisabledCallback = (product) => {
-  return product.stock === 0 || !product.available;
+select.getIsDisabledCallback = ({ item }) => {
+  return item.stock === 0 || !item.available;
 };
 
 NESTED PROPERTIES
@@ -370,10 +370,10 @@ const options = [
 ];
 
 Use callbacks:
-select.getValueCallback = (user) => user.id;
-select.getDisplayValueCallback = (user) => user.name;
-select.getSubtitleCallback = (user) => user.contact.email;
-select.getGroupCallback = (user) => user.address.country;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => item.name;
+select.getSubtitleCallback = ({ item }) => item.contact.email;
+select.getGroupCallback = ({ item }) => item.address.country;
 
 ARRAY PROPERTIES
 ----------------
@@ -389,12 +389,12 @@ const options = [
 ];
 
 Use callbacks:
-select.getSearchValueCallback = (user) => {
-  return `${user.name} ${user.tags.join(' ')} ${user.skills.join(' ')}`;
+select.getSearchValueCallback = ({ item }) => {
+  return `${item.name} ${item.tags.join(' ')} ${item.skills.join(' ')}`;
 };
 
-select.getSubtitleCallback = (user) => {
-  return user.tags.join(' • ');
+select.getSubtitleCallback = ({ item }) => {
+  return item.tags.join(' • ');
 };
 
 DYNAMIC DATA
@@ -468,15 +468,15 @@ NULL/UNDEFINED VALUES
 ---------------------
 Handle missing data:
 
-select.getDisplayValueCallback = (item) => {
+select.getDisplayValueCallback = ({ item }) => {
   return item.name || 'Unknown';
 };
 
-select.getSubtitleCallback = (item) => {
+select.getSubtitleCallback = ({ item }) => {
   return item.description || '';
 };
 
-select.getDisabledCallback = (item) => {
+select.getIsDisabledCallback = ({ item }) => {
   return item.disabled ?? false;
 };
 
@@ -502,8 +502,8 @@ select.options = [
 // Searches "javascript js ecmascript"
 
 // Callback for computed search
-select.getSearchValueCallback = (lang) => {
-  return `${lang.name} ${lang.alias} ${lang.tags.join(' ')}`;
+select.getSearchValueCallback = ({ item }) => {
+  return `${item.name} ${item.alias} ${item.tags.join(' ')}`;
 };
 
 BEST PRACTICES
@@ -532,17 +532,17 @@ select.options = [
 ];
 
 User list:
-select.getValueCallback = (u) => u.id;
-select.getDisplayValueCallback = (u) => `${u.firstName} ${u.lastName}`;
-select.getSubtitleCallback = (u) => u.email;
-select.getIconCallback = (u) => u.avatar;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
+select.getSubtitleCallback = ({ item }) => item.email;
+select.getIconCallback = ({ item }) => item.avatar;
 
 Product catalog:
-select.getValueCallback = (p) => p.sku;
-select.getDisplayValueCallback = (p) => `${p.name} ($${p.price})`;
-select.getSubtitleCallback = (p) => p.category;
-select.getGroupCallback = (p) => p.brand;
-select.getDisabledCallback = (p) => p.stock === 0;
+select.getValueCallback = ({ item }) => item.sku;
+select.getDisplayValueCallback = ({ item }) => `${item.name} ($${item.price})`;
+select.getSubtitleCallback = ({ item }) => item.category;
+select.getGroupCallback = ({ item }) => item.brand;
+select.getIsDisabledCallback = ({ item }) => item.stock === 0;
 
 Country selector:
 select.options = [

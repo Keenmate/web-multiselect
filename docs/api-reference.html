@@ -133,7 +133,7 @@
                     <td><code>defer</code></td>
                     <td class="type">boolean</td>
                     <td class="default">false</td>
-                    <td>Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire <code>options</code>, callbacks (e.g. <code>customStylesCallback</code>) and listeners first, then release with <code>ready()</code> (or by removing the attribute) so it builds once, flash-free. Latched; reflects an <code>is-ready</code> attribute after building.</td>
+                    <td>Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire <code>options</code>, callbacks (e.g. <code>getCustomStylesCallback</code>) and listeners first, then release with <code>ready()</code> (or by removing the attribute) so it builds once, flash-free. Latched; reflects an <code>is-ready</code> attribute after building.</td>
                 </tr>
                 <tr>
                     <td><code>enable-search</code></td>
@@ -277,8 +277,8 @@
         </table>
 
         <!-- JAVASCRIPT OPTIONS -->
-        <h2>JavaScript Options (WebMultiSelect)</h2>
-        <p class="section-intro">These options can be passed when instantiating <code>new WebMultiSelect(element, options)</code>.</p>
+        <h2>JavaScript Options (MultiSelectEngine)</h2>
+        <p class="section-intro">These options can be passed when instantiating the standalone engine, <code>new MultiSelectEngine(element, options)</code>. For the <code>&lt;web-multiselect&gt;</code> element, set them as properties and drive it through <code>el.controller</code>.</p>
         <table>
             <thead>
                 <tr>
@@ -323,50 +323,80 @@
             <tbody>
                 <tr>
                     <td><code>searchCallback</code></td>
-                    <td class="type">(searchTerm: string, signal?: AbortSignal) => Promise&lt;MultiSelectOption[]&gt;</td>
-                    <td>Async function to load options based on search term. Returns array of options. The optional <code>signal</code> aborts when a newer search supersedes this one — forward it to <code>fetch</code> to cancel the stale request.</td>
+                    <td class="type">(ctx: { term, signal, searchTerm, entries }) =&gt; T[] | Promise&lt;T[]&gt;</td>
+                    <td>Load options for the typed <code>ctx.term</code> (sync or async). <code>ctx.signal</code> aborts when a newer search supersedes this one — forward it to <code>fetch</code> to cancel the stale request. <code>ctx.searchTerm</code> is the term from <code>getSearchTermCallback</code>; <code>ctx.entries</code> pairs every option with its search value.</td>
                 </tr>
                 <tr>
-                    <td><code>addNewCallback</code></td>
-                    <td class="type">(value: string) => MultiSelectOption | Promise&lt;MultiSelectOption&gt;</td>
-                    <td>Called when user adds a new option (when allowAddNew is true). Should return the created option.</td>
+                    <td><code>beforeAddCallback</code></td>
+                    <td class="type">(ctx: { value }) =&gt; T | false | void | Promise&lt;…&gt;</td>
+                    <td>Runs when the user adds a new option (requires <code>allowAddNew</code>). Return the created option (appended + selected), <code>false</code> to cancel, or nothing — then only the <code>add</code> event fires (create it yourself).</td>
                 </tr>
                 <tr>
                     <td><code>beforeSearchCallback</code></td>
-                    <td class="type">(searchTerm: string) => string | null</td>
-                    <td>Interceptor: pre-process the search term. Return a transformed term, or <code>null</code> to block the search.</td>
+                    <td class="type">(ctx: { term }) =&gt; string | false | void</td>
+                    <td>Interceptor: pre-process the search term. Return a string to replace the term, <code>false</code> to skip the search, nothing to continue.</td>
                 </tr>
                 <tr>
                     <td><code>beforeSelectCallback</code></td>
-                    <td class="type">(option, selectedOptions) => boolean | void</td>
-                    <td>Interceptor: runs before an interactive selection. Return <code>false</code> to block; <code>true</code>/<code>undefined</code> to allow. Silent (no event). Bypassed by <code>setSelected</code> and Select-All.</td>
+                    <td class="type">(ctx: { option, selectedOptions, selectedValues, source }) =&gt; false | void | Promise&lt;false | void&gt;</td>
+                    <td>Interceptor: runs before an interactive selection. Return <code>false</code> to veto; nothing to allow. No event fires on a veto; to explain it call <code>ctx.controller.showMessage(text, { type: 'warning' })</code> (a returned string no longer vetoes). Bulk gestures (Select-All, group checkbox, …) run it per option (<code>ctx.source</code>); <code>setSelected</code> and form reset bypass it.</td>
                 </tr>
                 <tr>
                     <td><code>beforeDeselectCallback</code></td>
-                    <td class="type">(option, selectedOptions) => boolean | void</td>
-                    <td>Interceptor: runs before an interactive deselection. Return <code>false</code> to block; <code>true</code>/<code>undefined</code> to allow. Silent (no event). Bypassed by <code>setSelected</code> and Clear-All.</td>
+                    <td class="type">(ctx: { option, selectedOptions, selectedValues, source }) =&gt; false | void | Promise&lt;false | void&gt;</td>
+                    <td>Interceptor: runs before an interactive deselection (badge ×, Clear-All, inline ✕, …). Same contract as <code>beforeSelectCallback</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>beforeKeydownCallback</code></td>
+                    <td class="type">(ctx: KeydownContext) =&gt; false | void</td>
+                    <td>Runs on every keydown before the built-in handling (synchronous). Return <code>false</code> to suppress the built-in handling of the key (call <code>ctx.event.preventDefault()</code> yourself). <code>ctx.controller</code> exposes the focus/selection methods.</td>
+                </tr>
+                <tr>
+                    <td><code>beforeActionCallback</code></td>
+                    <td class="type">(detail: MultiSelectActionEventDetail) =&gt; false | void | Promise&lt;false | void&gt;</td>
+                    <td>Runs before an action item activates. Return <code>false</code> to cancel its <code>onClick</code>, the <code>action</code> event and the built-in behaviour.</td>
                 </tr>
                 <tr>
                     <td><code>onSelect</code></td>
-                    <td class="type">(e: CustomEvent&lt;MultiSelectEventDetail&gt;) => void</td>
-                    <td>Called when an option is selected. Since v2 this is a real listener — it receives the same <code>CustomEvent</code> as <code>addEventListener('select', …)</code>, so read the payload off <code>e.detail.option</code> (not a bare argument).</td>
+                    <td class="type">(detail: SelectEventDetail) =&gt; void</td>
+                    <td>Called when an option is selected, with the event <strong>detail</strong> (not the CustomEvent): <code>el.onSelect = ({ option }) =&gt; …</code>. <code>addEventListener('select', e =&gt; e.detail…)</code> is unchanged.</td>
                 </tr>
                 <tr>
                     <td><code>onDeselect</code></td>
-                    <td class="type">(e: CustomEvent&lt;MultiSelectEventDetail&gt;) => void</td>
-                    <td>Called when an option is deselected. Receives the <code>deselect</code> CustomEvent; payload on <code>e.detail.option</code>.</td>
+                    <td class="type">(detail: DeselectEventDetail) =&gt; void</td>
+                    <td>Called when an option is deselected, with the <code>deselect</code> detail (<code>detail.option</code>).</td>
                 </tr>
                 <tr>
                     <td><code>onChange</code></td>
-                    <td class="type">(e: CustomEvent&lt;MultiSelectEventDetail&gt;) => void</td>
-                    <td>Called whenever the selection changes (after select or deselect). Receives the <code>change</code> CustomEvent; payload on <code>e.detail.selectedOptions</code> / <code>e.detail.selectedValues</code>.</td>
+                    <td class="type">(detail: ChangeEventDetail) =&gt; void</td>
+                    <td>Called whenever the selection changes, with <code>detail.selectedOptions</code> / <code>detail.selectedValues</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>onAdd</code></td>
+                    <td class="type">(detail: AddEventDetail) =&gt; void</td>
+                    <td>Called when the user adds a new option (<code>detail.value</code>, <code>detail.option</code>).</td>
+                </tr>
+                <tr>
+                    <td><code>onAction</code></td>
+                    <td class="type">(detail: MultiSelectActionEventDetail) =&gt; void</td>
+                    <td>Called for every action-button activation and every <code>data-action</code> element in option / badge content or a <code>showMessage</code> element.</td>
+                </tr>
+                <tr>
+                    <td><code>onReady</code></td>
+                    <td class="type">(detail: ReadyEventDetail) =&gt; void</td>
+                    <td>Called once after the first build (<code>detail.controller</code>, <code>detail.element</code>).</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
+                        Every callback takes ONE <code>ctx</code> argument; per-option callbacks (<code>getValueCallback</code>, <code>getDisplayValueCallback</code>, <code>getIsDisabledCallback</code>, render callbacks, …) read the option from <code>ctx.item</code>. Every <code>ctx</code> also carries <code>controller</code>, <code>element</code> and the presentation flags. The only positional exception is <code>selectedOrderCompareCallback(a, b)</code>.
+                    </td>
                 </tr>
             </tbody>
         </table>
 
         <!-- CUSTOM EVENTS -->
         <h2>Custom Events (Web Component)</h2>
-        <p class="section-intro">Events dispatched by the <code>&lt;multi-select&gt;</code> element that can be listened to via <code>addEventListener</code>.</p>
+        <p class="section-intro">Events dispatched by the <code>&lt;web-multiselect&gt;</code> element that can be listened to via <code>addEventListener</code>.</p>
         <table>
             <thead>
                 <tr>
@@ -378,30 +408,45 @@
             <tbody>
                 <tr>
                     <td><code>select</code></td>
-                    <td class="type">MultiSelectEventDetail</td>
-                    <td>Fired when an option is selected. Detail contains: option, selectedOptions.</td>
+                    <td class="type">SelectEventDetail</td>
+                    <td>Fired when an option is selected. Detail: <code>option</code>, <code>selectedOptions</code>, <code>selectedValues</code>.</td>
                 </tr>
                 <tr>
                     <td><code>deselect</code></td>
-                    <td class="type">MultiSelectEventDetail</td>
-                    <td>Fired when an option is deselected. Detail contains: option, selectedOptions.</td>
+                    <td class="type">DeselectEventDetail</td>
+                    <td>Fired when an option is deselected. Detail: <code>option</code>, <code>selectedOptions</code>, <code>selectedValues</code>.</td>
                 </tr>
                 <tr>
                     <td><code>change</code></td>
-                    <td class="type">MultiSelectEventDetail</td>
-                    <td>Fired when selection changes. Detail contains: selectedOptions, selectedValues.</td>
+                    <td class="type">ChangeEventDetail</td>
+                    <td>Fired when selection changes. Detail: <code>selectedOptions</code>, <code>selectedValues</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>add</code></td>
+                    <td class="type">AddEventDetail</td>
+                    <td>Fired when the user adds a new option from the typed text (requires <code>allow-add-new</code>). Detail: <code>value</code>, <code>option?</code> (when <code>beforeAddCallback</code> returned one), <code>selectedOptions</code>, <code>selectedValues</code>. Not fired when <code>beforeAddCallback</code> returns <code>false</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>action</code></td>
+                    <td class="type">MultiSelectActionEventDetail</td>
+                    <td>Fired for every action button (built-in or custom) and every <code>data-action</code> element inside rendered option content (<code>source: 'option'</code>, <code>detail.option</code>), badge content (<code>source: 'badge'</code>) or a <code>showMessage</code> element (<code>source: 'message'</code>). Detail: <code>action</code>, <code>id</code>, <code>item</code>, <code>source</code>, <code>sourceEvent</code>, <code>triggerElement</code>, <code>dataset</code> + the selection snapshot. Order: <code>beforeActionCallback</code> → <code>onClick</code> → <code>action</code> → built-in.</td>
                 </tr>
                 <tr>
                     <td><code>ready</code></td>
-                    <td class="type">—</td>
-                    <td>Fired once, right after the first build — synchronously during upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. No detail.</td>
+                    <td class="type">ReadyEventDetail</td>
+                    <td>Fired once, right after the first build — synchronously during upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. Detail: <code>controller</code>, <code>element</code>, presentation flags.</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
+                        All events bubble and are not composed (<code>composed: false</code>). Every detail carries <code>controller</code> (= <code>el.controller</code>) and <code>element</code> as non-enumerable properties, so <code>JSON.stringify(e.detail)</code> sees only the data.
+                    </td>
                 </tr>
             </tbody>
         </table>
 
         <!-- PUBLIC METHODS -->
         <h2>Public Methods</h2>
-        <p class="section-intro">Methods available on the MultiSelectElement or WebMultiSelect instance.</p>
+        <p class="section-intro">Methods available on the <code>&lt;web-multiselect&gt;</code> element. The element also exposes <code>el.controller</code> (<code>MultiSelectController</code>) — the public facade also passed as <code>ctx.controller</code> to every callback and event detail: <code>getSelected</code>, <code>getValue</code>, <code>getOptions</code>, <code>isOpen</code>, <code>setSelected(values, { notify })</code>, <code>selectAll</code>, <code>clearAll</code>, <code>toggleValue</code>, <code>selectValue</code>, <code>deselectValue</code>, <code>toggleFocused</code>, <code>open</code>, <code>close</code>, <code>toggle</code>, <code>search</code>, <code>clearSearch</code>, <code>scrollToValue</code> / <code>scrollToGroup</code> / <code>scrollToIndex</code> (return <code>boolean</code>), <code>refresh</code>, the focus methods (<code>focusNext</code>, <code>focusPrevious</code>, <code>focusFirst</code>, <code>focusLast</code>, <code>focusPageUp</code>, <code>focusPageDown</code>, <code>focusNextMatch</code>, <code>focusPreviousMatch</code>, <code>focusIndex</code>), <code>showMessage(content, { type, autoHideMs, placement })</code> and <code>hideMessage</code>.</p>
         <table>
             <thead>
                 <tr>
@@ -503,7 +548,7 @@
             </tbody>
         </table>
 
-        <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #34495e;">MultiSelectEventDetail</h3>
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #34495e;">SelectEventDetail / ChangeEventDetail</h3>
         <table>
             <thead>
                 <tr>
@@ -522,7 +567,7 @@
                 </tr>
                 <tr>
                     <td><code>selectedValues</code></td>
-                    <td class="type">string[]</td>
+                    <td class="type">(string | number)[]</td>
                     <td class="default">Yes</td>
                     <td>Array of selected option values.</td>
                 </tr>
@@ -530,7 +575,13 @@
                     <td><code>option</code></td>
                     <td class="type">MultiSelectOption</td>
                     <td class="default">No</td>
-                    <td>The specific option that triggered the event (for select/deselect events).</td>
+                    <td>The specific option that triggered the event (<code>SelectEventDetail</code> / <code>DeselectEventDetail</code> only).</td>
+                </tr>
+                <tr>
+                    <td><code>controller</code> / <code>element</code></td>
+                    <td class="type">MultiSelectController / HTMLElement</td>
+                    <td class="default">Yes</td>
+                    <td>The public controller and the host element (non-enumerable).</td>
                 </tr>
             </tbody>
         </table>

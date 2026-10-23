@@ -31,7 +31,8 @@ A
 -
 Accessibility → keyboard-navigation.txt
 Actions → action-buttons.txt
-addNewCallback → search-features.txt, events-callbacks.txt
+action event → action-buttons.txt, events-callbacks.txt
+add event → events-callbacks.txt, search-features.txt
 allow-add-new → search-features.txt
 allow-groups → data-handling.txt, basic-setup.txt
 API → import-patterns.txt, typescript-types.txt
@@ -47,7 +48,12 @@ badges-max-visible → display-modes.txt
 badges-position → display-modes.txt
 badges-threshold → display-modes.txt
 Badge tooltips → display-modes.txt
+beforeActionCallback → action-buttons.txt, events-callbacks.txt
+beforeAddCallback → search-features.txt, events-callbacks.txt
+beforeDeselectCallback → selection-modes.txt, events-callbacks.txt
+beforeKeydownCallback → keyboard-navigation.txt, events-callbacks.txt
 beforeSearchCallback → search-features.txt, events-callbacks.txt
+beforeSelectCallback → selection-modes.txt, events-callbacks.txt
 Browser support → basic-setup.txt, import-patterns.txt
 Buffer → virtual-scrolling.txt
 Bundlers → import-patterns.txt
@@ -56,7 +62,8 @@ Buttons → action-buttons.txt
 C
 -
 Callbacks → events-callbacks.txt, custom-rendering.txt, data-handling.txt
-changeCallback → events-callbacks.txt
+controller (el.controller / ctx.controller) → events-callbacks.txt, typescript-types.txt
+ctx (single callback argument) → events-callbacks.txt, typescript-types.txt
 Checkboxes → styling-theming.txt, basic-setup.txt
 close-on-select → selection-modes.txt
 Compact mode → display-modes.txt
@@ -67,7 +74,6 @@ CSS Variables → styling-theming.txt
 CSV format → form-integration.txt
 Custom objects → data-handling.txt
 Custom rendering → custom-rendering.txt
-customStylesCallback → styling-theming.txt, custom-rendering.txt
 
 D
 -
@@ -76,7 +82,6 @@ Data formats → data-handling.txt
 Declarative → basic-setup.txt
 defer → advanced-patterns.txt
 Deferred initialization → advanced-patterns.txt
-deselectCallback → events-callbacks.txt
 destroy() → basic-setup.txt, typescript-types.txt
 Disabled options → data-handling.txt
 Display → display-modes.txt
@@ -108,10 +113,11 @@ getBadgeClassCallback → custom-rendering.txt, styling-theming.txt
 getBadgeDisplayCallback → data-handling.txt, custom-rendering.txt
 getBadgeTooltipCallback → display-modes.txt, events-callbacks.txt
 getCounterCallback → display-modes.txt, events-callbacks.txt
-getDisabledCallback → data-handling.txt, events-callbacks.txt
+getCustomStylesCallback → styling-theming.txt, custom-rendering.txt
 getDisplayValueCallback → data-handling.txt, events-callbacks.txt
 getGroupCallback → data-handling.txt, events-callbacks.txt
 getIconCallback → data-handling.txt, events-callbacks.txt
+getIsDisabledCallback → data-handling.txt, events-callbacks.txt
 getSearchValueCallback → data-handling.txt, search-features.txt
 getSelected() → selection-modes.txt, typescript-types.txt
 getSelectedItemClassCallback → custom-rendering.txt, styling-theming.txt
@@ -176,6 +182,8 @@ Navigation → keyboard-navigation.txt
 
 O
 -
+on* twins (onSelect, onChange, onAdd, onAction, onReady …) → events-callbacks.txt
+onClick (action items) → action-buttons.txt
 Objects → data-handling.txt
 <option> → basic-setup.txt, data-handling.txt
 <optgroup> → basic-setup.txt, data-handling.txt
@@ -215,9 +223,9 @@ search-input-mode → search-features.txt
 search-mode → search-features.txt
 search-placeholder → search-features.txt
 searchValueMember → data-handling.txt, search-features.txt
-selectCallback → events-callbacks.txt
 select-all → action-buttons.txt
 Selection → selection-modes.txt
+showMessage() → events-callbacks.txt, selection-modes.txt
 setLogLevel() → logging-debugging.txt
 setCategoryLevel() → logging-debugging.txt
 setSelected() → selection-modes.txt
@@ -259,7 +267,7 @@ Vite → import-patterns.txt, basic-setup.txt
 W
 -
 Web Component → basic-setup.txt, import-patterns.txt
-WebMultiSelect → import-patterns.txt, typescript-types.txt
+MultiSelectEngine → import-patterns.txt, typescript-types.txt
 Wildcards → data-handling.txt
 
 COMMON QUESTIONS
@@ -321,6 +329,12 @@ A: → advanced-patterns.txt (deferred initialization: defer / ready)
 
 Q: I'm migrating from another multiselect library
 A: → migration-guide.txt
+
+Q: How do I prevent / veto a selection?
+A: → selection-modes.txt, events-callbacks.txt (beforeSelectCallback / beforeDeselectCallback → return false)
+
+Q: I'm upgrading from web-multiselect 2.x (old callback signatures)
+A: → migration-guide.txt (FROM WEB-MULTISELECT 2.x) and CHANGELOG.md [Unreleased]
 
 FEATURES BY CATEGORY
 ====================

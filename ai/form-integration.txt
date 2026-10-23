@@ -150,18 +150,18 @@ CUSTOM VALUE FORMAT
 -------------------
 Define custom serialization:
 
-select.getValueFormatCallback = (values) => {
-  return values.join('|');  // Pipe-separated
+select.getValueFormatCallback = ({ selectedValues }) => {
+  return selectedValues.join('|');  // Pipe-separated
 };
 
 Hidden input value:
 "value1|value2|value3"
 
 Or JSON with metadata:
-select.getValueFormatCallback = (values) => {
+select.getValueFormatCallback = ({ selectedValues }) => {
   return JSON.stringify({
-    values: values,
-    count: values.length,
+    values: selectedValues,
+    count: selectedValues.length,
     timestamp: Date.now()
   });
 };

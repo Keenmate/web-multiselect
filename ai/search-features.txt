@@ -109,19 +109,20 @@ case/accents are up to the pattern. An invalid typed pattern keeps the last vali
 
 Both search-behavior and search-match are live: changing them re-runs the current search.
 
-getSearchTermCallback(term, { target, behavior, match }):
+getSearchTermCallback({ term, target, behavior, match }):
 - target 'internal': return a string (used as-is; normalize it yourself) or a RegExp
   (tested against the raw value). null / '' = no search.
-    select.getSearchTermCallback = (t) =>
-      new RegExp(t.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+    select.getSearchTermCallback = ({ term }) =>
+      new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
     // "ha-324/56" finds "HA 324-56", "HA32456"
-- target 'callback': return anything (objects too) — arrives as context.searchTerm.
+- target 'callback': return anything (objects too) — arrives as ctx.searchTerm.
 
-searchCallback(term, signal, { searchTerm, entries }) — sync or async:
+searchCallback({ term, signal, searchTerm, entries }) — sync or async (signal is aborted
+when a newer search supersedes this one):
 - entries: [{ item, searchValue }] with the RAW getSearchValueCallback output (may be an
   object). Built on first access, each value computed once, SAME array until options change.
-    select.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.name), zip: c.zip });
-    select.searchCallback = (t, signal, { searchTerm, entries }) =>
+    select.getSearchValueCallback = ({ item }) => ({ title: normalizeSearchText(item.name), zip: item.zip });
+    select.searchCallback = ({ searchTerm, entries }) =>
       entries.filter(e => e.searchValue.zip.startsWith(searchTerm.zip)).map(e => e.item);
 - An object search value WITHOUT searchCallback: internal search uses the display value (warns).
 
@@ -205,8 +206,8 @@ select.options = [
 // Searches "javascript js ecmascript"
 
 Callback:
-select.getSearchValueCallback = (option) => {
-  return `${option.name} ${option.aliases.join(' ')} ${option.tags.join(' ')}`;
+select.getSearchValueCallback = ({ item }) => {
+  return `${item.name} ${item.aliases.join(' ')} ${item.tags.join(' ')}`;
 };
 // Searches name + aliases + tags
 
@@ -214,27 +215,17 @@ ASYNC SEARCH
 ------------
 Load options from server based on search term:
 
-select.searchCallback = async (searchTerm) => {
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+select.searchCallback = async ({ term, signal }) => {
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   const results = await response.json();
   return results;
 };
 
 IMPORTANT: Return array of options or Promise<options[]>
 
-Example with debouncing:
-let debounceTimer;
-select.searchCallback = async (searchTerm) => {
-  clearTimeout(debounceTimer);
-
-  return new Promise((resolve) => {
-    debounceTimer = setTimeout(async () => {
-      const response = await fetch(`/api/search?q=${searchTerm}`);
-      const results = await response.json();
-      resolve(results);
-    }, 300);
-  });
-};
+Debouncing is built in (search-debounce, async searchCallback only); a superseded
+request is aborted via ctx.signal:
+<web-multiselect search-debounce="300"></web-multiselect>
 
 HYBRID SEARCH
 -------------
@@ -250,9 +241,9 @@ select.options = [
   { value: 3, label: 'TypeScript' }
 ];
 
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term, signal }) => {
   // Load additional results from server
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await response.json();
 };
 
@@ -266,21 +257,24 @@ SEARCH PRE-PROCESSING
 ---------------------
 Modify search term before searching:
 
-select.beforeSearchCallback = (searchTerm) => {
+Return a string to replace the term, false to skip the search (the full list shows),
+or nothing to continue unchanged.
+
+select.beforeSearchCallback = ({ term }) => {
   // Remove accents
-  return searchTerm.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };
 
 Or validate:
-select.beforeSearchCallback = (searchTerm) => {
+select.beforeSearchCallback = ({ term }) => {
   // Only allow alphanumeric
-  const cleaned = searchTerm.replace(/[^a-z0-9]/gi, '');
-  return cleaned || null;  // Return null to cancel search
+  const cleaned = term.replace(/[^a-z0-9]/gi, '');
+  return cleaned || false;  // Return false to skip the search
 };
 
 Or transform:
-select.beforeSearchCallback = (searchTerm) => {
-  return searchTerm.toLowerCase().trim();
+select.beforeSearchCallback = ({ term }) => {
+  return term.toLowerCase().trim();
 };
 
 LOADING STATE
@@ -321,9 +315,9 @@ Option 2: Min search length
 </web-multiselect>
 
 Option 3: Async search with pagination
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term, signal }) => {
   const response = await fetch(
-    `/api/search?q=${searchTerm}&limit=50`
+    `/api/search?q=${encodeURIComponent(term)}&limit=50`, { signal }
   );
   return await response.json();
 };
@@ -333,10 +327,10 @@ SEARCH MATCHING
 Default: Case-insensitive substring match
 
 Custom matching (via searchCallback):
-select.searchCallback = async (searchTerm) => {
-  const term = searchTerm.toLowerCase();
+select.searchCallback = async ({ term: raw, controller }) => {
+  const term = raw.toLowerCase();
 
-  return select.options.filter(option => {
+  return controller.getOptions().filter(option => {
     const searchValue = option.label.toLowerCase();
 
     // Fuzzy match
@@ -346,9 +340,9 @@ select.searchCallback = async (searchTerm) => {
 };
 
 Or exact match:
-select.searchCallback = async (searchTerm) => {
-  return select.options.filter(option =>
-    option.label.toLowerCase() === searchTerm.toLowerCase()
+select.searchCallback = ({ term, controller }) => {
+  return controller.getOptions().filter(option =>
+    option.label.toLowerCase() === term.toLowerCase()
   );
 };
 
@@ -378,7 +372,10 @@ Allow users to add custom values:
 <web-multiselect allow-add-new="true">
 </web-multiselect>
 
-select.addNewCallback = (value) => {
+beforeAddCallback({ value }) → return the option (appended + selected, then the `add`
+event fires), false to cancel, or nothing to only fire `add` (create it yourself).
+
+select.beforeAddCallback = ({ value }) => {
   // Create new option
   return {
     value: value.toLowerCase(),
@@ -388,8 +385,8 @@ select.addNewCallback = (value) => {
 };
 
 Or async:
-select.addNewCallback = async (value) => {
-  // Save to server
+select.beforeAddCallback = async ({ value }) => {
+  // Save to server (a spinner shows meanwhile)
   const response = await fetch('/api/items', {
     method: 'POST',
     body: JSON.stringify({ name: value })
@@ -423,18 +420,9 @@ select.options = [...];  // Filters immediately
 
 No debouncing needed for local search
 
-For async search, add debouncing:
-let timeout;
-select.searchCallback = async (searchTerm) => {
-  clearTimeout(timeout);
-
-  return new Promise((resolve) => {
-    timeout = setTimeout(async () => {
-      const results = await fetchFromAPI(searchTerm);
-      resolve(results);
-    }, 300);
-  });
-};
+For async search, use the built-in debounce:
+<web-multiselect search-debounce="300"></web-multiselect>
+select.searchCallback = async ({ term, signal }) => fetchFromAPI(term, { signal });
 
 SEARCH CACHING
 --------------
@@ -442,18 +430,18 @@ Cache async search results:
 
 const searchCache = new Map();
 
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term, signal }) => {
   // Check cache
-  if (searchCache.has(searchTerm)) {
-    return searchCache.get(searchTerm);
+  if (searchCache.has(term)) {
+    return searchCache.get(term);
   }
 
   // Fetch from API
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   const results = await response.json();
 
   // Cache results
-  searchCache.set(searchTerm, results);
+  searchCache.set(term, results);
 
   return results;
 };
@@ -463,13 +451,15 @@ SEARCH HIGHLIGHTING
 Matching text is automatically highlighted in navigate mode
 
 Custom highlighting (via renderOptionContentCallback):
-select.renderOptionContentCallback = (option, context) => {
-  if (!context.isMatched) {
-    return option.label;
+let searchTerm = '';
+select.beforeSearchCallback = ({ term }) => { searchTerm = term; };  // remember the term
+
+select.renderOptionContentCallback = ({ item, isMatched }) => {
+  if (!isMatched || !searchTerm) {
+    return item.label;
   }
 
-  const searchTerm = select.currentSearchTerm;  // If exposed
-  const label = option.label;
+  const label = item.label;
   const index = label.toLowerCase().indexOf(searchTerm.toLowerCase());
 
   if (index === -1) return label;
@@ -491,13 +481,13 @@ select.options = [
 ];
 
 Search label + subtitle:
-select.getSearchValueCallback = (option) => {
-  return `${option.label} ${option.subtitle || ''}`;
+select.getSearchValueCallback = ({ item }) => {
+  return `${item.label} ${item.subtitle || ''}`;
 };
 
 Search all fields:
-select.getSearchValueCallback = (option) => {
-  return Object.values(option).join(' ');
+select.getSearchValueCallback = ({ item }) => {
+  return Object.values(item).join(' ');
 };
 
 DISABLING SEARCH TEMPORARILY
@@ -513,15 +503,15 @@ SEARCH ANALYTICS
 ----------------
 Track search behavior:
 
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term }) => {
   // Log search
-  analytics.track('search', { term: searchTerm });
+  analytics.track('search', { term });
 
-  const results = await fetchResults(searchTerm);
+  const results = await fetchResults(term);
 
   // Log results count
   analytics.track('search_results', {
-    term: searchTerm,
+    term,
     count: results.length
   });
 
@@ -555,15 +545,15 @@ Simple filter:
 
 Async search:
 select.minSearchLength = 3;
-select.searchCallback = async (term) => {
-  const res = await fetch(`/api/search?q=${term}`);
+select.searchCallback = async ({ term, signal }) => {
+  const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await res.json();
 };
 
 Hybrid (popular + search):
 select.keepOptionsOnSearch = true;
 select.options = [...popularItems];
-select.searchCallback = async (term) => {...};
+select.searchCallback = async ({ term, signal }) => {...};
 
 Navigate mode:
 <web-multiselect

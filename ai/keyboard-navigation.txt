@@ -206,44 +206,57 @@ Home/End: Instant jump
 
 CUSTOM KEYBOARD HANDLERS
 ------------------------
-Add custom keyboard shortcuts:
+beforeKeydownCallback(ctx) runs BEFORE all built-in keyboard handling. Return false to
+suppress the built-in handling of that key (you own preventDefault); return nothing to fall
+through to the defaults. Must answer synchronously.
 
-select.addEventListener('keydown', (e) => {
+ctx (KeydownContext): event, key, isOpen, searchTerm, focusedIndex, focusedOption,
+filteredOptions, selectedValues (real values), plus controller (the public
+MultiSelectController — focus methods included) and element.
+
+select.beforeKeydownCallback = ({ event, key, controller }) => {
   // Ctrl+A: Select all
-  if (e.ctrlKey && e.key === 'a') {
-    e.preventDefault();
-    const allValues = select.options.map(o => o.value);
-    select.setSelected(allValues);
+  if (event.ctrlKey && key === 'a') {
+    event.preventDefault();
+    controller.selectAll();
+    return false;            // skip the built-in handling
   }
 
   // Ctrl+D: Deselect all
-  if (e.ctrlKey && e.key === 'd') {
-    e.preventDefault();
-    select.setSelected([]);
+  if (event.ctrlKey && key === 'd') {
+    event.preventDefault();
+    controller.clearAll();
+    return false;
   }
 
-  // Delete: Remove focused badge
-  if (e.key === 'Delete') {
-    // Custom implementation
-  }
-});
+  // vim-style navigation
+  if (key === 'j') { event.preventDefault(); controller.focusNext(); return false; }
+  if (key === 'k') { event.preventDefault(); controller.focusPrevious(); return false; }
+
+  // anything else → built-in handling
+};
+
+Controller focus methods: focusNext(), focusPrevious(), focusFirst(), focusLast(),
+focusPageUp(), focusPageDown(), focusNextMatch(), focusPreviousMatch(), focusIndex(i),
+toggleFocused().
 
 PREVENTING DEFAULT
 ------------------
 Prevent default behavior:
 
-select.addEventListener('keydown', (e) => {
-  // Prevent form submission on Enter
-  if (e.key === 'Enter' && !select.dropdownOpen) {
-    e.preventDefault();
-    select.openDropdown();
+select.beforeKeydownCallback = ({ event, key, isOpen, controller }) => {
+  // Open instead of submitting the form on Enter
+  if (key === 'Enter' && !isOpen) {
+    event.preventDefault();
+    controller.open();
+    return false;
   }
 
   // Prevent Tab closing if needed
-  if (e.key === 'Tab') {
-    // Custom logic
+  if (key === 'Tab') {
+    // Custom logic; return false to suppress the built-in Tab behaviour
   }
-});
+};
 
 FOCUS TRAPPING
 --------------
@@ -251,13 +264,14 @@ Keep focus within dropdown:
 
 Useful for modal contexts:
 
-select.addEventListener('keydown', (e) => {
-  if (e.key === 'Tab' && select.dropdownOpen) {
-    e.preventDefault();
-    // Keep focus in dropdown
-    // Cycle through options
+select.beforeKeydownCallback = ({ event, key, isOpen, controller }) => {
+  if (key === 'Tab' && isOpen) {
+    event.preventDefault();
+    // Keep focus in dropdown — cycle through options
+    event.shiftKey ? controller.focusPrevious() : controller.focusNext();
+    return false;
   }
-});
+};
 
 KEYBOARD SHORTCUTS REFERENCE
 ----------------------------
@@ -356,12 +370,13 @@ DEBUGGING
 ---------
 Log keyboard events:
 
-select.addEventListener('keydown', (e) => {
-  console.log('Key:', e.key);
-  console.log('Ctrl:', e.ctrlKey);
-  console.log('Dropdown open:', select.dropdownOpen);
-  console.log('Focused option:', select.focusedOption);
-});
+select.beforeKeydownCallback = ({ event, key, isOpen, focusedOption }) => {
+  console.log('Key:', key);
+  console.log('Ctrl:', event.ctrlKey);
+  console.log('Dropdown open:', isOpen);
+  console.log('Focused option:', focusedOption);
+  // return nothing → built-in handling continues
+};
 
 Check focus:
 console.log('Active element:', document.activeElement);

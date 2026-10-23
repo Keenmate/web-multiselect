@@ -117,7 +117,7 @@ multiselect.setSelected(['js', 'ts']);
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
-| `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `customStylesCallback`) and listeners first, then release with `ready()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `is-ready` attribute after building |
+| `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `ready()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `is-ready` attribute after building |
 | `search-placeholder` | `string` | `'Search...'` | Placeholder text shown while search is usable. When unset and `show-search-mode-toggle` is on, the default becomes mode-aware (`Search…` in navigate, `Filter…` in filter) and switches with the toggle; an explicit value always wins and stays fixed |
 | `select-placeholder` | `string` | `'Pick an option...'` | Placeholder shown when search is disabled (`enable-search="false"`, or `search-input-mode` `readonly`/`hidden`) — the input acts as a picker, not a search box |
 | `no-data-placeholder` | `string` | - | Opt-in placeholder shown when the option list is empty, so users see there's no data without opening. Highest priority when the list is empty. Useful for cascade multiselects (a child whose parent isn't resolved yet) |
@@ -180,7 +180,7 @@ multiselect.setSelected(['js', 'ts']);
 | `fullscreen-autofocus` | `boolean` | `false` | In the phone fullscreen overlay, focus the search field on open (pops the soft keyboard immediately). Default: the sheet opens with the list visible and the keyboard closed. No effect in the floating presentation |
 | `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list (fires the `add` event) |
 | `add-new-text` | `string` | `'Add "{value}"'` | Template for the "add new" prompt shown in place of the empty message when a search has no matches. `{value}` is the typed text. `getAddNewTextCallback` wins |
-| `add-new-pending-text` | `string` | `'Adding "{value}"…'` | Template for the pending prompt (spinner + text) shown while an async `addNewCallback` runs. `{value}` is the typed text |
+| `add-new-pending-text` | `string` | `'Adding "{value}"…'` | Template for the pending prompt (spinner + text) shown while an async `beforeAddCallback` runs. `{value}` is the typed text |
 | `value-member` | `string` | - | Property name for value/ID extraction from custom objects |
 | `display-value-member` | `string` | - | Property name for display text extraction from custom objects |
 | `search-value-member` | `string` | - | Property name for search text extraction from custom objects |
@@ -209,7 +209,7 @@ multiselect.setSelected(['js', 'ts']);
 | `virtual-scroll-threshold` | `number` | `100` | Minimum items before virtual scroll activates |
 | `option-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
 | `virtual-scroll-buffer` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
-| `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `customStylesCallback`, which wins when both are set |
+| `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set |
 | `show-debug-info` | `boolean` | `false` | **Deprecated** — use per-instance logging (`el.enableLogging()`) instead. Renders an in-component debug panel |
 
 ## Properties
@@ -223,18 +223,18 @@ multiselect.options = [
 
 // Async data loading. `signal` aborts when a newer search supersedes this one —
 // forward it to fetch to cancel the stale request.
-multiselect.searchCallback = async (searchTerm, signal) => {
-  const response = await fetch(`/api/search?q=${searchTerm}`, { signal });
+multiselect.searchCallback = async ({ term, signal }) => {
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await response.json();
 };
 
 // Pre-process search terms before calling searchCallback
-multiselect.beforeSearchCallback = (searchTerm) => {
+multiselect.beforeSearchCallback = ({ term }) => {
   // Remove accents: "café" → "cafe"
-  const normalized = searchTerm.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const normalized = term.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-  // Block search if too short (return null to prevent search)
-  if (normalized.length < 2) return null;
+  // Skip the search if too short (return false to prevent search)
+  if (normalized.length < 2) return false;
 
   return normalized; // Return transformed term
 };
@@ -278,7 +278,7 @@ whatever separators the user types:
 
 ```javascript
 // "ha-324/56" finds "HA 324-56" and "HA32456"
-multiselect.getSearchTermCallback = (term) =>
+multiselect.getSearchTermCallback = ({ term }) =>
   new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
 ```
 
@@ -286,22 +286,23 @@ A string it returns is used as-is (normalize it yourself — `normalizeSearchTex
 to match the prepared option values). `null` / `''` means no search.
 
 **Your own search** (`searchCallback`) — FlexSearch, a server, anything, sync or async.
-`search-behavior` / `search-match` don't apply; you normalize however you want. The third
-argument gives you the term from `getSearchTermCallback` (any shape, with
-`context.target === 'callback'`) and every option paired with its raw search value — which may
+`search-behavior` / `search-match` don't apply; you normalize however you want. Its `ctx`
+gives you the typed `term`, the abort `signal`, `searchTerm` — the term from
+`getSearchTermCallback` (any shape, with `ctx.target === 'callback'`) — and `entries`, every
+option paired with its raw search value — which may
 be an object:
 
 ```javascript
 import { normalizeSearchText } from '@keenmate/web-multiselect';
 
-multiselect.getSearchValueCallback = (city) => ({
+multiselect.getSearchValueCallback = ({ item: city }) => ({
   title: normalizeSearchText(city.name),     // optional: the standard normalization
   zip: city.zip.replace(/\s/g, ''),
 });
-multiselect.getSearchTermCallback = (term, { target }) =>
+multiselect.getSearchTermCallback = ({ term, target }) =>
   target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
-multiselect.searchCallback = (term, signal, { searchTerm, entries }) =>
+multiselect.searchCallback = ({ searchTerm, entries }) =>
   entries
     .filter(e => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
     .map(e => e.item);
@@ -314,125 +315,144 @@ search-engine index on it. Internal search needs a string: an object search valu
 
 ```typescript
 // Interceptors — veto a selection/deselection before it happens.
-// Return false to block silently; return a string to block AND show it as a
-// warning message (see showMessage()); return true/undefined to allow. No event fires on a veto.
-// Receives the option being toggled and the current selection (before the change).
-// Note: programmatic setSelected() and the Select-All / Clear-All buttons bypass these.
-multiselect.beforeSelectCallback = (option, selectedOptions) => {
+// One ctx argument: { option, selectedOptions, selectedValues, source, controller, element, … }.
+// Return false to block; return nothing to allow. May be async. No event fires on a veto.
+// To explain a veto, show a message yourself via ctx.controller.showMessage() — a
+// returned string no longer vetoes. `ctx.source` is the gesture ('option', 'badge',
+// 'group', 'select-all', 'clear-all', 'clear'): bulk gestures (Select-All, Clear-All, a
+// group checkbox, …) run the veto per option and skip the vetoed ones.
+// Programmatic setSelected() and form reset bypass these.
+multiselect.beforeSelectCallback = ({ option, selectedOptions }) => {
   // Example: don't allow selecting "item1" while "item2" is already selected
   if (option.value === 'item1' && selectedOptions.some(o => o.value === 'item2')) {
     return false; // blocked silently
   }
 };
 
-multiselect.beforeDeselectCallback = (option, selectedOptions) => {
+multiselect.beforeDeselectCallback = ({ option, controller }) => {
   // Example: "item1" is required — can't be removed once chosen
-  if (option.value === 'item1') return 'Item 1 is required'; // blocked + message shown
+  if (option.value === 'item1') {
+    controller.showMessage('Item 1 is required', { type: 'warning' });
+    return false; // blocked + message shown
+  }
 };
 
-// Keyboard hook — runs on every keydown BEFORE the built-in handling.
-// Return true to mark the key fully handled (you own preventDefault; the
-// component runs none of its own logic for it); return false/undefined to
-// fall through to the defaults. `ctx.controller` mirrors the built-in actions.
-multiselect.keydownCallback = (ctx) => {
-  // Vim-style navigation. Returning true means you own the key — call
+// Keyboard hook — runs on every keydown BEFORE the built-in handling (synchronous).
+// Return false to suppress the built-in handling of the key (you own preventDefault);
+// return nothing to fall through to the defaults. `ctx.controller` is the public
+// controller (same object as el.controller).
+multiselect.beforeKeydownCallback = (ctx) => {
+  // Vim-style navigation. Returning false means you own the key — call
   // preventDefault() so a printable key like 'j' isn't also typed into search.
-  if (ctx.key === 'j') { ctx.event.preventDefault(); ctx.controller.focusNext(); return true; }
-  if (ctx.key === 'k') { ctx.event.preventDefault(); ctx.controller.focusPrevious(); return true; }
+  if (ctx.key === 'j') { ctx.event.preventDefault(); ctx.controller.focusNext(); return false; }
+  if (ctx.key === 'k') { ctx.event.preventDefault(); ctx.controller.focusPrevious(); return false; }
   // Ctrl+A → select all currently-filtered options (selectValue is a no-op if
   // already selected — so it's a true "select all", not a toggle/invert)
   if ((ctx.event.ctrlKey || ctx.event.metaKey) && ctx.key === 'a') {
     ctx.event.preventDefault();
     ctx.filteredOptions.forEach(o => ctx.controller.selectValue(o.value));
-    return true;
+    return false;
   }
   // ctx also exposes: event, key, isOpen, presentation, searchTerm,
-  // focusedIndex, focusedOption, filteredOptions, selectedValues.
-  // controller (keyboard-only): focusNext/Previous/First/Last, focusPageUp/Down,
-  // focusNextMatch/PreviousMatch, focusIndex, toggleFocused, selectValue,
-  // deselectValue (setSearch is a deprecated alias of search).
-  // controller (shared, same as ActionContext.controller): getSelected, getValue,
-  // getOptions, setSelected(values, { notify }), selectAll, clearAll, toggleValue,
-  // open, close, toggle, search, clearSearch, scrollToValue/Group/Index,
-  // showMessage, hideMessage.
+  // focusedIndex, focusedOption, filteredOptions, selectedValues (the real values).
+  // controller — see "Controller (el.controller)" below.
 };
 
-multiselect.onAdd = (e) => {
-  console.log('Add requested:', e.detail.value, e.detail.option);
+// Event handler properties (on* twins). Each receives the event DETAIL (not the
+// CustomEvent) and runs right before the event is dispatched.
+// addEventListener('select', (e) => e.detail.option) is unchanged.
+multiselect.onAdd = (detail) => {
+  console.log('Add requested:', detail.value, detail.option);
 };
 
-// Event handler properties. Since v2 these are real listeners: each receives
-// the same CustomEvent addEventListener('select', ...) would get, so read the
-// payload off `e.detail` — NOT as a bare argument.
-multiselect.onSelect = (e) => {
-  console.log('Selected:', e.detail.option);
+multiselect.onSelect = ({ option }) => {
+  console.log('Selected:', option);
 };
 
-multiselect.onDeselect = (e) => {
-  console.log('Deselected:', e.detail.option);
+multiselect.onDeselect = ({ option }) => {
+  console.log('Deselected:', option);
 };
 
-multiselect.onChange = (e) => {
-  console.log('Changed:', e.detail.selectedOptions, e.detail.selectedValues);
+multiselect.onChange = ({ selectedOptions, selectedValues }) => {
+  console.log('Changed:', selectedOptions, selectedValues);
+};
+
+// Every action-button activation and every data-action element inside rendered
+// option / badge content or a showMessage element (see the `action` event).
+multiselect.onAction = (detail) => {
+  console.log('Action:', detail.action, detail.id, detail.source, detail.option);
+};
+
+// Veto an action item (its onClick, the `action` event and the built-in behaviour)
+multiselect.beforeActionCallback = (detail) => {
+  if (detail.action === 'clear-all' && !confirm('Clear everything?')) return false;
 };
 
 // Badge display customization (show different text in badges vs dropdown)
-multiselect.getBadgeDisplayCallback = (item) => {
+multiselect.getBadgeDisplayCallback = ({ item }) => {
   // Show shorter text in badges (e.g., just name instead of "name (email)")
   return item.name; // Dropdown might show "John Doe (john@example.com)"
 };
 
 // Badge tooltip customization
-multiselect.getBadgeTooltipCallback = (item) => {
+multiselect.getBadgeTooltipCallback = ({ item }) => {
   return `${item.label} - ${item.subtitle}`;
 };
 
 // Option (dropdown row) tooltip customization — requires enable-option-tooltips
-multiselect.getOptionTooltipCallback = (item) => {
+multiselect.getOptionTooltipCallback = ({ item }) => {
   return `${item.label} — ${item.description}`;
 };
 
-// Action buttons (Select All, Clear All, custom actions).
-// Every button callback receives (picker, ctx): `picker` is the internal engine
-// instance (untyped); `ctx` is a typed ActionContext — selectedValues,
-// selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm,
-// presentation, controller (see the keydown controller list) and element (the host).
-// Prefer `ctx`. Optional `row` (1-based) stacks buttons into multiple rows.
+// Action buttons (core action items). None render unless you set actionButtons.
+// Built-ins: 'select-all', 'clear-all' (string shorthand or { action, … });
+// custom items are identified by `id`. Every get*Callback receives ONE ctx — the
+// selection snapshot: selectedValues, selectedOptions, options, selectedCount,
+// optionCount, isOpen, searchTerm, presentation, controller and element (the host).
+// onClick(detail) receives the `action` event detail (ctx + action, id, item,
+// source, sourceEvent, triggerElement, dataset) and runs for built-ins too
+// (before the built-in). Text and icon are plain text (not HTML).
+// Optional `row` (1-based) stacks buttons into multiple rows.
+multiselect.actionButtons = ['select-all', 'clear-all']; // shorthand (text from labels.selectAll / labels.clearAll)
+
 multiselect.actionButtons = [
   {
     action: 'select-all',
     text: 'Select All',
     tooltip: 'Select all items',
     cssClass: 'my-custom-class',
-    getIsVisibleCallback: (_, ctx) => ctx.selectedCount < 5  // Hide if 5+ selected
+    getIsVisibleCallback: (ctx) => ctx.selectedCount < 5  // Hide if 5+ selected
   },
   {
     action: 'clear-all',
     text: 'Clear All',
+    icon: '✕',
+    isDanger: true,   // destructive styling
     tooltip: 'Clear selection',
     isVisible: true,  // Static visibility
     isDisabled: false // Static disabled state
   },
   {
-    action: 'custom',
+    id: 'invert',
     text: 'Invert',
     tooltip: 'Invert selection',
-    onClick: (_, ctx) => {
+    onClick: ({ options, selectedValues, controller }) => {
       // Custom action - invert selection (assumes options with a `value` field)
-      const allValues = ctx.options.map(opt => opt.value);
-      const inverted = allValues.filter(v => !ctx.selectedValues.includes(v));
-      ctx.controller.setSelected(inverted, { notify: true }); // emit one `change`
+      const allValues = options.map(opt => opt.value);
+      const inverted = allValues.filter(v => !selectedValues.includes(v));
+      controller.setSelected(inverted, { notify: true }); // emit one `change`
     },
     // Dynamic callbacks (take priority over static properties)
-    getIsDisabledCallback: (_, ctx) => ctx.selectedCount === 0,
-    getTextCallback: (_, ctx) => ctx.selectedCount > 0 ? 'Invert' : 'Select Items First',
-    getClassCallback: (_, ctx) => ctx.selectedCount > 0 ? 'active' : 'inactive',
-    getTooltipCallback: (_, ctx) => `Invert ${ctx.selectedCount} of ${ctx.optionCount}`
+    getIsDisabledCallback: (ctx) => ctx.selectedCount === 0,
+    getTextCallback: (ctx) => ctx.selectedCount > 0 ? 'Invert' : 'Select Items First',
+    getClassCallback: (ctx) => ctx.selectedCount > 0 ? 'active' : 'inactive',
+    getTooltipCallback: (ctx) => `Invert ${ctx.selectedCount} of ${ctx.optionCount}`,
+    getIsActiveCallback: (ctx) => ctx.selectedCount > 0  // toggle state → aria-pressed
   }
 ];
 
 // Counter i18n/pluralization
-multiselect.getCounterCallback = (count, moreCount) => {
+multiselect.getCounterCallback = ({ count, moreCount }) => {
   if (moreCount !== undefined) {
     return `+${moreCount} more`; // Partial mode badge
   }
@@ -447,87 +467,92 @@ multiselect.subtitleMember = 'description';
 multiselect.groupMember = 'category';
 multiselect.disabledMember = 'isDisabled';
 
-// Data extraction - Callback functions (for complex logic)
-multiselect.getValueCallback = (item) => item.id || item.value;
-multiselect.getDisplayValueCallback = (item) => item.label || item.name;
-multiselect.getSearchValueCallback = (item) => `${item.name} ${item.tags.join(' ')}`;
-multiselect.getIconCallback = (item) => item.icon || '📄';
-multiselect.getSubtitleCallback = (item) => `${item.price} - ${item.stock} in stock`;
-multiselect.getGroupCallback = (item) => item.category;
-multiselect.getDisabledCallback = (item) => item.stock === 0;
-multiselect.getFullTitleCallback = (item) => `${item.name} (${item.email})`; // badges, with show-badge-full-title
+// Data extraction - Callback functions (for complex logic). Each takes ONE ctx;
+// the option is ctx.item.
+multiselect.getValueCallback = ({ item }) => item.id || item.value;
+multiselect.getDisplayValueCallback = ({ item }) => item.label || item.name;
+multiselect.getSearchValueCallback = ({ item }) => `${item.name} ${item.tags.join(' ')}`;
+multiselect.getIconCallback = ({ item }) => item.icon || '📄';
+multiselect.getSubtitleCallback = ({ item }) => `${item.price} - ${item.stock} in stock`;
+multiselect.getGroupCallback = ({ item }) => item.category;
+multiselect.getIsDisabledCallback = ({ item }) => item.stock === 0;
+multiselect.getFullTitleCallback = ({ item }) => `${item.name} (${item.email})`; // badges, with show-badge-full-title
 
 // Tree of options (alternative to path-member etc.)
-multiselect.getPathCallback = (node) => node.path;            // e.g. "1.2.3"; enables tree mode
-multiselect.getIsSelectableCallback = (node) => !node.isFolder;
+multiselect.getPathCallback = ({ item }) => item.path;            // e.g. "1.2.3"; enables tree mode
+multiselect.getIsSelectableCallback = ({ item, node }) => !item.isFolder; // node: the built tree node
 multiselect.isTreeEnabled = true; // tristate: true / false force tree mode; null (default) = auto when a path source is set
 
 // Selected-items display order (with selected-order="member" / "custom")
-multiselect.getSelectedOrderCallback = (item) => item.priority;            // sort key
-multiselect.selectedOrderCompareCallback = (a, b) => a.rank - b.rank;      // comparator
+multiselect.getSelectedOrderCallback = ({ item }) => item.priority;   // sort key
+multiselect.selectedOrderCompareCallback = (a, b) => a.rank - b.rank; // comparator — the one positional callback
 
-// Extra CSS classes
-multiselect.getBadgeClassCallback = (item) => item.isVip ? 'vip' : '';                // badges (string | string[])
-multiselect.getSelectedItemClassCallback = (item) => item.isVip ? ['vip', 'bold'] : []; // popover items (falls back to getBadgeClassCallback)
+// Extra CSS classes (ctx: { item, displayMode, isInPopover })
+multiselect.getBadgeClassCallback = ({ item }) => item.isVip ? 'vip' : '';                // badges (string | string[])
+multiselect.getSelectedItemClassCallback = ({ item }) => item.isVip ? ['vip', 'bold'] : []; // popover items (falls back to getBadgeClassCallback)
 
 // Count chip shared by the in-input counter and group-header counts (default `[selected]`)
-multiselect.getCountLabelCallback = (selected, total) => `${selected}/${total}`;
+multiselect.getCountLabelCallback = ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}`;
 
 // Badge remove-button hover tooltip (shown with enable-badge-tooltips; the
 // button's aria-label comes from labels.removeItem instead)
-multiselect.getRemoveButtonTooltipCallback = (item) => `Unassign ${item.name}`;
+multiselect.getRemoveButtonTooltipCallback = ({ item }) => `Unassign ${item.name}`;
 
 // Custom rendering - Full HTML control
-multiselect.renderGroupLabelContentCallback = (groupName, context) => {
-  // context: groupName, members, selectedMembers, selectedCount, memberCount,
+multiselect.renderGroupLabelContentCallback = (ctx) => {
+  // ctx: groupName, members, selectedMembers, selectedCount, memberCount,
   // selectableCount, checkState, plus presentation / isFullscreen / isModal
-  return `<strong>📦 ${groupName.toUpperCase()}</strong> ${context.selectedCount}/${context.memberCount}`;
+  return `<strong>📦 ${ctx.groupName.toUpperCase()}</strong> ${ctx.selectedCount}/${ctx.memberCount}`;
 };
 
-multiselect.renderOptionContentCallback = (item, context) => {
+// ctx: { item, index, isSelected, isFocused, isMatched, isDisabled, …tree fields }
+// A [data-action] element inside fires the `action` event (source 'option') and
+// never toggles the row.
+multiselect.renderOptionContentCallback = ({ item }) => {
   return `<strong>${item.name}</strong> <span class="badge">${item.status}</span>`;
 };
 
-multiselect.renderBadgeContentCallback = (item, context) => {
-  return context.isInPopover
+multiselect.renderBadgeContentCallback = ({ item, isInPopover }) => {
+  return isInPopover
     ? `${item.icon} ${item.name} - ${item.description}`
     : `${item.icon} ${item.name}`;
 };
 
 // Replace the WHOLE badge (not just its content). Wrapped in
-// .ms__badge.ms__badge--custom; an inner [data-action="remove"] removes the item.
+// .ms__badge.ms__badge--custom; an inner [data-ms-action="remove"] (or
+// .ms__badge-remove) removes the item.
 // Return null to fall back to the default pill for that item.
-multiselect.renderBadgeCallback = (item, context) => {
-  return `<span class="my-chip">${item.name} <button data-action="remove">×</button></span>`;
+multiselect.renderBadgeCallback = ({ item }) => {
+  return `<span class="my-chip">${item.name} <button data-ms-action="remove">×</button></span>`;
 };
 
-// One selected item inside the selected-items popover (context.isInPopover === true)
-multiselect.renderSelectedItemContentCallback = (item, context) => {
+// One selected item inside the selected-items popover (ctx.isInPopover === true)
+multiselect.renderSelectedItemContentCallback = ({ item }) => {
   return `${item.name} <small>${item.email}</small>`;
 };
 
-multiselect.renderSelectedContentCallback = (item, context) => {
+multiselect.renderSelectedContentCallback = ({ item }) => {
   // Customize selected item text in single-select mode (plain text only).
-  // context: presentation / isFullscreen / isModal
+  // ctx also has presentation / isFullscreen / isModal
   return item.firstName;
 };
 
 // Inject CSS into the Shadow DOM (wins over the custom-styles attribute)
-multiselect.customStylesCallback = () => `.ms__badge { border-radius: 0; }`;
+multiselect.getCustomStylesCallback = (ctx) => `.ms__badge { border-radius: 0; }`;
 
 // Form integration
 multiselect.name = 'selected_items';
 multiselect.valueFormat = 'json'; // 'json' | 'csv' | 'array'
-multiselect.getValueFormatCallback = (values) => values.join('|'); // Custom format
+multiselect.getValueFormatCallback = ({ selectedValues }) => selectedValues.join('|'); // Custom format
 
 // Read-only properties
 const selectedValue = multiselect.selectedValue; // string | number | array | null
 const selectedItem = multiselect.selectedItem;   // First selected item object
 
-// Add new option callback (requires allow-add-new). May be async; return
-// null/undefined to cancel (no add, no `add` event). Omit it entirely to handle
-// creation yourself in the `add` event.
-multiselect.addNewCallback = async (value) => {
+// Add-new hook (requires allow-add-new). May be async. Return the new option
+// (appended + selected, `add` event carries it), `false` to cancel (no add, no
+// `add` event), or nothing → only the `add` event fires (create it yourself there).
+multiselect.beforeAddCallback = async ({ value }) => {
   const newOption = await fetch('/api/options', {
     method: 'POST',
     body: JSON.stringify({ name: value })
@@ -536,7 +561,7 @@ multiselect.addNewCallback = async (value) => {
 };
 
 // "Add new" prompt label (plain text; wins over add-new-text)
-multiselect.getAddNewTextCallback = (value) => `Create "${value}"`;
+multiselect.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
 
 // i18n of ARIA labels / short UI strings — see "Labels (i18n)" below
 multiselect.labels = { removeItem: 'Odebrat {item}', close: 'Zavřít' };
@@ -590,7 +615,7 @@ You do **not** need to await between a property write and an imperative method �
 | `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `boolean` (`false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
 | `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Returns `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) — call `clearSearch()` first |
 | `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Returns `false` in tree mode or if the group is empty |
-| `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `variant` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `duration` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
+| `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `type` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `autoHideMs` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
 | `hideMessage()` | Dismiss the message shown by `showMessage()` |
 | `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered — see below |
 | `batch(fn: () => void)` | Run `fn` (e.g. several `setAttribute` calls) and apply the resulting changes as one update. Flushes synchronously |
@@ -599,15 +624,34 @@ You do **not** need to await between a property write and an imperative method �
 | `isReady` | Property (read-only): `true` once the picker has been built (the `ready` event has fired). `false` while a `defer` gate is still held. Reflected as the `is-ready` attribute |
 | `destroy()` | Clean up and destroy instance |
 
+### Controller (`el.controller`)
+
+`el.controller` is the public facade — the same object every callback `ctx` and event detail carries as `controller`. It delegates to the live picker, so it survives rebuilds. Interactive methods behave like the matching gesture (vetoes included); `setSelected` is the programmatic, veto-free path.
+
+| Group | Members |
+|-------|---------|
+| Read state | `getSelected()`, `getValue()`, `getOptions()`, `isOpen` |
+| Selection | `setSelected(values, { notify })`, `selectAll()`, `clearAll()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
+| Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `boolean`), `refresh()` |
+| Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |
+| Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()` |
+
+```javascript
+document.querySelector('web-multiselect').controller.selectAll();
+```
+
 ## Events
 
 | Event | Detail | Description |
 |-------|--------|-------------|
-| `select` | `{ option, selectedOptions, selectedValues }` | Fired when an option is selected |
-| `deselect` | `{ option, selectedOptions, selectedValues }` | Fired when an option is deselected |
-| `change` | `{ selectedOptions, selectedValues }` | Fired when selection changes |
-| `add` | `{ value, option?, selectedOptions, selectedValues }` | Fired when the user chooses to create a new option from the typed text (the "add new" prompt or Enter) — requires `allow-add-new`. `value` is the typed text; `option` is the created item when `addNewCallback` returned one. Not fired if `addNewCallback` returns `null`/`undefined` |
-| `ready` | — | Fired once, right after the first build — synchronously during upgrade for a normal element, or when the `defer` gate is released for a deferred one. Bubbles + composed |
+| `select` | `{ option, selectedOptions, selectedValues }` | Fired when an option is selected. Twin: `onSelect(detail)` |
+| `deselect` | `{ option, selectedOptions, selectedValues }` | Fired when an option is deselected. Twin: `onDeselect(detail)` |
+| `change` | `{ selectedOptions, selectedValues }` | Fired when selection changes. Twin: `onChange(detail)` |
+| `add` | `{ value, option?, selectedOptions, selectedValues }` | Fired when the user chooses to create a new option from the typed text (the "add new" prompt or Enter) — requires `allow-add-new`. `value` is the typed text; `option` is the created item when `beforeAddCallback` returned one. Not fired if `beforeAddCallback` returns `false`. Twin: `onAdd(detail)` |
+| `action` | `{ action, id, item, source, option?, sourceEvent, triggerElement, dataset, selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm }` | Fired for every action-button activation (built-in or custom) and every `data-action` element inside rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` (→ `false` cancels) → the item's `onClick` → `action` → the built-in. Twin: `onAction(detail)` |
+| `ready` | `{ controller, element, presentation, … }` | Fired once, right after the first build — synchronously during upgrade for a normal element, or when the `defer` gate is released for a deferred one. Twin: `onReady(detail)` |
+
+All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`.
 
 ## Option structure
 

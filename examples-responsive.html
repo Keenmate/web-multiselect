@@ -261,8 +261,8 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>picker.renderOptionContentCallback = (item, ctx) =&gt;
-  ctx.isFullscreen
+<pre><code>picker.renderOptionContentCallback = ({ item, isFullscreen }) =&gt;
+  isFullscreen
     ? `&lt;div class="row-lean"&gt;&lt;strong&gt;${item.label}&lt;/strong&gt;
          &lt;span&gt;${item.price}&lt;/span&gt;&lt;/div&gt;`                       // lean on the phone sheet
     : `&lt;div class="row-rich"&gt;&lt;strong&gt;${item.label}&lt;/strong&gt;
@@ -526,8 +526,8 @@ el.collapseBadgesBelow = null;</code></pre>
             const responsive = document.getElementById('responsive-select');
             responsive.options = plans;
             // Content HTML is injected into the shadow DOM, so styling is inline here (page
-            // CSS classes wouldn't reach it). ctx.isFullscreen picks the layout.
-            responsive.renderOptionContentCallback = (item, ctx) => ctx.isFullscreen
+            // CSS classes wouldn't reach it). isFullscreen picks the layout.
+            responsive.renderOptionContentCallback = ({ item, isFullscreen }) => isFullscreen
                 ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;width:100%;">
                        <strong>${item.label}</strong>
                        <span style="color:#667eea;">${item.price}</span>

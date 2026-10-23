@@ -309,11 +309,11 @@ CUSTOM RENDERING
 ----------------
 Custom rendering works with virtual scroll:
 
-select.renderOptionContentCallback = (option, context) => {
+select.renderOptionContentCallback = (context) => {
   return `
     <div style="height: 50px; display: flex; align-items: center;">
       ${context.isSelected ? '✓ ' : ''}
-      ${option.icon || ''} ${option.label}
+      ${context.item.icon || ''} ${context.item.label}
     </div>
   `;
 };
@@ -382,7 +382,7 @@ Large dataset:
 </web-multiselect>
 
 With custom rendering:
-select.renderOptionContentCallback = (option, context) => {
+select.renderOptionContentCallback = (context) => {
   return `<div style="height: 50px;">...</div>`;
 };
 select.optionHeight = 50;

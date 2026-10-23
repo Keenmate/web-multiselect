@@ -58,6 +58,16 @@ The first 2.6 release on npm (rc01 never reached it), so it also carries everyth
 - **Theming — follows base-css-variables 2.0.0-rc03** — Selected options read `--base-selected-*` (renamed from `--base-highlighted-*`). The placeholder and hint use text step 3, because step 4 was too faint to read. Primary used as text (badges, "add new", the fullscreen info icon) reads `--base-primary-text-color` for at least 4.5:1 contrast. Disabled controls share `--base-disabled-opacity`. Standalone fallbacks now match the contract defaults (accent `#0ea5e9`).
 - **Fixes — fullscreen in Firefox/Safari, group count chip, trailing spaces** — `mobile-presentation="fullscreen"` closed itself the moment it opened in Firefox and WebKit, because a zero-delay timer cleared the open-gesture guard before the follow-up `click`. The guard now lasts the whole gesture. The per-group count chip gets vertical padding so its `[N]` no longer touches the edges, and group headers grow about 4px to fit it without shifting when it toggles. Flat-list search now trims the term like tree search does, so `york ` (with a trailing space) finds `New York`.
 
+> **Breaking change in the next 2.x release — interaction model.** Every callback now takes one
+> `ctx` argument (per-option callbacks read `ctx.item`, e.g. `getDisplayValueCallback: ({ item }) => item.name`),
+> `on*` properties receive the event **detail** (`el.onSelect = (detail) => detail.option`),
+> `addNewCallback` / `keydownCallback` / `getDisabledCallback` / `customStylesCallback` became
+> `beforeAddCallback` / `beforeKeydownCallback` / `getIsDisabledCallback` / `getCustomStylesCallback`,
+> before-hooks cancel with `false`, custom action buttons use `id` + `onClick(detail)`, a new
+> `action` event reports every button / `data-action` click, and `el.controller` is the public
+> facade. The full old → new table is in the [CHANGELOG `[Unreleased]` section](CHANGELOG.md#unreleased);
+> the docs below already describe the new API.
+
 ## Install
 
 ```bash
@@ -167,7 +177,7 @@ Follows the BlissFramework four-layer web-component layout:
 | Layer | File | Role |
 |-------|------|------|
 | Element | `src/web-component.ts` | `MultiSelectElement` — custom-element I/O wrapper, driven by the `INPUTS` table (attributes, properties, callbacks) and the events table |
-| Logic | `src/multiselect.ts` | `WebMultiSelect<T>` — framework-agnostic core (search, selection, keyboard, rendering) |
+| Logic | `src/multiselect.ts` | `MultiSelectEngine<T>` — framework-agnostic core (search, selection, keyboard, rendering) |
 | Service | `src/virtual-scroll.ts`, `src/tree/` | `VirtualScroll`; the ltree option model and checkbox cascade for tree mode |
 | Side | `src/types.ts`, `src/option-formats.ts`, `src/converters.ts`, `src/logger.ts`, `src/index.ts` | types, `data-options` parsers, component-local converters, logging shim, package entry |
 

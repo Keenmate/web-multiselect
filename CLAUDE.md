@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A feature-rich multiselect web component with typeahead search, virtual scrolling, grouping, and extensive customization options. Published as `@keenmate/web-multiselect` on npm.
 
-Core logic lives in `src/multiselect.ts` (the generic `WebMultiSelect<T>` class — search, selection, keyboard nav, virtual scrolling); `src/web-component.ts` wraps it as the `<web-multiselect>` custom element (Shadow DOM, attribute/property reflection, events, form integration); `src/types.ts` holds the config/callback interfaces. Data extraction uses a member/callback pattern (`valueMember` + `getValueCallback`), similar to svelte-treeview.
+Core logic lives in `src/multiselect.ts` (the generic `MultiSelectEngine<T>` class — search, selection, keyboard nav, virtual scrolling); `src/web-component.ts` wraps it as the `<web-multiselect>` custom element (Shadow DOM, attribute/property reflection, events, form integration); `src/types.ts` holds the config/callback interfaces. Data extraction uses a member/callback pattern (`valueMember` + `getValueCallback`), similar to svelte-treeview.
 
 ## Naming Conventions
 
@@ -59,7 +59,7 @@ Inputs are declared ONCE as rows in the `INPUTS` table in `web-component.ts` (th
    - `converter` — `toText(...)`, `toBool('default-true' | 'default-false' | 'presence' | 'tristate')`, `toEnum([...], { default })`, `toInt({ default })`, `toObjectArray()`, `toValue({ validate })`, or `cb()` for a callback.
    - `on` — `'update'` (cosmetic → applied in place via `picker.updateOptions(partial)`) or `'reinit'` (data-shape / layout-mode change → rebuild the picker). A batch containing any `reinit` key runs `reinit()` only.
    - `reflect: true` mirrors the property back to the attribute.
-2. If the key is element-only (not forwarded to the core `WebMultiSelect` config), add it to `NON_PICKER_KEYS`.
+2. If the key is element-only (not forwarded to the core `MultiSelectEngine` config), add it to `NON_PICKER_KEYS`.
 3. Consume it in the picker via `this.options.<configKey>` (`multiselect.ts`).
 
 ### Consistency with web-daterangepicker

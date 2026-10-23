@@ -979,13 +979,13 @@
   allowClearAll: true,
   maxHeight: '20rem',
   emptyMessage: 'No results found',
-  onSelect: (option) => {
+  onSelect: ({ option }) => {
     console.log('Selected:', option);
   },
-  onDeselect: (option) => {
+  onDeselect: ({ option }) => {
     console.log('Deselected:', option);
   },
-  onChange: (selectedOptions) => {
+  onChange: ({ selectedOptions }) => {
     console.log('Changed:', selectedOptions);
   }
 });</code></pre>

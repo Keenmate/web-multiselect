@@ -7,6 +7,7 @@ CRITICAL: Guide for migrating from other multiselect libraries
 - From Tom Select
 - From React Select
 - From Vue Multiselect
+- From web-multiselect 2.x (pre interaction model)
 - Common pitfalls and solutions
 
 FROM SELECT2
@@ -112,7 +113,8 @@ Web Multiselect:
   const select = document.querySelector('web-multiselect');
   select.options = sortedOptions;
 
-  select.addNewCallback = (value) => ({
+  // return the option (appended + selected); false cancels
+  select.beforeAddCallback = ({ value }) => ({
     value: value,
     label: value
   });
@@ -257,7 +259,7 @@ searchEnabled: true → enable-search="true"
 allowClear: true → (built-in with badge X buttons)
 
 Max items:
-maxItems: 5 → (implement in changeCallback)
+maxItems: 5 → beforeSelectCallback: ({ selectedOptions }) => selectedOptions.length >= 5 ? false : undefined
 
 Create/add new:
 create: true → allow-add-new="true"
@@ -280,8 +282,8 @@ Web Multiselect (default):
 {value: 1, label: 'Option 1'}
 
 Or use callbacks:
-select.getValueCallback = (item) => item.id;
-select.getDisplayValueCallback = (item) => item.text;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => item.text;
 
 EVENT HANDLING MIGRATION
 ------------------------
@@ -294,6 +296,9 @@ New (standard DOM):
 select.addEventListener('select', (e) => {
   console.log(e.detail.option);
 });
+
+Or the property twin (receives the detail, not the event):
+select.onSelect = ({ option }) => console.log(option);
 
 Old (library instance):
 choices.passedElement.element.addEventListener('change', handler);
@@ -316,7 +321,7 @@ web-multiselect {
 }
 
 Or inject styles:
-select.customStylesCallback = () => {
+select.getCustomStylesCallback = () => {
   return `.option { ... }`;
 };
 
@@ -333,8 +338,8 @@ $('#select').select2({
 });
 
 New:
-select.searchCallback = async (searchTerm) => {
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+select.searchCallback = async ({ term, signal }) => {
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await response.json();
 };
 
@@ -348,8 +353,8 @@ $('#select').select2({
 });
 
 New:
-select.renderOptionContentCallback = (option) => {
-  return `<span>${option.label}</span>`;
+select.renderOptionContentCallback = ({ item }) => {
+  return `<span>${item.label}</span>`;
 };
 
 PLUGINS/EXTENSIONS
@@ -359,7 +364,7 @@ Some libraries have plugin systems:
 If you need features:
 1. Check if built-in (likely is)
 2. Use callbacks for customization
-3. Use customStylesCallback for styling
+3. Use getCustomStylesCallback for styling
 4. Use action buttons for bulk operations
 
 Most "plugins" are unnecessary with web-multiselect
@@ -399,6 +404,46 @@ Most modern libraries and web-multiselect:
 If migrating from older library with IE support:
 - Web Components don't support IE11
 - Consider polyfills or keep old library
+
+FROM WEB-MULTISELECT 2.x (INTERACTION MODEL)
+--------------------------------------------
+The interaction-model release is BREAKING, with no aliases. Full old → new table:
+CHANGELOG.md, section [Unreleased]. The essentials:
+
+- Every callback takes ONE ctx; per-option callbacks read ctx.item:
+    getDisplayValueCallback = (item) => item.name      →  ({ item }) => item.name
+    renderOptionContentCallback = (item, ctx) => …     →  (ctx) => … ctx.item …
+  Exception: selectedOrderCompareCallback(a, b) stays positional.
+- Renames: getDisabledCallback → getIsDisabledCallback; customStylesCallback() →
+  getCustomStylesCallback(ctx); addNewCallback(value) → beforeAddCallback({ value });
+  keydownCallback (return true = handled) → beforeKeydownCallback (return false = suppress
+  built-in); onAddNew → onAdd.
+- Before-hooks: false cancels, nothing continues, a value replaces.
+    beforeSelectCallback(option, selected) → beforeSelectCallback({ option, selectedOptions,
+    selectedValues, source }). A returned string NO LONGER vetoes — call
+    ctx.controller.showMessage('…', { type: 'warning' }) and return false.
+    beforeSearchCallback: return false to skip (was null). beforeAddCallback: false cancels
+    (was null); nothing → only the `add` event fires.
+- searchCallback(term, signal, ctx) → searchCallback({ term, signal, searchTerm, entries });
+  getSearchTermCallback(term, opts) → ({ term, target, behavior, match });
+  getCounterCallback(count, more) → ({ count, moreCount });
+  getCountLabelCallback(s, t) → ({ selectedCount, totalCount, groupName });
+  getValueFormatCallback(values) → ({ selectedValues, selectedOptions });
+  renderGroupLabelContentCallback(groupName, ctx) → (ctx) with ctx.groupName.
+- on* twins receive the DETAIL: el.onSelect = (e) => e.detail.option → (detail) => detail.option.
+  addEventListener('select', e => e.detail…) is unchanged. Events are composed: false.
+- Action buttons: { action: 'custom', … } → { id: 'export', … }; onClick(ms, ctx) →
+  onClick(detail); get*Callback(ms, ctx) → get*Callback(ctx); text/icon are plain text;
+  string shorthand ['select-all', 'clear-all']; new `action` event / onAction /
+  beforeActionCallback.
+- el.controller is the public facade (selectAll, clearAll, toggleValue, focusNext, showMessage…);
+  showMessage(content, { variant, duration }) → { type, autoHideMs, placement }.
+- WebMultiSelect → MultiSelectEngine; MultiSelectKeyboardController → MultiSelectController;
+  MultiSelectKeydownContext → KeydownContext; ActionButton → MultiSelectActionItem;
+  MultiSelectEventDetail → SelectEventDetail / ChangeEventDetail / ….
+- Internal controls use data-ms-action (show-selected, clear-count, remove-hidden, add-new);
+  a renderBadgeCallback remove control is data-ms-action="remove" (or .ms__badge-remove).
+  data-action / data-id are now only for action items.
 
 MIGRATION CHECKLIST
 -------------------

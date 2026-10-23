@@ -199,14 +199,14 @@ dist/
 ## Code Organization
 
 ### Core Class (multiselect.ts)
-The `WebMultiSelect` class contains all the logic:
+The `MultiSelectEngine` class contains all the logic:
 - Option management
 - Search/filtering
 - Keyboard navigation
 - Dropdown positioning
 - Event handling
 
-This can be used directly without the web component wrapper.
+It can be used standalone without the web component wrapper; when you use the element, drive it through `el.controller` instead.
 
 ### Web Component (web-component.ts)
 The `MultiSelectElement` class wraps the core class in a custom element:
@@ -218,8 +218,9 @@ The `MultiSelectElement` class wraps the core class in a custom element:
 ### Types (types.ts)
 TypeScript interfaces for:
 - `MultiSelectOption` - Option structure
-- `MultiSelectOptions` - Configuration options
-- `MultiSelectEventDetail` - Event payload
+- `MultiSelectConfig` - Configuration options
+- `SelectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, … - per-event payloads
+- `MultiSelectController`, `ItemContext`, `KeydownContext`, `MultiSelectActionItem`, … - the public facade, callback contexts and action items
 - Display modes and enums
 
 ### Styles (scss/_multiselect.scss)

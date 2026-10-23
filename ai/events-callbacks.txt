@@ -2,135 +2,192 @@ EVENTS & CALLBACKS
 ==================
 
 CRITICAL: Two ways to handle component interactions
-- DOM Events: select, deselect, change, ready (CustomEvent)
-- Callback Functions: All get*/render*/before* callbacks
-- Events for listening, callbacks for side effects
-- Both provide access to component state
+- DOM Events: select, deselect, change, add, action, ready (CustomEvent, detail in e.detail)
+- on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady —
+  receive the DETAIL (not the CustomEvent): el.onSelect = (detail) => detail.option
+- Callback Functions: all get*/render*/before* callbacks take ONE `ctx` argument
+  (per-option callbacks read ctx.item). Only exception: selectedOrderCompareCallback(a, b)
+- Before-hooks: return false to cancel, nothing to continue, a value to replace
+- Every ctx and every event detail carries `controller` (the public facade, also
+  el.controller) and `element` (the host) — both non-enumerable, so JSON.stringify / logs /
+  LiveView pushEvent see only the data — plus presentation, isFullscreen, isModal
 
 DOM EVENTS
 ----------
-Three main selection events:
+Selection events:
 
 select event:
-Fired when option is selected
+Fired when an option is selected
 
 select.addEventListener('select', (e) => {
   console.log('Selected:', e.detail.option);
   console.log('All selected:', e.detail.selectedOptions);
 });
 
-Event detail:
+Event detail (SelectEventDetail):
 {
   option: { value, label, ... },        // Newly selected option
-  selectedOptions: [{ value, label }]   // All selected options
+  selectedOptions: [{ value, label }],  // All selected options
+  selectedValues: [value1, value2]      // All selected values
 }
 
 deselect event:
-Fired when option is deselected
+Fired when an option is deselected
 
 select.addEventListener('deselect', (e) => {
   console.log('Deselected:', e.detail.option);
   console.log('Remaining:', e.detail.selectedOptions);
 });
 
-Event detail:
-{
-  option: { value, label, ... },        // Deselected option
-  selectedOptions: [{ value, label }]   // Remaining selected options
-}
+Event detail (DeselectEventDetail): same shape as select.
 
 change event:
-Fired when selection changes (any select/deselect)
+Fired when the selection changes (any select/deselect; a bulk gesture fires ONE change)
 
 select.addEventListener('change', (e) => {
   console.log('Selected options:', e.detail.selectedOptions);
   console.log('Selected values:', e.detail.selectedValues);
 });
 
-Event detail:
+Event detail (ChangeEventDetail):
 {
   selectedOptions: [{ value, label }],  // All selected option objects
   selectedValues: [value1, value2]      // All selected values
 }
 
+add event:
+Fired when the user creates an option from the typed text (requires allow-add-new).
+detail (AddEventDetail): { value, option?, selectedOptions, selectedValues } — `option` is
+set when beforeAddCallback returned one.
+
+action event:
+Fired for every action button (built-in or custom) and every `data-action` element inside
+rendered option content (source 'option'), badge content (source 'badge') or a showMessage
+element (source 'message'). See action-buttons.txt.
+detail (MultiSelectActionEventDetail): action, id, item, source, option?, sourceEvent,
+triggerElement, dataset, plus the selection snapshot (selectedValues, selectedOptions,
+options, selectedCount, optionCount, isOpen, searchTerm).
+
 ready event:
 Fired once, right after the FIRST build — synchronously during upgrade for a
 normal element, or when a `defer` render gate is released (via ready() / removing
-the attribute) for a deferred one. No detail. Bubbles + composed.
+the attribute) for a deferred one. detail: { controller, element, presentation… }.
+Bubbles (not composed).
 
-select.addEventListener('ready', () => {
+select.addEventListener('ready', (e) => {
   // the picker is built and painted — safe to read state, focus it, etc.
+  e.detail.controller.open();
 });
 
 // See advanced-patterns.txt (DEFERRED INITIALIZATION) for defer / ready() / isReady.
 
+ON* PROPERTY TWINS
+------------------
+Each event has a camelCase property twin, called with the DETAIL right before the event
+is dispatched:
+
+select.onSelect   = (detail) => console.log('Selected', detail.option);
+select.onDeselect = (detail) => console.log('Deselected', detail.option);
+select.onChange   = ({ selectedValues }) => console.log('Now', selectedValues);
+select.onAdd      = ({ value, option }) => console.log('Added', value, option);
+select.onAction   = ({ action, id, source }) => console.log('Action', action, id, source);
+select.onReady    = ({ controller }) => controller.focusFirst();
+
+// OLD (pre-interaction-model): el.onSelect = (e) => e.detail.option  — no longer valid.
+
 CALLBACK FUNCTIONS
 ------------------
-All available callbacks:
+All available callbacks (every one takes ONE ctx argument):
 
-Data extraction:
-- getValueCallback(item): Extract value
-- getDisplayValueCallback(item): Display text
-- getBadgeDisplayCallback(item): Badge text
-- getSearchValueCallback(item): Search text
-- getIconCallback(item): Icon
-- getSubtitleCallback(item): Subtitle
-- getGroupCallback(item): Group name
-- getDisabledCallback(item): Disabled state
+Data extraction (ctx.item = the option):
+- getValueCallback({ item }): Extract value
+- getDisplayValueCallback({ item }): Display text
+- getBadgeDisplayCallback({ item, displayMode, isInPopover }): Badge text
+- getSearchValueCallback({ item }): Search text (or object for searchCallback)
+- getIconCallback({ item }): Icon
+- getSubtitleCallback({ item }): Subtitle
+- getGroupCallback({ item }): Group name
+- getFullTitleCallback({ item }): Full title
+- getIsDisabledCallback({ item }): Disabled state
+- getIsSelectableCallback({ item, node }): Tree node selectable
+- getPathCallback({ item }): Tree path
+- getSelectedOrderCallback({ item }): Selected-order sort key
+- selectedOrderCompareCallback(a, b): Comparator (positional — the one exception)
 
 Custom rendering:
-- renderOptionContentCallback(item, context): Dropdown option HTML
-- renderBadgeContentCallback(item, context): Badge HTML
-- renderSelectedItemContentCallback(item): Popover item HTML
-- renderSelectedContentCallback(item): Single-select text
-- getBadgeClassCallback(item): Badge CSS classes
-- getSelectedItemClassCallback(item): Popover item classes
-- customStylesCallback(): Inject CSS
+- renderOptionContentCallback({ item, index, isSelected, isFocused, … }): Dropdown option HTML
+- renderBadgeContentCallback({ item, displayMode, isInPopover }): Badge HTML
+- renderBadgeCallback({ item, displayMode, isInPopover }): Whole badge HTML
+- renderSelectedItemContentCallback({ item, … }): Popover item HTML
+- renderSelectedContentCallback({ item }): Single-select text
+- renderGroupLabelContentCallback({ groupName, members, selectedCount, … }): Group header
+- getBadgeClassCallback({ item, … }): Badge CSS classes
+- getSelectedItemClassCallback({ item, … }): Popover item classes
+- getCustomStylesCallback(ctx): Inject CSS
 
-Interaction:
-- searchCallback(searchTerm): Async search
-- beforeSearchCallback(searchTerm): Pre-process search
-- addNewCallback(value): Handle new option
-- selectCallback(option): Before select
-- deselectCallback(option): Before deselect
-- changeCallback(selectedOptions): After change
+Before-hooks (false cancels, nothing continues, a value replaces):
+- beforeSearchCallback({ term }): string replaces the term, false skips the search
+- beforeSelectCallback({ option, selectedOptions, selectedValues, source }): false vetoes
+- beforeDeselectCallback({ option, selectedOptions, selectedValues, source }): false vetoes
+- beforeAddCallback({ value }): return the new option, false cancels, nothing → only `add`
+- beforeKeydownCallback(ctx): false suppresses the built-in key handling (synchronous)
+- beforeActionCallback(detail): false cancels an action item
+
+Search:
+- getSearchTermCallback({ term, target, behavior, match }): Prepare the term
+- searchCallback({ term, signal, searchTerm, entries }): Custom / async search
 
 Formatting:
-- getCounterCallback(count, moreCount): Counter text
-- getBadgeTooltipCallback(item): Badge tooltip
-- getValueFormatCallback(values): Form value format
+- getCounterCallback({ count, moreCount }): Counter text
+- getCountLabelCallback({ selectedCount, totalCount, groupName }): Count chip
+- getBadgeTooltipCallback({ item, … }): Badge tooltip
+- getOptionTooltipCallback({ item, … }): Option tooltip
+- getRemoveButtonTooltipCallback({ item, … }): Remove-button tooltip
+- getValueFormatCallback({ selectedValues, selectedOptions }): Form value format
+- getAddNewTextCallback({ value }): "Add new" prompt text
 
-SELECTION CALLBACKS
--------------------
-React to selection changes:
+SELECTION VETOES
+----------------
+beforeSelectCallback / beforeDeselectCallback run BEFORE a user gesture changes the
+selection — once per option, also for bulk gestures (Select-All, Clear-All, group checkbox,
+tree cascade, inline ✕, count ×, "+N more" ×). ctx.source tells which gesture:
+'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear'.
+Vetoed options are skipped; the rest apply in ONE change. May be async.
+setSelected() and form reset are veto-free.
 
-selectCallback:
-Called AFTER an option has been added to the selection (same commit() pass
-that dispatches the 'select' event). Selection is already committed — the
-callback CANNOT cancel it. Returning early has no effect on the selection.
+A returned string does NOT veto. Explain a veto with showMessage, then return false:
 
-select.selectCallback = (option) => {
+select.beforeSelectCallback = ({ option, selectedOptions, controller }) => {
+  if (selectedOptions.length >= 3) {
+    controller.showMessage('You can pick at most 3 items', { type: 'warning' });
+    return false;
+  }
+};
+
+select.beforeDeselectCallback = ({ option, controller }) => {
+  if (option.required) {
+    controller.showMessage(`${option.label} is required`, { type: 'warning' });
+    return false;
+  }
+};
+
+Async confirmation:
+select.beforeDeselectCallback = async ({ option }) => {
+  const ok = await confirmDialog(`Remove ${option.label}?`);
+  if (!ok) return false;
+};
+
+REACTING TO SELECTION
+---------------------
+Use the events or their on* twins (they fire AFTER the selection is committed):
+
+select.onSelect = ({ option }) => {
   console.log('Just selected:', option);
 };
 
-deselectCallback:
-Called AFTER an option has been removed from the selection. Cannot cancel
-the removal. For "are you sure?" style flows see PREVENTING ACTIONS below
-— the only option is post-commit rollback via setSelected().
-
-select.deselectCallback = (option) => {
-  console.log('Just deselected:', option);
-};
-
-changeCallback:
-Called after selection changes
-
-select.changeCallback = (selectedOptions) => {
-  console.log('Selection changed:', selectedOptions);
-
+select.onChange = ({ selectedOptions }) => {
   // Update UI
   updateRelatedFields(selectedOptions);
-
   // Analytics
   trackSelection(selectedOptions);
 };
@@ -140,37 +197,36 @@ SEARCH CALLBACKS
 Handle search interactions:
 
 searchCallback:
-Load options dynamically
+Load options dynamically. ctx.signal is aborted when a newer search supersedes this one.
 
-select.searchCallback = async (searchTerm) => {
-  if (searchTerm.length < 3) return [];
+select.searchCallback = async ({ term, signal }) => {
+  if (term.length < 3) return [];
 
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   const results = await response.json();
 
   return results;  // Must return array of options
 };
 
 beforeSearchCallback:
-Pre-process search term
+Pre-process the search term
 
-select.beforeSearchCallback = (searchTerm) => {
-  // Remove accents
-  const normalized = searchTerm.normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+select.beforeSearchCallback = ({ term }) => {
+  // Skip the search entirely for 1-char input (full list shows)
+  if (term.length === 1) return false;
 
-  // Return processed term or null to cancel
-  return normalized.toLowerCase();
+  // Return a rewritten term
+  return term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 };
 
 ADD NEW CALLBACK
 ----------------
-Handle custom option creation:
+Handle custom option creation (requires allow-add-new):
 
-select.addNewCallback = (value) => {
+select.beforeAddCallback = ({ value }) => {
   console.log('Adding new:', value);
 
-  // Create new option
+  // Return the new option → appended + selected, then `add` fires
   return {
     value: value.toLowerCase(),
     label: value,
@@ -179,21 +235,21 @@ select.addNewCallback = (value) => {
   };
 };
 
-Or async:
-select.addNewCallback = async (value) => {
-  // Save to server
+Or async (a spinner shows meanwhile):
+select.beforeAddCallback = async ({ value }) => {
   const response = await fetch('/api/items', {
     method: 'POST',
     body: JSON.stringify({ name: value })
   });
 
-  const item = await response.json();
+  if (!response.ok) return false;   // false cancels (no `add` event)
 
-  return {
-    value: item.id,
-    label: item.name
-  };
+  const item = await response.json();
+  return { value: item.id, label: item.name };
 };
+
+Return nothing → only the `add` event fires and you create the option yourself:
+select.onAdd = ({ value }) => openCreateDialog(value);
 
 DISPLAY CALLBACKS
 -----------------
@@ -202,25 +258,23 @@ Control text display:
 getDisplayValueCallback:
 Dropdown display text
 
-select.getDisplayValueCallback = (option) => {
-  return `${option.firstName} ${option.lastName}`;
-};
+select.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
 
 getBadgeDisplayCallback:
 Badge display text (can differ from dropdown)
 
-select.getBadgeDisplayCallback = (option) => {
+select.getBadgeDisplayCallback = ({ item }) => {
   // Show initials in badges
-  return option.firstName[0] + option.lastName[0];
+  return item.firstName[0] + item.lastName[0];
 };
 
 COUNTER CALLBACK
 ----------------
 Customize counter text:
 
-select.getCounterCallback = (count, moreCount) => {
+select.getCounterCallback = ({ count, moreCount }) => {
   // Count mode
-  if (!moreCount) {
+  if (moreCount === undefined) {
     return count === 1 ? '1 selected' : `${count} selected`;
   }
 
@@ -229,7 +283,7 @@ select.getCounterCallback = (count, moreCount) => {
 };
 
 Internationalization:
-select.getCounterCallback = (count, moreCount) => {
+select.getCounterCallback = ({ count, moreCount }) => {
   const locale = 'es';  // Spanish
 
   const translations = {
@@ -247,27 +301,29 @@ select.getCounterCallback = (count, moreCount) => {
 
   const t = translations[locale];
 
-  if (moreCount) {
+  if (moreCount !== undefined) {
     return t.more(moreCount);
   }
 
   return count === 1 ? t.single : t.multiple(count);
 };
 
+Count chip (in-input counter + group headers):
+select.getCountLabelCallback = ({ selectedCount, totalCount, groupName }) =>
+  `${selectedCount}/${totalCount}`;
+
 TOOLTIP CALLBACK
 ----------------
 Customize badge tooltips:
 
-select.getBadgeTooltipCallback = (option) => {
-  return `${option.label}\n${option.description}`;
-};
+select.getBadgeTooltipCallback = ({ item }) => `${item.label}\n${item.description}`;
 
 Or return HTMLElement:
-select.getBadgeTooltipCallback = (option) => {
+select.getBadgeTooltipCallback = ({ item }) => {
   const div = document.createElement('div');
   div.innerHTML = `
-    <strong>${option.label}</strong><br>
-    <small>${option.description}</small>
+    <strong>${item.label}</strong><br>
+    <small>${item.description}</small>
   `;
   return div;
 };
@@ -276,43 +332,40 @@ VALUE FORMAT CALLBACK
 ---------------------
 Custom form value serialization:
 
-select.getValueFormatCallback = (values) => {
+select.getValueFormatCallback = ({ selectedValues }) => {
   // Pipe-separated
-  return values.join('|');
+  return selectedValues.join('|');
 };
 
 Or with metadata:
-select.getValueFormatCallback = (values) => {
-  return JSON.stringify({
-    values: values,
-    count: values.length,
-    timestamp: Date.now()
-  });
-};
+select.getValueFormatCallback = ({ selectedValues }) => JSON.stringify({
+  values: selectedValues,
+  count: selectedValues.length,
+  timestamp: Date.now()
+});
 
 EVENT VS CALLBACK
 -----------------
 When to use each:
 
-Use DOM Events when:
+Use DOM Events (or on* twins) when:
 ✅ Listening from outside component
-✅ Multiple listeners needed
+✅ Multiple listeners needed (addEventListener)
 ✅ Framework event binding
-✅ Bubbling/capturing needed
+✅ Bubbling needed
 
 Use Callbacks when:
-✅ Side effects during operation
-✅ Modifying behavior
+✅ Modifying behavior (before* hooks, render*, get*)
 ✅ Single handler sufficient
 ✅ Performance critical
 
 Example - Both together:
-// Callback: Update dependent field
-select.changeCallback = (selected) => {
-  updateDependentField(selected);
+// Twin: update dependent field
+select.onChange = ({ selectedOptions }) => {
+  updateDependentField(selectedOptions);
 };
 
-// Event: Update multiple parts of UI
+// Event: update multiple parts of UI
 select.addEventListener('change', (e) => {
   updateChart(e.detail.selectedOptions);
   updateSummary(e.detail.selectedOptions);
@@ -320,19 +373,20 @@ select.addEventListener('change', (e) => {
 
 EVENT BUBBLING
 --------------
-Events DO bubble and DO cross shadow DOM boundaries.
-Dispatched as `new CustomEvent(name, { detail, bubbles: true, composed: true })`
-— see web-component.ts dispatch sites.
+Events DO bubble but are NOT composed: dispatched on the <web-multiselect> host with
+{ bubbles: true, composed: false }.
 
 This means:
-- addEventListener can be attached to the <web-multiselect> host OR any ancestor
+- addEventListener can be attached to the <web-multiselect> host OR any ancestor in the
+  same tree
 - Framework delegation works out of the box:
     Svelte 5: onchange={handler}   (callback prop)
     Svelte 4: on:change={handler}  (directive — also still works in Svelte 5)
     React:    onChange={handler}
     Vue:      @change="handler"
-- composed: true lets the event escape an enclosing shadow DOM (e.g. when
-  this component is wrapped by another web component)
+- composed: false — the event does NOT escape an enclosing shadow root. If this component
+  is wrapped by another web component, the wrapper must listen on the element (inside its
+  shadow root) and re-dispatch.
 
 COLLISION WARNING — 'change' and 'select' are also native DOM event names:
 - Form-level listeners using event delegation will receive both native
@@ -347,38 +401,16 @@ COLLISION WARNING — 'change' and 'select' are also native DOM event names:
 
 CANCELLATION:
 - Events fire AFTER the selection is committed, so preventDefault() does
-  nothing — there is nothing to cancel. cancelable is false.
+  nothing — cancelable is false. To cancel, use beforeSelectCallback /
+  beforeDeselectCallback (return false) — see SELECTION VETOES.
 - stopPropagation() DOES work and will prevent ancestor listeners (including
-  framework delegation roots) from seeing the event. Use sparingly — calling
-  stopPropagation in a handler can break framework-level event routing.
+  framework delegation roots) from seeing the event. Use sparingly.
 
 If you want to react to selection changes WITHOUT also receiving native
 form/text events at the same handler, attach the listener directly on the
 <web-multiselect> host:
 const select = document.querySelector('web-multiselect');
 select.addEventListener('change', (e) => { ... });
-
-PREVENTING ACTIONS
-------------------
-Callbacks fire AFTER the selection has been committed — they cannot cancel.
-The "prevent" pattern is a silent rollback via setSelected().
-
-Workaround for preventing deselection:
-select.deselectCallback = (option) => {
-  if (option.required) {
-    alert('Cannot remove required item');
-
-    // Re-add after a tick. NOTE: setSelected is SILENT (see
-    // PROGRAMMATIC SELECTION — WHICH METHODS FIRE EVENTS below).
-    // The rollback restores the visual state but does NOT fire a fresh
-    // 'select'/'change' event, so downstream listeners won't see the rebound.
-    setTimeout(() => {
-      const current = select.getValue();
-      const arr = Array.isArray(current) ? current : (current != null ? [current] : []);
-      select.setSelected([...arr, option.value]);
-    }, 0);
-  }
-};
 
 SINGLE-SELECT EVENT SEMANTICS
 -----------------------------
@@ -389,10 +421,7 @@ one is already selected:
 - DOES fire: 'select' (new item) → 'change'
 - DOES NOT fire: 'deselect' for the displaced item
 
-The previous item is cleared silently inside the picker's internal state
-(multiselect.ts toggleOption single-mode branch — selectedValues.clear()
-runs without going through deselectOption). Do not rely on 'deselect' to
-detect "the previous item is gone" in single-select mode.
+Do not rely on 'deselect' to detect "the previous item is gone" in single-select mode.
 
 Clicking the already-selected item DOES fire 'deselect' + 'change' (the
 selection becomes empty — single-select tolerates 0 items).
@@ -411,49 +440,29 @@ select.addEventListener('change', (e) => {
 
 PROGRAMMATIC SELECTION — WHICH METHODS FIRE EVENTS
 ---------------------------------------------------
-Not every programmatic state change is observable via events. The rule
-is "anything that goes through the commit() helper fires events":
-
-setSelected(values):    SILENT  (no select/deselect/change)
-clearAll():             FIRES   ('deselect' per removed + one 'change')
-"Select All" action:    FIRES   ('select' per added + one 'change')
-"Clear All" action:     FIRES   (calls clearAll internally)
-User click / keyboard:  FIRES
+el.setSelected(values):                  SILENT, veto-free (no select/deselect/change)
+el.setSelected(values, { notify: true }): one aggregate 'change', veto-free
+el.controller.clearAll():                FIRES ('deselect' per removed + one 'change'); vetoes apply
+el.controller.selectAll():               FIRES ('select' per added + one 'change'); vetoes apply
+el.controller.toggleValue / selectValue / deselectValue: FIRES; vetoes apply
+"Select All" / "Clear All" buttons:      FIRES (plus the `action` event)
+User click / keyboard:                   FIRES
 
 setSelected is silent BY DESIGN — it's the right tool for "update state
 without re-triggering my own listeners":
   - action-menu reset after handling a pick
   - parent-driven state sync from a store
-  - silent rollback in preventing-action workarounds
 
-clearAll is the right tool for "clear AND notify":
+controller.clearAll is the right tool for "clear AND notify":
   - reset buttons users see
-  - form.reset() — the component's formResetCallback uses clearAll
 
-If you need "setSelected but with events", re-dispatch a 'change' manually:
-
-select.setSelected(values);
-select.dispatchEvent(new CustomEvent('change', {
-  detail: {
-    selectedOptions: select.getSelected(),
-    selectedValues: (() => {
-      const v = select.getValue();
-      return Array.isArray(v) ? v : (v != null ? [v] : []);
-    })()
-  }
-}));
-
-ASYNC CALLBACKS
----------------
-Handle async operations:
-
-select.changeCallback = async (selectedOptions) => {
+ASYNC HANDLERS
+--------------
+select.onChange = async ({ selectedValues }) => {
   // Save to server
   await fetch('/api/save', {
     method: 'POST',
-    body: JSON.stringify({
-      selections: selectedOptions.map(o => o.value)
-    })
+    body: JSON.stringify({ selections: selectedValues })
   });
 
   console.log('Saved');
@@ -463,9 +472,9 @@ ERROR HANDLING
 --------------
 Handle errors in callbacks:
 
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term, signal }) => {
   try {
-    const response = await fetch(`/api/search?q=${searchTerm}`);
+    const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
 
     if (!response.ok) {
       throw new Error('Search failed');
@@ -478,97 +487,99 @@ select.searchCallback = async (searchTerm) => {
   }
 };
 
+A before-hook that throws cancels (the error is logged).
+
 CALLBACK CONTEXT
 ----------------
-Access component in callbacks:
+Every ctx / detail carries the controller and the host element:
 
-select.changeCallback = (selectedOptions) => {
-  // Access component properties
-  const allOptions = select.options;
-  const searchTerm = select.searchTerm;
-  const isMultiple = select.multiple;
+select.onChange = ({ selectedOptions, controller, element }) => {
+  const allOptions = controller.getOptions();
+  const isOpen = controller.isOpen;
 
   console.log('Selected:', selectedOptions.length);
   console.log('Total:', allOptions.length);
-  console.log('Search:', searchTerm);
-  console.log('Multiple:', isMultiple);
+  console.log('Open:', isOpen);
+  console.log('Host id:', element.id);
 };
+
+controller (also el.controller): getSelected(), getValue(), getOptions(), isOpen,
+setSelected(values, { notify }), selectAll(), clearAll(), toggleValue(v), selectValue(v),
+deselectValue(v), toggleFocused(), open(), close(), toggle(), search(term), clearSearch(),
+scrollToValue/Group/Index(), refresh(), focusNext/Previous/First/Last/PageUp/PageDown(),
+focusNextMatch/PreviousMatch(), focusIndex(i), showMessage(content, { type, autoHideMs,
+placement }), hideMessage().
 
 MULTIPLE CALLBACKS
 ------------------
 Set multiple callbacks:
 
 // Data callbacks
-select.getValueCallback = (item) => item.id;
-select.getDisplayValueCallback = (item) => item.name;
-select.getSearchValueCallback = (item) => `${item.name} ${item.email}`;
+select.getValueCallback = ({ item }) => item.id;
+select.getDisplayValueCallback = ({ item }) => item.name;
+select.getSearchValueCallback = ({ item }) => `${item.name} ${item.email}`;
 
-// Interaction callbacks
-select.selectCallback = (option) => console.log('Select:', option);
-select.changeCallback = (selected) => updateUI(selected);
+// Interaction (event twins)
+select.onSelect = ({ option }) => console.log('Select:', option);
+select.onChange = ({ selectedOptions }) => updateUI(selectedOptions);
 
 // Rendering callbacks
-select.renderOptionContentCallback = (item, ctx) => `${item.name}`;
-select.getBadgeDisplayCallback = (item) => item.code;
+select.renderOptionContentCallback = ({ item }) => `${item.name}`;
+select.getBadgeDisplayCallback = ({ item }) => item.code;
 
 CALLBACK PERFORMANCE
 --------------------
 Optimize callbacks for performance:
 
 ❌ Slow: Expensive operation every render
-select.renderOptionContentCallback = (option) => {
-  const data = expensiveCalculation(option);  // Called many times!
+select.renderOptionContentCallback = ({ item }) => {
+  const data = expensiveCalculation(item);  // Called many times!
   return `<div>${data}</div>`;
 };
 
 ✅ Fast: Cache results
 const cache = new Map();
-select.renderOptionContentCallback = (option) => {
-  if (!cache.has(option.value)) {
-    cache.set(option.value, expensiveCalculation(option));
+select.renderOptionContentCallback = ({ item }) => {
+  if (!cache.has(item.value)) {
+    cache.set(item.value, expensiveCalculation(item));
   }
-  return `<div>${cache.get(option.value)}</div>`;
+  return `<div>${cache.get(item.value)}</div>`;
 };
 
 REMOVING CALLBACKS
 ------------------
-Clear callbacks:
+Clear callbacks / twins:
 
-select.selectCallback = null;
-select.deselectCallback = null;
-select.changeCallback = null;
+select.onSelect = null;
+select.onDeselect = null;
+select.onChange = null;
+select.beforeSelectCallback = null;
 
 DEBUGGING
 ---------
-Log all events and callbacks:
+Log all events:
 
-// Log all events
-['select', 'deselect', 'change'].forEach(eventName => {
+['select', 'deselect', 'change', 'add', 'action'].forEach(eventName => {
   select.addEventListener(eventName, (e) => {
-    console.log(`Event: ${eventName}`, e.detail);
+    console.log(`Event: ${eventName}`, e.detail);   // controller/element are hidden (non-enumerable)
   });
 });
 
-// Log callbacks
-select.changeCallback = (selected) => {
-  console.log('Callback: change', selected);
-};
-
 BEST PRACTICES
 --------------
-✅ Use events for UI updates
+✅ Use events / on* twins for UI updates
+✅ Use before* callbacks to veto / rewrite (return false to cancel)
+✅ Explain a veto with ctx.controller.showMessage(…, { type: 'warning' })
 ✅ Use callbacks for data transformation
 ✅ Handle async errors gracefully
 ✅ Keep callbacks fast
 ✅ Cache expensive calculations
-✅ Use both events and callbacks when needed
 ✅ Clean up event listeners when done
 
+❌ Don't return a string from beforeSelectCallback expecting a veto (it no longer vetoes)
+❌ Don't read e.detail inside on* twins — they receive the detail itself
 ❌ Don't do heavy computation in callbacks
-❌ Don't forget error handling
-❌ Don't rely on callback execution order
 ❌ Don't mutate data in callbacks
-❌ Don't forget to remove event listeners
 
 COMMON PATTERNS
 ---------------
@@ -578,12 +589,12 @@ select.addEventListener('change', (e) => {
 });
 
 Update dependent field:
-select.changeCallback = (selected) => {
-  dependentSelect.options = getFilteredOptions(selected);
+select.onChange = ({ selectedOptions }) => {
+  dependentSelect.options = getFilteredOptions(selectedOptions);
 };
 
 Analytics tracking:
-select.selectCallback = (option) => {
+select.onSelect = ({ option }) => {
   analytics.track('option_selected', {
     value: option.value,
     label: option.label
@@ -591,14 +602,14 @@ select.selectCallback = (option) => {
 };
 
 Async search:
-select.searchCallback = async (term) => {
-  const res = await fetch(`/api/search?q=${term}`);
+select.searchCallback = async ({ term, signal }) => {
+  const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await res.json();
 };
 
 EXAMPLES
 --------
-See examples files for:
+See examples-events-callbacks.html for:
 - Event handling patterns
 - Callback combinations
 - Async operations

@@ -39,7 +39,9 @@
                 the bubbling DOM events <code>select</code> / <code>deselect</code> / <code>change</code>,
                 and the JS properties <code>onSelect</code> / <code>onDeselect</code> / <code>onChange</code>.
                 They're <em>events</em>, not callbacks — the return value is ignored.
-                This picker wires both so you can watch them pair up.
+                The DOM listener gets the <code>CustomEvent</code> (read <code>e.detail</code>); the
+                <code>on*</code> property receives the <strong>detail itself</strong>. Events bubble but are not
+                <code>composed</code>. This picker wires both so you can watch them pair up.
             </p>
             <div class="form-group">
                 <label>Pick a few</label>
@@ -58,15 +60,15 @@
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>// Property handlers (the on* form) — real listeners, so each receives
-// the SAME CustomEvent addEventListener would get (v2 change).
-el.onSelect   = (e) =&gt; log('prop', 'onSelect', e.detail.option.label);
-el.onDeselect = (e) =&gt; log('prop', 'onDeselect', e.detail.option.label);
-el.onChange   = (e) =&gt; log('prop', 'onChange', e.detail.selectedOptions.map(o =&gt; o.value));
+<pre><code>// Property handlers (the on* form) — each receives the event DETAIL
+// (the same object addEventListener sees as e.detail).
+el.onSelect   = ({ option }) =&gt; log('prop', 'onSelect', option.label);
+el.onDeselect = ({ option }) =&gt; log('prop', 'onDeselect', option.label);
+el.onChange   = ({ selectedOptions }) =&gt; log('prop', 'onChange', selectedOptions.map(o =&gt; o.value));
 
 // The very same notifications as bubbling DOM events
 el.addEventListener('change', (e) =&gt; {
-  // e.detail = { option, selectedOptions, selectedValues }
+  // e.detail = { selectedOptions, selectedValues, controller, element }
   log('event', 'change', e.detail.selectedValues);
 });</code></pre>
             </details>
@@ -78,10 +80,11 @@ el.addEventListener('change', (e) =&gt; {
         <div class="card">
             <h2>EV02 · <code>beforeSelectCallback</code> — block a selection</h2>
             <p>
-                An <strong>interceptor</strong>: runs <em>before</em> an option is added and returns
-                <code>false</code> to block it. Here <strong>Full-time</strong> and <strong>Part-time</strong>
-                are mutually exclusive — picking one while the other is selected is vetoed.
-                The veto is silent (no event fires); the message below is produced by the callback itself.
+                An <strong>interceptor</strong>: runs <em>before</em> an option is added with one
+                <code>ctx</code> — <code>{ option, selectedOptions, selectedValues, source }</code> — and returns
+                <code>false</code> to block it (nothing = allow; it may also be async). Here <strong>Full-time</strong>
+                and <strong>Part-time</strong> are mutually exclusive — picking one while the other is selected is
+                vetoed. The veto is silent (no event fires); the message below is produced by the callback itself.
             </p>
             <div class="form-group">
                 <label>Availability</label>
@@ -99,12 +102,12 @@ el.addEventListener('change', (e) =&gt; {
                 <summary>Show code</summary>
 <pre><code>const EXCLUSIVE = ['full', 'part'];
 
-el.beforeSelectCallback = (option, selected) =&gt; {
+el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
   // block if the option conflicts with something already selected
   const conflict = EXCLUSIVE.includes(option.value)
-    &amp;&amp; selected.find(o =&gt; EXCLUSIVE.includes(o.value) &amp;&amp; o.value !== option.value);
+    &amp;&amp; selectedOptions.find(o =&gt; EXCLUSIVE.includes(o.value) &amp;&amp; o.value !== option.value);
   if (conflict) {
-    showMessage(`Blocked: can't pick ${option.label} while ${conflict.label} is selected`);
+    controller.showMessage(`Blocked: can't pick ${option.label} while ${conflict.label} is selected`, { type: 'warning' });
     return false;            // ← veto
   }
   // return undefined ⇒ allow
@@ -120,8 +123,10 @@ el.beforeSelectCallback = (option, selected) =&gt; {
             <p>
                 The mirror interceptor on the way out. <strong>Team Lead</strong> is pre-selected and
                 required — trying to remove it is vetoed, while the other members can be toggled freely.
-                Note the veto applies only to interactive removal: programmatic
-                <code>setSelected()</code> and the Clear-All button bypass it.
+                The veto applies to every interactive removal — including bulk gestures (Clear-All, the
+                inline ✕, the count badge's ×), where it runs per option (<code>ctx.source</code> tells you
+                which) and only the vetoed options stay. Programmatic <code>setSelected()</code> and form reset
+                bypass it.
             </p>
             <div class="form-group">
                 <label>Team</label>
@@ -137,9 +142,10 @@ el.beforeSelectCallback = (option, selected) =&gt; {
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>el.beforeDeselectCallback = (option) =&gt; {
+<pre><code>el.beforeDeselectCallback = ({ option, controller }) =&gt; {
   if (option.value === 'lead') {
-    showMessage('Team Lead is required — cannot be removed');
+    // in-component message — visible even in the fullscreen overlay
+    controller.showMessage('Team Lead is required — cannot be removed', { type: 'warning' });
     return false;            // ← veto removal
   }
 };
@@ -157,9 +163,11 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
                 being: in the <strong>fullscreen overlay</strong> (phones) the sheet covers the whole page,
                 so your own toasts / inline messages are hidden behind it. This shows above the panel in
                 both presentations — anchored under the control when floating, pinned over the overlay when
-                fullscreen. It's also what a <code>before*Callback</code> uses when it returns a reason
-                string (demo 3). Content can be text <em>or</em> an element; variants are
-                <code>info</code> / <code>warning</code> / <code>error</code> / <code>success</code>.
+                fullscreen. It's also how a <code>before*Callback</code> explains a veto
+                (<code>ctx.controller.showMessage(…)</code>, then <code>return false</code> — demo 3). Content can be
+                text <em>or</em> an element; options are <code>type</code> (<code>info</code> / <code>warning</code> /
+                <code>error</code> / <code>success</code>), <code>autoHideMs</code> and <code>placement</code>.
+                Available as <code>el.showMessage()</code> and on <code>el.controller</code> / every <code>ctx.controller</code>.
                 (For the fullscreen overlay itself, see the <a href="examples-responsive.html">Responsive &amp; Mobile</a> page.)
             </p>
             <div class="form-group">
@@ -194,8 +202,8 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>// imperative — text + variant + auto-dismiss (ms; 0 = sticky until tapped/replaced)
-el.showMessage('Saved!', { variant: 'success', duration: 2000 });
+<pre><code>// imperative — text + type + auto-dismiss (ms; 0 = sticky until tapped/replaced)
+el.showMessage('Saved!', { type: 'success', autoHideMs: 2000 });
 
 // placement (floating case): a floating-ui Placement, default 'bottom'
 el.showMessage('Over here', { placement: 'top-start' });
@@ -203,15 +211,15 @@ el.showMessage('Over here', { placement: 'top-start' });
 // rich content
 const box = document.createElement('span');
 box.innerHTML = '&lt;strong&gt;Heads up&lt;/strong&gt; — 3 items hidden';
-el.showMessage(box, { variant: 'warning', duration: 0 });
+el.showMessage(box, { type: 'warning', autoHideMs: 0 });
 
 el.hideMessage();               // dismiss programmatically
 
 // from a veto interceptor — same toasts, driven by the selection
-el.beforeSelectCallback = (option) =&gt; {
-  if (option.value === 'warn') return 'Heads up — this one is discouraged'; // veto + warning (shortcut)
-  if (option.value === 'err')  { el.showMessage('Not allowed', { variant: 'error' }); return false; } // veto + error
-  if (option.value === 'ok')   { el.showMessage('Nice choice!', { variant: 'success' }); }            // allow + success
+el.beforeSelectCallback = ({ option, controller }) =&gt; {
+  if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { type: 'warning' }); return false; } // veto + warning
+  if (option.value === 'err')  { controller.showMessage('Not allowed', { type: 'error' }); return false; }                          // veto + error
+  if (option.value === 'ok')   { controller.showMessage('Nice choice!', { type: 'success' }); }                                     // allow + success
 };</code></pre>
             </details>
         </div>
@@ -226,9 +234,10 @@ el.beforeSelectCallback = (option) =&gt; {
                 <strong>“Add new …”</strong> prompt instead of the empty message. Choosing it (click or
                 <kbd>Enter</kbd>) fires the <code>add</code> event. The prompt label is set statically via
                 <code>add-new-text</code> (the <code>{value}</code> placeholder is the typed text) or
-                dynamically via <code>getAddNewTextCallback</code>. <code>addNewCallback</code> is
-                <strong>async and cancelable</strong> — return a rich option to create + select it, or
-                <code>null</code> to abort (try adding a name that already exists, e.g. “Anna”).
+                dynamically via <code>getAddNewTextCallback({ value })</code>. <code>beforeAddCallback({ value })</code> is
+                <strong>async and cancelable</strong> — return a rich option to create + select it,
+                <code>false</code> to abort (try adding a name that already exists, e.g. “Anna”), or nothing to just
+                let the <code>add</code> event fire and create the option yourself.
             </p>
             <div class="form-group">
                 <label>Group members — type a name that isn't listed</label>
@@ -249,20 +258,25 @@ el.beforeSelectCallback = (option) =&gt; {
 <pre><code>&lt;web-multiselect allow-add-new add-new-text='Add new member: "{value}"'&gt;&lt;/web-multiselect&gt;
 
 // Async + cancelable. Return a rich option to create + select it,
-// or null/undefined to abort (no add, no `add` event, search kept).
-el.addNewCallback = async (value) =&gt; {
-  if (await api.exists(value)) return null;        // ← cancel
+// false to abort (no add, no `add` event, search kept),
+// or nothing → only the `add` event fires (create the option yourself).
+el.beforeAddCallback = async ({ value, controller }) =&gt; {
+  if (await api.exists(value)) {
+    controller.showMessage(`"${value}" already exists`, { type: 'warning' });
+    return false;                                  // ← cancel
+  }
   return await api.create(value);                  // ← rich option → create + select
 };
 
-// …and/or just listen for the intent (fires whether or not a callback ran):
+// …and/or just listen for the intent (fires unless the callback cancelled):
 el.addEventListener('add', (e) =&gt; {
   // e.detail = { value, option?, selectedOptions, selectedValues }
   log('event', 'add', e.detail.value);
 });
+// (or el.onAdd = ({ value }) =&gt; …)
 
 // Dynamic label instead of the {value} template:
-el.getAddNewTextCallback = (v) =&gt; `Create "${v}"`;</code></pre>
+el.getAddNewTextCallback = ({ value }) =&gt; `Create "${value}"`;</code></pre>
             </details>
         </div>
 
@@ -272,7 +286,7 @@ el.getAddNewTextCallback = (v) =&gt; `Create "${v}"`;</code></pre>
         <div class="card">
             <h2>EV4c · Add new — async creation with a rich option</h2>
             <p>
-                A real creation usually hits a server. Here <code>addNewCallback</code> is
+                A real creation usually hits a server. Here <code>beforeAddCallback</code> is
                 <strong>async with a deliberate ~1.2 s delay</strong>, so you can watch the picker show a
                 <strong>spinner + “Adding …”</strong> in the prompt while it works, then drop the created
                 member into the list. The new option comes back as a <strong>rich object</strong>
@@ -312,7 +326,7 @@ el.options = [
 
 // Async: a short delay shows the pending spinner. Returns a RICH option
 // (subtitle + icon) so the created member renders like every other row.
-el.addNewCallback = async (value) =&gt; {
+el.beforeAddCallback = async ({ value }) =&gt; {
   await new Promise(r =&gt; setTimeout(r, 1200));      // ← server round-trip
   return {
     value: value.trim().toLowerCase().replace(/\s+/g, '-'),
@@ -334,14 +348,21 @@ el.addNewCallback = async (value) =&gt; {
             </p>
             <ul>
                 <li><strong>Event</strong> (fire-and-forget, return ignored): <code>onSelect</code>,
-                    <code>onDeselect</code>, <code>onChange</code>, and the bare DOM
-                    <code>select</code>/<code>deselect</code>/<code>change</code> events.</li>
-                <li><strong>Interceptor callback</strong> (return consumed to cancel): <code>before*Callback</code>
-                    — <code>beforeSelectCallback</code>, <code>beforeDeselectCallback</code>,
-                    <code>beforeSearchCallback</code>.</li>
+                    <code>onDeselect</code>, <code>onChange</code>, <code>onAdd</code>, <code>onAction</code>,
+                    <code>onReady</code> (each receives the detail), and the bare DOM
+                    <code>select</code>/<code>deselect</code>/<code>change</code>/<code>add</code>/<code>action</code>/<code>ready</code> events.</li>
+                <li><strong>Interceptor callback</strong> (one contract: <code>false</code> cancels, nothing continues,
+                    a value replaces): <code>before*Callback</code> — <code>beforeSelectCallback</code>,
+                    <code>beforeDeselectCallback</code>, <code>beforeSearchCallback</code>, <code>beforeAddCallback</code>,
+                    <code>beforeActionCallback</code>, <code>beforeKeydownCallback</code>.</li>
                 <li><strong>Data/behavior callback</strong> (return consumed as a value):
                     <code>get*Callback</code> / <code>render*Callback</code> / <code>searchCallback</code>.</li>
             </ul>
+            <p>
+                Every callback takes <strong>one <code>ctx</code> argument</strong> (per-option callbacks read
+                <code>ctx.item</code>), and every <code>ctx</code> and event detail carries
+                <code>controller</code> (the same facade as <code>el.controller</code>) and <code>element</code>.
+            </p>
         </div>
     </div>
 
@@ -371,10 +392,11 @@ el.addNewCallback = async (value) =&gt; {
             const eventsLog = logger(document.getElementById('events-log'));
             eventsSelect.options = skills;
 
-            eventsSelect.onSelect   = (e) => eventsLog('tag-prop', '[prop] onSelect', e.detail.option.label);
-            eventsSelect.onDeselect = (e) => eventsLog('tag-prop', '[prop] onDeselect', e.detail.option.label);
-            eventsSelect.onChange   = (e) =>
-                eventsLog('tag-prop', '[prop] onChange', JSON.stringify(e.detail.selectedOptions.map(o => o.value)));
+            // on* twins receive the detail; addEventListener receives the CustomEvent.
+            eventsSelect.onSelect   = ({ option }) => eventsLog('tag-prop', '[prop] onSelect', option.label);
+            eventsSelect.onDeselect = ({ option }) => eventsLog('tag-prop', '[prop] onDeselect', option.label);
+            eventsSelect.onChange   = ({ selectedOptions }) =>
+                eventsLog('tag-prop', '[prop] onChange', JSON.stringify(selectedOptions.map(o => o.value)));
             eventsSelect.addEventListener('change', (e) =>
                 eventsLog('tag-event', '[event] change', JSON.stringify(e.detail.selectedValues)));
 
@@ -390,9 +412,9 @@ el.addNewCallback = async (value) =&gt; {
             const exclusiveLog = logger(document.getElementById('exclusive-log'));
             exclusiveSelect.options = availability;
 
-            exclusiveSelect.beforeSelectCallback = (option, selected) => {
+            exclusiveSelect.beforeSelectCallback = ({ option, selectedOptions }) => {
                 const conflict = EXCLUSIVE.includes(option.value)
-                    && selected.find(o => EXCLUSIVE.includes(o.value) && o.value !== option.value);
+                    && selectedOptions.find(o => EXCLUSIVE.includes(o.value) && o.value !== option.value);
                 if (conflict) {
                     exclusiveLog('tag-block', '[blocked] beforeSelect',
                         `can't pick ${option.label} while ${conflict.label} is selected`);
@@ -400,7 +422,7 @@ el.addNewCallback = async (value) =&gt; {
                 }
                 // allow
             };
-            exclusiveSelect.onSelect = (e) => exclusiveLog('tag-ok', '[allowed] onSelect', e.detail.option.label);
+            exclusiveSelect.onSelect = ({ option }) => exclusiveLog('tag-ok', '[allowed] onSelect', option.label);
 
             // --- 3. beforeDeselectCallback (required item) ------------
             const team = [
@@ -413,15 +435,16 @@ el.addNewCallback = async (value) =&gt; {
             const requiredLog = logger(document.getElementById('required-log'));
             requiredSelect.options = team;
 
-            requiredSelect.beforeDeselectCallback = (option) => {
+            requiredSelect.beforeDeselectCallback = ({ option, source, controller }) => {
                 if (option.value === 'lead') {
-                    requiredLog('tag-block', '[blocked] beforeDeselect', 'Team Lead is required — cannot be removed');
-                    // Returning a string vetoes AND shows an in-component message — visible
-                    // even in the fullscreen overlay, where this page log would be hidden.
-                    return 'Team Lead is required — cannot be removed';
+                    requiredLog('tag-block', '[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`);
+                    // Explain the veto with an in-component message — visible even in the
+                    // fullscreen overlay, where this page log would be hidden.
+                    controller.showMessage('Team Lead is required — cannot be removed', { type: 'warning' });
+                    return false;
                 }
             };
-            requiredSelect.onDeselect = (e) => requiredLog('tag-ok', '[removed] onDeselect', e.detail.option.label);
+            requiredSelect.onDeselect = ({ option }) => requiredLog('tag-ok', '[removed] onDeselect', option.label);
             requiredSelect.setSelected(['lead']); // pre-select; bypasses the veto
 
             // --- 4b. Add new (creation tool) -------------------------
@@ -432,15 +455,15 @@ el.addNewCallback = async (value) =&gt; {
                 { value: 'ben', label: 'Ben' },
                 { value: 'carla', label: 'Carla' }
             ];
-            // Async + cancelable: return a rich option to create + select it, or null to abort.
+            // Async + cancelable: return a rich option to create + select it, or false to abort.
             // Here we reject a name that already exists (case-insensitive) — the search is left
             // intact and no `add` event fires.
-            createSelect.addNewCallback = async (value) => {
+            createSelect.beforeAddCallback = async ({ value, controller }) => {
                 const key = value.trim().toLowerCase();
                 const exists = createSelect.options.some(o => o.value === key);
                 if (exists) {
-                    createSelect.showMessage(`"${value}" already exists`, { variant: 'warning' });
-                    return null;                          // ← cancel
+                    controller.showMessage(`"${value}" already exists`, { type: 'warning' });
+                    return false;                         // ← cancel
                 }
                 // (a real app might `await api.create(value)` here)
                 return { value: key, label: value };      // ← rich option → create + select
@@ -460,8 +483,8 @@ el.addNewCallback = async (value) =&gt; {
             ];
             // Async: the delay lets the pending spinner show; returns a rich option so the
             // created member renders (avatar + subtitle) like the seeded rows.
-            membersSelect.addNewCallback = async (value) => {
-                membersLog('tag-prop', '[pending] addNewCallback', `creating "${value}"… (~1.2s)`);
+            membersSelect.beforeAddCallback = async ({ value }) => {
+                membersLog('tag-prop', '[pending] beforeAddCallback', `creating "${value}"… (~1.2s)`);
                 await new Promise(r => setTimeout(r, 1200));
                 return {
                     value: value.trim().toLowerCase().replace(/\s+/g, '-'),
@@ -483,28 +506,27 @@ el.addNewCallback = async (value) =&gt; {
                 { value: 'err', label: '⛔ Error on select' },
                 { value: 'ok', label: '✅ Success on select' }
             ];
-            // Drive the same toasts from the selection itself: return a string to veto +
-            // show a warning (the built-in shortcut), or call showMessage() for another
-            // variant. 'ok' allows the selection AND shows a success message.
-            msgSelect.beforeSelectCallback = (option) => {
-                if (option.value === 'warn') return 'Heads up — this one is discouraged';
-                if (option.value === 'err') { msgSelect.showMessage('Not allowed', { variant: 'error' }); return false; }
-                if (option.value === 'ok') { msgSelect.showMessage('Nice choice!', { variant: 'success' }); }
+            // Drive the same toasts from the selection itself: showMessage() + return false
+            // vetoes with an explanation; 'ok' allows the selection AND shows a success message.
+            msgSelect.beforeSelectCallback = ({ option, controller }) => {
+                if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { type: 'warning' }); return false; }
+                if (option.value === 'err') { controller.showMessage('Not allowed', { type: 'error' }); return false; }
+                if (option.value === 'ok') { controller.showMessage('Nice choice!', { type: 'success' }); }
             };
             const msgPlacement = document.getElementById('msg-placement');
             document.querySelectorAll('[data-msg]').forEach((btn) => {
                 btn.addEventListener('click', () => {
-                    const variant = btn.dataset.msg;
-                    msgSelect.showMessage(`This is a ${variant} message`, { variant, placement: msgPlacement.value });
+                    const type = btn.dataset.msg;
+                    msgSelect.showMessage(`This is a ${type} message`, { type, placement: msgPlacement.value });
                 });
             });
             document.getElementById('msg-html').addEventListener('click', () => {
                 const span = document.createElement('span');
                 span.innerHTML = '<strong>Custom</strong> HTML content ✨';
-                msgSelect.showMessage(span, { variant: 'info', duration: 4000, placement: msgPlacement.value });
+                msgSelect.showMessage(span, { type: 'info', autoHideMs: 4000, placement: msgPlacement.value });
             });
             document.getElementById('msg-sticky').addEventListener('click', () => {
-                msgSelect.showMessage('Sticky — tap me to dismiss', { variant: 'warning', duration: 0, placement: msgPlacement.value });
+                msgSelect.showMessage('Sticky — tap me to dismiss', { type: 'warning', autoHideMs: 0, placement: msgPlacement.value });
             });
             document.getElementById('msg-fs').addEventListener('click', () => {
                 const isFs = msgSelect.getAttribute('mobile-presentation') === 'fullscreen';

@@ -25,11 +25,11 @@ select.options = popularLanguages;
 select.keepOptionsOnSearch = true;
 select.minSearchLength = 3;
 
-select.searchCallback = async (searchTerm) => {
-  if (searchTerm.length < 3) return [];
+select.searchCallback = async ({ term, signal }) => {
+  if (term.length < 3) return [];
 
-  // Load from API
-  const response = await fetch(`/api/languages?q=${searchTerm}`);
+  // Load from API (signal aborts a superseded request)
+  const response = await fetch(`/api/languages?q=${encodeURIComponent(term)}`, { signal });
   const results = await response.json();
 
   // Return additional results
@@ -45,22 +45,22 @@ CONDITIONAL RENDERING
 ---------------------
 Render based on item state and context:
 
-select.renderOptionContentCallback = (option, context) => {
+select.renderOptionContentCallback = (context) => {
   const user = getCurrentUser();
 
   // Different rendering for selected items
   if (context.isSelected) {
     return `
       <div class="option-selected">
-        ✓ <strong>${option.label}</strong>
-        ${option.addedBy === user.id ? '<span class="badge-you">You</span>' : ''}
+        ✓ <strong>${context.item.label}</strong>
+        ${context.item.addedBy === user.id ? '<span class="badge-you">You</span>' : ''}
       </div>
     `;
   }
 
   // Highlight matches in search
   if (context.isMatched) {
-    const highlighted = highlightSearchTerm(option.label, searchTerm);
+    const highlighted = highlightSearchTerm(context.item.label, searchTerm);
     return `<div class="option-matched">${highlighted}</div>`;
   }
 
@@ -68,8 +68,8 @@ select.renderOptionContentCallback = (option, context) => {
   if (context.isDisabled) {
     return `
       <div class="option-disabled">
-        ${option.label}
-        <span class="reason">${option.disabledReason}</span>
+        ${context.item.label}
+        <span class="reason">${context.item.disabledReason}</span>
       </div>
     `;
   }
@@ -77,7 +77,7 @@ select.renderOptionContentCallback = (option, context) => {
   // Default rendering
   return `
     <div class="option">
-      ${option.icon || ''} ${option.label}
+      ${context.item.icon || ''} ${context.item.label}
     </div>
   `;
 };
@@ -90,11 +90,11 @@ interface PriorityOption extends MultiSelectOption {
   priority: 'low' | 'medium' | 'high' | 'urgent';
 }
 
-select.getBadgeClassCallback = (option: PriorityOption) => {
-  return [`badge-priority`, `badge-${option.priority}`];
+select.getBadgeClassCallback = ({ item }: { item: PriorityOption }) => {
+  return [`badge-priority`, `badge-${item.priority}`];
 };
 
-select.customStylesCallback = () => {
+select.getCustomStylesCallback = () => {
   return `
     .badge-low {
       --ml-badge-text-bg: #f3f4f6;
@@ -123,7 +123,7 @@ Implement search caching:
 const searchCache = new Map<string, MultiSelectOption[]>();
 const pendingSearches = new Map<string, Promise<MultiSelectOption[]>>();
 
-select.searchCallback = async (searchTerm: string) => {
+select.searchCallback = async ({ term: searchTerm }: MultiSelectSearchContext) => {
   // Check cache
   if (searchCache.has(searchTerm)) {
     return searchCache.get(searchTerm)!;
@@ -153,20 +153,14 @@ select.searchCallback = async (searchTerm: string) => {
 
 DEBOUNCED SEARCH
 ----------------
-Reduce API calls with debouncing:
+Reduce API calls with the built-in debounce (async searchCallback only); a superseded
+request is aborted through ctx.signal:
 
-let debounceTimer: ReturnType<typeof setTimeout>;
+<web-multiselect search-debounce="300"></web-multiselect>
 
-select.searchCallback = async (searchTerm: string) => {
-  return new Promise((resolve) => {
-    clearTimeout(debounceTimer);
-
-    debounceTimer = setTimeout(async () => {
-      const response = await fetch(`/api/search?q=${searchTerm}`);
-      const results = await response.json();
-      resolve(results);
-    }, 300);
-  });
+select.searchCallback = async ({ term, signal }: MultiSelectSearchContext) => {
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
+  return await response.json();
 };
 
 PROGRESSIVE LOADING
@@ -202,32 +196,32 @@ select.addEventListener('scroll-near-bottom', async () => {
 
 DYNAMIC VALIDATION
 ------------------
-Validate selections dynamically:
+Veto selections BEFORE they happen (once per option, also for Select-All / group checkbox).
+Return false to veto; explain it with ctx.controller.showMessage (a returned string does
+NOT veto):
 
-select.changeCallback = (selectedOptions) => {
+select.beforeSelectCallback = ({ option, selectedOptions, controller }) => {
   // Max selections
-  if (selectedOptions.length > 5) {
-    alert('Maximum 5 selections allowed');
-    const limited = selectedOptions.slice(0, 5);
-    select.setSelected(limited.map(o => o.value));
-    return;
-  }
-
-  // Required combinations
-  const categories = selectedOptions.map(o => o.category);
-  if (!categories.includes('required-category')) {
-    alert('Must include at least one from required category');
-    return;
+  if (selectedOptions.length >= 5) {
+    controller.showMessage('Maximum 5 selections allowed', { type: 'warning' });
+    return false;
   }
 
   // Mutual exclusivity
-  const hasA = selectedOptions.some(o => o.group === 'A');
-  const hasB = selectedOptions.some(o => o.group === 'B');
-  if (hasA && hasB) {
-    alert('Cannot select from both groups A and B');
-    // Remove last selected
-    const newValues = selectedOptions.slice(0, -1).map(o => o.value);
-    select.setSelected(newValues);
+  const otherGroup = option.group === 'A' ? 'B' : option.group === 'B' ? 'A' : null;
+  if (otherGroup && selectedOptions.some(o => o.group === otherGroup)) {
+    controller.showMessage('Cannot select from both groups A and B', { type: 'warning' });
+    return false;
+  }
+};
+
+// Keep at least one from the required category
+select.beforeDeselectCallback = ({ option, selectedOptions, controller }) => {
+  const remaining = selectedOptions.filter(o => o !== option);
+  if (option.category === 'required-category' &&
+      !remaining.some(o => o.category === 'required-category')) {
+    controller.showMessage('Must include at least one from required category', { type: 'warning' });
+    return false;
   }
 };
 
@@ -263,8 +257,9 @@ interface TreeOption extends MultiSelectOption {
   children?: TreeOption[];
 }
 
-select.changeCallback = (selectedOptions: TreeOption[]) => {
+select.onChange = ({ selectedOptions }: ChangeEventDetail<TreeOption>) => {
   // Auto-select children when parent selected
+  // (for path-based trees prefer the built-in tree mode + cascade selection)
   const withChildren = selectedOptions.flatMap(option => {
     if (option.children) {
       return [option, ...option.children];
@@ -277,7 +272,7 @@ select.changeCallback = (selectedOptions: TreeOption[]) => {
     withChildren.map(o => [o.value, o])
   ).values());
 
-  select.setSelected(unique.map(o => o.value));
+  select.setSelected(unique.map(o => o.value));   // silent — no change-event loop
 };
 
 CUSTOM SORTING
@@ -334,8 +329,7 @@ OPTIMISTIC UPDATES
 ------------------
 Update UI before server confirms:
 
-select.changeCallback = async (selectedOptions) => {
-  const values = selectedOptions.map(o => o.value);
+select.onChange = async ({ selectedValues: values, controller }) => {
 
   try {
     // Optimistically update (already done by component)
@@ -355,7 +349,7 @@ select.changeCallback = async (selectedOptions) => {
     const previousValues = getPreviousValues(); // Store previous state
     select.setSelected(previousValues);
 
-    alert('Failed to save selections');
+    controller.showMessage('Failed to save selections', { type: 'error' });
   }
 };
 
@@ -390,7 +384,7 @@ DEFERRED INITIALIZATION (defer / ready) — FLASH-FREE
 ----------------------------------------------------
 A custom element upgrades as soon as its script loads: the browser builds the
 shadow DOM and paints it with the component's DEFAULT styles. If you then assign
-a customStylesCallback (or your framework adopts a shared stylesheet) AFTER
+a getCustomStylesCallback (or your framework adopts a shared stylesheet) AFTER
 upgrade, there is a visible beat where badges/options show unstyled before they
 restyle — the classic custom-element flash. The same race hits any post-upgrade
 wiring (options, listeners) you'd rather have in place before the first paint.
@@ -399,7 +393,7 @@ The `defer` attribute holds the first render until you release it:
 
   - Add `defer` and the component builds NOTHING on upgrade (reserves space only,
     via :host([defer]:not([is-ready])), mirroring the :not(:defined) window).
-  - Wire everything from JS — options, customStylesCallback, listeners.
+  - Wire everything from JS — options, getCustomStylesCallback, listeners.
   - Call el.ready() (or REMOVE the `defer` attribute) to build ONCE with it all
     applied. The gate is latched — once released it never re-closes.
 
@@ -407,7 +401,7 @@ The `defer` attribute holds the first render until you release it:
 
 const el = document.getElementById('skills');
 el.options = await loadSkills();
-el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+el.getCustomStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
 el.ready();          // builds once — styled badges appear in one shot, no flash
 el.isReady;          // → true
@@ -415,7 +409,8 @@ el.isReady;          // → true
 The `ready` event fires once, right after the first build (synchronously during
 upgrade for a normal element; on release for a deferred one):
 
-el.addEventListener('ready', () => { /* picker is live and painted */ });
+el.addEventListener('ready', (e) => { /* picker is live and painted; e.detail.controller */ });
+el.onReady = ({ controller }) => { /* same, property twin — receives the detail */ };
 
 Phoenix LiveView (server-rendered tag + JS hook — the ordering that flashes):
 
@@ -426,7 +421,8 @@ Hooks.MultiSelect = {
   mounted() {
     const el = this.el;
     el.options = JSON.parse(el.dataset.options);
-    el.customStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+    el.getCustomStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
+    // detail.controller / detail.element are non-enumerable → pushEvent sends only the data
     el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
     el.ready();                // build once, flash-free
   },
@@ -438,7 +434,7 @@ Notes:
     — no client hook required.
   - `isReady` (getter) is reflected as the `is-ready` attribute; don't set it
     yourself. CSS hook: :host([defer]:not([is-ready])).
-  - See also: styling-theming.txt (customStylesCallback), basic-setup.txt.
+  - See also: styling-theming.txt (getCustomStylesCallback), basic-setup.txt.
 
 PERFORMANCE MONITORING
 ----------------------
@@ -447,7 +443,7 @@ Track performance metrics:
 let renderCount = 0;
 let lastRenderTime = performance.now();
 
-select.renderOptionContentCallback = (option, context) => {
+select.renderOptionContentCallback = (context) => {
   renderCount++;
 
   if (renderCount % 100 === 0) {
@@ -457,15 +453,15 @@ select.renderOptionContentCallback = (option, context) => {
     lastRenderTime = now;
   }
 
-  return `<div>${option.label}</div>`;
+  return `<div>${context.item.label}</div>`;
 };
 
 ACCESSIBILITY ENHANCEMENTS
 --------------------------
 Enhanced ARIA support:
 
-select.renderOptionContentCallback = (option, context) => {
-  const ariaLabel = `${option.label}, ${option.subtitle || ''}, ${context.isSelected ? 'selected' : 'not selected'}`;
+select.renderOptionContentCallback = (context) => {
+  const ariaLabel = `${context.item.label}, ${context.item.subtitle || ''}, ${context.isSelected ? 'selected' : 'not selected'}`;
 
   return `
     <div
@@ -473,7 +469,7 @@ select.renderOptionContentCallback = (option, context) => {
       aria-label="${ariaLabel}"
       aria-selected="${context.isSelected}"
       aria-disabled="${context.isDisabled}">
-      ${option.label}
+      ${context.item.label}
     </div>
   `;
 };

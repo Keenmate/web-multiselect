@@ -12,7 +12,7 @@
     <style>
         /* NOTE: option/badge/popover content is rendered inside the component's
            shadow DOM, which page CSS can't reach — style those classes via each
-           picker's `customStylesCallback` (see the users/jobs/contextual pickers
+           picker's `getCustomStylesCallback` (see the users/jobs/contextual pickers
            below), not here. Only genuine light-DOM markup (the playlist) belongs
            in this block. */
 
@@ -245,14 +245,14 @@
             </div>
 
             <div class="code-block"><pre>// 1) Own the badge CONTENT (rendered inside .ms__badge-text)
-el.renderBadgeContentCallback = (item) =&gt;
+el.renderBadgeContentCallback = ({ item }) =&gt;
   `&lt;img class="ava" src="${item.avatar}" alt=""&gt;&lt;span&gt;${item.name}&lt;/span&gt;`;
 
 // 2) Tag special items so their pill can be styled
-el.getBadgeClassCallback = (item) =&gt; item.vip ? 'badge--vip' : '';
+el.getBadgeClassCallback = ({ item }) =&gt; item.vip ? 'badge--vip' : '';
 
 // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill)
-el.customStylesCallback = () =&gt; `
+el.getCustomStylesCallback = () =&gt; `
   .ms__badge { border-radius: 999px; }                 /* pill shape */
   .ms__badge-text { gap: .4rem; padding-inline-start: .35rem; }
   .ms__badge .ava { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
@@ -285,19 +285,19 @@ el.customStylesCallback = () =&gt; `
                 <div class="note-title">Removal contract</div>
                 The component wraps your markup in <code>.ms__badge--custom</code> carrying
                 <code>data-value</code>, and delegates removal to any element inside with
-                <code>data-action="remove"</code> (or the built-in <code>.ms__badge-remove</code>). So you
+                <code>data-ms-action="remove"</code> (or the built-in <code>.ms__badge-remove</code>). So you
                 just add a remove control — no event wiring. Return <code>null</code> to fall back to the
                 default pill for an item.
             </div>
 
-            <div class="code-block"><pre>el.renderBadgeCallback = (item) =&gt; `
+            <div class="code-block"><pre>el.renderBadgeCallback = ({ item }) =&gt; `
   &lt;div class="icard"&gt;
     &lt;div class="icard__tile"&gt;${item.svg}&lt;/div&gt;
     &lt;div class="icard__title"&gt;${item.name}&lt;/div&gt;
-    &lt;button type="button" class="icard__remove" data-action="remove"&gt;Remove&lt;/button&gt;
+    &lt;button type="button" class="icard__remove" data-ms-action="remove"&gt;Remove&lt;/button&gt;
   &lt;/div&gt;`;
 // data-value is stamped on the wrapper by the component; the click on
-// [data-action="remove"] resolves it and deselects — no manual event.</pre></div>
+// [data-ms-action="remove"] resolves it and deselects — no manual event.</pre></div>
         </div>
 
         <div class="card">
@@ -388,7 +388,7 @@ panel.addEventListener('click', (e) =&gt; {
                 <web-multiselect id="contextual" option-height="80" badges-threshold="3" badges-threshold-mode="partial" enable-badge-tooltips="true"></web-multiselect>
                 <small class="form-text">
                     Combines 3 callbacks: <code>renderOptionContentCallback</code> (rich dropdown with status, priority, tags),
-                    <code>renderBadgeContentCallback</code> (compact "▶️ Name" in main area, detailed "▶️ Name [priority]" in popover using <code>context.isInPopover</code>),
+                    <code>renderBadgeContentCallback</code> (compact "▶️ Name" in main area, detailed "▶️ Name [priority]" in popover using <code>ctx.isInPopover</code>),
                     and <code>getBadgeDisplayCallback</code> (plain text "Name - status (priority)" for tooltips).
                 </small>
             </div>
@@ -400,7 +400,7 @@ panel.addEventListener('click', (e) =&gt; {
                 <small class="form-text">
                     Uses <code>renderBadgeContentCallback</code> for compact badge display and <code>renderSelectedItemContentCallback</code> for detailed popover display.
                     Uses <code>getBadgeClassCallback</code> to add priority-based CSS classes (badge-urgent, badge-important, badge-normal, badge-low).
-                    Uses <code>customStylesCallback</code> to inject CSS into Shadow DOM for styling those classes.
+                    Uses <code>getCustomStylesCallback</code> to inject CSS into Shadow DOM for styling those classes.
                     Demonstrates separate callbacks for badges vs. selected items popover and solving Shadow DOM CSS isolation.
                 </small>
             </div>
@@ -435,11 +435,11 @@ panel.addEventListener('click', (e) =&gt; {
         <div class="card">
             <h2>CR09 · Declarative Styling — the <code>custom-styles</code> attribute (no JS)</h2>
             <p>
-                Every card above reaches into the Shadow DOM via <code>customStylesCallback</code> (a JS
+                Every card above reaches into the Shadow DOM via <code>getCustomStylesCallback</code> (a JS
                 function). The <code>custom-styles</code> attribute is the declarative twin: set a raw CSS
                 string right on the element and it's injected verbatim into the same replaceable style slot —
                 no script at all. Perfect for static HTML or server-rendered markup. When both are present,
-                <code>customStylesCallback</code> wins (the attribute is the static fallback).
+                <code>getCustomStylesCallback</code> wins (the attribute is the static fallback).
             </p>
 
             <div class="form-group">
@@ -486,7 +486,7 @@ panel.addEventListener('click', (e) =&gt; {
     </style>
 
     <script type="module">
-        import './dist/multiselect.js';
+        import '/src/index.ts';
 
         // 1. Framework Selector with Descriptions
         const frameworks = document.getElementById('frameworks');
@@ -502,7 +502,7 @@ panel.addEventListener('click', (e) =&gt; {
         frameworks.valueMember = 'id';
         frameworks.displayValueMember = 'name';
 
-        frameworks.renderOptionContentCallback = (item, context) => {
+        frameworks.renderOptionContentCallback = ({ item }) => {
             const starCount = (item.stars / 1000).toFixed(0);
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; gap: 0.25rem 0.75rem; align-items: center; width: 100%;">
@@ -529,7 +529,7 @@ panel.addEventListener('click', (e) =&gt; {
         products.valueMember = 'id';
         products.displayValueMember = 'name';
 
-        products.renderOptionContentCallback = (item, context) => {
+        products.renderOptionContentCallback = ({ item }) => {
             const stockStatus = item.stock === 0 ? 'Out of stock' : `${item.stock} in stock`;
             const stockColor = item.stock === 0 ? '#ef4444' : item.stock < 20 ? '#f59e0b' : '#10b981';
             const stars = '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 >= 0.5 ? '½' : '');
@@ -566,14 +566,14 @@ panel.addEventListener('click', (e) =&gt; {
         };
 
         // Add dynamic CSS classes to badges based on price
-        products.getBadgeClassCallback = (item) => {
+        products.getBadgeClassCallback = ({ item }) => {
             if (item.price < 20) return 'product-budget';
             if (item.price < 50) return 'product-mid';
             return 'product-premium';
         };
 
         // Inject CSS for price-based styling
-        products.customStylesCallback = () => `
+        products.getCustomStylesCallback = () => `
             /* Price badge styles in options */
             .price-budget {
                 background-color: #d1fae5;
@@ -606,7 +606,7 @@ panel.addEventListener('click', (e) =&gt; {
             }
         `;
 
-        products.getDisabledCallback = (item) => item.stock === 0;
+        products.getIsDisabledCallback = ({ item }) => item.stock === 0;
 
         // 3. Article/Blog Post Selector
         const articles = document.getElementById('articles');
@@ -621,7 +621,7 @@ panel.addEventListener('click', (e) =&gt; {
         articles.valueMember = 'id';
         articles.displayValueMember = 'title';
 
-        articles.renderOptionContentCallback = (item, context) => {
+        articles.renderOptionContentCallback = ({ item }) => {
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; gap: 0.25rem 0.75rem; width: 100%;">
                     <span style="grid-row: 1 / 4; font-size: 1.25rem; align-self: center;">${item.icon}</span>
@@ -653,7 +653,7 @@ panel.addEventListener('click', (e) =&gt; {
         jobs.valueMember = 'id';
         jobs.displayValueMember = 'title';
 
-        jobs.renderOptionContentCallback = (item, context) => {
+        jobs.renderOptionContentCallback = ({ item }) => {
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; gap: 0.375rem 0.75rem; width: 100%;">
                     <span style="grid-row: 1 / 4; font-size: 1.25rem; align-self: center;">💼</span>
@@ -676,7 +676,7 @@ panel.addEventListener('click', (e) =&gt; {
         };
 
         // Option content lives in the shadow DOM, so the .tag chip is styled here.
-        jobs.customStylesCallback = () => `
+        jobs.getCustomStylesCallback = () => `
             .tag {
                 display: inline-block;
                 background: #e5e7eb;
@@ -702,7 +702,7 @@ panel.addEventListener('click', (e) =&gt; {
         movies.valueMember = 'id';
         movies.displayValueMember = 'title';
 
-        movies.renderOptionContentCallback = (item, context) => {
+        movies.renderOptionContentCallback = ({ item }) => {
             const stars = '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 >= 0.5 ? '½' : '');
             return `
                 <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; width: 100%;">
@@ -754,7 +754,7 @@ panel.addEventListener('click', (e) =&gt; {
             return '📷';
         };
 
-        images.renderOptionContentCallback = (item, context) => {
+        images.renderOptionContentCallback = ({ item }) => {
             const icon = getFileIcon(item.type);
             const fileSize = formatFileSize(item.size);
             const dimensions = `${item.width} × ${item.height}`;
@@ -781,13 +781,13 @@ panel.addEventListener('click', (e) =&gt; {
             `;
         };
 
-        images.renderBadgeContentCallback = (item, context) => {
+        images.renderBadgeContentCallback = ({ item }) => {
             const icon = getFileIcon(item.type);
             return `${icon} ${item.filename}`;
         };
 
         // Rich rendering for Selected Items popover
-        images.renderSelectedItemContentCallback = (item) => {
+        images.renderSelectedItemContentCallback = ({ item }) => {
             const icon = getFileIcon(item.type);
             const fileSize = formatFileSize(item.size);
             const dimensions = `${item.width} × ${item.height}`;
@@ -818,9 +818,9 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         users.valueMember = 'id';
-        users.getDisplayValueCallback = (item) => `${item.firstName} ${item.lastName}`;
+        users.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
 
-        users.renderOptionContentCallback = (item, context) => {
+        users.renderOptionContentCallback = ({ item }) => {
             const statusClass = item.status === 'online' ? 'status-online' : 'status-offline';
             return `
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -836,8 +836,8 @@ panel.addEventListener('click', (e) =&gt; {
             `;
         };
 
-        users.renderBadgeContentCallback = (item, context) => {
-            if (context.isInPopover) {
+        users.renderBadgeContentCallback = ({ item, isInPopover }) => {
+            if (isInPopover) {
                 // Detailed view in popover
                 return `
                     <div class="user-badge">
@@ -856,7 +856,7 @@ panel.addEventListener('click', (e) =&gt; {
 
         // The status dot (in dropdown options) and the detailed popover badge both
         // render inside the shadow DOM, so their classes are injected here.
-        users.customStylesCallback = () => `
+        users.getCustomStylesCallback = () => `
             .status-indicator {
                 display: inline-block;
                 width: 8px;
@@ -901,7 +901,7 @@ panel.addEventListener('click', (e) =&gt; {
         tags.valueMember = 'id';
         tags.displayValueMember = 'name';
 
-        tags.renderBadgeContentCallback = (item, context) => {
+        tags.renderBadgeContentCallback = ({ item }) => {
             return `
                 <span style="display: inline-flex; align-items: center; gap: 0.375rem;">
                     <span>${item.icon}</span>
@@ -923,17 +923,17 @@ panel.addEventListener('click', (e) =&gt; {
         sexy.displayValueMember = 'name';
 
         // 1) Own the badge CONTENT (goes inside .ms__badge-text).
-        sexy.renderBadgeContentCallback = (item) =>
+        sexy.renderBadgeContentCallback = ({ item }) =>
             `<img class="ava" src="${item.avatar}" alt=""><span>${item.name}</span>`;
 
         // 2) Tag special items so we can style their pill.
-        sexy.getBadgeClassCallback = (item) => item.vip ? 'badge--vip' : '';
+        sexy.getBadgeClassCallback = ({ item }) => item.vip ? 'badge--vip' : '';
 
         // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill). The visible
         //    fill is split between .ms__badge-text and .ms__badge-remove, so for a
         //    continuous VIP gradient we paint the wrapper and make those two transparent —
         //    the remove × stays fully functional (still component-owned).
-        sexy.customStylesCallback = () => `
+        sexy.getCustomStylesCallback = () => `
             .ms__badge { border-radius: 999px; }
             .ms__badge-text { gap: .4rem; padding-inline-start: .35rem; }
             .ms__badge .ava { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
@@ -973,10 +973,10 @@ panel.addEventListener('click', (e) =&gt; {
             { id: 'bell-o',  name: 'Bell',     icon: 'bell',     filled: false, sizes: [16, 20, 24] }
         ];
         iconPicker.valueMember = 'id';
-        iconPicker.getDisplayValueCallback = (item) => `${item.name} (${item.filled ? 'Filled' : 'Outline'})`;
+        iconPicker.getDisplayValueCallback = ({ item }) => `${item.name} (${item.filled ? 'Filled' : 'Outline'})`;
 
         // Compact dropdown rows: small glyph + name + style.
-        iconPicker.renderOptionContentCallback = (item) => `
+        iconPicker.renderOptionContentCallback = ({ item }) => `
             <span style="display:inline-flex;align-items:center;gap:.6rem;width:100%;">
                 <span style="color:#15803d;display:inline-flex;">${iconSvg(item.icon, item.filled, 20)}</span>
                 <strong>${item.name}</strong>
@@ -984,17 +984,17 @@ panel.addEventListener('click', (e) =&gt; {
             </span>`;
 
         // The whole selected badge is a card, with its own Remove button.
-        iconPicker.renderBadgeCallback = (item) => `
+        iconPicker.renderBadgeCallback = ({ item }) => `
             <div class="icard">
                 <div class="icard__title">${item.name}</div>
                 <div class="icard__chip">${item.filled ? 'Filled' : 'Outline'}</div>
                 <div class="icard__tile">${iconSvg(item.icon, item.filled, 36)}</div>
                 <div class="icard__sizes">${item.sizes.map(s => `<span>${s}px</span>`).join('')}</div>
-                <button type="button" class="icard__remove" data-action="remove">Remove</button>
+                <button type="button" class="icard__remove" data-ms-action="remove">Remove</button>
             </div>`;
 
         // Card CSS injected into the shadow DOM (page CSS can't reach the badges).
-        iconPicker.customStylesCallback = () => `
+        iconPicker.getCustomStylesCallback = () => `
             .icard {
                 position: relative; box-sizing: border-box; width: 150px;
                 background: #0b1220; color: #e2e8f0;
@@ -1026,7 +1026,7 @@ panel.addEventListener('click', (e) =&gt; {
             { id: 8, title: 'Purple Rain',            artist: 'Prince',           seconds: 520 }
         ];
         playlist.valueMember = 'id';
-        playlist.getDisplayValueCallback = (item) => `${item.title} — ${item.artist}`;
+        playlist.getDisplayValueCallback = ({ item }) => `${item.title} — ${item.artist}`;
 
         const fmtDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
@@ -1088,8 +1088,8 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         person.valueMember = 'id';
-        person.getDisplayValueCallback = (item) => `${item.firstName} ${item.lastName} (${item.email})`;
-        person.renderSelectedContentCallback = (item) => item.firstName; // Just first name when closed
+        person.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName} (${item.email})`;
+        person.renderSelectedContentCallback = ({ item }) => item.firstName; // Just first name when closed
 
         // 9. Country Code
         const country = document.getElementById('country');
@@ -1102,8 +1102,8 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         country.valueMember = 'code';
-        country.getDisplayValueCallback = (item) => `${item.flag} ${item.name}`;
-        country.renderSelectedContentCallback = (item) => item.code; // Just code when closed
+        country.getDisplayValueCallback = ({ item }) => `${item.flag} ${item.name}`;
+        country.renderSelectedContentCallback = ({ item }) => item.code; // Just code when closed
 
         // 10. Context-Aware Rendering
         const contextual = document.getElementById('contextual');
@@ -1118,7 +1118,7 @@ panel.addEventListener('click', (e) =&gt; {
         contextual.valueMember = 'id';
         contextual.displayValueMember = 'name';
 
-        contextual.renderOptionContentCallback = (item, context) => {
+        contextual.renderOptionContentCallback = ({ item, isFocused }) => {
             const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
             const statusIcons = { active: '▶️', planning: '📋', completed: '✅' };
 
@@ -1126,7 +1126,7 @@ panel.addEventListener('click', (e) =&gt; {
                 <div>
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
                         <span>${statusIcons[item.status]}</span>
-                        <strong style="${context.isFocused ? 'color: #667eea;' : ''}">${item.name}</strong>
+                        <strong style="${isFocused ? 'color: #667eea;' : ''}">${item.name}</strong>
                         <span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: ${priorityColors[item.priority]}; color: white; border-radius: 3px; margin-left: auto;">
                             ${item.priority}
                         </span>
@@ -1138,11 +1138,11 @@ panel.addEventListener('click', (e) =&gt; {
             `;
         };
 
-        contextual.renderBadgeContentCallback = (item, context) => {
+        contextual.renderBadgeContentCallback = ({ item, isInPopover }) => {
             const statusIcons = { active: '▶️', planning: '📋', completed: '✅' };
             const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
 
-            if (context.isInPopover) {
+            if (isInPopover) {
                 // In popover: Show full details with status icon and priority
                 return `
                     <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
@@ -1161,13 +1161,13 @@ panel.addEventListener('click', (e) =&gt; {
             }
         };
 
-        contextual.getBadgeDisplayCallback = (item) => {
+        contextual.getBadgeDisplayCallback = ({ item }) => {
             // For tooltips: show full project details
             return `${item.name} - ${item.status} (${item.priority} priority)`;
         };
 
         // The tag chips render in the shadow-DOM dropdown, so style them here.
-        contextual.customStylesCallback = () => `
+        contextual.getCustomStylesCallback = () => `
             .tags-container { margin-top: 0.375rem; }
             .tag {
                 display: inline-block;
@@ -1197,7 +1197,7 @@ panel.addEventListener('click', (e) =&gt; {
         priorityBadges.valueMember = 'id';
         priorityBadges.displayValueMember = 'name';
 
-        priorityBadges.renderOptionContentCallback = (item, context) => {
+        priorityBadges.renderOptionContentCallback = ({ item }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
             const priorityLabels = { urgent: 'URGENT', important: 'Important', normal: 'Normal', low: 'Low Priority' };
 
@@ -1214,13 +1214,13 @@ panel.addEventListener('click', (e) =&gt; {
         };
 
         // Main badges area: Compact with just icon + name
-        priorityBadges.renderBadgeContentCallback = (item, context) => {
+        priorityBadges.renderBadgeContentCallback = ({ item }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
             return `<span>${priorityIcons[item.priority]} ${item.name}</span>`;
         };
 
         // Selected items popover: Show full details with icon, name, due date, and priority label
-        priorityBadges.renderSelectedItemContentCallback = (item) => {
+        priorityBadges.renderSelectedItemContentCallback = ({ item }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
             const priorityLabels = { urgent: 'URGENT', important: 'Important', normal: 'Normal', low: 'Low Priority' };
 
@@ -1236,18 +1236,18 @@ panel.addEventListener('click', (e) =&gt; {
             `;
         };
 
-        priorityBadges.getBadgeClassCallback = (item) => {
+        priorityBadges.getBadgeClassCallback = ({ item }) => {
             // Return CSS class based on priority for semantic styling (main badges area)
             return `badge-${item.priority}`;
         };
 
-        priorityBadges.getSelectedItemClassCallback = (item) => {
+        priorityBadges.getSelectedItemClassCallback = ({ item }) => {
             // Return CSS class based on priority for selected items in popover
             return `badge-${item.priority}`;
         };
 
         // Inject custom CSS into Shadow DOM for badge styling
-        priorityBadges.customStylesCallback = () => `
+        priorityBadges.getCustomStylesCallback = () => `
             .badge-urgent {
                 --ms-badge-text-bg: #fee2e2;
                 --ms-badge-text-color: #dc2626;
@@ -1285,7 +1285,7 @@ panel.addEventListener('click', (e) =&gt; {
         gridLayout.valueMember = 'id';
         gridLayout.displayValueMember = 'name';
 
-        gridLayout.renderOptionContentCallback = (item, context) => {
+        gridLayout.renderOptionContentCallback = ({ item }) => {
             return `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; width: 100%;">
                     <div style="font-weight: 600; font-size: 1.05rem; grid-column: 1 / -1; margin-bottom: 0.25rem;">
@@ -1316,7 +1316,7 @@ panel.addEventListener('click', (e) =&gt; {
         flexLayout.valueMember = 'id';
         flexLayout.displayValueMember = 'name';
 
-        flexLayout.renderOptionContentCallback = (item, context) => {
+        flexLayout.renderOptionContentCallback = ({ item }) => {
             return `
                 <div style="display: flex; flex-direction: column; gap: 0.375rem; flex: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1346,7 +1346,7 @@ panel.addEventListener('click', (e) =&gt; {
         largeCheckbox.valueMember = 'id';
         largeCheckbox.displayValueMember = 'name';
 
-        largeCheckbox.renderOptionContentCallback = (item, context) => {
+        largeCheckbox.renderOptionContentCallback = ({ item }) => {
             return `
                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">

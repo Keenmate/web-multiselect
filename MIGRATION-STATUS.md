@@ -2,6 +2,10 @@
 
 _Snapshot: 2026-08-02 (v2.0.0 promoted; cold review + core enrichments done)_
 
+> Historical log. The API signatures quoted below (e.g. `on*` handlers reading `e.detail`,
+> `searchCallback(searchTerm, signal)`, `customStylesCallback`) are superseded by the
+> interaction-model change — see CHANGELOG `[Unreleased]`.
+
 ## Summary
 
 The **v2.0.0-rc01 core adoption** is complete, green, and shippable as an rc.

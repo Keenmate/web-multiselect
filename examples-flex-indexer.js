@@ -15,7 +15,7 @@
 //     { getText: (o) => o.label, boost: 1 },               // partial/fuzzy title
 //   ]);
 //   ix.build(options);
-//   el.searchCallback = (term) => ix.search(term, 50);
+//   el.searchCallback = ({ term }) => ix.search(term, 50);
 //
 // A single function is shorthand for one full-tokenize text field:
 //   new FlexIndexer((o) => o.label)

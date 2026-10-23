@@ -512,7 +512,7 @@
             const notes = ['<!-- options assigned in JS: el.options = [...] -->'];
             if (el.getAttribute('allow-add-new') === 'true') {
                 notes.push('<!-- add-new needs a JS callback (or an `add` handler) to create the option: -->');
-                notes.push('<!-- el.addNewCallback = (value) => ({ value, label: value }); -->');
+                notes.push('<!-- el.beforeAddCallback = ({ value }) => ({ value, label: value }); -->');
             }
             if (el.getAttribute('selected-order') === 'custom') {
                 notes.push('<!-- selected-order="custom" needs a JS comparator: -->');
@@ -532,10 +532,11 @@
 
         // ── Boot ─────────────────────────────────────────────────────────────
         customElements.whenDefined('web-multiselect').then(() => {
-            // `allow-add-new` only shows the prompt; creation is delegated. A callback (or an
-            // `add` event handler) is what actually materializes the option. It's a JS callback,
-            // not an attribute, so wire a simple one here — otherwise clicking "+ Add …" is a no-op.
-            el.addNewCallback = (value) => ({ value, label: value });
+            // `allow-add-new` only shows the prompt; creation is delegated. `beforeAddCallback`
+            // returning the option (or an `add` event handler) is what actually materializes it.
+            // It's a JS callback, not an attribute, so wire a simple one here — otherwise clicking
+            // "+ Add …" only fires the `add` event.
+            el.beforeAddCallback = ({ value }) => ({ value, label: value });
 
             // `selected-order="custom"` has no attribute to express the order — it needs a JS
             // comparator. Wire a demo one (shortest label first, then alphabetical) so picking

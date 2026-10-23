@@ -157,7 +157,7 @@ option-tooltip-follow-cursor  // boolean, default false — anchor to & track th
 el.enableOptionTooltips
 el.optionTooltipPlacement
 el.optionTooltipFollowCursor
-el.getOptionTooltipCallback = (item) =&gt; string | HTMLElement
+el.getOptionTooltipCallback = ({ item }) =&gt; string | HTMLElement
 
 // Independent styling (default to the shared --ms-tooltip-* surface):
 --ms-option-tooltip-bg | -text-color | -padding | -border-radius
@@ -169,8 +169,8 @@ badge-tooltip-placement    // 'top' | 'bottom' | 'left' | 'right' (default 'top'
 badge-tooltip-delay        // ms before show (default 100)
 badge-tooltip-offset       // px gap (default 8)
 remove-button-tooltip-text // {0} = item name
-el.getBadgeTooltipCallback        = (item) =&gt; string | HTMLElement
-el.getRemoveButtonTooltipCallback = (item) =&gt; string</pre></div>
+el.getBadgeTooltipCallback        = ({ item }) =&gt; string | HTMLElement
+el.getRemoveButtonTooltipCallback = ({ item }) =&gt; string</pre></div>
 
             <div class="note">
                 <div class="note-title">Shared styling:</div>
@@ -211,7 +211,7 @@ el.getRemoveButtonTooltipCallback = (item) =&gt; string</pre></div>
             optTt.displayValueMember = 'label';
             optTt.subtitleMember = 'description';
             optTt.options = fruitOptions;
-            const optCustomCb = (item) => `${item.label} — ${item.description}`;
+            const optCustomCb = ({ item }) => `${item.label} — ${item.description}`;
 
             document.getElementById('opt-enable').addEventListener('change', (e) =>
                 boolAttr(optTt, 'enable-option-tooltips', e.target.checked));
@@ -240,7 +240,7 @@ el.getRemoveButtonTooltipCallback = (item) =&gt; string</pre></div>
             styTt.valueMember = 'value';
             styTt.displayValueMember = 'label';
             styTt.options = fruitOptions;
-            styTt.getOptionTooltipCallback = (item) => item.description;
+            styTt.getOptionTooltipCallback = ({ item }) => item.description;
 
             const setVar = (name, value) => styTt.style.setProperty(name, value);
             document.getElementById('sty-bg').addEventListener('input', (e) => setVar('--ms-option-tooltip-bg', e.target.value));
@@ -255,7 +255,7 @@ el.getRemoveButtonTooltipCallback = (item) =&gt; string</pre></div>
             bdgTt.subtitleMember = 'description';
             bdgTt.options = fruitOptions;
             bdgTt.setSelected(['apple', 'banana', 'cherry']);
-            const bdgCustomCb = (item) => `${item.label}: ${item.description}`;
+            const bdgCustomCb = ({ item }) => `${item.label}: ${item.description}`;
 
             document.getElementById('bdg-enable').addEventListener('change', (e) =>
                 boolAttr(bdgTt, 'enable-badge-tooltips', e.target.checked));

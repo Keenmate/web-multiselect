@@ -53,7 +53,7 @@ Icons support multiple formats — emojis, SVG markup, Font Awesome, images, or 
 
 ### Icons in Shadow DOM — SVG vs. font icons
 
-The component renders in **Shadow DOM**, which changes how icons reach it. This applies anywhere you pass icon HTML: option `icon`, action button `text`, badge/option render callbacks, etc.
+The component renders in **Shadow DOM**, which changes how icons reach it. This applies anywhere you pass icon HTML: option `icon`, badge/option render callbacks, etc. (Action button `text` / `icon` are plain text, not HTML.)
 
 | Icon type | Works out of the box? | What's needed |
 |---|---|---|
@@ -65,13 +65,13 @@ The component renders in **Shadow DOM**, which changes how icons reach it. This 
 **Font icons need two things, because they're font-based:**
 
 1. **Register the `@font-face` at the document level** — a normal `<link>` (or `@font-face`) in the page `<head>`. A browser will **not** apply a `@font-face` declared *inside* a shadow root, so a shadow-only setup renders the glyphs as empty `□` boxes.
-2. **Inject the icon *class rules* into the Shadow DOM** via `customStylesCallback` — page CSS doesn't cross the shadow boundary, so `.fas` / `.fa-*::before` must be added inside the component.
+2. **Inject the icon *class rules* into the Shadow DOM** via `getCustomStylesCallback` — page CSS doesn't cross the shadow boundary, so `.fas` / `.fa-*::before` must be added inside the component.
 
 ```javascript
 // 1) In the page <head> (once): <link rel="stylesheet" href="…/font-awesome/6.5.1/css/all.min.css">
 
 // 2) Inject the class rules into the shadow:
-select.customStylesCallback = () => `
+select.getCustomStylesCallback = () => `
   @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
 `;
 // (Or, to avoid the async @import, inject only the few rules you use:
@@ -79,21 +79,27 @@ select.customStylesCallback = () => `
 //   .fa-check::before { content: "\f00c"; } … )
 ```
 
-**Recommended: prefer inline SVG icons** (e.g. [Lucide](https://lucide.dev)) — they render natively in Shadow DOM with **zero** setup, and using `stroke="currentColor"` / `fill="currentColor"` makes them inherit the surrounding text color (dark mode included):
+**Recommended: prefer inline SVG icons** (e.g. [Lucide](https://lucide.dev)) for option icons and render callbacks — they render natively in Shadow DOM with **zero** setup, and using `stroke="currentColor"` / `fill="currentColor"` makes them inherit the surrounding text color (dark mode included):
 
 ```javascript
 const check = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
   style="vertical-align:-3px"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>`;
 
+select.getIconCallback = ({ item }) => item.isDone ? check : '';
+```
+
+**Action buttons are the exception:** their `text` and `icon` are inserted as **plain text**, not HTML. Use a glyph or emoji in the `icon` field:
+
+```javascript
 select.actionButtons = [
-  { action: 'select-all', text: `${check} Select All`, tooltip: 'Select all' }
+  { action: 'select-all', text: 'Select All', icon: '✓', tooltip: 'Select all' }
 ];
 ```
 
-> See [`examples-action-buttons.html`](../examples-action-buttons.html) §11 (Font Awesome) and §12 (Lucide SVG) for runnable side-by-side demos.
+> See [`examples-action-buttons.html`](../examples-action-buttons.html) §AB04 for runnable icon-button demos (Unicode glyphs vs Font Awesome code points).
 
-> ⚠️ **Security:** `icon`, action button `text`, and the render callbacks all insert **raw HTML**. Only pass icon markup you control — never untrusted/user-supplied strings. See the [HTML Injection (XSS) notice](#html-injection-xss-notice).
+> ⚠️ **Security:** option `icon` and the render callbacks insert **raw HTML** (action button `text` / `icon` are plain text). Only pass icon markup you control — never untrusted/user-supplied strings. See the [HTML Injection (XSS) notice](#html-injection-xss-notice).
 
 ## Grouped options
 
@@ -122,8 +128,8 @@ select.options = [
 
   // `signal` aborts when a newer search supersedes this one (or the element is destroyed).
   // Forward it to fetch so the stale request is actually cancelled.
-  select.searchCallback = async (searchTerm, signal) => {
-    const response = await fetch(`/api/products?q=${searchTerm}`, { signal });
+  select.searchCallback = async ({ term, signal }) => {
+    const response = await fetch(`/api/products?q=${encodeURIComponent(term)}`, { signal });
     const data = await response.json();
     return data.products;
   };
@@ -131,7 +137,7 @@ select.options = [
 ```
 
 - `search-debounce="300"` waits 300ms after the last keystroke before calling the API, so a burst of typing makes one request instead of one per character.
-- The `signal` (an `AbortSignal`) is optional — callbacks that omit it still work; their superseded results are discarded, just not network-cancelled.
+- `ctx.signal` (an `AbortSignal`) is optional — callbacks that ignore it still work; their superseded results are discarded, just not network-cancelled.
 
 ## Hybrid static + dynamic search
 
@@ -157,15 +163,15 @@ Show popular items initially, then switch to full database search when the user 
   ];
 
   // Pre-process search terms (remove accents, validate, etc.)
-  select.beforeSearchCallback = (searchTerm) => {
-    const normalized = searchTerm.normalize('NFD').replace(/[̀-ͯ]/g, '');
-    if (normalized.length < 2) return null;
+  select.beforeSearchCallback = ({ term }) => {
+    const normalized = term.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (normalized.length < 2) return false; // skip the search
     return normalized;
   };
 
   // Search full database when user types 3+ characters
-  select.searchCallback = async (searchTerm, signal) => {
-    const response = await fetch(`/api/frameworks/search?q=${searchTerm}`, { signal });
+  select.searchCallback = async ({ term, signal }) => {
+    const response = await fetch(`/api/frameworks/search?q=${encodeURIComponent(term)}`, { signal });
     return await response.json();
   };
 </script>
@@ -179,7 +185,7 @@ Show popular items initially, then switch to full database search when the user 
 
 **Key options:**
 - `keep-options-on-search="true"` (default) — keep initial options visible when search is empty/short.
-- `beforeSearchCallback` — transform search text or block search by returning `null`.
+- `beforeSearchCallback` — transform search text (return a string) or skip the search by returning `false`.
 - `min-search-length` — minimum characters before triggering search (shows initial options below this).
 
 ## Virtual scrolling for large datasets
@@ -340,9 +346,9 @@ Perfect for different use cases and space constraints:
 **Display mode behavior:**
 
 - **`badges`** (default) — individual removable badges for each selected item. Calls `getBadgeDisplayCallback` for each item.
-- **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback(count)`.
-- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback(firstItem)` and `getCounterCallback(count, remainingCount)`.
-- **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback(count, remainingCount)` for badge.
+- **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback({ count })`.
+- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback({ item: firstItem, … })` and `getCounterCallback({ count, moreCount })`.
+- **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback({ count, moreCount })` for badge.
 - **`none`** — no display in badges area. No callbacks invoked. Use with `show-counter="true"` for minimal UI.
 
 **Badge styling:**
@@ -407,7 +413,7 @@ Enable tooltips on selected item badges with customizable placement and delay:
   const select = document.querySelector('web-multiselect');
 
   // Custom tooltip content
-  select.getBadgeTooltipCallback = (item) => {
+  select.getBadgeTooltipCallback = ({ item }) => {
     return `${item.label} - ${item.subtitle}`;
   };
 </script>
@@ -429,7 +435,7 @@ Customize counter text for proper pluralization and localization:
   const select = document.getElementById('i18n-select');
 
   // Spanish pluralization example
-  select.getCounterCallback = (count, moreCount) => {
+  select.getCounterCallback = ({ count, moreCount }) => {
     if (moreCount !== undefined) {
       // Partial mode: "+X more" badge
       return moreCount === 1 ? '+1 más' : `+${moreCount} más`;
@@ -496,13 +502,13 @@ The following callbacks allow **raw HTML injection** and are intentionally **NOT
 | `getBadgeDisplayCallback` | Badge text (innerHTML) | HTML injection |
 | `getCounterCallback` | Count badges (innerHTML) | HTML injection |
 | `getBadgeTooltipCallback` | Tooltips (innerHTML if HTMLElement) | HTML injection |
-| `customStylesCallback` | Style tag (textContent) | CSS injection |
+| `getCustomStylesCallback` | Style tag (textContent) | CSS injection |
 
 **Safe callbacks** (output is escaped or used as data):
 
-- `getValueCallback`, `getSearchValueCallback`, `getGroupCallback`, `getDisabledCallback`
+- `getValueCallback`, `getSearchValueCallback`, `getGroupCallback`, `getIsDisabledCallback`
 - `getBadgeClassCallback`, `getSelectedItemClassCallback` (CSS class names only)
-- `beforeSearchCallback`, `searchCallback`, `addNewCallback`
+- `beforeSearchCallback`, `searchCallback`, `beforeAddCallback`
 - `onSelect`, `onDeselect`, `onChange`
 - `getRemoveButtonTooltipCallback` (used as title attribute)
 - `getValueFormatCallback` (form value)
@@ -528,9 +534,9 @@ Customize how options appear in the dropdown:
     { id: 4, name: 'Svelte', stars: 76000, trending: true }
   ];
 
-  select.renderOptionContentCallback = (item, context) => {
-    // Context provides: { index, isSelected, isFocused, isMatched, isDisabled,
-    //                     presentation, isFullscreen, + tree fields }
+  select.renderOptionContentCallback = ({ item }) => {
+    // ctx provides: { item, index, isSelected, isFocused, isMatched, isDisabled,
+    //                 presentation, isFullscreen, controller, element, + tree fields }
 
     return `
       <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -543,8 +549,9 @@ Customize how options appear in the dropdown:
 </script>
 ```
 
-**Context object** (`OptionContentRenderContext`):
+**Context object** (`OptionContentRenderContext` — the callback's single `ctx` argument):
 
+- `item` — the option being rendered.
 - `index: number` — index of the option in the filtered list.
 - `isSelected: boolean` — whether the option is currently selected.
 - `isFocused: boolean` — whether the option is currently focused (keyboard navigation).
@@ -564,8 +571,8 @@ Customize how options appear in the dropdown:
 one callback (no `matchMedia` wiring; the component drives it):
 
 ```javascript
-select.renderOptionContentCallback = (item, ctx) =>
-  ctx.isFullscreen
+select.renderOptionContentCallback = ({ item, isFullscreen }) =>
+  isFullscreen
     ? `<span>${item.name}</span>`                                  // lean on the phone sheet
     : `<div class="rich"><strong>${item.name}</strong>
          <small>${item.price} · ⭐${item.popularity}</small></div>`; // rich on desktop
@@ -585,12 +592,12 @@ select.options = [
 ];
 
 // Custom badge rendering in main badges area
-select.renderBadgeContentCallback = (item, context) => {
+select.renderBadgeContentCallback = ({ item }) => {
   return `${item.avatar} ${item.name}`;
 };
 
 // Custom rendering for selected items popover (separate callback)
-select.renderSelectedItemContentCallback = (item) => {
+select.renderSelectedItemContentCallback = ({ item }) => {
   return `
     <div style="display: flex; align-items: center; gap: 0.5rem;">
       <span>${item.avatar}</span>
@@ -610,8 +617,9 @@ select.renderSelectedItemContentCallback = (item) => {
 - If `renderSelectedItemContentCallback` is not defined, falls back to `renderBadgeContentCallback`.
 - Users can assign the same function to both if identical rendering is desired.
 
-**Context object** (`BadgeContentRenderContext` for `renderBadgeContentCallback`):
+**Context object** (`BadgeContentRenderContext` — the single `ctx` of `renderBadgeContentCallback`):
 
+- `item` — the selected option.
 - `displayMode: BadgesDisplayMode` — current badges display mode (`'badges'`, `'count'`, `'compact'`, `'partial'`, `'none'`).
 - `isInPopover: boolean` — whether the badge is being rendered in the selected items popover (always false for this callback).
 
@@ -632,7 +640,7 @@ select.options = [
 select.isGroupsAllowed = true;
 select.groupMember = 'group';
 
-select.renderGroupLabelContentCallback = (groupName) => {
+select.renderGroupLabelContentCallback = ({ groupName }) => {
   const emojis = {
     'frontend': '🎨',
     'backend': '🔧',
@@ -643,7 +651,7 @@ select.renderGroupLabelContentCallback = (groupName) => {
 };
 ```
 
-**Signature:** `(groupName: string) => string | HTMLElement`
+**Signature:** `(ctx: GroupLabelRenderContext) => string | HTMLElement` — `ctx.groupName`, plus `members`, `selectedMembers`, `selectedCount`, `memberCount`, `selectableCount`, `checkState`.
 
 **Use cases:**
 
@@ -657,7 +665,7 @@ select.renderGroupLabelContentCallback = (groupName) => {
 
 - Keeps standard `.ms__group-label` wrapper for consistent styling.
 - Can return HTML string or HTMLElement.
-- Group name is passed as a string parameter.
+- The group name is `ctx.groupName`; the selection fields let a header show e.g. a "3 / 8" count.
 
 ### Custom badge styling with CSS classes
 
@@ -673,12 +681,12 @@ select.options = [
 ];
 
 // Add CSS class based on priority
-select.getBadgeClassCallback = (item) => {
+select.getBadgeClassCallback = ({ item }) => {
   return `badge-${item.priority}`; // Returns 'badge-urgent', 'badge-normal', etc.
 };
 
 // Can also return array of classes
-select.getBadgeClassCallback = (item) => {
+select.getBadgeClassCallback = ({ item }) => {
   const classes = [`badge-${item.priority}`];
   if (item.urgent) classes.push('badge-blink');
   return classes;
@@ -709,7 +717,7 @@ Then style with CSS:
 
 The callback:
 
-- Takes the item as a parameter.
+- Takes one `ctx` (`{ item, displayMode, isInPopover }`).
 - Returns a string (single class) or array of strings (multiple classes).
 - Classes are added to the badge's base `.ms__badge` element.
 - Works across all rendering locations (main badges, partial mode, popover).
@@ -720,12 +728,12 @@ Similar to rendering callbacks, you can use different class callbacks for badges
 
 ```javascript
 // Add classes to badges in main area
-select.getBadgeClassCallback = (item) => {
+select.getBadgeClassCallback = ({ item }) => {
   return `badge-${item.priority}`;
 };
 
 // Add different/additional classes to selected items in popover
-select.getSelectedItemClassCallback = (item) => {
+select.getSelectedItemClassCallback = ({ item }) => {
   return [`badge-${item.priority}`, 'badge-detailed'];
 };
 ```
@@ -737,16 +745,16 @@ select.getSelectedItemClassCallback = (item) => {
 
 **Shadow DOM CSS injection:**
 
-Since the component uses Shadow DOM, regular page CSS cannot style shadow elements. Use `customStylesCallback` to inject CSS directly into the Shadow DOM:
+Since the component uses Shadow DOM, regular page CSS cannot style shadow elements. Use `getCustomStylesCallback` to inject CSS directly into the Shadow DOM:
 
 ```javascript
 const select = document.querySelector('web-multiselect');
 
-select.getBadgeClassCallback = (item) => {
+select.getBadgeClassCallback = ({ item }) => {
   return `badge-${item.priority}`;
 };
 
-select.customStylesCallback = () => `
+select.getCustomStylesCallback = () => `
   .badge-urgent {
     --ms-badge-text-bg: #fee2e2;
     --ms-badge-text-color: #dc2626;
@@ -767,7 +775,7 @@ select.customStylesCallback = () => `
 `;
 ```
 
-The `customStylesCallback`:
+The `getCustomStylesCallback`:
 
 - Returns a CSS string (not HTML).
 - Styles are injected into the Shadow DOM on initialization.
@@ -787,12 +795,12 @@ select.options = [
 ];
 
 // Show just first name when closed
-select.renderSelectedContentCallback = (item) => {
+select.renderSelectedContentCallback = ({ item }) => {
   return item.firstName; // Plain text (not HTML)
 };
 
 // While dropdown shows full details
-select.getDisplayValueCallback = (item) => {
+select.getDisplayValueCallback = ({ item }) => {
   return `${item.firstName} ${item.lastName} (${item.email})`;
 };
 ```
@@ -802,10 +810,10 @@ select.getDisplayValueCallback = (item) => {
 Use JavaScript logic for conditional rendering:
 
 ```javascript
-select.renderOptionContentCallback = (item, context) => {
+select.renderOptionContentCallback = ({ item, isSelected, isFocused }) => {
   const classes = [];
-  if (context.isSelected) classes.push('selected');
-  if (context.isFocused) classes.push('focused');
+  if (isSelected) classes.push('selected');
+  if (isFocused) classes.push('focused');
 
   return `
     <div class="${classes.join(' ')}">
@@ -823,7 +831,7 @@ select.renderOptionContentCallback = (item, context) => {
 You can also return DOM elements for more complex rendering:
 
 ```javascript
-select.renderOptionContentCallback = (item, context) => {
+select.renderOptionContentCallback = ({ item }) => {
   const div = document.createElement('div');
   div.style.display = 'flex';
   div.style.alignItems = 'center';
@@ -861,7 +869,7 @@ When using `renderOptionContentCallback` with virtual scroll enabled:
 <script type="module">
   const select = document.getElementById('large-dataset');
 
-  select.renderOptionContentCallback = (item) => {
+  select.renderOptionContentCallback = ({ item }) => {
     return `
       <div style="height: 60px; display: flex; align-items: center;">
         <strong>${item.name}</strong>
@@ -939,7 +947,7 @@ Custom rendering callbacks support full CSS layout control:
 
 ```javascript
 // CSS Grid example
-multiselect.renderOptionContentCallback = (item, context) => {
+multiselect.renderOptionContentCallback = ({ item }) => {
   return `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
       <div><strong>Name:</strong> ${item.name}</div>
@@ -951,7 +959,7 @@ multiselect.renderOptionContentCallback = (item, context) => {
 };
 
 // Flexbox example
-multiselect.renderOptionContentCallback = (item, context) => {
+multiselect.renderOptionContentCallback = ({ item }) => {
   return `
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; flex-direction: column;">
@@ -1027,35 +1035,35 @@ For complex data extraction or conditional logic, use callbacks:
 const select = document.querySelector('web-multiselect');
 
 // Custom value extraction
-select.getValueCallback = (item) => item.id || item.code || item.value;
+select.getValueCallback = ({ item }) => item.id || item.code || item.value;
 
 // Combine multiple fields for display
-select.getDisplayValueCallback = (item) => {
+select.getDisplayValueCallback = ({ item }) => {
   return `${item.firstName} ${item.lastName}`;
 };
 
 // Include multiple fields in search
-select.getSearchValueCallback = (item) => {
+select.getSearchValueCallback = ({ item }) => {
   return `${item.name} ${item.sku} ${item.tags.join(' ')}`;
 };
 
 // Conditional icons
-select.getIconCallback = (item) => {
+select.getIconCallback = ({ item }) => {
   return item.inStock ? '✅' : '❌';
 };
 
 // Dynamic subtitles
-select.getSubtitleCallback = (item) => {
+select.getSubtitleCallback = ({ item }) => {
   return `$${item.price} - ${item.stock} in stock`;
 };
 
 // Disable based on conditions
-select.getDisabledCallback = (item) => {
+select.getIsDisabledCallback = ({ item }) => {
   return item.stock === 0 || item.discontinued;
 };
 
 // Customize badge display (show different text in badges vs dropdown)
-select.getBadgeDisplayCallback = (item) => {
+select.getBadgeDisplayCallback = ({ item }) => {
   return item.name;
 };
 ```
@@ -1178,9 +1186,9 @@ For advanced use cases, provide a custom formatting function:
 const select = document.querySelector('web-multiselect');
 
 select.name = 'product_ids';
-select.getValueFormatCallback = (values) => {
+select.getValueFormatCallback = ({ selectedValues }) => {
   // Custom format: pipe-separated with prefix
-  return values.map(v => `ID:${v}`).join('|');
+  return selectedValues.map(v => `ID:${v}`).join('|');
 };
 
 // When submitted, FormData will have:
@@ -1252,7 +1260,7 @@ select.options = [
 
 A custom element upgrades the moment its script loads: the browser builds its shadow DOM
 and paints it with the component's **default** styles. If you then assign a
-[`customStylesCallback`](#custom-rendering) (or your framework adopts a shared stylesheet)
+[`getCustomStylesCallback`](#custom-rendering) (or your framework adopts a shared stylesheet)
 *after* upgrade, there's a visible beat where badges/options show unstyled before they
 restyle — the classic custom-element flash. The same race bites any post-upgrade wiring
 (options, event listeners) that you'd rather have in place before the first paint.
@@ -1261,7 +1269,7 @@ The `defer` attribute holds the first render until you say go:
 
 - Add `defer` and the component builds **nothing** on upgrade — it only reserves space
   (via `:host([defer]:not([is-ready]))`, mirroring the pre-upgrade `:not(:defined)` window).
-- Wire everything from JS — `options`, `customStylesCallback`, listeners.
+- Wire everything from JS — `options`, `getCustomStylesCallback`, listeners.
 - Call `el.ready()` (or remove the `defer` attribute) to build **once**, with all of it
   already applied. The gate is *latched* — once released it never re-closes.
 
@@ -1273,7 +1281,7 @@ The `defer` attribute holds the first render until you say go:
 const el = document.getElementById('skills');
 
 el.options = await loadSkills();
-el.customStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
+el.getCustomStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
 
 el.ready();          // builds once — the styled badges appear in one shot, no flash
@@ -1306,7 +1314,7 @@ Hooks.MultiSelect = {
   mounted() {
     const el = this.el;
     el.options = JSON.parse(el.dataset.options);
-    el.customStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
+    el.getCustomStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
     el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
     el.ready();                // build once, flash-free
   },

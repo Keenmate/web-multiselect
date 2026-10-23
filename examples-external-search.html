@@ -37,7 +37,7 @@
 const ix = new FlexIndexer();
 ix.build(options, (o) =&gt; `${o.label} ${o.code}`);   // index the options (batched)
 el.options = options;
-el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole search</pre></div>
+el.searchCallback = ({ term }) =&gt; ix.search(term, 50);   // externalize the whole search</pre></div>
             <p class="description">
                 The demo below is a flat list of cities with accented names. FlexSearch's
                 <code>Charset.Normalize</code> folds accents and <code>tokenize: "full"</code> matches partial tokens
@@ -100,11 +100,11 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
             </div>
         </section>
 
-        <!-- Demo D: object search values + context.entries -->
+        <!-- Demo D: object search values + ctx.entries -->
         <section class="example-section">
-            <h2>ES04 · Your own search over prepared values — <code>context.entries</code></h2>
+            <h2>ES04 · Your own search over prepared values — <code>ctx.entries</code></h2>
             <p class="description">
-                <code>searchCallback</code> gets a third argument, <code>context</code>. Its <code>entries</code> pair
+                <code>searchCallback</code>'s <code>ctx</code> carries <code>entries</code> next to <code>term</code>. They pair
                 every option with its <strong>search value</strong>, and that value may be an object. Here
                 <code>getSearchValueCallback</code> returns <code>{ title, zip }</code> per city, and
                 <code>getSearchTermCallback</code> (with <code>target: 'callback'</code>) prepares the typed term
@@ -119,11 +119,11 @@ el.searchCallback = (term) =&gt; ix.search(term, 50);   // externalize the whole
             </p>
             <div class="code-block"><pre>import { normalizeSearchText } from '@keenmate/web-multiselect';
 
-el.getSearchValueCallback = (c) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
-el.getSearchTermCallback = (term, ctx) =&gt;
-    ctx.target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+el.getSearchValueCallback = ({ item: c }) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+el.getSearchTermCallback = ({ term, target }) =&gt;
+    target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
-el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
+el.searchCallback = ({ searchTerm, entries }) =&gt;
     entries
         .filter((e) =&gt; e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
         .map((e) =&gt; e.item);</pre></div>
@@ -194,7 +194,7 @@ el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
                 citiesEl.valueMember = 'value';
                 citiesEl.displayValueMember = 'label';
                 citiesEl.options = cities;
-                citiesEl.searchCallback = (term) => cityIx.search(term, 20);
+                citiesEl.searchCallback = ({ term }) => cityIx.search(term, 20);
             } catch (err) {
                 fail(section, err);
             }
@@ -223,7 +223,7 @@ el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
                 iscoEl.isSelectableMember = 'selectable';
                 iscoEl.options = isco;
                 // Return matches from the index; the component adds ancestors + renders the tree.
-                iscoEl.searchCallback = (term) => iscoIx.search(term, 80);
+                iscoEl.searchCallback = ({ term }) => iscoIx.search(term, 80);
             } catch (err) {
                 fail(section, err);
             }
@@ -271,7 +271,7 @@ el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
                 el.subtitleMember = 'subtitle';
                 // Deliberately NO el.options — every row comes from the callback.
                 const fold = (s) => String(s || '').toLowerCase();
-                el.searchCallback = (term) => new Promise((resolve) => {
+                el.searchCallback = ({ term }) => new Promise((resolve) => {
                     const t = fold(term).trim();
                     setTimeout(() => {
                         if (!t) { resolve([]); return; }
@@ -283,7 +283,7 @@ el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
             }
         })();
 
-        // --- Demo D: object search values + context.entries --------------------
+        // --- Demo D: object search values + ctx.entries --------------------
         (async () => {
             const section = document.querySelector('#zip-search')?.closest('.example-section');
             try {
@@ -303,13 +303,13 @@ el.searchCallback = (term, signal, { searchTerm, entries }) =&gt;
                 el.subtitleMember = 'zip';
                 el.options = cities;
 
-                el.getSearchValueCallback = (c) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
-                el.getSearchTermCallback = (term, ctx) =>
-                    ctx.target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+                el.getSearchValueCallback = ({ item: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+                el.getSearchTermCallback = ({ term, target }) =>
+                    target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
                 let firstEntries = null;
                 let calls = 0;
-                el.searchCallback = (term, signal, { searchTerm, entries }) => {
+                el.searchCallback = ({ searchTerm, entries }) => {
                     firstEntries ??= entries;
                     calls++;
                     const results = entries

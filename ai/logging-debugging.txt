@@ -289,14 +289,14 @@ DEBUGGING CALLBACKS
 -------------------
 Log callback execution:
 
-select.changeCallback = (selectedOptions) => {
-  console.log('Change callback:', selectedOptions);
+select.onChange = ({ selectedOptions }) => {
+  console.log('Change:', selectedOptions);
   // Your logic
 };
 
-select.searchCallback = async (searchTerm) => {
-  console.log('Search callback:', searchTerm);
-  const results = await fetchResults(searchTerm);
+select.searchCallback = async ({ term }) => {
+  console.log('Search callback:', term);
+  const results = await fetchResults(term);
   console.log('Search results:', results.length);
   return results;
 };
@@ -305,8 +305,9 @@ DEBUGGING EVENTS
 ----------------
 Log all events:
 
-['select', 'deselect', 'change'].forEach(eventName => {
+['select', 'deselect', 'change', 'add', 'action'].forEach(eventName => {
   select.addEventListener(eventName, (e) => {
+    // controller / element are non-enumerable — not in the logged detail
     console.log(`Event: ${eventName}`, e.detail);
   });
 });
@@ -349,11 +350,11 @@ NETWORK DEBUGGING
 -----------------
 Debug async search:
 
-select.searchCallback = async (searchTerm) => {
-  console.log('Fetching results for:', searchTerm);
+select.searchCallback = async ({ term, signal }) => {
+  console.log('Fetching results for:', term);
 
   const start = performance.now();
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   const end = performance.now();
 
   console.log(`Fetch took ${end - start}ms`);
@@ -368,9 +369,9 @@ ERROR HANDLING
 --------------
 Log errors:
 
-select.searchCallback = async (searchTerm) => {
+select.searchCallback = async ({ term, signal }) => {
   try {
-    const response = await fetch(`/api/search?q=${searchTerm}`);
+    const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
     return await response.json();
   } catch (error) {
     console.error('Search failed:', error);
@@ -379,12 +380,12 @@ select.searchCallback = async (searchTerm) => {
 };
 
 Catch render errors:
-select.renderOptionContentCallback = (option, context) => {
+select.renderOptionContentCallback = (context) => {
   try {
-    return customRender(option, context);
+    return customRender(context.item, context);
   } catch (error) {
     console.error('Render error:', error);
-    return option.label;  // Fallback
+    return context.item.label;  // Fallback
   }
 };
 

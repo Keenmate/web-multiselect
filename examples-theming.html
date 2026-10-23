@@ -1169,9 +1169,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 
 &lt;script&gt;
   // Show just the code in the closed input
-  select.renderSelectedContentCallback = (item) =&gt; item.code;
+  select.renderSelectedContentCallback = ({ item }) =&gt; item.code;
   // Show full label in dropdown
-  select.getDisplayValueCallback = (item) =&gt; `${item.flag} ${item.name}`;
+  select.getDisplayValueCallback = ({ item }) =&gt; `${item.flag} ${item.name}`;
 &lt;/script&gt;</pre></div>
 
             <div class="narrow-demo-grid">
@@ -1784,7 +1784,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 
     function initMultiselects() {
       // Generate custom styles callback with current font URL
-      const customStylesCallback = () => {
+      const getCustomStylesCallback = () => {
         if (currentFontUrl) {
           return `@import url('${currentFontUrl}');`;
         }
@@ -1797,7 +1797,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       singleSelect.valueMember = 'value';
       singleSelect.displayValueMember = 'label';
       singleSelect.subtitleMember = 'subtitle';
-      singleSelect.customStylesCallback = customStylesCallback;
+      singleSelect.getCustomStylesCallback = getCustomStylesCallback;
 
       // Multi select with badges
       const multiBadges = document.getElementById('multiBadges');
@@ -1805,7 +1805,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       multiBadges.valueMember = 'value';
       multiBadges.displayValueMember = 'label';
       multiBadges.subtitleMember = 'subtitle';
-      multiBadges.customStylesCallback = customStylesCallback;
+      multiBadges.getCustomStylesCallback = getCustomStylesCallback;
       multiBadges.setSelected(['react', 'vue']);
 
       // Multi select with count
@@ -1813,7 +1813,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       multiCount.options = languages;
       multiCount.valueMember = 'value';
       multiCount.displayValueMember = 'label';
-      multiCount.customStylesCallback = customStylesCallback;
+      multiCount.getCustomStylesCallback = getCustomStylesCallback;
       multiCount.setSelected(['typescript', 'javascript', 'rust']);
 
       // Grouped
@@ -1822,7 +1822,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       groupedEl.valueMember = 'value';
       groupedEl.displayValueMember = 'label';
       groupedEl.groupMember = 'group';
-      groupedEl.customStylesCallback = customStylesCallback;
+      groupedEl.getCustomStylesCallback = getCustomStylesCallback;
       groupedEl.setSelected(['react', 'nodejs']);
     }
 
@@ -1898,7 +1898,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 el.displayValueMember = 'label';
 
                 // Inject Google Fonts into Shadow DOM
-                el.customStylesCallback = () => googleFontsImport;
+                el.getCustomStylesCallback = () => googleFontsImport;
             });
 
             // Pre-select some items for multi-select demos
@@ -1916,9 +1916,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 countrySelect.valueMember = 'code';
                 countrySelect.displayValueMember = 'name';
                 // Show flag + name in dropdown
-                countrySelect.getDisplayValueCallback = (item) => `${item.flag} ${item.name}`;
+                countrySelect.getDisplayValueCallback = ({ item }) => `${item.flag} ${item.name}`;
                 // Show just code in closed input
-                countrySelect.renderSelectedContentCallback = (item) => item.code;
+                countrySelect.renderSelectedContentCallback = ({ item }) => item.code;
                 countrySelect.value = 'US';
             }
 
@@ -1928,9 +1928,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 currencySelect.valueMember = 'code';
                 currencySelect.displayValueMember = 'name';
                 // Show symbol + code + name in dropdown
-                currencySelect.getDisplayValueCallback = (item) => `${item.symbol} ${item.code} - ${item.name}`;
+                currencySelect.getDisplayValueCallback = ({ item }) => `${item.symbol} ${item.code} - ${item.name}`;
                 // Show just code in closed input
-                currencySelect.renderSelectedContentCallback = (item) => item.code;
+                currencySelect.renderSelectedContentCallback = ({ item }) => item.code;
                 currencySelect.value = 'USD';
             }
 
@@ -1940,9 +1940,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 prioritySelect.valueMember = 'code';
                 prioritySelect.displayValueMember = 'name';
                 // Show color + name in dropdown
-                prioritySelect.getDisplayValueCallback = (item) => `${item.color} ${item.name}`;
+                prioritySelect.getDisplayValueCallback = ({ item }) => `${item.color} ${item.name}`;
                 // Show just code in closed input
-                prioritySelect.renderSelectedContentCallback = (item) => item.code;
+                prioritySelect.renderSelectedContentCallback = ({ item }) => item.code;
                 prioritySelect.value = 'M';
             }
         });

@@ -13,13 +13,33 @@ IMPORTING TYPES
 Import type definitions:
 
 import type {
+  MultiSelectElement,           // the <web-multiselect> element class (also a value export)
   MultiSelectOption,
   MultiSelectConfig,
-  MultiSelectEventDetail,
-  BadgesDisplayMode,
-  SearchMode,
-  ActionButton
+  MultiSelectController,        // el.controller / ctx.controller
+  // callback contexts
+  MultiSelectContext, ItemContext, TreeNodeContext,
+  OptionContentRenderContext, BadgeContentRenderContext, GroupLabelRenderContext,
+  CounterContext, CountLabelContext, ValueFormatContext, AddContext,
+  BeforeSearchContext, SearchTermCallbackContext, MultiSelectSearchContext,
+  BeforeSelectContext, BeforeDeselectContext, SelectionSource, KeydownContext,
+  // action items
+  ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail,
+  // event details
+  SelectEventDetail, DeselectEventDetail, ChangeEventDetail, AddEventDetail, ReadyEventDetail,
+  // misc
+  MessageType, MessageOptions, BadgesDisplayMode, SearchMode
 } from '@keenmate/web-multiselect';
+
+Renamed / removed in the interaction-model release (see CHANGELOG [Unreleased]):
+  WebMultiSelect                 → MultiSelectEngine (standalone engine; element users use el.controller)
+  MultiSelectKeyboardController  → MultiSelectController
+  MultiSelectKeydownContext      → KeydownContext
+  ActionButton                   → MultiSelectActionItem
+  MultiSelectEventDetail         → SelectEventDetail / DeselectEventDetail / ChangeEventDetail /
+                                   AddEventDetail / ReadyEventDetail / MultiSelectActionEventDetail
+  MessageVariant                 → MessageType
+  MultiSelectOptions (legacy)    → MultiSelectConfig
 
 MULTISELECTOPTION INTERFACE
 ---------------------------
@@ -43,7 +63,8 @@ const options: MultiSelectOption[] = [
 
 GENERIC TYPE SUPPORT
 --------------------
-Use generics for custom objects:
+Use generics for custom objects. Every callback takes ONE ctx; per-option callbacks read
+ctx.item:
 
 interface User {
   id: number;
@@ -53,11 +74,12 @@ interface User {
 }
 
 const users: User[] = [...];
+const select = document.querySelector('web-multiselect') as MultiSelectElement<User>;
 
 // Type-safe callbacks
-select.getValueCallback = (user: User): number => user.id;
-select.getDisplayValueCallback = (user: User): string =>
-  `${user.firstName} ${user.lastName}`;
+select.getValueCallback = ({ item }: ItemContext<User>): number => item.id;
+select.getDisplayValueCallback = ({ item }: ItemContext<User>): string =>
+  `${item.firstName} ${item.lastName}`;
 
 Or extend MultiSelectOption:
 interface UserOption extends Partial<MultiSelectOption> {
@@ -83,34 +105,56 @@ interface MultiSelectConfig<T = any> {
   allowGroups?: boolean;
   badgesDisplayMode?: BadgesDisplayMode;
   badgesPosition?: BadgesPosition;
-  // ... all config properties
+  // ... all config properties and callbacks
 }
 
 Usage:
 const config: MultiSelectConfig = {
   multiple: true,
   enableSearch: true,
-  badgesDisplayMode: 'pills'
+  badgesDisplayMode: 'badges'
 };
 
-MULTISELECTEVENTDETAIL INTERFACE
---------------------------------
-Event detail types:
+CONTEXT BASE
+------------
+Every callback ctx and every event detail extends MultiSelectContext:
 
-interface SelectEventDetail<T = any> {
-  option: T;                      // Selected option
-  selectedOptions: T[];           // All selected options
+interface MultiSelectContext<T = any> {
+  controller: MultiSelectController<T>;   // non-enumerable
+  element: HTMLElement;                    // the host, non-enumerable
+  presentation: 'floating' | 'fullscreen';
+  isFullscreen: boolean;
+  isModal: boolean;
 }
 
-interface DeselectEventDetail<T = any> {
-  option: T;                      // Deselected option
-  selectedOptions: T[];           // Remaining options
+EVENT DETAIL TYPES
+------------------
+Event detail types (one per event):
+
+interface SelectEventDetail<T = any> extends MultiSelectContext<T> {
+  option: T;                           // Selected option
+  selectedOptions: T[];                // All selected options
+  selectedValues: (string | number)[];
 }
 
-interface ChangeEventDetail<T = any> {
-  selectedOptions: T[];           // All selected options
+type DeselectEventDetail<T = any> = SelectEventDetail<T>;   // option = the deselected one
+
+interface ChangeEventDetail<T = any> extends MultiSelectContext<T> {
+  selectedOptions: T[];                // All selected options
   selectedValues: (string | number)[]; // Values only
 }
+
+interface AddEventDetail<T = any> extends MultiSelectContext<T> {
+  value: string;                       // Typed text
+  option?: T;                          // Created option (when beforeAddCallback returned one)
+  selectedOptions: T[];
+  selectedValues: (string | number)[];
+}
+
+type ReadyEventDetail<T = any> = MultiSelectContext<T>;
+
+type MultiSelectActionEventDetail<T = any>  // ActionContext + action, id, item, source,
+                                            // sourceEvent, triggerElement, dataset
 
 Usage:
 select.addEventListener('change', (e: CustomEvent<ChangeEventDetail>) => {
@@ -118,18 +162,25 @@ select.addEventListener('change', (e: CustomEvent<ChangeEventDetail>) => {
   console.log(e.detail.selectedValues);
 });
 
+// on* twins receive the DETAIL (not the CustomEvent):
+select.onChange = (detail: ChangeEventDetail<User>) => console.log(detail.selectedValues);
+select.onSelect = ({ option }: SelectEventDetail<User>) => console.log(option.email);
+
 STRING LITERAL TYPES
 --------------------
 Enum-like string types:
 
-type BadgesDisplayMode = 'pills' | 'count' | 'compact' | 'partial' | 'none';
+type BadgesDisplayMode = 'badges' | 'count' | 'compact' | 'partial' | 'none';
 type SearchMode = 'filter' | 'navigate';
 type SearchBehavior = 'normalized' | 'case-insensitive' | 'exact';
 type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 'ends-with' | 'word-ends-with' | 'regex';
-interface SearchTermContext { target: 'internal' | 'callback'; behavior: SearchBehavior; match: SearchMatch; }
+interface SearchTermContext { term: string; target: 'internal' | 'callback'; behavior: SearchBehavior; match: SearchMatch; }
 type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
 interface SearchEntry<T> { item: T; searchValue: unknown; }
-interface SearchCallbackContext<T> { searchTerm: string | RegExp | Record<string, unknown>; readonly entries: ReadonlyArray<SearchEntry<T>>; }
+interface SearchCallbackContext<T> { term: string; signal: AbortSignal; searchTerm: string | RegExp | Record<string, unknown>; readonly entries: ReadonlyArray<SearchEntry<T>>; }
+type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear';
+type MessageType = 'info' | 'warning' | 'error' | 'success';
+type MultiSelectAction = 'select-all' | 'clear-all';
 type BadgesPosition = 'top' | 'bottom' | 'left' | 'right';
 type BadgesThresholdMode = 'count' | 'partial';
 type SearchInputMode = 'normal' | 'readonly' | 'hidden';
@@ -137,149 +188,155 @@ type CheckboxAlign = 'top' | 'center' | 'bottom';
 type ActionsLayout = 'nowrap' | 'wrap';
 
 Usage:
-const displayMode: BadgesDisplayMode = 'pills';
+const displayMode: BadgesDisplayMode = 'badges';
 const searchMode: SearchMode = 'filter';
 
-ACTIONBUTTON INTERFACE
-----------------------
-Action button type:
+MULTISELECTACTIONITEM INTERFACE
+-------------------------------
+Action button type (core action item):
 
-interface ActionButton {
-  id: string;
-  text?: string;
-  icon?: string;
-  cssClass?: string | string[];
-  tooltip?: string | TooltipFunction;
+interface MultiSelectActionItem<T = any> {
+  action?: 'select-all' | 'clear-all';   // built-in; omit for a custom item
+  id?: string;                           // identifies a custom item
+  text?: string;                         // plain text
+  icon?: string;                         // glyph / emoji (text)
+  tooltip?: string;
+  cssClass?: string;
+  row?: number;
   isVisible?: boolean;
   isDisabled?: boolean;
-  getTextCallback?: () => string;
-  getClassCallback?: () => string | string[];
-  isVisibleCallback?: () => boolean;
-  isDisabledCallback?: () => boolean;
-  onClick: () => void | Promise<void>;
+  isDanger?: boolean;
+  isActive?: boolean;
+  getTextCallback?(ctx: ActionContext<T>): string;
+  getIconCallback?(ctx: ActionContext<T>): string;
+  getTooltipCallback?(ctx: ActionContext<T>): string;
+  getClassCallback?(ctx: ActionContext<T>): string | string[];
+  getIsVisibleCallback?(ctx: ActionContext<T>): boolean;
+  getIsDisabledCallback?(ctx: ActionContext<T>): boolean;
+  getIsActiveCallback?(ctx: ActionContext<T>): boolean;
+  onClick?(detail: MultiSelectActionEventDetail<T>): void | Promise<void>;
 }
 
-type TooltipFunction = () => string | HTMLElement;
+interface ActionContext<T = any> extends MultiSelectContext<T> {
+  selectedValues: (string | number)[];
+  selectedOptions: T[];
+  options: ReadonlyArray<T>;
+  selectedCount: number;
+  optionCount: number;
+  isOpen: boolean;
+  searchTerm: string;
+  option?: T;      // for data-action triggers in option / badge content
+}
 
 Usage:
-const actions: ActionButton[] = [
+const actions: Array<MultiSelectActionItem | 'select-all' | 'clear-all'> = [
+  'select-all',
   {
-    id: 'select-all',
-    text: 'Select All',
-    onClick: () => selectAll()
+    id: 'export',
+    text: 'Export',
+    icon: '⬇️',
+    getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0,
+    onClick: ({ selectedOptions }) => exportItems(selectedOptions)
   }
 ];
+select.actionButtons = actions;
 
 CALLBACK FUNCTION TYPES
 -----------------------
-All callback signatures:
+All callback signatures (ONE ctx argument each; selectedOrderCompareCallback(a, b) is the
+only positional exception):
 
-type GetValueCallback<T> = (item: T) => string | number;
-type GetDisplayValueCallback<T> = (item: T) => string;
-type GetSearchValueCallback<T> = (item: T) => string;
-type GetIconCallback<T> = (item: T) => string;
-type GetSubtitleCallback<T> = (item: T) => string;
-type GetGroupCallback<T> = (item: T) => string;
-type GetDisabledCallback<T> = (item: T) => boolean;
+getValueCallback?:        (ctx: ItemContext<T>) => string | number;
+getDisplayValueCallback?: (ctx: ItemContext<T>) => string;
+getSearchValueCallback?:  (ctx: ItemContext<T>) => string | object;
+getIconCallback?:         (ctx: ItemContext<T>) => string;
+getSubtitleCallback?:     (ctx: ItemContext<T>) => string;
+getGroupCallback?:        (ctx: ItemContext<T>) => string;
+getIsDisabledCallback?:   (ctx: ItemContext<T>) => boolean;
+getIsSelectableCallback?: (ctx: TreeNodeContext<T>) => boolean;      // { item, node }
 
-type SelectCallback<T> = (option: T) => void;
-type DeselectCallback<T> = (option: T) => void;
-type ChangeCallback<T> = (selectedOptions: T[]) => void;
+searchCallback?:          (ctx: MultiSelectSearchContext<T>) => T[] | Promise<T[]>;   // { term, signal, searchTerm, entries }
+getSearchTermCallback?:   (ctx: SearchTermCallbackContext<T>) => PreparedSearchTerm;  // { term, target, behavior, match }
+beforeSearchCallback?:    (ctx: BeforeSearchContext<T>) => string | false | void;     // string replaces, false skips
+beforeSelectCallback?:    (ctx: BeforeSelectContext<T>) => void | false | Promise<void | false>;
+beforeDeselectCallback?:  (ctx: BeforeDeselectContext<T>) => void | false | Promise<void | false>;
+beforeAddCallback?:       (ctx: AddContext<T>) => T | false | void | Promise<T | false | void>;
+beforeKeydownCallback?:   (ctx: KeydownContext<T>) => void | false;                  // synchronous
+beforeActionCallback?:    (detail: MultiSelectActionEventDetail<T>) => void | false | Promise<void | false>;
 
-type SearchCallback<T> = (searchTerm: string) => Promise<T[]> | T[];
-type BeforeSearchCallback = (searchTerm: string) => string | null;
-type AddNewCallback<T> = (value: string) => T | Promise<T>;
+getCounterCallback?:      (ctx: CounterContext<T>) => string;       // { count, moreCount? }
+getCountLabelCallback?:   (ctx: CountLabelContext<T>) => string;    // { selectedCount, totalCount, groupName? }
+getValueFormatCallback?:  (ctx: ValueFormatContext<T>) => string;   // { selectedValues, selectedOptions }
+getAddNewTextCallback?:   (ctx: AddContext<T>) => string;           // { value }
+getCustomStylesCallback?: (ctx: MultiSelectContext<T>) => string | null;
 
 RENDER CALLBACK TYPES
 ---------------------
 Rendering function signatures:
 
-interface RenderContext {
+interface OptionContentRenderContext<T> extends ItemContext<T> {
   index: number;
   isSelected: boolean;
   isFocused: boolean;
   isMatched: boolean;
   isDisabled: boolean;
+  // tree only: isTreeNode, isBranch, isLeaf, childCount, level, depth, path,
+  //            isSelectable, isIndeterminate
 }
 
-interface BadgeRenderContext {
+interface BadgeContentRenderContext<T> extends ItemContext<T> {
   displayMode: BadgesDisplayMode;
   isInPopover: boolean;
-  remainingCount?: number;
 }
 
-type RenderOptionContentCallback<T> = (
-  option: T,
-  context: RenderContext
-) => string | HTMLElement;
+renderOptionContentCallback?:       (ctx: OptionContentRenderContext<T>) => string | HTMLElement;
+getOptionTooltipCallback?:          (ctx: OptionContentRenderContext<T>) => string | HTMLElement;
+renderBadgeContentCallback?:        (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
+renderBadgeCallback?:               (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null;
+renderSelectedItemContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
+renderSelectedContentCallback?:     (ctx: ItemContext<T>) => string;
+renderGroupLabelContentCallback?:   (ctx: GroupLabelRenderContext<T>) => string | HTMLElement;  // { groupName, members, selectedCount, … }
+getBadgeDisplayCallback? / getBadgeClassCallback? / getSelectedItemClassCallback? /
+getBadgeTooltipCallback? / getRemoveButtonTooltipCallback?: (ctx: BadgeContentRenderContext<T>) => …
 
-type RenderBadgeContentCallback<T> = (
-  option: T,
-  context: BadgeRenderContext
-) => string | HTMLElement;
+ELEMENT TYPE
+------------
+The package registers the tag in HTMLElementTagNameMap, so querySelector is typed:
 
-type RenderSelectedItemContentCallback<T> = (
-  option: T
-) => string | HTMLElement;
+const select = document.querySelector('web-multiselect');   // MultiSelectElement | null
 
-type RenderSelectedContentCallback<T> = (
-  option: T
-) => string;
-
-ELEMENT TYPE DEFINITION
------------------------
-Extend HTMLElement for component:
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'web-multiselect': MultiSelectElement;
-  }
-}
-
-interface MultiSelectElement extends HTMLElement {
-  // Properties
-  options: any[];
-  multiple: boolean;
-  enableSearch: boolean;
-  searchPlaceholder: string;
-  // ... all properties
-
+MultiSelectElement<T> exposes:
+  // Properties: options, multiple, enableSearch, … every input + every callback
+  // on* twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady (receive the detail)
+  // controller: MultiSelectController<T>
   // Methods
-  getSelected(): any[];
-  getValue(): any | any[];
-  setSelected(values: (string | number)[]): void;
-  destroy(): void;
+  getSelected(): T[];
+  getValue(): string | number | (string | number)[] | null;
+  setSelected(values: (string | number)[], opts?: { notify?: boolean }): void;
+  showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
+  open(); close(); toggle(); search(term); clearSearch(); refresh(); destroy(); ready();
 
-  // Callbacks
-  getValueCallback?: GetValueCallback<any>;
-  changeCallback?: ChangeCallback<any>;
-  // ... all callbacks
-}
-
-Usage:
-const select = document.querySelector('web-multiselect') as MultiSelectElement;
-select.options = [...];
-
-Or with proper typing:
-const select = document.querySelector('web-multiselect');
-if (select) {
-  (select as MultiSelectElement).options = [...];
-}
+MultiSelectController<T> (el.controller, ctx.controller):
+  getSelected(), getValue(), getOptions(), isOpen, setSelected(), selectAll(), clearAll(),
+  toggleValue(), selectValue(), deselectValue(), toggleFocused(), open(), close(), toggle(),
+  search(), clearSearch(), scrollToValue/Group/Index() → boolean, refresh(),
+  focusNext/Previous/First/Last/PageUp/PageDown(), focusNextMatch/PreviousMatch(),
+  focusIndex(), showMessage(content, { type, autoHideMs, placement }), hideMessage()
 
 GENERIC COMPONENT TYPE
 ----------------------
 Type-safe component reference:
 
-function setupMultiSelect<T extends MultiSelectOption>(
+function setupMultiSelect<T>(
   selector: string,
   options: T[]
-): MultiSelectElement {
-  const select = document.querySelector(selector) as MultiSelectElement;
+): MultiSelectElement<T> {
+  const select = document.querySelector(selector) as MultiSelectElement<T>;
 
   select.options = options;
 
-  select.changeCallback = (selected: T[]) => {
-    console.log('Selected:', selected);
+  select.onChange = ({ selectedOptions }: ChangeEventDetail<T>) => {
+    console.log('Selected:', selectedOptions);
   };
 
   return select;
@@ -358,7 +415,7 @@ FRAMEWORK INTEGRATION
 React with TypeScript:
 
 import { useRef, useEffect } from 'react';
-import type { MultiSelectElement, MultiSelectOption } from '@keenmate/web-multiselect';
+import type { MultiSelectElement, MultiSelectOption, ChangeEventDetail } from '@keenmate/web-multiselect';
 
 interface Props {
   options: MultiSelectOption[];
@@ -375,7 +432,7 @@ function MyComponent({ options, onChange }: Props) {
     select.options = options;
 
     const handleChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
+      const detail = (e as CustomEvent<ChangeEventDetail<MultiSelectOption>>).detail;
       onChange(detail.selectedOptions);
     };
 
@@ -433,12 +490,13 @@ ASYNC TYPES
 -----------
 Async callback types:
 
-const searchCallback: SearchCallback<MultiSelectOption> = async (
-  searchTerm: string
+const searchCallback = async (
+  { term, signal }: MultiSelectSearchContext<MultiSelectOption>
 ): Promise<MultiSelectOption[]> => {
-  const response = await fetch(`/api/search?q=${searchTerm}`);
+  const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal });
   return await response.json();
 };
+select.searchCallback = searchCallback;
 
 TYPE INFERENCE
 --------------
@@ -449,7 +507,7 @@ const options = [
   { value: 2, label: 'TypeScript' }
 ];  // Type inferred as { value: number; label: string; }[]
 
-select.getValueCallback = (item) => item.value;  // Type inferred
+select.getValueCallback = ({ item }) => item.value;  // ctx type inferred from the property
 
 BEST PRACTICES
 --------------
@@ -482,14 +540,17 @@ interface Product {
   name: string;
 }
 
-select.getValueCallback = (product: Product) => product.id;
-select.getDisplayValueCallback = (product: Product) => product.name;
+select.getValueCallback = ({ item }: { item: Product }) => item.id;
+select.getDisplayValueCallback = ({ item }: { item: Product }) => item.name;
 
 Event handling:
 select.addEventListener('change', (e: Event) => {
-  const detail = (e as CustomEvent).detail;
+  const detail = (e as CustomEvent<ChangeEventDetail>).detail;
   console.log(detail.selectedOptions);
 });
+
+// or the twin — receives the detail directly
+select.onChange = (detail) => console.log(detail.selectedOptions);
 
 TSCONFIG RECOMMENDATIONS
 ------------------------

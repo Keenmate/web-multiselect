@@ -16,7 +16,7 @@ This component is designed to be navigable from the keyboard alone and to work w
 | **Tab** | Close dropdown and move to next field |
 | **Type** | `search-mode="filter"` (default): filter options by the search term. `search-mode="navigate"`: keep all options and jump to matches. With `enable-search="false"` printable keys are ignored |
 
-Any key can be intercepted or overridden with `keydownCallback`, which runs before the built-in handling — see [usage.md → Properties](./usage.md#properties).
+Any key can be intercepted or overridden with `beforeKeydownCallback`, which runs before the built-in handling (return `false` to suppress the built-in handling of that key) — see [usage.md → Properties](./usage.md#properties).
 
 > 💡 To surface these shortcuts to your users, set the `search-hint` attribute — the hint floats above the input when focused. Example:
 >
@@ -64,9 +64,9 @@ All keys: `close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showF
 
 ## Other ARIA semantics
 
-- **Messages** (`showMessage()`, or a `beforeSelectCallback` / `beforeDeselectCallback` returning a string) are live regions: `role="status"` + `aria-live="polite"` for `info` / `success`, `role="alert"` + `aria-live="assertive"` for `warning` / `error`.
+- **Messages** (`el.controller.showMessage()` — e.g. called from a `beforeSelectCallback` / `beforeDeselectCallback` to explain a veto) are live regions: `role="status"` + `aria-live="polite"` for `info` / `success`, `role="alert"` + `aria-live="assertive"` for `warning` / `error`.
 - **Tristate checkboxes** (tree `checkbox-mode="cascade"` branches, `group-select-mode="cascade"` headers) expose the partial state as `aria-checked="mixed"`.
-- **"Add new" prompt** is `role="button"`; while an async `addNewCallback` runs, the pending prompt carries `aria-busy="true"`.
+- **"Add new" prompt** is `role="button"`; while an async `beforeAddCallback` runs, the pending prompt carries `aria-busy="true"`.
 - **Fullscreen search-mode toggle** exposes the current mode with `aria-pressed` (`true` = navigate). Its `aria-label` is English-only for now.
 - Decorative icons (empty icon gutters, spinners, add-new icon) are `aria-hidden="true"`.
 

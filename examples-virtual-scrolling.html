@@ -171,7 +171,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 </web-multiselect>
                 <span class="form-text">
                     Select 100+ items to see virtual scroll in the popover with custom rendering.
-                    Uses <code>renderSelectionBadgeContentCallback</code> and <code>getSelectionBadgeClassCallback</code> for rich badge styling.
+                    Uses <code>renderSelectedItemContentCallback</code> and <code>getSelectedItemClassCallback</code> for rich badge styling.
                 </span>
             </div>
         </div>
@@ -241,7 +241,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
 
                 // Log selection changes
                 filterMultiselect.addEventListener('change', (e) => {
-                    console.log('[Filter Mode] Selected:', e.detail.length, 'items');
+                    console.log('[Filter Mode] Selected:', e.detail.selectedValues.length, 'items');
                 });
             }
 
@@ -254,7 +254,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
 
                 // Log selection changes
                 navigateMultiselect.addEventListener('change', (e) => {
-                    console.log('[Navigate Mode] Selected:', e.detail.length, 'items');
+                    console.log('[Navigate Mode] Selected:', e.detail.selectedValues.length, 'items');
                 });
             }
         });
@@ -291,7 +291,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 richVirtual.displayValueMember = 'name';
 
                 // Rich rendering for dropdown options
-                richVirtual.renderOptionContentCallback = (item, context) => {
+                richVirtual.renderOptionContentCallback = ({ item }) => {
                     const stars = '★'.repeat(Math.floor(item.rating));
                     const stockStatus = item.stock === 0 ? 'Out of stock' : `${item.stock} in stock`;
                     const stockColor = item.stock === 0 ? '#ef4444' : item.stock < 20 ? '#f59e0b' : '#10b981';
@@ -315,12 +315,12 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 };
 
                 // Compact rendering for main badges
-                richVirtual.renderBadgeContentCallback = (item, context) => {
+                richVirtual.renderBadgeContentCallback = ({ item }) => {
                     return `${item.name}`;
                 };
 
                 // Rich rendering for selected items popover (virtual scroll mode)
-                richVirtual.renderSelectionBadgeContentCallback = (item) => {
+                richVirtual.renderSelectedItemContentCallback = ({ item }) => {
                     const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
                     const stars = '★'.repeat(Math.floor(item.rating));
 
@@ -338,12 +338,12 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 };
 
                 // Priority-based CSS classes for selected items
-                richVirtual.getSelectionBadgeClassCallback = (item) => {
+                richVirtual.getSelectedItemClassCallback = ({ item }) => {
                     return `product-${item.priority}`;
                 };
 
                 // Inject custom CSS for priority-based styling
-                richVirtual.customStylesCallback = () => `
+                richVirtual.getCustomStylesCallback = () => `
                     .product-urgent {
                         --ms-badge-text-bg: #fee2e2;
                         --ms-badge-text-color: #dc2626;

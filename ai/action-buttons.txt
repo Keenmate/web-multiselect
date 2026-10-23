@@ -1,63 +1,79 @@
 ACTION BUTTONS
 ==============
 
-CRITICAL: Buttons in dropdown footer for bulk actions
-- Built-in: select-all, clear-all
-- Custom: Define onClick handlers
-- Static or dynamic properties
-- Layout modes: nowrap, wrap
-- Visibility, disabled state, tooltips
+CRITICAL: Buttons in the dropdown header/footer for bulk actions (core action items)
+- Built-in: 'select-all', 'clear-all' (string shorthand or { action: 'select-all' })
+- Custom: { id: 'export', text, icon, onClick } — identified by `id` (NOT action: 'custom')
+- Static or dynamic properties (static value + get*Callback(ctx) that wins when set)
+- Every activation fires the `action` event (+ el.onAction); beforeActionCallback can cancel
+- Layout modes: nowrap, wrap; position top/bottom; alignment
+- NONE render when actionButtons is unset — you must opt in
+- Property-only (no attribute)
 
 BUILT-IN ACTIONS
 ----------------
-Select All and Clear All buttons:
+Select All and Clear All buttons — string shorthand:
 
+select.actionButtons = ['select-all', 'clear-all'];
+// Default text comes from labels.selectAll / labels.clearAll
+
+Object form (custom text / tooltip / row …):
 select.actionButtons = [
-  {
-    id: 'select-all',
-    text: 'Select All',
-    onClick: () => {
-      const allValues = select.options.map(opt => opt.value);
-      select.setSelected(allValues);
-    }
-  },
-  {
-    id: 'clear-all',
-    text: 'Clear All',
-    onClick: () => {
-      select.setSelected([]);
-    }
-  }
+  { action: 'select-all', text: 'Select All' },
+  { action: 'clear-all', text: 'Clear All', isDanger: true }
 ];
+
+Built-ins go through the selection vetoes per option (beforeSelectCallback /
+beforeDeselectCallback, ctx.source 'select-all' / 'clear-all'); vetoed options are skipped,
+the rest apply in ONE change event.
+
+An onClick on a built-in runs BEFORE the built-in behaviour (it no longer replaces it).
 
 BASIC CUSTOM ACTION
 -------------------
-Add custom action button:
+Add a custom action button (identified by `id`):
 
 select.actionButtons = [
   {
     id: 'custom-action',
     text: 'My Action',
-    onClick: () => {
-      console.log('Action clicked');
+    onClick: (detail) => {
+      console.log('Action clicked', detail.id, detail.selectedValues);
     }
   }
 ];
 
 ACTION PROPERTIES
 -----------------
-Static properties:
+Static properties (MultiSelectActionItem):
 
 {
-  id: string,                 // Unique identifier
-  text: string,               // Button text
-  onClick: () => void,        // Click handler
-  icon?: string,              // Icon or emoji
-  cssClass?: string,          // CSS class
+  action?: 'select-all' | 'clear-all', // Built-in; omit for a custom item
+  id?: string,                // Identifies a custom item; reported in the `action` event
+  text?: string,              // Button text — PLAIN TEXT (not HTML)
+  icon?: string,              // Glyph / emoji / text — inserted as text
+  cssClass?: string,          // CSS class(es)
   tooltip?: string,           // Hover tooltip
+  row?: number,               // 1-based row (default 1); rows stack inward from the panel edge
   isVisible?: boolean,        // Show/hide (default: true)
-  isDisabled?: boolean        // Enable/disable (default: false)
+  isDisabled?: boolean,       // Enable/disable (default: false)
+  isDanger?: boolean,         // Destructive styling (.ms__action-btn--danger)
+  isActive?: boolean,         // Toggle state → aria-pressed="true" (.ms__action-btn--active)
+  onClick?: (detail) => void | Promise<void>   // Awaited; the button is busy meanwhile
 }
+
+Dynamic counterparts (each wins over its static field), all take ONE ctx argument:
+  getTextCallback(ctx), getIconCallback(ctx), getTooltipCallback(ctx),
+  getClassCallback(ctx), getIsVisibleCallback(ctx), getIsDisabledCallback(ctx),
+  getIsActiveCallback(ctx)
+
+ctx (ActionContext) = selection snapshot:
+  selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm,
+  plus controller + element (non-enumerable) and presentation / isFullscreen / isModal.
+
+onClick(detail) receives the `action` event detail = ctx + action ('select-all' |
+'clear-all' | 'custom'), id, item (the clicked action item), source ('action-buttons'),
+sourceEvent, triggerElement, dataset.
 
 Example with all properties:
 select.actionButtons = [
@@ -69,35 +85,26 @@ select.actionButtons = [
     tooltip: 'Export selected items',
     isVisible: true,
     isDisabled: false,
-    onClick: () => exportSelected()
+    onClick: ({ selectedOptions }) => exportSelected(selectedOptions)
   }
 ];
 
 DYNAMIC CALLBACKS
 -----------------
-Make properties dynamic with callbacks:
+Make properties dynamic with callbacks (ctx = selection snapshot):
 
 select.actionButtons = [
   {
-    id: 'select-all',
-    getTextCallback: () => {
-      const selected = select.getSelected();
-      return selected.length === select.options.length
-        ? 'Deselect All'
-        : 'Select All';
-    },
-    isVisibleCallback: () => {
-      return select.options.length > 0;
-    },
-    isDisabledCallback: () => {
-      return select.options.length === 0;
-    },
-    onClick: () => {
-      const selected = select.getSelected();
-      if (selected.length === select.options.length) {
-        select.setSelected([]);
+    id: 'toggle-all',
+    getTextCallback: ({ selectedCount, optionCount }) =>
+      selectedCount === optionCount ? 'Deselect All' : 'Select All',
+    getIsVisibleCallback: ({ optionCount }) => optionCount > 0,
+    getIsDisabledCallback: ({ optionCount }) => optionCount === 0,
+    onClick: ({ controller, selectedCount, optionCount }) => {
+      if (selectedCount === optionCount) {
+        controller.clearAll();
       } else {
-        select.setSelected(select.options.map(o => o.value));
+        controller.selectAll();
       }
     }
   }
@@ -119,9 +126,7 @@ Dynamic (callback):
 {
   id: 'export',
   text: 'Export',
-  isVisibleCallback: () => {
-    return select.getSelected().length > 0;
-  },
+  getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0,
   onClick: () => {}
 }
 
@@ -146,10 +151,7 @@ Dynamic (callback):
 {
   id: 'save',
   text: 'Save',
-  isDisabledCallback: () => {
-    const selected = select.getSelected();
-    return selected.length === 0 || selected.length > 10;
-  },
+  getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0 || selectedCount > 10,
   onClick: () => {}
 }
 
@@ -158,9 +160,25 @@ Use cases:
 - Disable when limit exceeded
 - Disable during async operations
 
+TOGGLE (ACTIVE) STATE
+---------------------
+A button that toggles something renders aria-pressed="true" when active:
+
+let isCompact = false;
+{
+  id: 'compact',
+  text: 'Compact',
+  getIsActiveCallback: () => isCompact,
+  onClick: ({ controller }) => {
+    isCompact = !isCompact;
+    controller.refresh();
+  }
+}
+
 ICONS
 -----
-Add icons to actions:
+Add icons to actions. Text and icon are inserted as TEXT, not HTML — use a glyph, emoji or
+short string (an `<i class="fa …">` tag will show literally).
 
 Emoji:
 {
@@ -170,21 +188,16 @@ Emoji:
   onClick: () => {}
 }
 
-Font Awesome:
-{
-  id: 'export',
-  text: 'Export',
-  icon: 'fa fa-download',
-  onClick: () => {}
-}
-
 Unicode:
 {
   id: 'clear',
   text: 'Clear',
-  icon: '\u2715',  // ✕
+  icon: '✕',  // ✕
   onClick: () => {}
 }
+
+Rendered as <span class="ms__action-btn-icon"> + <span class="ms__action-btn-label">;
+gap via --ms-action-button-icon-gap.
 
 TOOLTIPS
 --------
@@ -201,10 +214,8 @@ Dynamic tooltip:
 {
   id: 'save',
   text: 'Save',
-  tooltip: () => {
-    const count = select.getSelected().length;
-    return `Save ${count} selected item${count !== 1 ? 's' : ''}`;
-  },
+  getTooltipCallback: ({ selectedCount }) =>
+    `Save ${selectedCount} selected item${selectedCount !== 1 ? 's' : ''}`,
   onClick: () => {}
 }
 
@@ -215,7 +226,7 @@ Style actions with custom classes:
 {
   id: 'delete',
   text: 'Delete',
-  cssClass: 'danger-button',
+  isDanger: true,              // built-in destructive styling
   onClick: () => {}
 }
 
@@ -256,6 +267,11 @@ Wrap:
 - Better for many actions
 - Mobile-friendly
 
+Position / alignment:
+<web-multiselect actions-position="bottom" actions-align="right"></web-multiselect>
+- actions-position: top (default) | bottom
+- actions-align: stretch (default) | left | right | center | space-between
+
 STICKY ACTIONS
 --------------
 Keep actions visible when scrolling:
@@ -264,8 +280,7 @@ Keep actions visible when scrolling:
 </web-multiselect>
 
 Behavior:
-- Actions fixed at bottom
-- Visible while scrolling options
+- Action bar pinned while the option list scrolls
 - Better UX for long lists
 
 Disable:
@@ -274,25 +289,23 @@ Disable:
 
 ASYNC ACTIONS
 -------------
-Handle async operations:
+Handle async operations (onClick is awaited; the button is busy meanwhile):
 
 {
   id: 'save',
   text: 'Save',
-  onClick: async () => {
-    const selected = select.getSelected();
-
+  onClick: async ({ selectedOptions, controller }) => {
     try {
       const response = await fetch('/api/save', {
         method: 'POST',
-        body: JSON.stringify(selected)
+        body: JSON.stringify(selectedOptions)
       });
 
       if (response.ok) {
-        alert('Saved successfully');
+        controller.showMessage('Saved successfully', { type: 'success' });
       }
     } catch (error) {
-      console.error('Save failed:', error);
+      controller.showMessage('Save failed', { type: 'error' });
     }
   }
 }
@@ -303,7 +316,7 @@ let isSaving = false;
 {
   id: 'save',
   getTextCallback: () => isSaving ? 'Saving...' : 'Save',
-  isDisabledCallback: () => isSaving,
+  getIsDisabledCallback: () => isSaving,
   onClick: async () => {
     isSaving = true;
     await saveData();
@@ -317,19 +330,8 @@ Common action combinations:
 
 Select All + Clear All:
 select.actionButtons = [
-  {
-    id: 'select-all',
-    text: 'Select All',
-    onClick: () => {
-      select.setSelected(select.options.map(o => o.value));
-    }
-  },
-  {
-    id: 'clear-all',
-    text: 'Clear All',
-    isVisibleCallback: () => select.getSelected().length > 0,
-    onClick: () => select.setSelected([])
-  }
+  'select-all',
+  { action: 'clear-all', getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0 }
 ];
 
 CRUD operations:
@@ -343,80 +345,86 @@ select.actionButtons = [
   {
     id: 'edit',
     text: 'Edit',
-    isDisabledCallback: () => select.getSelected().length !== 1,
-    onClick: () => editSelected()
+    getIsDisabledCallback: ({ selectedCount }) => selectedCount !== 1,
+    onClick: ({ selectedOptions }) => editSelected(selectedOptions[0])
   },
   {
     id: 'delete',
     text: 'Delete',
-    cssClass: 'danger',
-    isDisabledCallback: () => select.getSelected().length === 0,
-    onClick: () => deleteSelected()
+    isDanger: true,
+    getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0,
+    onClick: ({ selectedOptions }) => deleteSelected(selectedOptions)
   }
 ];
 
-CONDITIONAL ACTIONS
--------------------
-Show different actions based on state:
+THE `action` EVENT
+------------------
+Every activation — built-in or custom button, plus any `data-action` element inside rendered
+option content (source 'option', detail.option), badge content (source 'badge') or a
+showMessage element (source 'message') — fires the `action` event.
 
-select.actionButtons = [
-  {
-    id: 'select-all',
-    getTextCallback: () => {
-      return select.getSelected().length === select.options.length
-        ? 'Deselect All'
-        : 'Select All';
-    },
-    onClick: () => {
-      if (select.getSelected().length === select.options.length) {
-        select.setSelected([]);
-      } else {
-        select.setSelected(select.options.map(o => o.value));
-      }
-    }
+Order: beforeActionCallback → item.onClick → `action` event → built-in behaviour.
+
+// Handle all custom buttons in one place
+select.addEventListener('action', (e) => {
+  const { action, id, source, selectedValues } = e.detail;
+  if (id === 'export') exportValues(selectedValues);
+});
+
+// Property twin — receives the DETAIL, not the CustomEvent
+select.onAction = (detail) => console.log(detail.action, detail.id, detail.source);
+
+// data-action inside option content fires `action` instead of toggling the row
+select.renderOptionContentCallback = ({ item }) =>
+  `<span>${item.name}</span> <button data-action="info" data-id="${item.id}">i</button>`;
+select.onAction = ({ id, source, option, dataset }) => {
+  if (source === 'option') showInfo(option);
+};
+
+CONFIRMATION / CANCELLING
+-------------------------
+beforeActionCallback(detail) → return false to cancel (onClick, the `action` event and the
+built-in all skipped). May be async.
+
+select.beforeActionCallback = (detail) => {
+  if (detail.action === 'clear-all') {
+    return confirm('Clear all selections?') ? undefined : false;
   }
-];
+};
 
-CONFIRMATION DIALOGS
---------------------
-Confirm dangerous actions:
-
+Or inside a custom item:
 {
   id: 'delete',
   text: 'Delete Selected',
-  cssClass: 'danger',
-  onClick: () => {
-    const selected = select.getSelected();
-    const confirmed = confirm(
-      `Delete ${selected.length} item(s)?`
-    );
-
-    if (confirmed) {
-      deleteItems(selected);
-      select.setSelected([]);
+  isDanger: true,
+  onClick: ({ selectedOptions, controller }) => {
+    if (confirm(`Delete ${selectedOptions.length} item(s)?`)) {
+      deleteItems(selectedOptions);
+      controller.clearAll();
     }
   }
 }
 
 ACTION CONTEXT
 --------------
-Access component state in actions:
+Everything is on the detail — no need to reach back to the element:
 
 {
   id: 'export',
   text: 'Export',
-  onClick: () => {
-    const selected = select.getSelected();
-    const allOptions = select.options;
-    const searchTerm = select.searchTerm;
-
+  onClick: ({ selectedOptions, optionCount, searchTerm }) => {
     exportData({
-      selected,
-      total: allOptions.length,
+      selected: selectedOptions,
+      total: optionCount,
       filter: searchTerm
     });
   }
 }
+
+detail.controller is the public facade (also el.controller): selectAll(), clearAll(),
+toggleValue(v), selectValue(v), deselectValue(v), setSelected(values), open(), close(),
+search(term), clearSearch(), refresh(), showMessage(content, { type, autoHideMs, placement }),
+hideMessage(), focus methods …
 
 UPDATING ACTIONS
 ----------------
@@ -447,40 +455,30 @@ Style action buttons with CSS variables:
 
 <style>
   web-multiselect {
-    --ml-action-button-bg: #f3f4f6;
-    --ml-action-button-color: #374151;
-    --ml-action-button-hover-bg: #e5e7eb;
-    --ml-action-button-border: 1px solid #d1d5db;
+    --ms-action-button-bg: #f3f4f6;
+    --ms-action-button-color: #374151;
+    --ms-action-button-bg-hover: #e5e7eb;
+    --ms-action-button-border-color: #d1d5db;
+    --ms-action-button-danger-color: #dc2626;
+    --ms-action-button-active-color: #2563eb;
+    --ms-action-button-icon-gap: 0.25rem;
   }
 </style>
 
-Or inject styles:
-select.customStylesCallback = () => {
-  return `
-    .action-button {
-      font-weight: 600;
-      padding: 0.5rem 1rem;
-    }
-
-    .danger-button {
-      color: #dc2626;
-    }
-  `;
-};
+Or inject styles (single ctx argument):
+select.getCustomStylesCallback = (ctx) => `
+  .primary-button {
+    font-weight: 600;
+  }
+`;
 
 DISABLING ALL ACTIONS
 ---------------------
 Temporarily disable all actions:
 
 select.actionButtons = select.actionButtons.map(action => ({
-  ...action,
+  ...(typeof action === 'string' ? { action } : action),
   isDisabled: true
-}));
-
-Re-enable:
-select.actionButtons = select.actionButtons.map(action => ({
-  ...action,
-  isDisabled: false
 }));
 
 BEST PRACTICES
@@ -489,33 +487,27 @@ BEST PRACTICES
 ✅ Provide tooltips for clarity
 ✅ Disable actions when not applicable
 ✅ Hide actions that don't make sense
-✅ Confirm destructive actions
+✅ Confirm destructive actions (beforeActionCallback or confirm in onClick)
+✅ Use isDanger for destructive actions
 ✅ Handle async operations properly
-✅ Use icons for better recognition
+✅ Use icons (glyph/emoji) for better recognition
 ✅ Test on mobile (wrap mode)
 
 ❌ Don't have too many actions (3-5 max)
+❌ Don't put HTML in text / icon (inserted as text)
+❌ Don't use action: 'custom' — give custom items an `id`
 ❌ Don't forget error handling
-❌ Don't block UI during async operations
 ❌ Don't use confusing labels
-❌ Don't forget to update dynamic state
 
 COMMON PATTERNS
 ---------------
 Select/Deselect All:
 {
   id: 'toggle-all',
-  getTextCallback: () => {
-    return select.getSelected().length === select.options.length
-      ? 'Deselect All' : 'Select All';
-  },
-  onClick: () => {
-    if (select.getSelected().length === select.options.length) {
-      select.setSelected([]);
-    } else {
-      select.setSelected(select.options.map(o => o.value));
-    }
-  }
+  getTextCallback: ({ selectedCount, optionCount }) =>
+    selectedCount === optionCount ? 'Deselect All' : 'Select All',
+  onClick: ({ controller, selectedCount, optionCount }) =>
+    selectedCount === optionCount ? controller.clearAll() : controller.selectAll()
 }
 
 Export selected:
@@ -523,23 +515,10 @@ Export selected:
   id: 'export',
   text: 'Export',
   icon: '⬇️',
-  isDisabledCallback: () => select.getSelected().length === 0,
-  onClick: () => {
-    const data = select.getSelected();
-    const csv = convertToCSV(data);
+  getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0,
+  onClick: ({ selectedOptions }) => {
+    const csv = convertToCSV(selectedOptions);
     downloadFile(csv, 'export.csv');
-  }
-}
-
-Clear with confirmation:
-{
-  id: 'clear',
-  text: 'Clear All',
-  isVisibleCallback: () => select.getSelected().length > 0,
-  onClick: () => {
-    if (confirm('Clear all selections?')) {
-      select.setSelected([]);
-    }
   }
 }
 
@@ -547,17 +526,10 @@ DEBUGGING
 ---------
 Log action clicks:
 
-select.actionButtons = [
-  {
-    id: 'debug',
-    text: 'Debug',
-    onClick: () => {
-      console.log('Selected:', select.getSelected());
-      console.log('Options:', select.options);
-      console.log('Actions:', select.actionButtons);
-    }
-  }
-];
+select.onAction = (detail) => {
+  console.log('Action:', detail.action, detail.id, detail.source);
+  console.log('Selected:', detail.selectedValues);
+};
 
 EXAMPLES
 --------

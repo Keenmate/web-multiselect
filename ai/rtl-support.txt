@@ -285,8 +285,8 @@ Combine RTL with i18n:
 </web-multiselect>
 
 Custom counter for RTL languages:
-select.getCounterCallback = (count) => {
-  const lang = select.getAttribute('lang');
+select.getCounterCallback = ({ count, element }) => {
+  const lang = element.getAttribute('lang');
 
   if (lang === 'ar') {
     return count === 1 ? 'عنصر واحد' : `${count} عناصر`;

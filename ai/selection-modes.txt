@@ -133,14 +133,15 @@ Clear all selected options:
 
 select.setSelected([]);  // SILENT — fires no 'deselect'/'change' events
 
-If listeners must react to the clear, use clearAll() instead:
-select.clearAll();       // Fires 'deselect' per removed item + one 'change'
-                         // This is what formResetCallback uses internally.
+Or notify with ONE aggregate 'change' (still veto-free):
+select.setSelected([], { notify: true });
 
-Or use clear-all action button:
-<web-multiselect>
-  <!-- Built-in clear button available -->
-</web-multiselect>
+If listeners must react like a user gesture, use the controller:
+select.controller.clearAll();  // Fires 'deselect' per removed item + one 'change'
+                               // beforeDeselectCallback applies per option (source 'clear-all')
+
+Or add the clear-all action button (none render unless you opt in):
+select.actionButtons = ['clear-all'];
 
 Listen to change event:
 select.addEventListener('change', (e) => {
@@ -207,8 +208,8 @@ NOTE: 'change' only fires when the selection set actually changed
 (multiselect.ts:1544 — guard on added.length > 0 || removed.length > 0).
 Re-picking the already-selected item in single mode fires nothing.
 
-NOTE: Events bubble and cross shadow DOM boundaries (bubbles + composed),
-so framework delegation (Svelte 5 onchange, React onChange, Vue @change)
+NOTE: Events bubble but are NOT composed (bubbles: true, composed: false) — they are
+dispatched on the host and do not escape an enclosing shadow root. Framework delegation (Svelte 5 onchange, React onChange, Vue @change)
 works out of the box. WATCH OUT for collisions with native 'change' and
 'select' events at form-level / container-level listeners — filter by
 e.target. See events-callbacks.txt EVENT BUBBLING section.
@@ -224,64 +225,59 @@ Single-select TOGGLE OFF (clicking the already-selected item):
 Multi-select TOGGLE (any direction):
 - 'select' OR 'deselect' + 'change' per click
 
-Multi-select SELECT ALL action button:
-- 'select' per newly-added item + one 'change'
+Multi-select SELECT ALL action button / controller.selectAll():
+- 'select' per newly-added item + one 'change' (vetoes apply per option)
 
-clearAll() — programmatic or "Clear All" action:
-- 'deselect' per removed item + one 'change'
+controller.clearAll() — programmatic or "Clear All" action:
+- 'deselect' per removed item + one 'change' (vetoes apply per option)
 
 setSelected(values) — programmatic:
-- SILENT in both modes. No events. See events-callbacks.txt
-  PROGRAMMATIC SELECTION — WHICH METHODS FIRE EVENTS.
+- SILENT in both modes, veto-free. setSelected(values, { notify: true }) fires one
+  'change'. See events-callbacks.txt PROGRAMMATIC SELECTION — WHICH METHODS FIRE EVENTS.
 
 SELECTION LIMITS
 ----------------
-Limit number of selections via POST-COMMIT ROLLBACK. Callbacks and events
-fire after the selection has been committed — they cannot cancel. The
-pattern is: detect the overflow, restore the previous state with
-setSelected (which is silent and will not re-trigger this listener).
+Limit the number of selections with beforeSelectCallback — it runs BEFORE the
+selection changes, once per option (also for Select-All / group checkbox, where vetoed
+options are skipped and the rest apply). Return false to veto; explain it with
+ctx.controller.showMessage (a returned string does NOT veto):
 
-select.addEventListener('select', (e) => {
+select.beforeSelectCallback = ({ selectedOptions, controller }) => {
   const maxSelections = 3;
-  if (e.detail.selectedOptions.length > maxSelections) {
-    const allowed = e.detail.selectedOptions
-      .slice(0, maxSelections)
-      .map(opt => opt.value);
-    select.setSelected(allowed);  // silent rollback — see events-callbacks.txt
-    alert(`Maximum ${maxSelections} selections allowed`);
+  if (selectedOptions.length >= maxSelections) {
+    controller.showMessage(`Maximum ${maxSelections} selections allowed`, { type: 'warning' });
+    return false;
   }
-});
+};
 
-NOTE: selectCallback fires from the same commit() pass as the 'select'
-event, AFTER the selection has already been added. Returning early from
-selectCallback does NOT cancel the selection (older docs incorrectly
-suggested this — the only cancel mechanism is post-commit rollback).
+NOTE: the 'select' / 'change' events (and onSelect / onChange) fire AFTER the commit and
+cannot cancel — use the before* hooks to veto.
 
 MINIMUM SELECTIONS
 ------------------
-Enforce minimum selections via the same post-commit rollback pattern:
+Enforce minimum selections with beforeDeselectCallback:
 
-select.addEventListener('deselect', (e) => {
+select.beforeDeselectCallback = ({ selectedOptions, controller }) => {
   const minSelections = 1;
-  if (e.detail.selectedOptions.length < minSelections) {
-    select.setSelected([e.detail.option.value]);  // silent re-add
-    alert(`Minimum ${minSelections} selection required`);
+  if (selectedOptions.length <= minSelections) {
+    controller.showMessage(`Minimum ${minSelections} selection required`, { type: 'warning' });
+    return false;
   }
-});
+};
 
 SINGLE-SELECT DISPLAY
 ---------------------
 Customize single-select input display:
 
-select.renderSelectedContentCallback = (option) => {
-  return `${option.icon || ''} ${option.label}`;
+select.renderSelectedContentCallback = ({ item }) => {
+  return `${item.icon || ''} ${item.label}`;
 };
 
 IMPORTANT: Returns plain text, not HTML
 
 Or use display value callback:
-select.getDisplayValueCallback = (option) => {
-  return option.label.toUpperCase();
+select.getDisplayValueCallback = ({ item }) => {
+  return item.label.toUpperCase();
 };
 
 MULTI-SELECT DISPLAY
@@ -299,40 +295,32 @@ CONDITIONAL SELECTION
 ---------------------
 Validate before selection:
 
-select.selectCallback = (option) => {
+select.beforeSelectCallback = ({ option, selectedOptions, controller }) => {
   // Check if already has item from same group
-  const selected = select.getSelected();
-  const sameGroup = selected.some(s =>
+  const sameGroup = selectedOptions.some(s =>
     s.group === option.group && s.value !== option.value
   );
 
   if (sameGroup) {
-    alert('Only one per group allowed');
-    return; // Cancel selection
+    controller.showMessage('Only one per group allowed', { type: 'warning' });
+    return false; // Veto
   }
 
-  // Selection proceeds
+  // Return nothing → selection proceeds
 };
 
 DESELECTION HANDLING
 --------------------
-deselectCallback fires AFTER the option has been removed from the
-selection. "Confirm before removal" is a silent post-commit rollback:
+"Confirm before removal" — beforeDeselectCallback runs BEFORE the option is removed
+(ctx.source: 'option' | 'badge' | 'clear-all' | 'clear' | 'group'). May be async:
 
-select.deselectCallback = (option) => {
-  console.log('Removed:', option);
-
-  if (option.important && !confirm(`Remove ${option.label}?`)) {
-    // Re-add. setSelected is SILENT — visual state restores but no
-    // 'select' event fires for the re-add, so don't put critical
-    // side-effect logic in a 'select' listener and expect to see it here.
-    setTimeout(() => {
-      const current = select.getValue();
-      const arr = Array.isArray(current) ? current : (current != null ? [current] : []);
-      select.setSelected([...arr, option.value]);
-    }, 0);
+select.beforeDeselectCallback = async ({ option }) => {
+  if (option.important && !(await confirmDialog(`Remove ${option.label}?`))) {
+    return false;   // keep it
   }
 };
+
+select.onDeselect = ({ option }) => console.log('Removed:', option);
 
 PROGRAMMATIC SELECTION
 ----------------------
@@ -401,20 +389,20 @@ select.addEventListener('change', (e) => {
 
 SELECTION CALLBACKS
 -------------------
-Use callbacks for side effects:
+Use the on* twins for side effects (they receive the event DETAIL):
 
-select.selectCallback = (option) => {
+select.onSelect = ({ option }) => {
   console.log('Selected:', option);
   // Analytics, logging, etc.
 };
 
-select.deselectCallback = (option) => {
+select.onDeselect = ({ option }) => {
   console.log('Deselected:', option);
 };
 
-select.changeCallback = (selectedOptions) => {
+select.onChange = ({ selectedOptions }) => {
   console.log('Changed:', selectedOptions);
-  // Update related UI, validate, etc.
+  // Update related UI, etc.
 };
 
 FORM INTEGRATION
@@ -502,9 +490,10 @@ Quick multi-select:
 </web-multiselect>
 
 Selection with validation:
-select.changeCallback = (selected) => {
-  if (selected.length === 0) {
-    alert('Please select at least one option');
+select.beforeDeselectCallback = ({ selectedOptions, controller }) => {
+  if (selectedOptions.length === 1) {
+    controller.showMessage('Please keep at least one option', { type: 'warning' });
+    return false;
   }
 };
 

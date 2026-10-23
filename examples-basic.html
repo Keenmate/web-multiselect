@@ -143,7 +143,7 @@
                 (<code>group-select-mode="cascade"</code>) to also put a tristate checkbox on each
                 header that toggles the whole group — the group name is never itself a value.
                 Turning on <strong>custom labels</strong> renders the header via
-                <code>renderGroupLabelContentCallback</code>, whose 2nd arg carries the per-group
+                <code>renderGroupLabelContentCallback</code>, whose <code>ctx</code> carries the per-group
                 selection — here it writes <code>GROUP — N remaining</code>
                 (<code>selectableCount − selectedCount</code>).
             </p>
@@ -188,7 +188,7 @@
                 <code>data-icon</code> / <code>data-subtitle</code>. Single-select is
                 <code>multiple="false"</code>. Even custom styling stays script-free — the
                 <code>custom-styles</code> attribute injects raw CSS into the shadow DOM (the
-                declarative twin of <code>customStylesCallback</code>).
+                declarative twin of <code>getCustomStylesCallback</code>).
             </p>
 
             <div class="grid">
@@ -482,7 +482,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>el.getSearchTermCallback = (term) =&gt;
+<pre><code>el.getSearchTermCallback = ({ term }) =&gt;
     new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
 // "ha-324/56" → /ha[^a-z0-9]*324[^a-z0-9]*56/i
 
@@ -575,22 +575,22 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { id: 25, name: 'Netherlands', flag: '🇳🇱' }
         ];
 
-        // Emoji-prefixed group labels for the "custom labels" toggle on BU03. The 2nd arg is the
-        // GroupLabelRenderContext — under cascade it carries the per-group selection, so a custom
+        // Emoji-prefixed group labels for the "custom labels" toggle on BU03. The single ctx is the
+        // GroupLabelRenderContext (ctx.groupName + the per-group selection) — under cascade it carries the per-group selection, so a custom
         // header can write whatever it likes: here "N remaining" (= selectableCount − selectedCount).
         // The suffix is left un-dimmed (same weight/color as the group name) so the whole label
         // reads dark and legible — a faded suffix is harder to scan. The context also carries the
         // presentation (isFullscreen) and is re-invoked when it changes: on the phone fullscreen
         // overlay the base rem scales UP for touch, so we render a notch smaller (font-size:0.8em)
         // to keep "NAME — N remaining" on one line.
-        const groupLabelRenderer = (name, ctx) => {
+        const groupLabelRenderer = (ctx) => {
+            const name = ctx.groupName;
             const emojis = { frontend: '🎨', backend: '🔧', database: '🗄️' };
-            const remaining = ctx ? ctx.selectableCount - ctx.selectedCount : 0;
-            const suffix = !ctx ? ''
-                : remaining > 0
-                    ? ` — ${remaining} remaining`
-                    : ' — all selected';
-            const scale = ctx && ctx.isFullscreen ? ' style="font-size:0.8em"' : '';
+            const remaining = ctx.selectableCount - ctx.selectedCount;
+            const suffix = remaining > 0
+                ? ` — ${remaining} remaining`
+                : ' — all selected';
+            const scale = ctx.isFullscreen ? ' style="font-size:0.8em"' : '';
             return `<span class="js-custom-label"${scale}><strong>${emojis[name] || '📦'} ${name.toUpperCase()}</strong>${suffix}</span>`;
         };
 
@@ -670,7 +670,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 r.addEventListener('change', (e) => {
                     if (!e.target.checked) return;
                     exGroups.getCountLabelCallback = e.target.value === 'ratio'
-                        ? (s, t) => `${s}/${t}`
+                        ? ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}`
                         : null; // null → default `[x]`
                 }));
 
@@ -763,7 +763,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 ['HA-324/56', 'Hydraulic adapter (supplier B)'], ['HA 324-57', 'Hydraulic adapter, long'],
                 ['HB 324-56', 'Hose bracket'], ['XK 100/20', 'Coupling'], ['XK-100-21', 'Coupling, reinforced']
             ].map(([label, subtitle], i) => ({ value: String(i), label, subtitle }));
-            const separatorAgnostic = (term) =>
+            const separatorAgnostic = ({ term }) =>
                 new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
             const applyTermCb = (on) => { exParts.getSearchTermCallback = on ? separatorAgnostic : null; };
             applyTermCb(true);

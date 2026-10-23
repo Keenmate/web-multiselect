@@ -406,7 +406,7 @@ CUSTOM STYLES CALLBACK
 ----------------------
 Inject CSS into Shadow DOM:
 
-select.customStylesCallback = () => {
+select.getCustomStylesCallback = (ctx) => {
   return `
     .custom-option {
       display: flex;
@@ -483,7 +483,7 @@ Cannot style internal elements directly:
   }
 </style>
 
-Or customStylesCallback for complex styling
+Or getCustomStylesCallback for complex styling
 
 BROWSER COMPATIBILITY
 ---------------------
@@ -550,7 +550,7 @@ BEST PRACTICES
 ✅ Create theme classes for variations
 ✅ Test dark mode
 ✅ Test responsive layouts
-✅ Use customStylesCallback for complex styles
+✅ Use getCustomStylesCallback for complex styles
 ✅ Keep consistent color scheme
 ✅ Test accessibility (contrast)
 

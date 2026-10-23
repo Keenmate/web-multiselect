@@ -36,16 +36,17 @@ Use this when:
 
 CORE CLASS IMPORT
 -----------------
-Import core logic without Web Component wrapper:
+Import the dropdown engine without the Web Component wrapper (standalone use only — when
+you use <web-multiselect>, drive it through el.controller instead):
 
-✅ import { WebMultiSelect } from '@keenmate/web-multiselect';
+✅ import { MultiSelectEngine } from '@keenmate/web-multiselect';
 
 Use for:
-- Framework-specific wrappers
 - Custom element implementations
 - Testing core logic independently
 
-const multiselect = new WebMultiSelect(containerElement, config);
+const engine = new MultiSelectEngine(containerElement, config);
+// engine options onSelect / onDeselect / onChange / onAdd / onAction receive the detail
 
 TYPESCRIPT IMPORTS
 ------------------
@@ -54,11 +55,16 @@ Types are included automatically, no @types package needed:
 ✅ import type {
   MultiSelectOption,
   MultiSelectConfig,
-  MultiSelectEventDetail,
+  MultiSelectController,
+  ItemContext,
+  ChangeEventDetail,
+  SelectEventDetail,
   BadgesDisplayMode,
   SearchMode,
-  ActionButton
+  MultiSelectActionItem
 } from '@keenmate/web-multiselect';
+
+(See typescript-types.txt for the full list — every callback ctx and event detail type.)
 
 Common types:
 
@@ -142,7 +148,7 @@ Styles only:
 @keenmate/web-multiselect/style.css
 
 Core class:
-@keenmate/web-multiselect (exports WebMultiSelect)
+@keenmate/web-multiselect (exports MultiSelectEngine)
 
 Web Component:
 @keenmate/web-multiselect (exports MultiSelectElement)
@@ -458,7 +464,7 @@ QUICK REFERENCE
 Default import:     import '@keenmate/web-multiselect';
 Types:              import type { MultiSelectOption } from '...';
 Logging:            import { enableLogging } from '...';
-Core class:         import { WebMultiSelect } from '...';
+Core class:         import { MultiSelectEngine } from '...';
 SCSS:               @use '@keenmate/web-multiselect/scss';
 Global API:         window.components['web-multiselect']
 Version:            window.components['web-multiselect'].version()

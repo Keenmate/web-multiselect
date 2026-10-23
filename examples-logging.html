@@ -200,8 +200,8 @@ for (const el of ms.getInstances()) console.log(el.id, el.getSelected());
         ];
         const fruitCfg = (el) => {
             el.options = fruits;
-            el.getValueCallback = (i) => i.id;
-            el.getDisplayValueCallback = (i) => `${i.emoji} ${i.name}`;
+            el.getValueCallback = ({ item }) => item.id;
+            el.getDisplayValueCallback = ({ item }) => `${item.emoji} ${item.name}`;
         };
 
         // ── 1. registry inspector ────────────────────────────────────────────
@@ -310,10 +310,10 @@ for (const el of ms.getInstances()) console.log(el.id, el.getSelected());
 
             const colorsEl = document.getElementById('colors');
             colorsEl.options = colors;
-            colorsEl.getValueCallback = (i) => i.id;
-            colorsEl.getDisplayValueCallback = (i) => i.name;
-            colorsEl.getSubtitleCallback = (i) => i.hex;
-            colorsEl.searchCallback = async (term) => {
+            colorsEl.getValueCallback = ({ item }) => item.id;
+            colorsEl.getDisplayValueCallback = ({ item }) => item.name;
+            colorsEl.getSubtitleCallback = ({ item }) => item.hex;
+            colorsEl.searchCallback = async ({ term }) => {
                 await new Promise((r) => setTimeout(r, 300));
                 if (!term) return colors;
                 const q = term.toLowerCase();

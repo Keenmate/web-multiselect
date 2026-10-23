@@ -137,8 +137,8 @@ el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
             <p class="description">
                 A node can be marked <strong>non-selectable</strong> — set
                 <code>is-selectable-member</code> (a data flag) or
-                <code>getIsSelectableCallback</code> (a predicate that receives the built node, so
-                it can read <code>node.hasChildren</code>). Non-selectable nodes render
+                <code>getIsSelectableCallback</code> (a predicate whose <code>ctx</code> carries the option as
+                <code>item</code> and the built node as <code>node</code>, so it can read <code>node.hasChildren</code>). Non-selectable nodes render
                 <em>normally</em> — they are <strong>not</strong> greyed out like
                 <code>disabled</code> — but they drop their checkbox, are skipped by keyboard
                 arrows, and can't be toggled or picked by Select&nbsp;All. The classic use is a
@@ -149,7 +149,7 @@ el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
                 <web-multiselect id="tree-leaves" multiple="true" show-checkboxes="true"></web-multiselect>
             </div>
             <div class="code-block"><pre>// Only leaves are selectable — the callback sees the derived hasChildren.
-el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
+el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
 
 // …or drive it from the data:
 // &lt;web-multiselect path-member="path" is-selectable-member="selectable"&gt;</pre></div>
@@ -161,7 +161,7 @@ el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
                 in <strong>cascade</strong> mode <strong>Select All emits the same rolled-up shape a
                 click would</strong> — here selecting everything collapses to just the two roots
                 (<em>Fruit</em>, <em>Vegetables</em>), not one badge per node. Add custom actions with an
-                <code>onClick(ms)</code> that receives the picker instance.
+                <code>id</code> and an <code>onClick(detail)</code> — <code>detail.controller</code> drives the picker.
             </p>
             <div class="demo-area">
                 <label class="demo-label">Cascade tree — Select All / Clear All + a custom "All fruit" action:</label>
@@ -171,9 +171,9 @@ el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
             <div class="code-block"><pre>el.actionButtons = [
   { action: 'select-all', text: 'Select All' },
   { action: 'clear-all',  text: 'Clear All' },
-  // custom action — receives the picker instance. setSelected is silent by default;
-  // { notify: true } announces the result as a single `change` (so the server hears it).
-  { action: 'custom', text: 'All fruit', onClick: (ms) =&gt; ms.setSelected(['fruit'], { notify: true }) }
+  // custom action — identified by `id`; detail.controller drives the picker. setSelected is
+  // silent by default; { notify: true } announces the result as a single `change` (so the server hears it).
+  { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) =&gt; controller.setSelected(['fruit'], { notify: true }) }
 ];</pre></div>
         </section>
 
@@ -316,18 +316,18 @@ el.getIsSelectableCallback = (node) =&gt; !node.hasChildren;
                 Two mechanisms working together. The <strong>content</strong> comes from
                 <code>renderOptionContentCallback</code> (here just the label plus a muted
                 <code>ctx.childCount</code>). The <strong>full-row background per node type</strong> comes
-                from the branch/leaf theming hooks via <code>customStylesCallback</code> — the render
+                from the branch/leaf theming hooks via <code>getCustomStylesCallback</code> — the render
                 callback only fills the content area (after the checkbox), so a background belongs on the
                 <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code> row classes.
             </p>
             <div class="code-block"><pre>// 1) Content — compact label + child count. Style via a CSS class, not inline styles.
-el.renderOptionContentCallback = (item, ctx) =&gt; ctx.isBranch
-  ? `&lt;span&gt;&lt;strong&gt;${item.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${ctx.childCount}&lt;/small&gt;&lt;/span&gt;`
+el.renderOptionContentCallback = ({ item, isBranch, childCount }) =&gt; isBranch
+  ? `&lt;span&gt;&lt;strong&gt;${item.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${childCount}&lt;/small&gt;&lt;/span&gt;`
   : `&lt;span&gt;${item.label}&lt;/span&gt;`;
 
 // 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
 //    branch/leaf theming hooks, plus the .node-count class used above.
-el.customStylesCallback = () =&gt; `
+el.getCustomStylesCallback = () =&gt; `
   .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
   .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
   .node-count { opacity: .55; font-weight: 400; }
@@ -412,7 +412,7 @@ el.options = [
 
 // Breadcrumb per popover row (popover reuses badge rendering):
 el.fullTitleMember = 'fullTitle';
-el.getBadgeDisplayCallback = (item) =&gt; item.fullTitle || item.label;
+el.getBadgeDisplayCallback = ({ item }) =&gt; item.fullTitle || item.label;
 
 // show-counter adds a compact [N] chip next to the toggle — independent of the
 // display mode, it opens the same selected-items popover. Drop the "N selected"
@@ -491,13 +491,13 @@ el.isSelectableMember = 'selectable'; // only 4-digit unit groups (leaves)
 el.options = isco;
 
 // Badge shows only the last segment; ".. /" hints at hidden ancestors.
-el.getBadgeDisplayCallback = (item) =&gt; {
+el.getBadgeDisplayCallback = ({ item }) =&gt; {
   const segs = String(item.fullTitle || item.label).split(' / ');
   const last = segs[segs.length - 1];
   return segs.length &gt; 1 ? `.. / ${last}` : last;
 };
 // Full breadcrumb in the badge tooltip (needs enable-badge-tooltips).
-el.getBadgeTooltipCallback = (item) =&gt; item.fullTitle || item.label;</pre></div>
+el.getBadgeTooltipCallback = ({ item }) =&gt; item.fullTitle || item.label;</pre></div>
 
             <p class="description" style="font-size: 0.85rem; opacity: 0.8;">
                 Source: <em>International Standard Classification of Occupations, ISCO-08</em>
@@ -705,7 +705,7 @@ el.scrollToValue('2211');</pre></div>
             leaves.valueMember = 'value';
             leaves.displayValueMember = 'label';
             leaves.pathMember = 'path';
-            leaves.getIsSelectableCallback = (node) => !node.hasChildren;
+            leaves.getIsSelectableCallback = ({ node }) => !node.hasChildren;
             leaves.options = categories;
 
             // Action buttons + cascade tree. Built-in select-all/clear-all plus a custom
@@ -720,7 +720,7 @@ el.scrollToValue('2211');</pre></div>
                 { action: 'clear-all', text: 'Clear All' },
                 // setSelected is silent by default; { notify: true } fires one aggregate
                 // `change` so a deliberate button press reaches the same listeners a pick does.
-                { action: 'custom', text: 'All fruit', onClick: (ms) => ms.setSelected(['fruit'], { notify: true }) }
+                { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) => controller.setSelected(['fruit'], { notify: true }) }
             ];
 
             // ---- TR03 · Search — filter vs navigate ----------------------------
@@ -750,7 +750,7 @@ el.scrollToValue('2211');</pre></div>
                 el.options = categories;
             }
             const bold = document.querySelector('#tree-bold');
-            bold.customStylesCallback = () => `
+            bold.getCustomStylesCallback = () => `
                 .ms__option--tree-branch .ms__option-title { font-weight: 600; }
                 .ms__option--tree-leaf   .ms__option-title { font-weight: 400; }
             `;
@@ -766,17 +766,17 @@ el.scrollToValue('2211');</pre></div>
 
             // Custom node rendering. Content via the render callback (compact: label +
             // muted child count from ctx); full-row background per node type via the
-            // branch/leaf theming hooks (customStylesCallback), since the render callback
+            // branch/leaf theming hooks (getCustomStylesCallback), since the render callback
             // only fills the content area after the checkbox.
             const render = document.querySelector('#tree-render');
             render.valueMember = 'value';
             render.displayValueMember = 'label';
             render.pathMember = 'path';
             render.options = categories;
-            render.renderOptionContentCallback = (item, ctx) => ctx.isBranch
-                ? `<span><strong>${item.label}</strong> <small class="node-count">${ctx.childCount}</small></span>`
+            render.renderOptionContentCallback = ({ item, isBranch, childCount }) => isBranch
+                ? `<span><strong>${item.label}</strong> <small class="node-count">${childCount}</small></span>`
                 : `<span>${item.label}</span>`;
-            render.customStylesCallback = () => `
+            render.getCustomStylesCallback = () => `
                 .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }
                 .ms__option--tree-leaf   { background: #fff; }
                 .node-count { opacity: .55; font-weight: 400; }
@@ -827,7 +827,7 @@ el.scrollToValue('2211');</pre></div>
             count.displayValueMember = 'label';
             count.pathMember = 'path';
             count.fullTitleMember = 'fullTitle';
-            count.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
+            count.getBadgeDisplayCallback = ({ item }) => item.fullTitle || item.label;
             count.options = withFullTitles;
             count.setSelected(['apple', 'peach', 'kale']);
 
@@ -839,7 +839,7 @@ el.scrollToValue('2211');</pre></div>
             widths.displayValueMember = 'label';
             widths.pathMember = 'path';
             widths.fullTitleMember = 'fullTitle';
-            widths.getBadgeDisplayCallback = (item) => item.fullTitle || item.label;
+            widths.getBadgeDisplayCallback = ({ item }) => item.fullTitle || item.label;
             widths.options = withFullTitles;
 
             // ---- TR06 · Real data (ISCO-08) + scroll-to API --------------------
@@ -857,15 +857,15 @@ el.scrollToValue('2211');</pre></div>
                     // Built-in search matches the display value only (the title). Widen
                     // it to also match the ISCO code and the full breadcrumb, so "2211"
                     // or "health" both find their nodes (matches keep their ancestors).
-                    el.getSearchValueCallback = (item) => `${item.label} ${item.value} ${item.fullTitle}`;
+                    el.getSearchValueCallback = ({ item }) => `${item.label} ${item.value} ${item.fullTitle}`;
                     // Badge = last segment only, with a ".. /" hint when ancestors exist.
-                    el.getBadgeDisplayCallback = (item) => {
+                    el.getBadgeDisplayCallback = ({ item }) => {
                         const segs = String(item.fullTitle || item.label).split(' / ');
                         const last = segs[segs.length - 1];
                         return segs.length > 1 ? `.. / ${last}` : last;
                     };
                     // Full breadcrumb in the badge tooltip.
-                    el.getBadgeTooltipCallback = (item) => item.fullTitle || item.label;
+                    el.getBadgeTooltipCallback = ({ item }) => item.fullTitle || item.label;
                     el.options = isco;
 
                     // --- Scroll-to API in a tree (reuses the ISCO data) ---
@@ -876,7 +876,7 @@ el.scrollToValue('2211');</pre></div>
                         treeScroll.displayValueMember = 'label';
                         treeScroll.pathMember = 'path';
                         treeScroll.isSelectableMember = 'selectable';
-                        treeScroll.getSearchValueCallback = (item) => `${item.label} ${item.value} ${item.fullTitle}`;
+                        treeScroll.getSearchValueCallback = ({ item }) => `${item.label} ${item.value} ${item.fullTitle}`;
                         treeScroll.options = isco;
 
                         const trLog = (msg) => {
