@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
+consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model
@@ -109,8 +112,6 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   event and never toggles the row.
 - The `actionButtons` description promised default Select-All / Clear buttons when unset; none
   render (and none did).
-
-## [2.6.0-rc04] - 2026-10-22
 
 ### Internal
 
