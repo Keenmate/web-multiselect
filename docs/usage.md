@@ -159,7 +159,7 @@ multiselect.setSelected(['js', 'ts']);
 | `max-height` | `string` | `'20rem'` | Maximum height of dropdown |
 | `empty-message` | `string` | `'No results found'` | Message when no options found |
 | `loading-message` | `string` | `'Loading...'` | Message while loading async data |
-| `min-search-length` | `number` | `0` | Minimum search length for async |
+| `min-search-length` | `number` | `0` | Minimum characters before searching starts (local filter/navigate and async `searchCallback`); shorter terms show all options |
 | `search-debounce` | `number` | `0` | Debounce (ms) before the async `searchCallback` fires; coalesces keystroke bursts into one request. Resets on each keystroke. Async callback only — local filtering stays instant. `0` = no debounce |
 | `keep-options-on-search` | `boolean` | `true` | Keep initial options visible when `searchCallback` is active (hybrid search) |
 | `should-keep-search-on-close` | `boolean` | unset | Preserve search text and filtered results when the dropdown closes. Unset: kept in multi-select, cleared in single-select |

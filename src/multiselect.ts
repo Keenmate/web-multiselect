@@ -437,6 +437,8 @@ export class MultiSelectEngine<T = any> {
      * `useCallback` is false on the searchCallback path, where this only drives highlighting.
      */
     private prepareSearchTerm(term: string, useCallback: boolean): ActiveSearchTerm {
+        // Below min-search-length there is no term: no filtering, no navigate jumps, no highlight.
+        if (term.trim().length < (this.options.minSearchLength || 0)) return NO_SEARCH_TERM;
         const callback = useCallback ? this.options.getSearchTermCallback : null;
         return prepareSearchTerm(term, {
             behavior: this.options.searchBehavior || 'normalized',
@@ -5239,7 +5241,7 @@ export class MultiSelectEngine<T = any> {
         }
         // Search rules (a page-level switch, say): re-prepare and re-run the current term in place.
         const searchRulesChanged = 'searchBehavior' in partial || 'searchMatch' in partial
-            || 'getSearchTermCallback' in partial;
+            || 'getSearchTermCallback' in partial || 'minSearchLength' in partial;
         if (searchRulesChanged) {
             if ('searchBehavior' in partial) this.preparedSearchValues.clear();
             this.activeTermFor = null;

@@ -511,6 +511,34 @@ test.describe('empty-message', () => {
     });
 });
 
+test.describe('min-search-length (local search)', () => {
+    test('filter mode does not filter below threshold', async ({ page }) => {
+        const p = picker(page, 'filter');
+        await p.evaluate(el => el.setAttribute('min-search-length', '2'));
+        await openDropdown(p);
+        const all = await visibleOptions(p).count();
+
+        await input(p).fill('c'); // 1 char — under threshold: nothing filtered or highlighted
+        await expect(visibleOptions(p)).toHaveCount(all);
+        await expect(p.locator('.ms__option mark')).toHaveCount(0);
+
+        await input(p).fill('ch'); // threshold met
+        await expect(visibleOptions(p)).toHaveCount(1);
+    });
+
+    test('lowering the threshold live re-runs the typed term', async ({ page }) => {
+        const p = picker(page, 'filter');
+        await p.evaluate(el => el.setAttribute('min-search-length', '3'));
+        await openDropdown(p);
+        const all = await visibleOptions(p).count();
+
+        await input(p).fill('ch');
+        await expect(visibleOptions(p)).toHaveCount(all);
+        await p.evaluate(el => el.setAttribute('min-search-length', '0'));
+        await expect(visibleOptions(p)).toHaveCount(1);
+    });
+});
+
 test.describe('min-search-length (with async searchCallback)', () => {
     test('searchCallback is not invoked below threshold', async ({ page }) => {
         const p = picker(page, 'min-len');

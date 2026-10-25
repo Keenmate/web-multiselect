@@ -336,8 +336,9 @@ el.scrollToValue('jp');</code></pre>
             <p>
                 <strong>Filter</strong> mode hides non-matches; <strong>navigate</strong> mode keeps
                 every option visible and jumps focus between matches (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> +
-                <kbd>↑</kbd>/<kbd>↓</kbd>). Add a search hint, require a minimum number of characters
-                before searching, and debounce the query.
+                <kbd>↑</kbd>/<kbd>↓</kbd>). Add a search hint and require a minimum number of characters
+                before searching. (<code>search-debounce</code> applies to an async <code>searchCallback</code>
+                only. See <a href="examples-data-api.html">DA04 · Async Search</a>.)
             </p>
 
             <div class="controls">
@@ -353,14 +354,6 @@ el.scrollToValue('jp');</code></pre>
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
-                    </select>
-                </label>
-                <label><code>search-debounce</code> (ms):
-                    <select id="srch-deb">
-                        <option value="0" selected>0</option>
-                        <option value="150">150</option>
-                        <option value="300">300</option>
-                        <option value="600">600</option>
                     </select>
                 </label>
             </div>
@@ -741,8 +734,6 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                     : exSearch.removeAttribute('search-hint'));
             document.getElementById('srch-min').addEventListener('change', (e) =>
                 exSearch.setAttribute('min-search-length', e.target.value));
-            document.getElementById('srch-deb').addEventListener('change', (e) =>
-                exSearch.setAttribute('search-debounce', e.target.value));
 
             // ── BU07 · Search matching ───────────────────────────────────
             const exMatch = document.getElementById('ex-search-match');
