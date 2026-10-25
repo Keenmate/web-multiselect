@@ -116,6 +116,10 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   the list (and highlighted matches) even with `min-search-length="2"`. Only the async
   `searchCallback` path honoured it. Below the threshold the term now counts as empty in both
   filter and navigate mode, flat and tree; changing the attribute live re-runs the typed term.
+- Docs: the space reservation before upgrade (`web-multiselect:not(:defined)` in `style.css`) only
+  works when `style.css` is linked in `<head>`; `docs/usage.md` said the JS import "includes
+  styles". Usage docs now explain this and suggest `modulepreload`. The example pages now link
+  the stylesheet, so they no longer jump on load.
 
 ### Internal
 

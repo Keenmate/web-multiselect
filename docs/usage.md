@@ -72,6 +72,29 @@ ignored for `json`.
 Both attributes are reactive — changing either re-renders. Declarative `<option>`
 children and a `.options` property set in JS both take precedence over `data-options`.
 
+## Reserving space before the element loads
+
+The component's own styles live inside its shadow root, so they can't apply until
+the JS defines `<web-multiselect>`. Until then an undefined element is inline and
+collapses, and the page jumps once it upgrades. `dist/style.css` holds the light-DOM
+rule (`web-multiselect:not(:defined)`) that reserves the input height in the
+meantime. **Link it in `<head>`** so it applies before the module runs:
+
+```html
+<link rel="stylesheet" href="node_modules/@keenmate/web-multiselect/dist/style.css">
+```
+
+Importing it from JS (`import '@keenmate/web-multiselect/style.css'`) only helps if your
+bundler extracts it into a `<link>` (e.g. a Vite production build). In dev mode, CSS
+imported from JS is injected by that same JS, so it arrives too late to reserve anything.
+
+The reservation covers the gap; to also shorten it, preload the module so it downloads
+in parallel with the HTML instead of after it:
+
+```html
+<link rel="modulepreload" href="node_modules/@keenmate/web-multiselect/dist/multiselect.js">
+```
+
 ## Programmatic (with JavaScript)
 
 For dynamic data and advanced features:
@@ -86,11 +109,8 @@ For dynamic data and advanced features:
 ```
 
 ```typescript
-// Import the component (includes styles)
+// Import the component (its shadow-DOM styles are bundled in the JS)
 import '@keenmate/web-multiselect';
-
-// Or import styles separately if needed
-import '@keenmate/web-multiselect/style.css';
 
 const multiselect = document.querySelector('web-multiselect');
 
