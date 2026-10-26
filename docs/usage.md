@@ -467,7 +467,7 @@ multiselect.actionButtons = [
     getTextCallback: (ctx) => ctx.selectedCount > 0 ? 'Invert' : 'Select Items First',
     getClassCallback: (ctx) => ctx.selectedCount > 0 ? 'active' : 'inactive',
     getTooltipCallback: (ctx) => `Invert ${ctx.selectedCount} of ${ctx.optionCount}`,
-    getIsActiveCallback: (ctx) => ctx.selectedCount > 0  // toggle state → aria-pressed
+    getIsToggledCallback: (ctx) => ctx.selectedCount > 0  // toggle state → aria-pressed
   }
 ];
 

@@ -63,7 +63,7 @@ async (except keydown); a throw cancels (logged).
 | `ctx.button` | gone — at activation the clicked item is `detail.item` |
 | `onClick` only ran for `custom` buttons | runs for built-ins too, before the built-in |
 | — | string shorthand: `actionButtons: ['select-all', 'clear-all']` (default text from `labels.selectAll` / `labels.clearAll`) |
-| — | `icon`, `isDanger`, `isActive` / `getIsActiveCallback` (`aria-pressed`), `getIconCallback` |
+| — | `icon`, `isDanger`, `isToggled` / `getIsToggledCallback` (toggle state ON → `aria-pressed`, `.ms__action-btn--toggled`; named `isToggled`, not `isActive`, per core), `getIconCallback` |
 | button text inserted as HTML | text and icon are inserted as text |
 | `data-button-index` on the button | `data-ms-item-index`; `data-action` = built-in name or `custom`, `data-id` = the item `id` |
 
@@ -95,8 +95,8 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 
 ### Added
 
-- `--ms-action-button-danger-color`, `--ms-action-button-active-color`,
-  `--ms-action-button-icon-gap`; `.ms__action-btn--danger`, `.ms__action-btn--active`,
+- `--ms-action-button-danger-color`, `--ms-action-button-toggled-color`,
+  `--ms-action-button-icon-gap`; `.ms__action-btn--danger`, `.ms__action-btn--toggled`,
   `.ms__action-btn-icon`, `.ms__action-btn-label`.
 - `labels.selectAll` / `labels.clearAll` (default text of the built-in buttons).
 - Exported types for every callback ctx: `MultiSelectContext`, `ItemContext`, `TreeNodeContext`,

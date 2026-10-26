@@ -314,13 +314,13 @@ cssClass?: string                               // Optional
 isVisible?: boolean                             // Optional (default: true)
 isDisabled?: boolean                            // Optional (default: false)
 isDanger?: boolean                              // Destructive styling (default: false)
-isActive?: boolean                              // Toggle state → aria-pressed (default: false)</pre></div>
+isToggled?: boolean                             // Toggle state (ON) → aria-pressed (default: false)</pre></div>
 
             <h3>Dynamic Callbacks</h3>
             <div class="code-block"><pre>onClick?: (detail) => void | Promise&lt;void&gt;      // Runs for built-ins too, before the built-in
 getIsVisibleCallback?: (ctx) => boolean          // Dynamic visibility
 getIsDisabledCallback?: (ctx) => boolean         // Dynamic disabled state
-getIsActiveCallback?: (ctx) => boolean           // Dynamic toggle state
+getIsToggledCallback?: (ctx) => boolean          // Dynamic toggle state
 getTextCallback?: (ctx) => string                // Dynamic text
 getIconCallback?: (ctx) => string                // Dynamic icon
 getClassCallback?: (ctx) => string | string[]    // Dynamic CSS classes
@@ -525,7 +525,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                 { id: 'toggle',
                   getIconCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount ? ic.toggleOn : ic.toggleOff,
                   getTextCallback: ({ selectedCount, optionCount }) => `${selectedCount}/${optionCount}`,
-                  getIsActiveCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount,
+                  getIsToggledCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount,
                   getTooltipCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount ? 'Deselect all' : 'Select all',
                   onClick: ({ controller, selectedCount, optionCount }) => selectedCount === optionCount ? controller.setSelected([]) : controller.selectAll() }
             ];

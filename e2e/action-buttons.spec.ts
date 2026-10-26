@@ -171,7 +171,7 @@ test.describe('base-css-variables 2.0 control tokens', () => {
 });
 
 test.describe('interaction model (core action items)', () => {
-    test('items render data-action / data-id, icon, isDanger, isActive; hidden items are skipped', async ({ page }) => {
+    test('items render data-action / data-id, icon, isDanger, isToggled; hidden items are skipped', async ({ page }) => {
         const p = picker(page, 'interaction');
         await openDropdown(p);
         const exportBtn = p.locator('.ms__action-btn[data-action="custom"][data-id="export"]');
@@ -179,7 +179,7 @@ test.describe('interaction model (core action items)', () => {
         await expect(exportBtn.locator('.ms__action-btn-label')).toHaveText('Export');
         await expect(p.locator('.ms__action-btn[data-id="danger"]')).toHaveClass(/ms__action-btn--danger/);
         const active = p.locator('.ms__action-btn[data-id="active"]');
-        await expect(active).toHaveClass(/ms__action-btn--active/);
+        await expect(active).toHaveClass(/ms__action-btn--toggled/);
         await expect(active).toHaveAttribute('aria-pressed', 'true');
         await expect(p.locator('.ms__action-btn[data-id="hidden"]')).toHaveCount(0);
     });

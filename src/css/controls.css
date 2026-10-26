@@ -318,10 +318,10 @@
   border-color: var(--ms-action-button-danger-color);
 }
 
-/* `isActive` — toggle state ("pressed"), rendered with aria-pressed="true" */
-.ms__action-btn--active {
-  color: var(--ms-action-button-active-color);
-  border-color: var(--ms-action-button-active-color);
+/* `isToggled` — toggle state (the thing it toggles is ON), rendered with aria-pressed="true" */
+.ms__action-btn--toggled {
+  color: var(--ms-action-button-toggled-color);
+  border-color: var(--ms-action-button-toggled-color);
 }
 
 .ms__action-btn:disabled,

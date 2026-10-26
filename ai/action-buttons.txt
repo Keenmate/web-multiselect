@@ -58,14 +58,14 @@ Static properties (MultiSelectActionItem):
   isVisible?: boolean,        // Show/hide (default: true)
   isDisabled?: boolean,       // Enable/disable (default: false)
   isDanger?: boolean,         // Destructive styling (.ms__action-btn--danger)
-  isActive?: boolean,         // Toggle state → aria-pressed="true" (.ms__action-btn--active)
+  isToggled?: boolean,        // Toggle state (ON) → aria-pressed="true" (.ms__action-btn--toggled)
   onClick?: (detail) => void | Promise<void>   // Awaited; the button is busy meanwhile
 }
 
 Dynamic counterparts (each wins over its static field), all take ONE ctx argument:
   getTextCallback(ctx), getIconCallback(ctx), getTooltipCallback(ctx),
   getClassCallback(ctx), getIsVisibleCallback(ctx), getIsDisabledCallback(ctx),
-  getIsActiveCallback(ctx)
+  getIsToggledCallback(ctx)
 
 ctx (ActionContext) = selection snapshot:
   selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm,
@@ -162,13 +162,13 @@ Use cases:
 
 TOGGLE (ACTIVE) STATE
 ---------------------
-A button that toggles something renders aria-pressed="true" when active:
+A button that toggles something renders aria-pressed="true" when toggled on:
 
 let isCompact = false;
 {
   id: 'compact',
   text: 'Compact',
-  getIsActiveCallback: () => isCompact,
+  getIsToggledCallback: () => isCompact,
   onClick: ({ controller }) => {
     isCompact = !isCompact;
     controller.refresh();
@@ -461,7 +461,7 @@ Style action buttons with CSS variables:
     --ms-action-button-bg-hover: #e5e7eb;
     --ms-action-button-border-color: #d1d5db;
     --ms-action-button-danger-color: #dc2626;
-    --ms-action-button-active-color: #2563eb;
+    --ms-action-button-toggled-color: #2563eb;
     --ms-action-button-icon-gap: 0.25rem;
   }
 </style>

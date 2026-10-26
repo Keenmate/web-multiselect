@@ -206,14 +206,14 @@ interface MultiSelectActionItem<T = any> {
   isVisible?: boolean;
   isDisabled?: boolean;
   isDanger?: boolean;
-  isActive?: boolean;
+  isToggled?: boolean;
   getTextCallback?(ctx: ActionContext<T>): string;
   getIconCallback?(ctx: ActionContext<T>): string;
   getTooltipCallback?(ctx: ActionContext<T>): string;
   getClassCallback?(ctx: ActionContext<T>): string | string[];
   getIsVisibleCallback?(ctx: ActionContext<T>): boolean;
   getIsDisabledCallback?(ctx: ActionContext<T>): boolean;
-  getIsActiveCallback?(ctx: ActionContext<T>): boolean;
+  getIsToggledCallback?(ctx: ActionContext<T>): boolean;
   onClick?(detail: MultiSelectActionEventDetail<T>): void | Promise<void>;
 }
 

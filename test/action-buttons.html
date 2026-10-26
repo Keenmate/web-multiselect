@@ -161,7 +161,7 @@
                 }
             ];
 
-            // Interaction model: icon / isDanger / isActive / tooltip on items, the action event
+            // Interaction model: icon / isDanger / isToggled / tooltip on items, the action event
             // + onAction + beforeActionCallback, and data-action triggers in rendered content.
             const im = document.getElementById('interaction');
             im.options = items;
@@ -170,7 +170,7 @@
                 'select-all',
                 { id: 'export', text: 'Export', icon: '⇩', tooltip: 'Export the selection', onClick: () => window.__im.log.push('onClick') },
                 { id: 'danger', text: 'Danger', isDanger: true },
-                { id: 'active', text: 'Active', getIsActiveCallback: () => true },
+                { id: 'active', text: 'Active', getIsToggledCallback: () => true },
                 { id: 'hidden', text: 'Hidden', isVisible: false }
             ];
             im.beforeActionCallback = (d) => {

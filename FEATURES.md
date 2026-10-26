@@ -135,11 +135,11 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Action buttons config | prop | `actionButtons: (MultiSelectActionItem \| 'select-all' \| 'clear-all')[]` | — (none render when unset) | Built-ins `{ action: 'select-all' \| 'clear-all' }` or the string shorthand; custom items `{ id, text, onClick }` | | |
-| Action item fields | prop | `text`, `icon`, `tooltip`, `cssClass`, `row`, `isVisible`, `isDisabled`, `isDanger`, `isActive` | — | Text and icon are inserted as text (not HTML); `isActive` → `aria-pressed` | | |
+| Action item fields | prop | `text`, `icon`, `tooltip`, `cssClass`, `row`, `isVisible`, `isDisabled`, `isDanger`, `isToggled` | — | Text and icon are inserted as text (not HTML); `isToggled` → `aria-pressed` | | |
 | Action onClick | callback | `MultiSelectActionItem.onClick(detail)` | — | The `action` detail (`controller`, `action`, `id`, `selectedCount`, …); runs for built-ins too, before the built-in | | |
 | Dynamic visibility | callback | `MultiSelectActionItem.getIsVisibleCallback(ctx)` | — | Overrides static `isVisible` | | |
 | Dynamic disabled | callback | `MultiSelectActionItem.getIsDisabledCallback(ctx)` | — | Overrides static `isDisabled` | | |
-| Dynamic active | callback | `MultiSelectActionItem.getIsActiveCallback(ctx)` | — | Overrides static `isActive` | | |
+| Dynamic toggle state | callback | `MultiSelectActionItem.getIsToggledCallback(ctx)` | — | Overrides static `isToggled` | | |
 | Dynamic text / icon | callback | `MultiSelectActionItem.getTextCallback(ctx)` / `getIconCallback(ctx)` | — | | | |
 | Dynamic class | callback | `MultiSelectActionItem.getClassCallback(ctx)` | — | | | |
 | Dynamic tooltip | callback | `MultiSelectActionItem.getTooltipCallback(ctx)` | — | | | |

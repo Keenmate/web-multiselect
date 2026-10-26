@@ -741,9 +741,9 @@
       "usage": "Text + border color of an isDanger (destructive) action item"
     },
     {
-      "name": "ms-action-button-active-color",
+      "name": "ms-action-button-toggled-color",
       "category": "action-button",
-      "usage": "Text + border color of an isActive (pressed toggle) action item"
+      "usage": "Text + border color of an isToggled (toggle ON) action item"
     },
     {
       "name": "ms-action-button-icon-gap",

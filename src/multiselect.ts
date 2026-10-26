@@ -1641,13 +1641,13 @@ export class MultiSelectEngine<T = any> {
 
             const classes = ['ms__action-btn'];
             if (resolved.isDanger) classes.push('ms__action-btn--danger');
-            if (resolved.isActive) classes.push('ms__action-btn--active');
+            if (resolved.isToggled) classes.push('ms__action-btn--toggled');
             if (resolved.cssClass) classes.push(resolved.cssClass);
 
             let attrs = ` class="${this.escapeHtml(classes.join(' '))}" data-action="${this.escapeHtml(resolved.action)}" data-ms-item-index="${itemIndex}"`;
             if (resolved.id) attrs += ` data-id="${this.escapeHtml(resolved.id)}"`;
             if (resolved.isDisabled) attrs += ' disabled';
-            if (resolved.isActive) attrs += ' aria-pressed="true"';
+            if (resolved.isToggled) attrs += ' aria-pressed="true"';
             if (!resolved.text && resolved.tooltip) attrs += ` aria-label="${this.escapeHtml(resolved.tooltip)}"`;
 
             // Icon + label are text, never HTML.
