@@ -429,7 +429,7 @@
                 <tr>
                     <td><code>action</code></td>
                     <td class="type">MultiSelectActionEventDetail</td>
-                    <td>Fired for every action button (built-in or custom) and every <code>data-action</code> element inside rendered option content (<code>source: 'option'</code>, <code>detail.option</code>), badge content (<code>source: 'badge'</code>) or a <code>showMessage</code> element (<code>source: 'message'</code>). Detail: <code>action</code>, <code>id</code>, <code>item</code>, <code>source</code>, <code>sourceEvent</code>, <code>triggerElement</code>, <code>dataset</code> + the selection snapshot. Order: <code>beforeActionCallback</code> → <code>onClick</code> → <code>action</code> → built-in.</td>
+                    <td>Fired for every action button (built-in or custom) and every <code>data-action</code> element inside rendered option content (<code>source: 'option'</code>, <code>detail.option</code>), badge content (<code>source: 'badge'</code>) or a <code>showMessage</code> element (<code>source: 'message'</code>). Detail: <code>action</code>, <code>id</code>, <code>item</code>, <code>source</code>, <code>sourceEvent</code>, <code>triggerElement</code>, <code>dataset</code> + the selection snapshot. Order: <code>beforeActionCallback</code> → <code>onClick</code> → built-in → <code>action</code> (after the fact; the selection snapshot is re-read).</td>
                 </tr>
                 <tr>
                     <td><code>ready</code></td>

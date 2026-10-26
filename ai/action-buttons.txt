@@ -363,7 +363,8 @@ Every activation — built-in or custom button, plus any `data-action` element i
 option content (source 'option', detail.option), badge content (source 'badge') or a
 showMessage element (source 'message') — fires the `action` event.
 
-Order: beforeActionCallback → item.onClick → `action` event → built-in behaviour.
+Order: beforeActionCallback → item.onClick → built-in behaviour → `action` event (the event
+reports the state after the built-in; the detail's selection snapshot is re-read).
 
 // Handle all custom buttons in one place
 select.addEventListener('action', (e) => {

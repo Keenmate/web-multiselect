@@ -71,7 +71,7 @@ async (except keydown); a throw cancels (logged).
 
 | Old | New |
 |---|---|
-| — | `action` event (+ `onAction`): every action button, built-in or custom, and every `data-action` element in rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` → `onClick` → `action` → built-in. |
+| — | `action` event (+ `onAction`): every action button, built-in or custom, and every `data-action` element in rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` → `onClick` → built-in → `action` — **a notification after the fact** (core #15): the event sees the state the built-in left, and the detail's selection snapshot (`selectedValues`, `selectedCount`, …) is re-read before it fires, so `select-all` reports the new selection. To prevent a built-in use `beforeActionCallback`. |
 | `el.onSelect = (e) => e.detail.option` (all `on*` props got the CustomEvent) | `el.onSelect = (detail) => detail.option` — `onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady` receive the **detail** |
 | `ready` detail `undefined` | `{ controller, element, presentation… }` |
 | `MultiSelectEventDetail` (one catch-all type) | `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `ReadyEventDetail`, `MultiSelectActionEventDetail` |

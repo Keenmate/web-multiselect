@@ -3149,8 +3149,16 @@ export class MultiSelectEngine<T = any> {
      * and the base of the `action` detail (activation): a selection snapshot + the component context.
      */
     private buildActionContext(option?: T): ActionContext<T> {
-        const selectedOptions = this.getSelected();
         return this.ctx({
+            ...this.selectionSnapshot(),
+            ...(option !== undefined ? { option } : {}),
+        });
+    }
+
+    /** The selection snapshot part of an action context (re-read before the `action` event). */
+    private selectionSnapshot() {
+        const selectedOptions = this.getSelected();
+        return {
             selectedValues: this.selectedValueList(),
             selectedOptions,
             options: this.allOptions,
@@ -3158,13 +3166,12 @@ export class MultiSelectEngine<T = any> {
             optionCount: this.allOptions.length,
             isOpen: this.#isOpen,
             searchTerm: this.searchTerm,
-            ...(option !== undefined ? { option } : {}),
-        });
+        };
     }
 
     /**
-     * Activate an action item (core `runAction`: `beforeActionCallback` → `onClick` → `action`
-     * event → built-in). `trigger` is a configured action button (`data-ms-item-index` → its
+     * Activate an action item (core `runAction`: `beforeActionCallback` → `onClick` → built-in →
+     * `action` event — a notification after the fact). `trigger` is a configured action button (`data-ms-item-index` → its
      * item) or a consumer `data-action` element in rendered option / badge content or in a
      * `showMessage` element (a synthetic item; `source` from where it sits, `dataset` = its
      * other `data-*`).
@@ -3214,7 +3221,8 @@ export class MultiSelectEngine<T = any> {
         void runAction({
             detail,
             beforeActionCallback: this.options.beforeActionCallback,
-            emitAction: (d) => this.options.onAction?.(d),
+            // The event reports the state the built-in / onClick left: refresh the selection snapshot.
+            emitAction: (d) => this.options.onAction?.(Object.assign(d, this.selectionSnapshot())),
             runBuiltIn: (d) => this.runBuiltInAction(d.action),
         });
     }

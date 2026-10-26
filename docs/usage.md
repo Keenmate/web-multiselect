@@ -431,7 +431,7 @@ multiselect.getOptionTooltipCallback = ({ item }) => {
 // optionCount, isOpen, searchTerm, presentation, controller and element (the host).
 // onClick(detail) receives the `action` event detail (ctx + action, id, item,
 // source, sourceEvent, triggerElement, dataset) and runs for built-ins too
-// (before the built-in). Text and icon are plain text (not HTML).
+// (before the built-in; the `action` event fires after it). Text and icon are plain text (not HTML).
 // Optional `row` (1-based) stacks buttons into multiple rows.
 multiselect.actionButtons = ['select-all', 'clear-all']; // shorthand (text from labels.selectAll / labels.clearAll)
 
@@ -668,7 +668,7 @@ document.querySelector('web-multiselect').controller.selectAll();
 | `deselect` | `{ option, selectedOptions, selectedValues }` | Fired when an option is deselected. Twin: `onDeselect(detail)` |
 | `change` | `{ selectedOptions, selectedValues }` | Fired when selection changes. Twin: `onChange(detail)` |
 | `add` | `{ value, option?, selectedOptions, selectedValues }` | Fired when the user chooses to create a new option from the typed text (the "add new" prompt or Enter) — requires `allow-add-new`. `value` is the typed text; `option` is the created item when `beforeAddCallback` returned one. Not fired if `beforeAddCallback` returns `false`. Twin: `onAdd(detail)` |
-| `action` | `{ action, id, item, source, option?, sourceEvent, triggerElement, dataset, selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm }` | Fired for every action-button activation (built-in or custom) and every `data-action` element inside rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` (→ `false` cancels) → the item's `onClick` → `action` → the built-in. Twin: `onAction(detail)` |
+| `action` | `{ action, id, item, source, option?, sourceEvent, triggerElement, dataset, selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm }` | Fired for every action-button activation (built-in or custom) and every `data-action` element inside rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` (→ `false` cancels) → the item's `onClick` → the built-in → `action` (a notification after the fact: the selection snapshot is re-read, so `select-all` reports the new selection). Twin: `onAction(detail)` |
 | `ready` | `{ controller, element, presentation, … }` | Fired once, right after the first build — synchronously during upgrade for a normal element, or when the `defer` gate is released for a deferred one. Twin: `onReady(detail)` |
 
 All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`.

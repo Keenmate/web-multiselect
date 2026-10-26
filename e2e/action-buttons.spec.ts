@@ -199,14 +199,15 @@ test.describe('interaction model (core action items)', () => {
         expect(seen.composed).toBe(false);
     });
 
-    test('a built-in fires the action event BEFORE its behaviour runs', async ({ page }) => {
+    test('a built-in fires the action event AFTER its behaviour ran (the detail snapshot is fresh)', async ({ page }) => {
         const p = picker(page, 'interaction');
         await openDropdown(p);
         await p.locator('.ms__action-btn[data-action="select-all"]').click();
-        await expect.poll(() => p.evaluate((el: any) => el.getValue().length)).toBe(8);
+        await expect.poll(() => page.evaluate(() => (window as any).__im.details.length)).toBe(1);
         const [seen] = await page.evaluate(() => (window as any).__im.details);
         expect(seen.json.action).toBe('select-all');
-        expect(seen.selectedAtEvent).toBe(0);
+        expect(seen.selectedAtEvent).toBe(8);
+        expect(seen.json.selectedCount).toBe(8);
     });
 
     test('beforeActionCallback returning false cancels the event and the built-in', async ({ page }) => {
