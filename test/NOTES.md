@@ -115,14 +115,14 @@ desired.
 
 **Where:** `src/multiselect.ts:1085-1093` — the Enter handler calls
 `toggleOption(filteredOptions[focusedIndex])` unconditionally. `toggleOption`
-itself (line 1328) doesn't inspect `disabledMember` / `getDisabledCallback`.
+itself (line 1328) doesn't inspect `isDisabledMember` / `getDisabledCallback`.
 
 The click handler at `multiselect.ts:1157` correctly checks
 `!option.classList.contains('ms__option--disabled')` before calling
 `toggleOption`, so mouse interaction respects the disabled state. Keyboard
 doesn't.
 
-**Symptom I hit:** With `disabled-member="disabled"` and Banana flagged
+**Symptom I hit:** With `is-disabled-member="disabled"` and Banana flagged
 disabled, pressing ArrowDown twice (focusing Banana) and then Enter selects
 Banana — even though clicking it is silently ignored.
 

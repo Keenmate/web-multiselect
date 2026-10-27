@@ -176,7 +176,7 @@
 &lt;web-multiselect fullscreen-autofocus="true"&gt;&lt;/web-multiselect&gt;
 
 // or via property
-el.fullscreenAutofocus = true;</code></pre>
+el.shouldFullscreenAutofocus = true;</code></pre>
             </details>
         </div>
 
@@ -215,7 +215,7 @@ el.fullscreenAutofocus = true;</code></pre>
             <div class="form-group" style="max-width:320px;">
                 <label>live <code>search-mode</code> switch</label>
                 <web-multiselect id="nav-fs-select" multiple="true" search-mode="navigate" show-search-mode-toggle
-                    badges-display-mode="partial" badges-max-visible="2"
+                    badges-display-mode="partial" max-visible-badge-count="2"
                     value-member="value" display-value-member="label" group-member="group"></web-multiselect>
                 <small class="form-text">Fullscreen: tap the leading icon in the search bar to switch. navigate: type, then use the ↑/↓ next to the count to jump. filter: the list narrows to matches.</small>
             </div>

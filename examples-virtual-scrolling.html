@@ -84,8 +84,8 @@
                     display-value-member="label"
                     enable-virtual-scroll="true"
                     virtual-scroll-threshold="100"
-                    option-height="50"
-                    virtual-scroll-buffer="10"
+                    virtual-scroll-item-height="50"
+                    virtual-scroll-overscan="10"
                     badges-threshold="4"
                     badges-threshold-mode="count"
                     show-counter="true">
@@ -106,8 +106,8 @@
                     display-value-member="label"
                     enable-virtual-scroll="true"
                     virtual-scroll-threshold="100"
-                    option-height="50"
-                    virtual-scroll-buffer="10">
+                    virtual-scroll-item-height="50"
+                    virtual-scroll-overscan="10">
                 </web-multiselect>
                 <span class="form-text">Navigate mode keeps all options visible, use Ctrl+↑/↓ to jump between matches</span>
             </div>
@@ -163,7 +163,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 <web-multiselect
                     id="rich-virtual"
                     placeholder="Select products..."
-                    option-height="70"
+                    virtual-scroll-item-height="70"
                     badge-height="50"
                     badges-threshold="3"
                     badges-threshold-mode="count"

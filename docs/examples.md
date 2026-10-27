@@ -197,8 +197,8 @@ Handle 10,000+ options with smooth 60fps performance by rendering only visible i
   id="large-dataset"
   enable-virtual-scroll="true"
   virtual-scroll-threshold="100"
-  option-height="50"
-  virtual-scroll-buffer="10"
+  virtual-scroll-item-height="50"
+  virtual-scroll-overscan="10"
   search-mode="filter"
   max-height="400px">
 </web-multiselect>
@@ -231,8 +231,8 @@ Handle 10,000+ options with smooth 60fps performance by rendering only visible i
 
 - `enable-virtual-scroll="true"` — opt-in to virtual scrolling (default: `false`).
 - `virtual-scroll-threshold="100"` — auto-activate when this many items are present (default: `100`).
-- `option-height="50"` — fixed height per option in pixels (default: `50px`).
-- `virtual-scroll-buffer="10"` — extra items rendered above/below viewport for smooth scrolling (default: `10`).
+- `virtual-scroll-item-height="50"` — fixed height per option in pixels (default: `50px`).
+- `virtual-scroll-overscan="10"` — extra items rendered above/below viewport for smooth scrolling (default: `10`).
 
 **How it works:**
 
@@ -339,7 +339,7 @@ Perfect for different use cases and space constraints:
 <web-multiselect
   badges-threshold="5"
   badges-threshold-mode="partial"
-  badges-max-visible="3">
+  max-visible-badge-count="3">
 </web-multiselect>
 ```
 
@@ -428,7 +428,7 @@ Customize counter text for proper pluralization and localization:
   id="i18n-select"
   badges-threshold="5"
   badges-threshold-mode="partial"
-  badges-max-visible="3">
+  max-visible-badge-count="3">
 </web-multiselect>
 
 <script type="module">
@@ -857,13 +857,13 @@ select.renderOptionContentCallback = ({ item }) => {
 
 When using `renderOptionContentCallback` with virtual scroll enabled:
 
-> ⚠️ **Important:** Custom option content **must fit within** the configured `optionHeight` (default: 50px).
+> ⚠️ **Important:** Custom option content **must fit within** the configured `virtualScrollItemHeight` (default: 50px).
 
 ```html
 <web-multiselect
   id="large-dataset"
   enable-virtual-scroll="true"
-  option-height="60">
+  virtual-scroll-item-height="60">
 </web-multiselect>
 
 <script type="module">
@@ -881,7 +881,7 @@ When using `renderOptionContentCallback` with virtual scroll enabled:
 
 **Virtual scroll requirements:**
 
-- Content height must be **fixed** and match `optionHeight`.
+- Content height must be **fixed** and match `virtualScrollItemHeight`.
 - Overflow will be clipped.
 - Variable-height content only works in non-virtual mode.
 

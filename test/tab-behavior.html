@@ -17,7 +17,7 @@
     <input class="field" id="before" placeholder="before">
 
     <div class="fixture">
-        <div class="fixture-label">single, default (select-highlighted, search cleared on close)</div>
+        <div class="fixture-label">single, default (select-focused, search cleared on close)</div>
         <web-multiselect id="tb-single" multiple="false" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
@@ -34,8 +34,8 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">single, should-keep-search-on-close="true" + tab-behavior="close"</div>
-        <web-multiselect id="tb-keep" multiple="false" tab-behavior="close" should-keep-search-on-close="true" value-member="value" display-value-member="label"></web-multiselect>
+        <div class="fixture-label">single, keep-search-on-close="true" + tab-behavior="close"</div>
+        <web-multiselect id="tb-keep" multiple="false" tab-behavior="close" keep-search-on-close="true" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <div class="fixture">
@@ -44,8 +44,8 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">multi, tab-behavior="select-highlighted"</div>
-        <web-multiselect id="tb-multi-hl" tab-behavior="select-highlighted" value-member="value" display-value-member="label"></web-multiselect>
+        <div class="fixture-label">multi, tab-behavior="select-focused"</div>
+        <web-multiselect id="tb-multi-hl" tab-behavior="select-focused" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <input class="field" id="before-long" placeholder="before long">

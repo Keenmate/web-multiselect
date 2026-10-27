@@ -31,7 +31,7 @@ test('loads the full ISCO-08 classification (619 groups)', async ({ page }) => {
     expect(count).toBe(619);
 });
 
-test('rows are compact (option-height 32, not the 50px default)', async ({ page }) => {
+test('rows are compact (virtual-scroll-item-height 32, not the 50px default)', async ({ page }) => {
     const p = isco(page);
     await openDropdown(p);
     const h = await p.locator('.ms__option').first().evaluate(
@@ -86,7 +86,7 @@ test('row height is consistent across the virtualization threshold', async ({ pa
     await expect.poll(async () => p.locator('.ms__option').count()).toBeGreaterThan(12);
     const broad = await rowHeight();
 
-    // Both honour option-height=32, and don't jump as the count crosses the threshold.
+    // Both honour virtual-scroll-item-height=32, and don't jump as the count crosses the threshold.
     expect(narrow).toBeLessThanOrEqual(33);
     expect(broad).toBeLessThanOrEqual(33);
     expect(Math.abs(narrow - broad)).toBeLessThan(1);

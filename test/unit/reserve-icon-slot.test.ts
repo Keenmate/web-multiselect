@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import '../../src/web-component'; // registers <web-multiselect>
 
 /**
- * Unit tests for `reserve-icon-slot` (config `isIconSlotReserved`).
+ * Unit tests for `reserve-icon-slot` (config `shouldReserveIconSlot`).
  *
  * The icon slot (`.ms__option-icon`) is a fixed-width box rendered before the label.
  * By default it's drawn ONLY on rows that have an icon, so a list mixing icon and

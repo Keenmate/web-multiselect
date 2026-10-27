@@ -55,7 +55,7 @@ describe('synchronous imperative API after a property write', () => {
         mount({
             'badges-threshold': '3',
             'badges-threshold-mode': 'partial',
-            'badges-max-visible': '3'
+            'max-visible-badge-count': '3'
         });
         el.options = ITEMS;
         el.setSelected(['js', 'ts', 'py', 'go']); // 4 > threshold 3 → partial; 3 visible → "+1 more"

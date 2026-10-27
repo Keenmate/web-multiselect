@@ -22,7 +22,7 @@ const ITEMS: Item[] = [
 const BASE: Partial<MultiSelectConfig<Item>> = {
     valueMember: 'value',
     displayValueMember: 'label',
-    isMultipleEnabled: true,
+    isMultiple: true,
     options: ITEMS
 };
 
@@ -118,7 +118,7 @@ describe('beforeDeselectCallback', () => {
 describe('single-select mode', () => {
     it('blocked selection keeps the previous value (no clobber)', () => {
         make({
-            isMultipleEnabled: false,
+            isMultiple: false,
             beforeSelectCallback: ({ option }) => (option.value === 'item3' ? false : undefined)
         });
 

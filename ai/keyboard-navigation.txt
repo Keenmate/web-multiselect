@@ -50,7 +50,7 @@ the highlight on the selected option (scrolled to the middle), like native <sele
 ArrowUp/Down move from there. Multi-select: no initial highlight.
 
 Tab / Shift+Tab: select per tab-behavior, close, move focus
-- tab-behavior="select-highlighted" (single-select default): selects the highlighted
+- tab-behavior="select-focused" (single-select default): selects the highlighted
   option first, including the first match highlighted while typing
   (type "cesky kru", Tab -> Cesky Krumlov selected, select + change fired)
 - tab-behavior="select-navigated": only an option moved to with arrows /
@@ -58,7 +58,7 @@ Tab / Shift+Tab: select per tab-behavior, close, move focus
 - tab-behavior="close" (multi-select default): selects nothing
 - Never deselects; beforeSelectCallback can veto
 - Closes dropdown, focus moves to the next / previous field (not prevented)
-- Single-select clears its search on close (should-keep-search-on-close unset)
+- Single-select clears its search on close (keep-search-on-close unset)
 
 QUICK JUMPS
 -----------

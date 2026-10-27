@@ -175,7 +175,7 @@
                         icon-member="icon"
                         subtitle-member="subtitle"
                         full-title-member="fullTitle"
-                        disabled-member="disabled"></web-multiselect>
+                        is-disabled-member="disabled"></web-multiselect>
                 </div>
 
                 <div class="builder__data">
@@ -243,7 +243,7 @@
             'icon-member': "Property holding an option icon (text, emoji, or HTML).",
             'subtitle-member': "Property holding a secondary line shown under the label.",
             'full-title-member': "Property holding a longer title — used by show-badge-full-title, tooltips, and the clipped-label reveal.",
-            'disabled-member': "Property that marks an option as disabled (non-selectable).",
+            'is-disabled-member': "Property that marks an option as disabled (non-selectable).",
             'multiple': "Allow selecting multiple options. Off = single-select (a pick replaces the previous).",
             'enable-search': "Show the search / filter input in the dropdown.",
             'show-checkboxes': "Show a checkbox on each option.",
@@ -258,7 +258,7 @@
             'badges-position': "Where the badges block sits relative to the input.",
             'badges-threshold-mode': "Whether the threshold counts items (count) or collapses to +N more (partial).",
             'badges-threshold': "Number of selections before count / partial collapsing kicks in.",
-            'badges-max-visible': "Max badges shown before the rest go behind +N more (partial mode).",
+            'max-visible-badge-count': "Max badges shown before the rest go behind +N more (partial mode).",
             'show-badge-full-title': "Use the full-title text on badges instead of the short label.",
             'search-mode': "filter hides non-matches; navigate keeps all options and jumps to matches.",
             'search-input-mode': "Search field: editable (normal), read-only, or hidden.",
@@ -280,10 +280,10 @@
             'max-height': "Max dropdown list height before it scrolls (any CSS length).",
             'dropdown-min-width': "Minimum dropdown panel width (any CSS length).",
             'dropdown-max-width': "Maximum dropdown panel width (any CSS length).",
-            'option-height': "Fixed option row height in px (required for virtual scrolling).",
+            'virtual-scroll-item-height': "Fixed option row height in px (required for virtual scrolling).",
             'enable-virtual-scroll': "Force windowed rendering on regardless of the threshold.",
             'virtual-scroll-threshold': "Option count above which virtual scrolling turns on.",
-            'virtual-scroll-buffer': "Extra rows rendered above / below the viewport for smooth scrolling.",
+            'virtual-scroll-overscan': "Extra rows rendered above / below the viewport for smooth scrolling.",
             'enable-badge-tooltips': "Show hover tooltips on selected badges.",
             'enable-option-tooltips': "Show hover tooltips on dropdown options.",
             'mobile-presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
@@ -317,7 +317,7 @@
                 { attr: 'icon-member', type: 'text', def: '', val: 'icon' },
                 { attr: 'subtitle-member', type: 'text', def: '', val: 'subtitle' },
                 { attr: 'full-title-member', type: 'text', def: '', val: 'fullTitle' },
-                { attr: 'disabled-member', type: 'text', def: '', val: 'disabled' },
+                { attr: 'is-disabled-member', type: 'text', def: '', val: 'disabled' },
             ]},
             { name: 'Behavior', props: [
                 { attr: 'multiple', type: 'bool', def: true },
@@ -336,7 +336,7 @@
                 { attr: 'badges-position', type: 'enum', opts: ['top','bottom','left','right'], def: 'bottom' },
                 { attr: 'badges-threshold-mode', type: 'enum', opts: ['count','partial'], def: 'count' },
                 { attr: 'badges-threshold', type: 'int', def: '' },
-                { attr: 'badges-max-visible', type: 'int', def: '' },
+                { attr: 'max-visible-badge-count', type: 'int', def: '' },
                 { attr: 'show-badge-full-title', type: 'bool', def: false },
             ]},
             { name: 'Search', props: [
@@ -366,12 +366,12 @@
                 { attr: 'max-height', type: 'text', def: '20rem' },
                 { attr: 'dropdown-min-width', type: 'text', def: '' },
                 { attr: 'dropdown-max-width', type: 'text', def: '' },
-                { attr: 'option-height', type: 'int', def: '50' },
+                { attr: 'virtual-scroll-item-height', type: 'int', def: '50' },
             ]},
             { name: 'Virtual scroll', props: [
                 { attr: 'enable-virtual-scroll', type: 'bool', def: false },
                 { attr: 'virtual-scroll-threshold', type: 'int', def: '100' },
-                { attr: 'virtual-scroll-buffer', type: 'int', def: '10' },
+                { attr: 'virtual-scroll-overscan', type: 'int', def: '10' },
             ]},
             { name: 'Tooltips', props: [
                 { attr: 'enable-badge-tooltips', type: 'bool', def: false },

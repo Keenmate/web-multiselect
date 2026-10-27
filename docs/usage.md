@@ -153,7 +153,7 @@ multiselect.setSelected(['js', 'ts']);
 | `badges-display-mode` | `'badges' \| 'count' \| 'compact' \| 'partial' \| 'none'` | `'badges'` | How to display selected items. `badges`: one pill per item. `compact`: first item + count. `none`: no display |
 | `badges-threshold` | `number` | - | Auto-switch mode when exceeded (see `badges-threshold-mode`) |
 | `badges-threshold-mode` | `'count' \| 'partial'` | `'count'` | Mode after threshold: `count` shows badge, `partial` shows limited badges + more badge |
-| `badges-max-visible` | `number` | `3` | Max badges shown in partial mode |
+| `max-visible-badge-count` | `number` | `3` | Max badges shown in partial mode |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
 | `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
 | `badge-height` | `number` | `36` | Fixed badge height in px used for layout/virtualization |
@@ -181,9 +181,9 @@ multiselect.setSelected(['js', 'ts']);
 | `min-search-length` | `number` | `0` | Minimum characters before searching starts (local filter/navigate and async `searchCallback`); shorter terms show all options |
 | `search-debounce` | `number` | `0` | Debounce (ms) before the async `searchCallback` fires; coalesces keystroke bursts into one request. Resets on each keystroke. Async callback only — local filtering stays instant. `0` = no debounce |
 | `keep-options-on-search` | `boolean` | `true` | Keep initial options visible when `searchCallback` is active (hybrid search) |
-| `should-keep-search-on-close` | `boolean` | unset | Preserve search text and filtered results when the dropdown closes. Unset: kept in multi-select, cleared in single-select |
-| `tab-behavior` | `'select-highlighted' \| 'select-navigated' \| 'close'` | unset | What Tab / Shift+Tab selects before focus moves on: the highlighted option (also the first match highlighted while typing), only an option the user arrowed to, or nothing. Unset: `select-highlighted` in single-select, `close` in multi-select. Tab never deselects |
-| `sticky-actions` | `boolean` | `true` | Keep the action-buttons block pinned to its edge while scrolling |
+| `keep-search-on-close` | `boolean` | unset | Preserve search text and filtered results when the dropdown closes. Unset: kept in multi-select, cleared in single-select |
+| `tab-behavior` | `'select-focused' \| 'select-navigated' \| 'close'` | unset | What Tab / Shift+Tab selects before focus moves on: the highlighted option (also the first match highlighted while typing), only an option the user arrowed to, or nothing. Unset: `select-focused` in single-select, `close` in multi-select. Tab never deselects |
+| `actions-sticky` | `boolean` | `true` | Keep the action-buttons block pinned to its edge while scrolling |
 | `actions-layout` | `'nowrap' \| 'wrap'` | `'nowrap'` | Whether buttons in a row wrap: `nowrap` (single line) or `wrap` |
 | `actions-position` | `'top' \| 'bottom'` | `'top'` | Place the actions block at the top or bottom (sticky footer) of the dropdown |
 | `actions-align` | `'stretch' \| 'left' \| 'right' \| 'center' \| 'space-between'` | `'stretch'` | Horizontal arrangement of buttons within a row (`stretch` = full-width) |
@@ -206,7 +206,7 @@ multiselect.setSelected(['js', 'ts']);
 | `icon-member` | `string` | `'icon'` | Property name for icon extraction. `getIconCallback` overrides it |
 | `subtitle-member` | `string` | `'subtitle'` | Property name for subtitle extraction. `getSubtitleCallback` overrides it |
 | `group-member` | `string` | `'group'` | Property name for group extraction. `getGroupCallback` overrides it. Set the property to `null` to ignore a `group` field |
-| `disabled-member` | `string` | `'disabled'` | Property name for disabled state extraction. `getIsDisabledCallback` overrides it |
+| `is-disabled-member` | `string` | `'disabled'` | Property name for disabled state extraction. `getIsDisabledCallback` overrides it |
 | `full-title-member` | `string` | - | Property name for a full/long title (shown on badges with `show-badge-full-title`) |
 | `path-member` | `string` | - | Tree mode: property holding a node's materialized path (e.g. `1.1.2`). Setting a path source enables tree mode |
 | `parent-path-member` | `string` | - | Tree mode: property holding a node's parent path |
@@ -226,8 +226,8 @@ multiselect.setSelected(['js', 'ts']);
 | `prune-missing-selection` | `boolean` | `false` | When the option set is replaced (`options` / `data-options`), silently drop selected values whose option is no longer present. Default keeps them (safe for search/paged lists) |
 | `enable-virtual-scroll` | `boolean` | `false` | Enable virtual scrolling for large datasets |
 | `virtual-scroll-threshold` | `number` | `100` | Minimum items before virtual scroll activates |
-| `option-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
-| `virtual-scroll-buffer` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
+| `virtual-scroll-item-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
+| `virtual-scroll-overscan` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
 | `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set |
 
 ## Properties
@@ -483,7 +483,7 @@ multiselect.displayValueMember = 'name';
 multiselect.iconMember = 'icon';
 multiselect.subtitleMember = 'description';
 multiselect.groupMember = 'category';
-multiselect.disabledMember = 'isDisabled';
+multiselect.isDisabledMember = 'isDisabled';
 
 // Data extraction - Callback functions (for complex logic). Each takes ONE ctx;
 // the option is ctx.item.

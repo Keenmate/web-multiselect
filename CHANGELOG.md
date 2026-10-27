@@ -24,6 +24,29 @@ One vocabulary across the KeenMate components (rulebook D-NC-13..27). No aliases
 | — | `el.whenReady(): Promise<void>` |
 | `el.destroy()` (own) | core `el.destroy()`: the element stays inert afterwards (re-inserting it does not rebuild) |
 
+**Inputs and attributes.** Config keys carry the suite prefixes (`is*Shown` / `is*Enabled` /
+`should*` / `is*`), attributes are derived from them mechanically; limits are `max*Count`; one
+`virtualScroll*` family; the form field is `name`.
+
+| Old (property / attribute) | New (property / attribute) |
+|---|---|
+| `isMultipleEnabled` / `multiple` | `isMultiple` / `multiple` |
+| `isCloseOnSelect` / `close-on-select` | `shouldCloseOnSelect` / `close-on-select` |
+| `formFieldId` / `name` | `name` / `name` |
+| `disabledMember` / `disabled-member` | `isDisabledMember` / `is-disabled-member` |
+| `badgesMaxVisible` / `badges-max-visible` | `maxVisibleBadgeCount` / `max-visible-badge-count` |
+| `optionHeight` / `option-height` | `virtualScrollItemHeight` / `virtual-scroll-item-height` |
+| `virtualScrollBuffer` / `virtual-scroll-buffer` | `virtualScrollOverscan` / `virtual-scroll-overscan` |
+| `shouldKeepSearchOnClose` / `should-keep-search-on-close` | `shouldKeepSearchOnClose` / `keep-search-on-close` |
+| `isKeepOptionsOnSearch` / `keep-options-on-search` | `shouldKeepOptionsOnSearch` / `keep-options-on-search` |
+| `isIconSlotReserved` / `reserve-icon-slot` | `shouldReserveIconSlot` / `reserve-icon-slot` |
+| `isOptionTooltipFollowCursor` / `option-tooltip-follow-cursor` | `shouldOptionTooltipFollowCursor` / `option-tooltip-follow-cursor` |
+| `isPruneMissingSelectionEnabled` / `prune-missing-selection` | `shouldPruneMissingSelection` / `prune-missing-selection` |
+| `isPlacementLocked` / `lock-placement` | `shouldLockPlacement` / `lock-placement` |
+| `fullscreenAutofocus` / `fullscreen-autofocus` | `shouldFullscreenAutofocus` / `fullscreen-autofocus` |
+| `isActionsSticky` / `sticky-actions` | `isActionsSticky` / `actions-sticky` |
+| `tab-behavior="select-highlighted"` | `tab-behavior="select-focused"` (focus = the keyboard cursor) |
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model

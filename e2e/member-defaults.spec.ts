@@ -53,7 +53,7 @@ test('object options work with no member configuration', async ({ page }) => {
 });
 
 test('single mode: selectedValue returns the default value member', async ({ page }) => {
-    const p = await make(page, [{ value: 1, label: 'Prague' }, { value: 2, label: 'Brno' }], { isMultipleEnabled: false });
+    const p = await make(page, [{ value: 1, label: 'Prague' }, { value: 2, label: 'Brno' }], { isMultiple: false });
     await open(p);
     await p.locator('.ms__option[data-value="2"]').click();
     expect(await p.evaluate((el: any) => el.selectedValue)).toBe(2);

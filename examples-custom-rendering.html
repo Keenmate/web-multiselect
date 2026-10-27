@@ -161,14 +161,14 @@
             <h3>1. Framework Selector with Descriptions</h3>
             <div class="form-group">
                 <label for="frameworks">Select Frameworks</label>
-                <web-multiselect id="frameworks" option-height="75"></web-multiselect>
+                <web-multiselect id="frameworks" virtual-scroll-item-height="75"></web-multiselect>
                 <small class="form-text">Multi-line options with framework descriptions, star counts, and badges</small>
             </div>
 
             <h3>2. Rich Product List</h3>
             <div class="form-group">
                 <label for="products">Select Products</label>
-                <web-multiselect id="products" option-height="80"></web-multiselect>
+                <web-multiselect id="products" virtual-scroll-item-height="80"></web-multiselect>
                 <small class="form-text">
                     Product cards with descriptions, ratings, prices, and stock status.
                     Uses <code>getBadgeClassCallback</code> for dynamic price-based badge colors (Budget: green, Mid-Range: blue, Premium: pink).
@@ -179,28 +179,28 @@
             <h3>3. Article/Blog Post Selector</h3>
             <div class="form-group">
                 <label for="articles">Select Articles</label>
-                <web-multiselect id="articles" option-height="75"></web-multiselect>
+                <web-multiselect id="articles" virtual-scroll-item-height="75"></web-multiselect>
                 <small class="form-text">Rich content with title, excerpt, author, and read time</small>
             </div>
 
             <h3>4. Job Listing Selector</h3>
             <div class="form-group">
                 <label for="jobs">Select Jobs</label>
-                <web-multiselect id="jobs" option-height="80"></web-multiselect>
+                <web-multiselect id="jobs" virtual-scroll-item-height="80"></web-multiselect>
                 <small class="form-text">Job cards with company, salary, location, and tech stack</small>
             </div>
 
             <h3>5. Movie/Media Selector</h3>
             <div class="form-group">
                 <label for="movies">Select Movies</label>
-                <web-multiselect id="movies" option-height="85"></web-multiselect>
+                <web-multiselect id="movies" virtual-scroll-item-height="85"></web-multiselect>
                 <small class="form-text">Movie details with genre, rating, year, and synopsis</small>
             </div>
 
             <h3>6. Image/File Picker</h3>
             <div class="form-group">
                 <label for="images">Select Images</label>
-                <web-multiselect id="images" option-height="70" badges-threshold="2" badges-threshold-mode="count"></web-multiselect>
+                <web-multiselect id="images" virtual-scroll-item-height="70" badges-threshold="2" badges-threshold-mode="count"></web-multiselect>
                 <small class="form-text">Image thumbnails with filename, dimensions, and file size. Shows max 2 badges then "+N more".</small>
             </div>
         </div>
@@ -387,7 +387,7 @@ panel.addEventListener('click', (e) =&gt; {
             <h3>11. Context-Aware Rendering</h3>
             <div class="form-group">
                 <label for="contextual">Select Projects</label>
-                <web-multiselect id="contextual" option-height="80" badges-threshold="3" badges-threshold-mode="partial" enable-badge-tooltips="true"></web-multiselect>
+                <web-multiselect id="contextual" virtual-scroll-item-height="80" badges-threshold="3" badges-threshold-mode="partial" enable-badge-tooltips="true"></web-multiselect>
                 <small class="form-text">
                     Combines 3 callbacks: <code>renderOptionContentCallback</code> (rich dropdown with status, priority, tags),
                     <code>renderBadgeContentCallback</code> (compact "▶️ Name" in main area, detailed "▶️ Name [priority]" in popover using <code>ctx.isInPopover</code>),
@@ -398,7 +398,7 @@ panel.addEventListener('click', (e) =&gt; {
             <h3>12. Priority-Based Badge Styling</h3>
             <div class="form-group">
                 <label for="priority-badges">Select Tasks</label>
-                <web-multiselect id="priority-badges" option-height="60" badges-threshold="2" badges-threshold-mode="count" show-counter="true"></web-multiselect>
+                <web-multiselect id="priority-badges" virtual-scroll-item-height="60" badges-threshold="2" badges-threshold-mode="count" show-counter="true"></web-multiselect>
                 <small class="form-text">
                     Uses <code>renderBadgeContentCallback</code> for compact badge display and <code>renderSelectedItemContentCallback</code> for detailed popover display.
                     Uses <code>getBadgeClassCallback</code> to add priority-based CSS classes (badge-urgent, badge-important, badge-normal, badge-low).
@@ -415,21 +415,21 @@ panel.addEventListener('click', (e) =&gt; {
             <h3>13. Grid Layout with Centered Checkboxes</h3>
             <div class="form-group">
                 <label for="grid-layout">Product Comparison Grid</label>
-                <web-multiselect id="grid-layout" checkbox-align="center" option-height="90"></web-multiselect>
+                <web-multiselect id="grid-layout" checkbox-align="center" virtual-scroll-item-height="90"></web-multiselect>
                 <small class="form-text">CSS Grid layout with 2-column spec comparison, checkboxes centered</small>
             </div>
 
             <h3>14. Flex Layout with Top-Aligned Checkboxes</h3>
             <div class="form-group">
                 <label for="flex-layout">Notification Settings</label>
-                <web-multiselect id="flex-layout" checkbox-align="top" option-height="75"></web-multiselect>
+                <web-multiselect id="flex-layout" checkbox-align="top" virtual-scroll-item-height="75"></web-multiselect>
                 <small class="form-text">Flexbox layout showing setting details with icons and badges</small>
             </div>
 
             <h3>15. Large Checkbox Scale Example</h3>
             <div class="form-group">
                 <label for="large-checkbox">Important Agreements</label>
-                <web-multiselect id="large-checkbox" option-height="60"></web-multiselect>
+                <web-multiselect id="large-checkbox" virtual-scroll-item-height="60"></web-multiselect>
                 <small class="form-text">Larger checkboxes (1.5x scale) for better visibility and accessibility</small>
             </div>
         </div>

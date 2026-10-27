@@ -36,7 +36,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `badges-display-mode="badges"` (default)                      | ✓      | `badges.spec.ts`             | `badges.html`             |
 | `badges-display-mode="count"` shows count badge in input      | ✓      | `badges.spec.ts`             | `badges.html`             |
 | `badges-display-mode="compact"` shows first + "+N more"       | ✓      | `badges.spec.ts`             | `badges.html`             |
-| `badges-display-mode="partial"` shows up to `badges-max-visible` | ✓    | `badges.spec.ts`             | `badges.html`             |
+| `badges-display-mode="partial"` shows up to `max-visible-badge-count` | ✓    | `badges.spec.ts`             | `badges.html`             |
 | `badges-display-mode="none"` hides badges entirely            | ✓      | `badges.spec.ts`             | `badges.html`             |
 | `badges-position="top"` / `"bottom"` / `"left"` / `"right"`   | ✓      | `badges.spec.ts`             | `badges.html`             |
 | `badges-threshold` auto-switches badges → count               | ✓      | `badges.spec.ts`             | `badges.html`             |
@@ -57,7 +57,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `min-search-length` defers search until threshold             | ✓      | `search.spec.ts`             | `search.html`             |
 | `searchCallback` async loading + loading message              | ✓      | `search.spec.ts`             | `search.html`             |
 | `keep-options-on-search` retains options when search clears   | ✓      | `search.spec.ts`             | `search.html`             |
-| `should-keep-search-on-close` retains search on close         | ✓      | `search.spec.ts`             | `search.html`             |
+| `keep-search-on-close` retains search on close         | ✓      | `search.spec.ts`             | `search.html`             |
 | `beforeSearchCallback` pre-processes / blocks search          | ✓      | `search.spec.ts`             | `search.html`             |
 
 ## 4. Floating panels (dropdown, hint, selected popover)
@@ -79,9 +79,9 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Feature                                                       | Status | Spec | Fixture |
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | `enable-virtual-scroll` activates at `virtual-scroll-threshold` | ✓    | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
-| `option-height` applied to virtual options                    | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
+| `virtual-scroll-item-height` applied to virtual options                    | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
 | `badge-height` applied to virtual badges in popover           | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
-| `virtual-scroll-buffer` renders extra above/below             | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
+| `virtual-scroll-overscan` renders extra above/below             | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
 | Search resets scroll position when results change             | ✓      | `virtual-scroll.spec.ts`     | `virtual-scroll.html`     |
 | Scroll preserves keyboard focus visibility                    | ✗      |      |         |
 
@@ -113,7 +113,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `getIsDisabledCallback` disables button dynamically              | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | `getTextCallback` / `getClassCallback` / `getTooltipCallback` | ✗      |      |         |
 | Action button tooltip shows on hover                          | ✗      |      |         |
-| `sticky-actions` keeps actions pinned while scrolling         | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
+| `actions-sticky` keeps actions pinned while scrolling         | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | `actions-layout="wrap"` wraps buttons to multiple rows        | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | Select-all fires per-item `onSelect`                    | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | Clear-all fires per-item `onDeselect`                   | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
@@ -131,7 +131,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 
 | Feature                                                       | Status | Spec | Fixture |
 | ------------------------------------------------------------- | :----: | ---- | ------- |
-| `disabled-member` marks specific options unselectable         | ✓      | `disabled.spec.ts`           | `disabled.html`           |
+| `is-disabled-member` marks specific options unselectable         | ✓      | `disabled.spec.ts`           | `disabled.html`           |
 | Disabled option ignores click                                 | ✓      | `disabled.spec.ts`           | `disabled.html`           |
 | Disabled option ignores keyboard select                       | ✓      | `disabled.spec.ts`           | `disabled.html`           |
 | Disabled component (entire control)                           | ✗      |      |         |

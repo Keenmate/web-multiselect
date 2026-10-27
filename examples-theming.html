@@ -668,7 +668,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                     <label for="grouped-select" style="display:block; margin-bottom:.4rem; font-weight:600;">Select technologies</label>
                     <web-multiselect id="grouped-select" multiple="true" show-checkboxes="true"
                         group-member="group" search-mode="navigate" show-search-mode-toggle
-                        badges-display-mode="partial" badges-max-visible="3"></web-multiselect>
+                        badges-display-mode="partial" max-visible-badge-count="3"></web-multiselect>
                     <span class="form-text">Grouped by Frontend / Runtimes / Languages. In the fullscreen sheet, tap the leading search icon to switch filter ↔ navigate.</span>
                 </div>
             </div>
@@ -1566,7 +1566,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 el.setAttribute('search-mode', 'navigate');
                 el.setAttribute('show-search-mode-toggle', '');
                 el.setAttribute('badges-display-mode', 'partial');
-                el.setAttribute('badges-max-visible', '3');
+                el.setAttribute('max-visible-badge-count', '3');
                 el.valueMember = 'value';
                 el.displayValueMember = 'label';
                 el.groupMember = 'group';

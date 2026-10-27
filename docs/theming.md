@@ -42,7 +42,7 @@ Override individual sizing variables for specific adjustments:
 - `--ms-input-padding-h` — inline padding of the field
 - `--ms-badge-height` — badge height
 - `--ms-option-min-height` — minimum row height for regular (non-virtual) options (default: `auto`, content-driven)
-- `option-height` attribute — fixed row height in px for virtual-scroll rows (default: `50`). The component writes it to `--ms-option-height` as an inline style, so set the attribute rather than the variable.
+- `virtual-scroll-item-height` attribute — fixed row height in px for virtual-scroll rows (default: `50`). The component writes it to `--ms-option-height` as an inline style, so set the attribute rather than the variable.
 
 **Input height:**
 

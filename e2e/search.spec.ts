@@ -590,7 +590,7 @@ test.describe('keep-options-on-search', () => {
     });
 });
 
-test.describe('should-keep-search-on-close', () => {
+test.describe('keep-search-on-close', () => {
     test('clears search and options on close when false', async ({ page }) => {
         const p = picker(page, 'clear-on-close');
         await openDropdown(p);

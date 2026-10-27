@@ -56,15 +56,15 @@ export type SearchMode = 'filter' | 'navigate';
  * What Tab (and Shift+Tab) does while the dropdown is open. Tab always closes the dropdown and
  * lets focus move on; this decides whether it selects something first.
  *
- * - `select-highlighted` — select the highlighted option, including the first match that is
- *   highlighted automatically while typing (type `cesky kru`, Tab). Default for single-select.
- * - `select-navigated` — select the highlighted option only if the user moved the highlight
+ * - `select-focused` — select the focused option, including the first match that is
+ *   focused automatically while typing (type `cesky kru`, Tab). Default for single-select.
+ * - `select-navigated` — select the focused option only if the user moved the focus
  *   (arrow keys, PageUp/PageDown, Home/End); an automatic highlight from typing is ignored.
  * - `close` — select nothing. Default for multi-select.
  *
  * Tab only ever adds: in multi-select an already-selected option stays selected.
  */
-export type TabBehavior = 'select-highlighted' | 'select-navigated' | 'close';
+export type TabBehavior = 'select-focused' | 'select-navigated' | 'close';
 
 /**
  * Visual tone of a transient message shown via `controller.showMessage()`. Each maps to a
@@ -553,9 +553,9 @@ export interface MultiSelectConfig<T = any> {
      * icon. Off by default (icon-less rows pull their label into the gutter). Turn it
      * on when a list mixes icon and icon-less rows and you want all labels to share one
      * start column — most visible in tree mode, where depth indent already shifts rows
-     * (internal: isIconSlotReserved).
+     * (internal: shouldReserveIconSlot).
      */
-    isIconSlotReserved?: boolean;
+    shouldReserveIconSlot?: boolean;
 
     /** Member property name for subtitle extraction. Default `'subtitle'`; `getSubtitleCallback` overrides it. */
     subtitleMember?: string;
@@ -641,8 +641,8 @@ export interface MultiSelectConfig<T = any> {
     groupSelectMode?: 'none' | 'cascade';
 
     /** Member property name for disabled state extraction. Default `'disabled'`; `getIsDisabledCallback` overrides it. */
-    disabledMember?: string;
-    /** Callback deciding whether an option (`ctx.item`) is disabled (overrides `disabledMember`) */
+    isDisabledMember?: string;
+    /** Callback deciding whether an option (`ctx.item`) is disabled (overrides `isDisabledMember`) */
     getIsDisabledCallback?: (ctx: ItemContext<T>) => boolean;
 
     // ========================================================================
@@ -692,7 +692,7 @@ export interface MultiSelectConfig<T = any> {
     // ========================================================================
 
     /** HTML form field ID/name for hidden input */
-    formFieldId?: string;
+    name?: string;
     /**
      * Format for value serialization (hidden form inputs and callbacks). Default: `json`.
      *
@@ -708,8 +708,8 @@ export interface MultiSelectConfig<T = any> {
     // BOOLEAN OPTIONS (internal names with 'is' prefix)
     // ========================================================================
 
-    /** Allow multiple selections (internal: isMultipleEnabled) */
-    isMultipleEnabled?: boolean;
+    /** Allow multiple selections (internal: isMultiple) */
+    isMultiple?: boolean;
     /** Enable search/filtering (internal: isSearchEnabled) */
     isSearchEnabled?: boolean;
     /** Allow grouping of options (internal: isGroupsAllowed) */
@@ -732,8 +732,8 @@ export interface MultiSelectConfig<T = any> {
     isCheckboxesShown?: boolean;
     /** Keep Select All/Clear All buttons fixed at top while scrolling (internal: isActionsSticky) */
     isActionsSticky?: boolean;
-    /** Close dropdown after selecting an option (internal: isCloseOnSelect) */
-    isCloseOnSelect?: boolean;
+    /** Close dropdown after selecting an option (internal: shouldCloseOnSelect) */
+    shouldCloseOnSelect?: boolean;
     /**
      * When the option set is replaced (assigning `options` / `data-options`), drop any selected
      * value whose option is no longer present. Default `false` — selections are KEPT even if
@@ -741,18 +741,18 @@ export interface MultiSelectConfig<T = any> {
      * item can drop out of the current page yet remain a valid pick. Turn on when the list
      * replacement means the domain itself changed (e.g. an item was deleted server-side) and a
      * value with no matching option should stop being reported by `getValue()` (internal:
-     * isPruneMissingSelectionEnabled).
+     * shouldPruneMissingSelection).
      */
-    isPruneMissingSelectionEnabled?: boolean;
+    shouldPruneMissingSelection?: boolean;
     /**
      * In the phone fullscreen overlay, auto-focus the search field when it opens — which
      * pops the soft keyboard immediately. Default `false`: the sheet opens showing the list
      * (keyboard closed), and the keyboard appears only when the user taps the search. Set
      * `true` to type-to-filter right away (matches native pickers). No effect in the floating
-     * presentation. (internal: fullscreenAutofocus) */
-    fullscreenAutofocus?: boolean;
-    /** Lock dropdown placement after first open (internal: isPlacementLocked) */
-    isPlacementLocked?: boolean;
+     * presentation. (internal: shouldFullscreenAutofocus) */
+    shouldFullscreenAutofocus?: boolean;
+    /** Lock dropdown placement after first open (internal: shouldLockPlacement) */
+    shouldLockPlacement?: boolean;
     /**
      * Allow adding new options not in the list (internal: isAddNewAllowed).
      * When on and a search yields no matches, the empty dropdown shows a clickable
@@ -809,8 +809,8 @@ export interface MultiSelectConfig<T = any> {
      * full title. An explicit `getBadgeDisplayCallback` still takes precedence. Off by default.
      */
     isBadgeFullTitleShown?: boolean;
-    /** Keep initial options visible when searchCallback is active and search term is empty/short (internal: isKeepOptionsOnSearch) */
-    isKeepOptionsOnSearch?: boolean;
+    /** Keep initial options visible when searchCallback is active and search term is empty/short (internal: shouldKeepOptionsOnSearch) */
+    shouldKeepOptionsOnSearch?: boolean;
     /**
      * Keep search text and filtered results when the dropdown closes. Unset (`null`) = keep in
      * multi-select (reopen and keep picking from the same results), clear in single-select
@@ -876,7 +876,7 @@ export interface MultiSelectConfig<T = any> {
      * How the display switches once `badgesThreshold` is exceeded. Default: `count`.
      *
      * - `count` — collapse all selections into a single count badge
-     * - `partial` — keep up to `badgesMaxVisible` badges and add a "+X more" badge
+     * - `partial` — keep up to `maxVisibleBadgeCount` badges and add a "+X more" badge
      */
     badgesThresholdMode?: BadgesThresholdMode;
     /** Maximum height for dropdown */
@@ -924,7 +924,7 @@ export interface MultiSelectConfig<T = any> {
      */
     searchMatch?: SearchMatch;
     /**
-     * What Tab does while the dropdown is open. Unset (`null`) = `select-highlighted` in
+     * What Tab does while the dropdown is open. Unset (`null`) = `select-focused` in
      * single-select, `close` in multi-select. See `TabBehavior`.
      */
     tabBehavior?: TabBehavior | null;
@@ -971,7 +971,7 @@ export interface MultiSelectConfig<T = any> {
     /** Auto-switch from badges to count when threshold is exceeded */
     badgesThreshold?: number | null;
     /** Maximum number of badges to show in partial mode (used with thresholdMode='partial') */
-    badgesMaxVisible?: number | null;
+    maxVisibleBadgeCount?: number | null;
     /** Minimum search length before loading data */
     minSearchLength?: number;
     /**
@@ -984,11 +984,11 @@ export interface MultiSelectConfig<T = any> {
     /** Minimum items before virtual scroll activates (default: 100) */
     virtualScrollThreshold?: number;
     /** Fixed height for each option in pixels (required for virtual scroll, default: 50) */
-    optionHeight?: number;
+    virtualScrollItemHeight?: number;
     /** Fixed height for each badge in selected items popover in pixels (required for virtual scroll, default: 36) */
     badgeHeight?: number;
     /** Buffer size for virtual scroll - items above/below viewport (default: 10) */
-    virtualScrollBuffer?: number;
+    virtualScrollOverscan?: number;
 
     // ========================================================================
     // CALLBACK FUNCTIONS
@@ -1138,7 +1138,7 @@ export interface MultiSelectConfig<T = any> {
     /** Offset distance for an option tooltip (px). Falls back to `badgeTooltipOffset`, then `8`. */
     optionTooltipOffset?: number;
     /** Anchor the option tooltip to the mouse pointer and follow it across the row (best for full-width rows). Default `false`. */
-    isOptionTooltipFollowCursor?: boolean;
+    shouldOptionTooltipFollowCursor?: boolean;
 
     // ========================================================================
     // OTHER OPTIONS

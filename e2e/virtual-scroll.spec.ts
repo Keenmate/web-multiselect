@@ -46,7 +46,7 @@ test.describe('virtual scroll activation', () => {
     });
 });
 
-test.describe('option-height', () => {
+test.describe('virtual-scroll-item-height', () => {
     test('virtual items use the configured height', async ({ page }) => {
         const p = picker(page, 'vs-height');
         await openDropdown(p);
@@ -58,7 +58,7 @@ test.describe('option-height', () => {
     });
 });
 
-test.describe('virtual-scroll-buffer', () => {
+test.describe('virtual-scroll-overscan', () => {
     test('smaller buffer renders fewer items than the default', async ({ page }) => {
         const small = picker(page, 'vs-small-buffer');
         const normal = picker(page, 'vs-on');

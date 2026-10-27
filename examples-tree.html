@@ -482,8 +482,8 @@ web-multiselect {
             <div class="demo-area">
                 <label class="demo-label">Search e.g. <code>welder</code>, <code>2211</code>, or <code>health</code> — then hover a badge:</label>
                 <web-multiselect id="tree-isco" multiple="true"
-                    enable-virtual-scroll="true" option-height="32" enable-badge-tooltips="true" enable-option-tooltips="true"
-                    badges-display-mode="partial" badges-max-visible="3"
+                    enable-virtual-scroll="true" virtual-scroll-item-height="32" enable-badge-tooltips="true" enable-option-tooltips="true"
+                    badges-display-mode="partial" max-visible-badge-count="3"
                     style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
             </div>
 
@@ -519,7 +519,7 @@ el.getBadgeTooltipCallback = ({ item }) =&gt; item.fullTitle || item.label;</pre
                 <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
                     <div style="flex:1 1 260px; min-width:260px;">
                         <web-multiselect id="tree-scroll" multiple="true"
-                            enable-virtual-scroll="true" option-height="32"
+                            enable-virtual-scroll="true" virtual-scroll-item-height="32"
                             style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.5rem; flex:0 0 auto; min-width:210px;">

@@ -44,7 +44,7 @@ B
 -
 Badges → display-modes.txt, custom-rendering.txt
 badges-display-mode → display-modes.txt
-badges-max-visible → display-modes.txt
+max-visible-badge-count → display-modes.txt
 badges-position → display-modes.txt
 badges-threshold → display-modes.txt
 Badge tooltips → display-modes.txt
@@ -187,7 +187,7 @@ onClick (action items) → action-buttons.txt
 Objects → data-handling.txt
 <option> → basic-setup.txt, data-handling.txt
 <optgroup> → basic-setup.txt, data-handling.txt
-option-height → virtual-scrolling.txt
+virtual-scroll-item-height → virtual-scrolling.txt
 Options → data-handling.txt, basic-setup.txt
 
 P
@@ -234,7 +234,7 @@ show-checkboxes → basic-setup.txt, styling-theming.txt
 Single-select → selection-modes.txt
 Size (input) → styling-theming.txt
 SSR → advanced-patterns.txt, basic-setup.txt
-sticky-actions → action-buttons.txt
+actions-sticky → action-buttons.txt
 Styles → styling-theming.txt
 Subtitle → data-handling.txt
 
@@ -260,7 +260,7 @@ valueMember → data-handling.txt
 Values → selection-modes.txt, form-integration.txt
 Variables → styling-theming.txt
 Virtual scrolling → virtual-scrolling.txt
-virtual-scroll-buffer → virtual-scrolling.txt
+virtual-scroll-overscan → virtual-scrolling.txt
 virtual-scroll-threshold → virtual-scrolling.txt
 Vite → import-patterns.txt, basic-setup.txt
 

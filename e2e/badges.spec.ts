@@ -66,7 +66,7 @@ test.describe('display modes', () => {
         await expect(moreBadge).toContainText(/2/); // "+2 more" for 3 selected (1 shown + 2 more)
     });
 
-    test('"partial" mode shows up to badges-max-visible + more badge', async ({ page }) => {
+    test('"partial" mode shows up to max-visible-badge-count + more badge', async ({ page }) => {
         const p = picker(page, 'mode-partial');
         await select(p, 'apple', 'banana', 'cherry', 'date');
         await closeDropdown(page, p);

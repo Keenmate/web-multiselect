@@ -563,7 +563,7 @@ export class MultiSelectEngine<T = any> {
     private getItemDisabled(item: T): boolean {
         return this.extractField<boolean>(item, {
             tupleSkip: true,
-            member: this.options.disabledMember,
+            member: this.options.isDisabledMember,
             callback: this.options.getIsDisabledCallback,
             transform: Boolean,
             fallback: false
@@ -625,18 +625,18 @@ export class MultiSelectEngine<T = any> {
             searchDebounce: parseInt(element.dataset.searchDebounce || '0') || 0,
 
             // Boolean options (internal names with 'is' prefix)
-            isMultipleEnabled: element.dataset.multiple !== 'false',
+            isMultiple: element.dataset.multiple !== 'false',
             isGroupsAllowed: element.dataset.allowGroups !== 'false',
             isCheckboxesShown: element.dataset.showCheckboxes !== 'false',
-            isActionsSticky: element.dataset.stickyActions !== 'false',
-            isCloseOnSelect: element.dataset.closeOnSelect === 'true',
-            isPlacementLocked: element.dataset.lockPlacement !== 'false',
+            isActionsSticky: element.dataset.actionsSticky !== 'false',
+            shouldCloseOnSelect: element.dataset.closeOnSelect === 'true',
+            shouldLockPlacement: element.dataset.lockPlacement !== 'false',
             isSearchEnabled: element.dataset.enableSearch !== 'false',
             isAddNewAllowed: element.dataset.allowAddNew === 'true',
             isCounterShown: element.dataset.showCounter === 'true',
             isSelectedPopoverEnabled: element.dataset.enableSelectedPopover !== 'false',
             isSearchModeToggleShown: element.dataset.showSearchModeToggle === 'true',
-            isKeepOptionsOnSearch: element.dataset.keepOptionsOnSearch !== 'false',
+            shouldKeepOptionsOnSearch: element.dataset.keepOptionsOnSearch !== 'false',
             shouldKeepSearchOnClose: element.dataset.keepSearchOnClose === undefined ? null : element.dataset.keepSearchOnClose !== 'false',
             tabBehavior: (element.dataset.tabBehavior as TabBehavior) || null,
 
@@ -648,7 +648,7 @@ export class MultiSelectEngine<T = any> {
             groupMember: 'group',
             iconMember: 'icon',
             subtitleMember: 'subtitle',
-            disabledMember: 'disabled',
+            isDisabledMember: 'disabled',
             container: undefined,
 
             // Override with provided options
@@ -667,7 +667,7 @@ export class MultiSelectEngine<T = any> {
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
             placeholder: this.options.searchPlaceholder,
             totalOptions: this.allOptions.length,
-            isCloseOnSelect: this.options.isCloseOnSelect,
+            shouldCloseOnSelect: this.options.shouldCloseOnSelect,
             dataAttribute: this.element.dataset.closeOnSelect
         });
     }
@@ -737,7 +737,7 @@ export class MultiSelectEngine<T = any> {
      */
     private isCascadeMode(): boolean {
         return this.isTreeMode()
-            && this.options.isMultipleEnabled !== false
+            && this.options.isMultiple !== false
             && this.options.checkboxMode !== 'independent';
     }
 
@@ -1031,7 +1031,7 @@ export class MultiSelectEngine<T = any> {
             initLogger.debug(`[${this.instanceId}] Added ms--rtl class to element`);
         }
 
-        if (!this.options.isCheckboxesShown || !this.options.isMultipleEnabled) {
+        if (!this.options.isCheckboxesShown || !this.options.isMultiple) {
             this.element.classList.add('ms--no-checkboxes');
         }
 
@@ -1189,7 +1189,7 @@ export class MultiSelectEngine<T = any> {
      */
     private isGroupCascadeActive(): boolean {
         return !this.isTreeMode()
-            && this.options.isMultipleEnabled !== false
+            && this.options.isMultiple !== false
             && !!this.options.isGroupsAllowed
             && this.options.groupSelectMode === 'cascade'
             && this.hasGroups();
@@ -1339,8 +1339,8 @@ export class MultiSelectEngine<T = any> {
         // the virtual list uses — otherwise the height visibly jumps as the result
         // count crosses the threshold (e.g. filtering from many matches to few).
         if (this.options.isVirtualScrollEnabled) {
-            const optionHeight = this.scaledOptionHeight();
-            html += `<div class="ms__options ms__options--fixed-height" style="--ms-option-height: ${optionHeight}px;">`;
+            const virtualScrollItemHeight = this.scaledOptionHeight();
+            html += `<div class="ms__options ms__options--fixed-height" style="--ms-option-height: ${virtualScrollItemHeight}px;">`;
         } else {
             html += '<div class="ms__options">';
         }
@@ -1557,7 +1557,7 @@ export class MultiSelectEngine<T = any> {
         // Initialize or update virtual scroll (row height matches the scaled inline
         // --ms-option-height above so the scroll math and the CSS agree).
         const itemHeight = this.scaledOptionHeight();
-        const bufferSize = this.options.virtualScrollBuffer ?? 10;
+        const bufferSize = this.options.virtualScrollOverscan ?? 10;
 
         // Defer initialization until container has dimensions
         requestAnimationFrame(() => {
@@ -1642,7 +1642,7 @@ export class MultiSelectEngine<T = any> {
      */
     private renderActionsHTML(): string {
         const items = this.getActionItems();
-        if (!this.options.isMultipleEnabled || items.length === 0) return '';
+        if (!this.options.isMultiple || items.length === 0) return '';
 
         const position = this.options.actionsPosition === 'bottom' ? 'bottom' : 'top';
         const align = this.options.actionsAlign ?? 'stretch';
@@ -1715,7 +1715,7 @@ export class MultiSelectEngine<T = any> {
 
         let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}"${checkboxAlignAttr}>`;
 
-        if (this.options.isCheckboxesShown && this.options.isMultipleEnabled) {
+        if (this.options.isCheckboxesShown && this.options.isMultiple) {
             html += this.checkboxHtml({ checked: isSelected, disabled });
         }
 
@@ -1737,7 +1737,7 @@ export class MultiSelectEngine<T = any> {
             // Default rendering
             if (icon) {
                 html += `<span class="ms__option-icon">${icon}</span>`;
-            } else if (this.options.isIconSlotReserved) {
+            } else if (this.options.shouldReserveIconSlot) {
                 // Reserve the fixed-width gutter so icon-less rows keep the same label
                 // start column as rows that have an icon.
                 html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
@@ -1823,7 +1823,7 @@ export class MultiSelectEngine<T = any> {
         const selectableAttr = selectable ? '' : ' data-selectable="false"';
         let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}" data-path="${node.path}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
-        if (this.options.isCheckboxesShown && this.options.isMultipleEnabled && selectable) {
+        if (this.options.isCheckboxesShown && this.options.isMultiple && selectable) {
             html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
         }
 
@@ -1853,7 +1853,7 @@ export class MultiSelectEngine<T = any> {
         } else {
             if (icon) {
                 html += `<span class="ms__option-icon">${icon}</span>`;
-            } else if (this.options.isIconSlotReserved) {
+            } else if (this.options.shouldReserveIconSlot) {
                 // Reserve the fixed-width gutter so icon-less rows keep the same label
                 // start column as rows that have an icon (most visible in a tree, where
                 // depth indent already offsets each row).
@@ -2021,7 +2021,7 @@ export class MultiSelectEngine<T = any> {
         const selectedOptions = this.getOrderedSelectedOptions();
         const count = this.selectedValues.size;
 
-        if (!this.options.isMultipleEnabled) {
+        if (!this.options.isMultiple) {
             this.badgesContainer.innerHTML = '';
             this.counter.style.display = 'none';
 
@@ -2088,7 +2088,7 @@ export class MultiSelectEngine<T = any> {
             // Partial mode: show limited badges + "+X more" badge
             this.badgesContainer.className = `ms__badges ms__badges--${this.effectiveBadgesPosition}`;
 
-            const maxVisible = this.options.badgesMaxVisible || 3;
+            const maxVisible = this.options.maxVisibleBadgeCount || 3;
             const visibleOptions = selectedOptions.slice(0, maxVisible);
             const remainingCount = count - maxVisible;
 
@@ -2354,7 +2354,7 @@ export class MultiSelectEngine<T = any> {
             if (processedValue.length < this.options.minSearchLength || noCallbackTerm) {
                 this.abortInFlightSearch(); // No longer want any in-flight results
                 this.isLoading = false; // Stop loading state
-                if (this.options.isKeepOptionsOnSearch) {
+                if (this.options.shouldKeepOptionsOnSearch) {
                     // Keep showing initial options (full tree in tree mode).
                     if (this.isTreeMode()) this.rebuildTreeVisibleFromMatches(this.allOptions);
                     else this.filteredOptions = [...this.allOptions];
@@ -2527,7 +2527,7 @@ export class MultiSelectEngine<T = any> {
 
             // Auto-focus first option if search is enabled and there are results
             this.focusedIndex = (this.options.isSearchEnabled && this.filteredOptions.length > 0) ? 0 : -1;
-            this.isFocusNavigated = false; // results replaced the list - row 0 is auto-highlighted
+            this.isFocusNavigated = false; // results replaced the list - row 0 is auto-focused
             this.renderDropdown();
             // Results just replaced an empty/loading panel — its height changed, so
             // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
@@ -2539,7 +2539,7 @@ export class MultiSelectEngine<T = any> {
 
             dataLogger.error(`[${this.instanceId}] Error loading data:`, error);
             this.isLoading = false;
-            if (this.options.isKeepOptionsOnSearch) {
+            if (this.options.shouldKeepOptionsOnSearch) {
                 // Show initial options on error (full tree in tree mode).
                 if (this.isTreeMode()) this.rebuildTreeVisibleFromMatches(this.allOptions);
                 else this.filteredOptions = [...this.allOptions];
@@ -2761,7 +2761,7 @@ export class MultiSelectEngine<T = any> {
             interactionLogger.debug(`[${this.instanceId}] Option clicked:`, {
                 value,
                 optionIndex,
-                closeOnSelect: this.options.isCloseOnSelect,
+                closeOnSelect: this.options.shouldCloseOnSelect,
                 placeholder: this.options.searchPlaceholder
             });
             if (optionIndex >= 0) {
@@ -2819,7 +2819,7 @@ export class MultiSelectEngine<T = any> {
             // the items sorted AFTER the visible slice, so it honours `selectedOrder`.
             if (removeBtn.dataset.msAction === 'remove-hidden') {
                 interactionLogger.debug(`[${this.instanceId}] Remove hidden items button clicked`);
-                const maxVisible = this.options.badgesMaxVisible || 3;
+                const maxVisible = this.options.maxVisibleBadgeCount || 3;
                 const selectedOptions = this.getOrderedSelectedOptions();
                 const hiddenOptions = selectedOptions.slice(maxVisible);
 
@@ -2967,7 +2967,7 @@ export class MultiSelectEngine<T = any> {
      * and an active search keep their own rules (nothing / the first match).
      */
     private getOpenFocusIndex(): number {
-        if (this.options.isMultipleEnabled || this.searchTerm || this.selectedValues.size === 0) return -1;
+        if (this.options.isMultiple || this.searchTerm || this.selectedValues.size === 0) return -1;
         return this.filteredOptions.findIndex(o => this.selectedValues.has(String(this.getItemValue(o))));
     }
 
@@ -2996,18 +2996,18 @@ export class MultiSelectEngine<T = any> {
         scroller.scrollTop += (row.top - box.top) - (box.height - row.height) / 2;
     }
 
-    /** `tab-behavior`, resolved: unset = `select-highlighted` (single) / `close` (multi). */
+    /** `tab-behavior`, resolved: unset = `select-focused` (single) / `close` (multi). */
     private getTabBehavior(): TabBehavior {
-        return this.options.tabBehavior ?? (this.options.isMultipleEnabled ? 'close' : 'select-highlighted');
+        return this.options.tabBehavior ?? (this.options.isMultiple ? 'close' : 'select-focused');
     }
 
-    /** `should-keep-search-on-close`, resolved: unset = keep in multi-select, clear in single-select. */
+    /** `keep-search-on-close`, resolved: unset = keep in multi-select, clear in single-select. */
     private shouldKeepSearchOnClose(): boolean {
-        return this.options.shouldKeepSearchOnClose ?? !!this.options.isMultipleEnabled;
+        return this.options.shouldKeepSearchOnClose ?? !!this.options.isMultiple;
     }
 
     /**
-     * Tab / Shift+Tab with the dropdown open: select the highlighted option per `tab-behavior`
+     * Tab / Shift+Tab with the dropdown open: select the focused option per `tab-behavior`
      * before the dropdown closes and focus moves on. Only ever adds — an already-selected option
      * is left alone (Tab must never un-pick in multi-select). A veto (`beforeSelectCallback`)
      * simply leaves the value unchanged.
@@ -3018,7 +3018,7 @@ export class MultiSelectEngine<T = any> {
         if (behavior === 'select-navigated' && !this.isFocusNavigated) return;
         const option = this.filteredOptions[this.focusedIndex];
         if (!option || this.selectedValues.has(String(this.getItemValue(option)))) return;
-        interactionLogger.debug(`[${this.instanceId}] Tab commits highlighted option`, { behavior, index: this.focusedIndex });
+        interactionLogger.debug(`[${this.instanceId}] Tab commits focused option`, { behavior, index: this.focusedIndex });
         this.toggleOption(option);
     }
 
@@ -3435,7 +3435,7 @@ export class MultiSelectEngine<T = any> {
         }
         const value = this.getItemValue(option);
         const valueKey = String(value);
-        interactionLogger.debug(`[${this.instanceId}] toggleOption called`, { value, multiple: this.options.isMultipleEnabled });
+        interactionLogger.debug(`[${this.instanceId}] toggleOption called`, { value, multiple: this.options.isMultiple });
 
         // Cascade mode: toggling a node flips its whole subtree and re-projects to
         // emitted values. Route through the dedicated path (which commits its own
@@ -3451,7 +3451,7 @@ export class MultiSelectEngine<T = any> {
                 void then(this.vetoOne(isChecked ? 'deselect' : 'select', option, 'option'), (isAllowed) => {
                     if (!isAllowed) return;
                     this.toggleTreeCascade(node);
-                    if (this.options.isCloseOnSelect) this.close();
+                    if (this.options.shouldCloseOnSelect) this.close();
                 });
                 return;
             }
@@ -3465,7 +3465,7 @@ export class MultiSelectEngine<T = any> {
         // option re-click. Deselecting here would silently empty the control and
         // confuses users (the row gives no "you'd be un-picking this" cue in single
         // mode — there's no checkbox). Just close on the confirming click.
-        if (wasSelected && !this.options.isMultipleEnabled) {
+        if (wasSelected && !this.options.isMultiple) {
             this.close();
             return;
         }
@@ -3478,9 +3478,9 @@ export class MultiSelectEngine<T = any> {
             // A vetoed toggle changes nothing — leave the dropdown open so the user
             // can pick something else (single-select otherwise closes on every pick).
             if (!changed) return;
-            if (!this.options.isMultipleEnabled) {
+            if (!this.options.isMultiple) {
                 this.close();
-            } else if (this.options.isCloseOnSelect) {
+            } else if (this.options.shouldCloseOnSelect) {
                 this.close();
             }
         });
@@ -3529,7 +3529,7 @@ export class MultiSelectEngine<T = any> {
             // Single-select replaces the current value. Clearing directly (rather
             // than via deselectOption) preserves the documented replacement
             // semantics: a replace fires select + change, but no deselect.
-            if (!this.options.isMultipleEnabled) {
+            if (!this.options.isMultiple) {
                 this.selectedValues.clear();
                 this.selectedOptions.clear();
             }
@@ -3622,7 +3622,7 @@ export class MultiSelectEngine<T = any> {
                 selectedValues: this.selectedValueList(),
             }));
 
-            if (newOption !== undefined && this.options.isCloseOnSelect) {
+            if (newOption !== undefined && this.options.shouldCloseOnSelect) {
                 this.close();
             }
         } catch (error) {
@@ -3890,12 +3890,12 @@ export class MultiSelectEngine<T = any> {
         // searchTerm/filteredOptions per shouldKeepSearchOnClose, so mirroring
         // searchTerm here keeps the box and the filtered list in sync (no stale
         // "java" filter lingering under an empty box).
-        if (!this.options.isMultipleEnabled && this.options.isSearchEnabled) {
+        if (!this.options.isMultiple && this.options.isSearchEnabled) {
             this.input.value = this.searchTerm;
         }
 
         // If using searchCallback with keepOptionsOnSearch, ensure initial options are shown
-        if (this.options.searchCallback && this.options.isKeepOptionsOnSearch && !this.searchTerm) {
+        if (this.options.searchCallback && this.options.shouldKeepOptionsOnSearch && !this.searchTerm) {
             this.filteredOptions = [...this.allOptions];
             uiLogger.debug(`[${this.instanceId}] Showing ${this.allOptions.length} initial options on open`);
         }
@@ -3951,7 +3951,7 @@ export class MultiSelectEngine<T = any> {
         if (!this.shouldKeepSearchOnClose()) {
             this.searchTerm = '';
             // Only clear input in multi-select mode or when search is enabled
-            if (this.options.isMultipleEnabled || this.options.isSearchEnabled) {
+            if (this.options.isMultiple || this.options.isSearchEnabled) {
                 this.input.value = '';
             }
 
@@ -4179,7 +4179,7 @@ export class MultiSelectEngine<T = any> {
                 this.dropdownPlacement = p;
                 uiLogger.debug(`[${this.instanceId}] Locked dropdown placement:`, p);
             },
-            isLocked: () => !!this.options.isPlacementLocked,
+            isLocked: () => !!this.options.shouldLockPlacement,
             applyMaxWidth: true,
             afterPosition: () => { if (this.hint && this.#isOpen) this.positionHint(); }
         });
@@ -4324,7 +4324,7 @@ export class MultiSelectEngine<T = any> {
 
     /** Virtual/fixed row height (px), scaled up in the fullscreen phone view. */
     private scaledOptionHeight(): number {
-        return Math.round((this.options.optionHeight ?? 50) * this.fullscreenScale());
+        return Math.round((this.options.virtualScrollItemHeight ?? 50) * this.fullscreenScale());
     }
 
     /**
@@ -4400,12 +4400,12 @@ export class MultiSelectEngine<T = any> {
         this.observeKeyboardInset();
 
         // Seed the header search with the current term. Auto-focus (which pops the soft
-        // keyboard) is OPT-IN via fullscreenAutofocus — default is to open with the list
+        // keyboard) is OPT-IN via shouldFullscreenAutofocus — default is to open with the list
         // visible and the keyboard closed, so long lists browse cleanly and the bottom
         // action row stays on screen. When enabled, focus to type-to-filter immediately.
         if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = this.searchTerm;
         this.updateFullscreenSearchClear();
-        if (this.options.fullscreenAutofocus) {
+        if (this.options.shouldFullscreenAutofocus) {
             this.fullscreenSearchInput?.focus();
         } else {
             // Keyboard-off default: drop any focus the underlying input grabbed from the
@@ -4759,7 +4759,7 @@ export class MultiSelectEngine<T = any> {
                 // multi-selection while `multiple` flipped to false), keep only the
                 // first — otherwise the extra values stay in selectedValues and their
                 // rows render with the stale selected highlight.
-                const values = this.options.isMultipleEnabled === false ? parsed.slice(0, 1) : parsed;
+                const values = this.options.isMultiple === false ? parsed.slice(0, 1) : parsed;
                 values.forEach((value: string | number) => {
                     this.selectedValues.add(String(value));
                 });
@@ -4793,7 +4793,7 @@ export class MultiSelectEngine<T = any> {
      * {@link reconcileSelectedOptions}: that one *adds* mappings as options arrive; this one
      * *removes* selections whose option left the list. Silent — no select/deselect/change (a
      * data-driven correction when the option set is replaced, not a user gesture). Gated by
-     * `isPruneMissingSelectionEnabled`; the default (off) KEEPS missing selections. Runs before
+     * `shouldPruneMissingSelection`; the default (off) KEEPS missing selections. Runs before
      * {@link buildTree}, so cascade atoms recompute from the already-pruned selection.
      */
     private pruneMissingSelection(): void {
@@ -4975,7 +4975,7 @@ export class MultiSelectEngine<T = any> {
         const badgeHeight = this.scaledBadgeHeight();
         const gap = Math.round(4 * this.fullscreenScale()); // 0.25rem default gap
         const itemHeight = badgeHeight + gap;
-        const bufferSize = this.options.virtualScrollBuffer ?? 10;
+        const bufferSize = this.options.virtualScrollOverscan ?? 10;
 
         // Defer initialization until container has dimensions
         requestAnimationFrame(() => {
@@ -5154,7 +5154,7 @@ export class MultiSelectEngine<T = any> {
     // ========================================================================
 
     private updateHiddenInput(): void {
-        if (!this.options.formFieldId) return;
+        if (!this.options.name) return;
 
         // Remove existing inputs
         this.hiddenInputs.forEach(input => input.remove());
@@ -5171,7 +5171,7 @@ export class MultiSelectEngine<T = any> {
             values.forEach(value => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = `${this.options.formFieldId}[]`;
+                input.name = `${this.options.name}[]`;
                 input.value = String(value);
                 targetElement.appendChild(input);
                 this.hiddenInputs.push(input);
@@ -5180,8 +5180,8 @@ export class MultiSelectEngine<T = any> {
             // Single input with formatted value
             const input = document.createElement('input');
             input.type = 'hidden';
-            input.name = this.options.formFieldId;
-            input.id = this.options.formFieldId;
+            input.name = this.options.name;
+            input.id = this.options.name;
             input.value = this.getFormValue();
             targetElement.appendChild(input);
             this.hiddenInputs.push(input);
@@ -5291,7 +5291,7 @@ export class MultiSelectEngine<T = any> {
             // onto them. This is an in-place update, not a rebuild: an open dropdown stays open.
             this.allOptions = partial.options ?? [];
             this.reconcileSelectedOptions();
-            if (this.options.isPruneMissingSelectionEnabled) this.pruneMissingSelection();
+            if (this.options.shouldPruneMissingSelection) this.pruneMissingSelection();
             if (this.isTreeMode()) {
                 // buildTree derives filteredOptions from the tree, honouring the current search term.
                 this.buildTree();
@@ -5336,7 +5336,7 @@ export class MultiSelectEngine<T = any> {
 
         // Structural class on host
         this.element.classList.toggle('ms--no-checkboxes',
-            !this.options.isCheckboxesShown || !this.options.isMultipleEnabled);
+            !this.options.isCheckboxesShown || !this.options.isMultiple);
         this.element.classList.toggle('ms--no-selected-popover',
             !this.options.isSelectedPopoverEnabled);
 
@@ -5403,7 +5403,7 @@ export class MultiSelectEngine<T = any> {
     public refresh(): void {
         this.invalidateSearchValues(); // option objects may have been mutated in place
         this.reconcileSelectedOptions();
-        if (this.options.isPruneMissingSelectionEnabled) this.pruneMissingSelection();
+        if (this.options.shouldPruneMissingSelection) this.pruneMissingSelection();
         if (this.isTreeMode()) {
             this.buildTree();
         } else if (!this.searchTerm) {
@@ -5438,24 +5438,24 @@ export class MultiSelectEngine<T = any> {
         }
 
         if (this.selectedOptions.size === 0) {
-            return this.options.isMultipleEnabled ? [] : null;
+            return this.options.isMultiple ? [] : null;
         }
 
         const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
 
         // Mode-dependent return
-        return this.options.isMultipleEnabled ? values : (values[0] ?? null);
+        return this.options.isMultiple ? values : (values[0] ?? null);
     }
 
     public getValue(): string | number | (string | number)[] | null {
         if (this.selectedOptions.size === 0) {
-            return this.options.isMultipleEnabled ? [] : null;
+            return this.options.isMultiple ? [] : null;
         }
 
         const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
 
         // Single value in single-select, array in multi-select
-        return this.options.isMultipleEnabled ? values : (values[0] ?? null);
+        return this.options.isMultiple ? values : (values[0] ?? null);
     }
 
     // ========================================================================
@@ -5575,7 +5575,7 @@ export class MultiSelectEngine<T = any> {
             const moreBadge = this.badgesContainer.querySelector('.ms__badge--more');
             const removeBtn = moreBadge?.querySelector('.ms__badge-remove') as HTMLElement | null;
             if (removeBtn && removeBtn.dataset.msAction === 'remove-hidden') {
-                const maxVisible = this.options.badgesMaxVisible || 3;
+                const maxVisible = this.options.maxVisibleBadgeCount || 3;
                 const hiddenCount = this.selectedOptions.size - maxVisible;
                 this.spawnTooltip({
                     id: 'more-badge-remove',
@@ -5640,7 +5640,7 @@ export class MultiSelectEngine<T = any> {
                 showDelay: this.options.optionTooltipDelay ?? this.options.badgeTooltipDelay ?? 100,
                 cssClass: 'ms__option-tooltip',
                 visibleClass: 'ms__option-tooltip--visible',
-                shouldFollowCursor: this.options.isOptionTooltipFollowCursor
+                shouldFollowCursor: this.options.shouldOptionTooltipFollowCursor
             });
         });
     }

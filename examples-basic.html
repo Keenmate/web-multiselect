@@ -81,7 +81,7 @@
                 <label><input type="radio" name="disp-mode" value="compact"> compact</label>
                 <label><input type="radio" name="disp-mode" value="partial"> partial</label>
                 <label><input type="radio" name="disp-mode" value="none"> none</label>
-                <label id="disp-maxvisible-wrap" style="margin-inline-start:1rem; display:none"><code>badges-max-visible</code>:
+                <label id="disp-maxvisible-wrap" style="margin-inline-start:1rem; display:none"><code>max-visible-badge-count</code>:
                     <input type="number" id="disp-maxvisible" min="1" max="10" value="3" style="width:3.5rem">
                 </label>
             </div>
@@ -632,14 +632,14 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 r.addEventListener('change', (e) => {
                     if (!e.target.checked) return;
                     exDisp.setAttribute('badges-display-mode', e.target.value);
-                    // badges-max-visible only applies to partial mode — show it only then.
+                    // max-visible-badge-count only applies to partial mode — show it only then.
                     maxVisibleWrap.style.display = e.target.value === 'partial' ? '' : 'none';
                 }));
             document.querySelectorAll('input[name="disp-pos"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) exDisp.setAttribute('badges-position', e.target.value); }));
             document.getElementById('disp-maxvisible').addEventListener('input', (e) => {
                 const n = parseInt(e.target.value, 10);
-                if (n >= 1) exDisp.setAttribute('badges-max-visible', String(n));
+                if (n >= 1) exDisp.setAttribute('max-visible-badge-count', String(n));
             });
             // 'custom' mode uses a comparator; install it once (ignored unless selected-order="custom").
             exDisp.selectedOrderCompareCallback = (a, b) => b.year - a.year; // newest first

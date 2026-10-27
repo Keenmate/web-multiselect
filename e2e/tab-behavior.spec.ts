@@ -2,7 +2,7 @@ import { test, expect, Page, Locator } from './fixtures';
 
 /**
  * tab-behavior (what Tab / Shift+Tab selects before focus moves on) and the single-select
- * default of should-keep-search-on-close (cleared), in a form-like page.
+ * default of keep-search-on-close (cleared), in a form-like page.
  */
 
 const PAGE = '/test/tab-behavior.html';
@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
         && (document.getElementById('tb-long-virtual') as any)?.getSelected?.().length === 1);
 });
 
-test.describe('single-select default: select-highlighted', () => {
+test.describe('single-select default: select-focused', () => {
     test('type, Tab: commits the auto-highlighted match, fires events, focus moves on', async ({ page }) => {
         const p = picker(page, 'tb-single');
         await tabInto(page, 'before', p);
@@ -127,7 +127,7 @@ test.describe('single-select: search is cleared on close', () => {
         await expect(p.locator('.ms__option')).toHaveCount(5);
     });
 
-    test('should-keep-search-on-close="true" keeps it in single-select', async ({ page }) => {
+    test('keep-search-on-close="true" keeps it in single-select', async ({ page }) => {
         const p = picker(page, 'tb-keep');
         await input(p).click();
         await page.keyboard.type('cesk');
@@ -194,7 +194,7 @@ test.describe('multi-select', () => {
         await expect(p.locator('.ms__option')).toHaveCount(2);
     });
 
-    test('select-highlighted: Tab adds the highlighted option but never removes one', async ({ page }) => {
+    test('select-focused: Tab adds the highlighted option but never removes one', async ({ page }) => {
         const p = picker(page, 'tb-multi-hl');
         await input(p).click();
         await page.keyboard.type('brno');

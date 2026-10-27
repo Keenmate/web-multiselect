@@ -73,7 +73,7 @@ test.describe('dynamic visibility / disabled', () => {
 });
 
 test.describe('layout modifiers', () => {
-    test('sticky-actions adds the modifier class', async ({ page }) => {
+    test('actions-sticky adds the modifier class', async ({ page }) => {
         const p = picker(page, 'sticky');
         await openDropdown(p);
 

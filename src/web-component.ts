@@ -86,7 +86,7 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'loadingMessage',          attribute: 'loading-message',             converter: toText({ default: 'Loading...' }),     on: 'update', description: 'Message shown while options are loading.' },
   { configKey: 'removeButtonTooltipText', attribute: 'remove-button-tooltip-text',  converter: toText({ isNullable: true }),            on: 'update', description: 'Tooltip text for a badge remove (×) button.' },
   { configKey: 'selectedPopoverTitle',    attribute: 'selected-popover-title',      converter: toText({ default: 'Selected Items ({count})' }), on: 'update', description: 'Header text of the selected-items popover. Translatable; the `{count}` placeholder is replaced with the current selection count (e.g. `Vybrané položky ({count})`). Default: `Selected Items ({count})`.' },
-  { configKey: 'formFieldId',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
+  { configKey: 'name',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
   { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `getCustomStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `getCustomStylesCallback` takes precedence when both are set.' },
 
   // ── CSS-var sugar (mirrored to a host style prop in reinit()/update()) ────
@@ -101,7 +101,7 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true, default: 'subtitle' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option subtitle. Default: `subtitle`.' },
   { configKey: 'fullTitleMember',         attribute: 'full-title-member',           converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option full/long title.' },
   { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true, default: 'group' }), shouldReflect: true, on: 'reinit', description: 'Property name used to group options under headers. Default: `group`.' },
-  { configKey: 'disabledMember',          attribute: 'disabled-member',             converter: toText({ isNullable: true, default: 'disabled' }), shouldReflect: true, on: 'reinit', description: 'Property name that marks an option disabled. Default: `disabled`.' },
+  { configKey: 'isDisabledMember',          attribute: 'is-disabled-member',             converter: toText({ isNullable: true, default: 'disabled' }), shouldReflect: true, on: 'reinit', description: 'Property name that marks an option disabled. Default: `disabled`.' },
 
   // ── Tree of options (structural → reinit; optional → nullable) ───────────
   { configKey: 'pathMember',              attribute: 'path-member',                 converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name holding a node materialized tree path.' },
@@ -154,38 +154,38 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'optionTooltipPlacement',  attribute: 'option-tooltip-placement',    converter: toEnum(PLACEMENTS, { default: 'top-start' }), on: 'update', description: 'Preferred placement of an option tooltip (floating-ui placement).' },
   { configKey: 'mobilePresentation',      attribute: 'mobile-presentation',         converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), shouldReflect: true, on: 'update',
     description: 'How the open dropdown is presented on phones. `auto` (default) keeps the floating panel on desktop/tablet and switches to a full-screen overlay on phone-sized touch devices (touch primary + shorter viewport side < 600px, orientation-robust); `floating` forces the anchored panel everywhere; `fullscreen` forces the full-screen overlay on any device (handy for previews/testing). Resolved reactively from the device/viewport environment.' },
-  { configKey: 'fullscreenAutofocus',     attribute: 'fullscreen-autofocus',        converter: toBool('default-false'), on: 'update',
+  { configKey: 'shouldFullscreenAutofocus',     attribute: 'fullscreen-autofocus',        converter: toBool('default-false'), on: 'update',
     description: 'In the phone fullscreen overlay, auto-focus the search field on open (pops the soft keyboard immediately). Default `false`: the sheet opens with the list visible and the keyboard closed, appearing only when the user taps the search. Set `true` to type-to-filter right away. No effect in the floating presentation.' },
 
   // ── Numbers ──────────────────────────────────────────────────────────────
   { configKey: 'badgesThreshold',         attribute: 'badges-threshold',            converter: toInt(),               on: 'update', description: 'Threshold at which badges collapse to a count/compact view.' },
-  { configKey: 'badgesMaxVisible',        attribute: 'badges-max-visible',          converter: toInt(),               on: 'update', description: 'Maximum number of badges rendered before overflow.' },
+  { configKey: 'maxVisibleBadgeCount',        attribute: 'max-visible-badge-count',          converter: toInt(),               on: 'update', description: 'Maximum number of badges rendered before overflow.' },
   { configKey: 'collapseBadgesBelow',     attribute: 'collapse-badges-below',       converter: toInt(),               on: 'update', description: 'Container-responsive opt-in (off by default). When set to a px width, the control watches its OWN border box (not the window, via the core `sizeChanged` hook / a shared ResizeObserver) and collapses `badges-display-mode` to `count` ("N selected") while the box is narrower than this — so a picker in a narrow column/sidebar never overflows with pills, even on a wide monitor. Widening past the threshold restores the configured badges mode. Element-only: the override is applied to the live picker, never to your `badges-display-mode` config.' },
   { configKey: 'minSearchLength',         attribute: 'min-search-length',           converter: toInt({ default: 0 }), on: 'update', description: 'Minimum characters before searching/filtering starts.' },
   { configKey: 'searchDebounce',          attribute: 'search-debounce',             converter: toInt({ default: 0 }), on: 'update', description: 'Debounce delay in ms before the async `searchCallback` fires (local filtering is instant).' },
   { configKey: 'virtualScrollThreshold',  attribute: 'virtual-scroll-threshold',    converter: toInt({ default: 100 }), on: 'reinit', description: 'Option count above which virtual scrolling turns on.' },
-  { configKey: 'optionHeight',            attribute: 'option-height',               converter: toInt({ default: 50 }), on: 'update', description: 'Fixed row height in px used by virtual scrolling.' },
+  { configKey: 'virtualScrollItemHeight',            attribute: 'virtual-scroll-item-height',               converter: toInt({ default: 50 }), on: 'update', description: 'Fixed row height in px used by virtual scrolling.' },
   { configKey: 'badgeHeight',             attribute: 'badge-height',                converter: toInt({ default: 36 }), on: 'update', description: 'Fixed badge height in px used for layout/virtualization.' },
-  { configKey: 'virtualScrollBuffer',     attribute: 'virtual-scroll-buffer',       converter: toInt({ default: 10 }), on: 'update', description: 'Extra rows rendered above/below the viewport when virtualizing.' },
+  { configKey: 'virtualScrollOverscan',     attribute: 'virtual-scroll-overscan',       converter: toInt({ default: 10 }), on: 'update', description: 'Extra rows rendered above/below the viewport when virtualizing.' },
   { configKey: 'badgeTooltipDelay',       attribute: 'badge-tooltip-delay',         converter: toInt({ default: 100 }), on: 'update', description: 'Delay in ms before a badge tooltip appears.' },
   { configKey: 'badgeTooltipOffset',      attribute: 'badge-tooltip-offset',        converter: toInt({ default: 8 }), on: 'update', description: 'Gap in px between a badge and its tooltip.' },
   { configKey: 'optionTooltipDelay',      attribute: 'option-tooltip-delay',        converter: toInt(),               on: 'update', description: 'Delay in ms before an option tooltip appears (falls back to badgeTooltipDelay).' },
   { configKey: 'optionTooltipOffset',     attribute: 'option-tooltip-offset',       converter: toInt(),               on: 'update', description: 'Gap in px between an option and its tooltip.' },
 
   // ── Booleans (default true) ──────────────────────────────────────────────
-  { configKey: 'isMultipleEnabled',       attribute: 'multiple',                    converter: toBool('default-true'), on: 'reinit', description: 'Allow selecting multiple options. When off, selecting one replaces the previous.' },
+  { configKey: 'isMultiple',       attribute: 'multiple',                    converter: toBool('default-true'), on: 'reinit', description: 'Allow selecting multiple options. When off, selecting one replaces the previous.' },
   { configKey: 'isGroupsAllowed',         attribute: 'allow-groups',                converter: toBool('default-true'), on: 'reinit', description: 'Allow grouping options under group headers.' },
   { configKey: 'isCheckboxesShown',       attribute: 'show-checkboxes',             converter: toBool('default-true'), on: 'reinit', description: 'Show a checkbox on each option.' },
-  { configKey: 'isActionsSticky',         attribute: 'sticky-actions',              converter: toBool('default-true'), on: 'update', description: 'Keep the action bar pinned while the list scrolls.' },
-  { configKey: 'isPlacementLocked',       attribute: 'lock-placement',              converter: toBool('default-true'), on: 'update', description: 'Keep the dropdown initial placement instead of flipping when it fits.' },
+  { configKey: 'isActionsSticky',         attribute: 'actions-sticky',              converter: toBool('default-true'), on: 'update', description: 'Keep the action bar pinned while the list scrolls.' },
+  { configKey: 'shouldLockPlacement',       attribute: 'lock-placement',              converter: toBool('default-true'), on: 'update', description: 'Keep the dropdown initial placement instead of flipping when it fits.' },
   { configKey: 'isSearchEnabled',         attribute: 'enable-search',               converter: toBool('default-true'), on: 'reinit', description: 'Show the search input.' },
-  { configKey: 'isKeepOptionsOnSearch',   attribute: 'keep-options-on-search',      converter: toBool('default-true'), on: 'update', description: 'With `searchCallback` (hybrid search), keep showing the initial options when the dropdown opens and while the search term is shorter than `min-search-length`.' },
-  { configKey: 'shouldKeepSearchOnClose', attribute: 'should-keep-search-on-close', converter: toBool('tristate'), on: 'update', type: 'boolean', description: 'Preserve the search text and filtered results after the dropdown closes. Unset: kept in multi-select, cleared in single-select.' },
+  { configKey: 'shouldKeepOptionsOnSearch',   attribute: 'keep-options-on-search',      converter: toBool('default-true'), on: 'update', description: 'With `searchCallback` (hybrid search), keep showing the initial options when the dropdown opens and while the search term is shorter than `min-search-length`.' },
+  { configKey: 'shouldKeepSearchOnClose', attribute: 'keep-search-on-close', converter: toBool('tristate'), on: 'update', type: 'boolean', description: 'Preserve the search text and filtered results after the dropdown closes. Unset: kept in multi-select, cleared in single-select.' },
   { configKey: 'isSelectedPopoverEnabled', attribute: 'enable-selected-popover',     converter: toBool('default-true'), on: 'update', description: 'Allow the selected-items popover to open (from the count/compact/"+X more" badge or the in-input counter). Turn off when you render your own selection UI, so those affordances become inert.' },
 
   // ── Booleans (default false) ─────────────────────────────────────────────
-  { configKey: 'tabBehavior',             attribute: 'tab-behavior',                converter: toEnum(['select-highlighted', 'select-navigated', 'close'] as const, { shouldNullOnInvalid: true }), on: 'update', description: 'What Tab / Shift+Tab does while the dropdown is open, before focus moves on: `select-highlighted` selects the highlighted option (including the first match highlighted while typing), `select-navigated` only one the user arrowed to, `close` selects nothing. Unset: `select-highlighted` in single-select, `close` in multi-select. Tab never deselects.' },
-  { configKey: 'isCloseOnSelect',         attribute: 'close-on-select',             converter: toBool('default-false'), on: 'update', description: 'Close the dropdown immediately after a selection.' },
+  { configKey: 'tabBehavior',             attribute: 'tab-behavior',                converter: toEnum(['select-focused', 'select-navigated', 'close'] as const, { shouldNullOnInvalid: true }), on: 'update', description: 'What Tab / Shift+Tab does while the dropdown is open, before focus moves on: `select-focused` selects the focused option (including the first match focused while typing), `select-navigated` only one the user arrowed to, `close` selects nothing. Unset: `select-focused` in single-select, `close` in multi-select. Tab never deselects.' },
+  { configKey: 'shouldCloseOnSelect',         attribute: 'close-on-select',             converter: toBool('default-false'), on: 'update', description: 'Close the dropdown immediately after a selection.' },
   { configKey: 'isAddNewAllowed',         attribute: 'allow-add-new',               converter: toBool('default-false'), on: 'reinit', description: 'Allow adding a new option from the search text.' },
   { configKey: 'isCounterShown',          attribute: 'show-counter',                converter: toBool('default-false'), on: 'update', description: 'Show a selected-count indicator.' },
   { configKey: 'isClearShown',            attribute: 'show-clear',                  converter: toBool('default-false'), on: 'update', description: 'Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses.' },
@@ -193,8 +193,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'isVirtualScrollEnabled',  attribute: 'enable-virtual-scroll',       converter: toBool('default-false'), on: 'reinit', description: 'Force virtual scrolling on regardless of the threshold.' },
   { configKey: 'isBadgeTooltipsEnabled',  attribute: 'enable-badge-tooltips',       converter: toBool('default-false'), on: 'update', description: 'Enable tooltips on badges.' },
   { configKey: 'isOptionTooltipsEnabled', attribute: 'enable-option-tooltips',      converter: toBool('default-false'), on: 'update', description: 'Enable tooltips on options.' },
-  { configKey: 'isIconSlotReserved',      attribute: 'reserve-icon-slot',           converter: toBool('default-false'), on: 'update', description: 'Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows).' },
-  { configKey: 'isOptionTooltipFollowCursor', attribute: 'option-tooltip-follow-cursor', converter: toBool('default-false'), on: 'update', description: 'Make option tooltips follow the pointer.' },
+  { configKey: 'shouldReserveIconSlot',      attribute: 'reserve-icon-slot',           converter: toBool('default-false'), on: 'update', description: 'Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows).' },
+  { configKey: 'shouldOptionTooltipFollowCursor', attribute: 'option-tooltip-follow-cursor', converter: toBool('default-false'), on: 'update', description: 'Make option tooltips follow the pointer.' },
   { configKey: 'isSearchModeToggleShown',  attribute: 'show-search-mode-toggle',      converter: toBool('default-false'), on: 'update', description: 'Show a clickable toggle in the phone fullscreen overlay search header that flips `search-mode` between `filter` and `navigate` live. Fullscreen-only; no effect in the floating presentation or when search is disabled.' },
 
   // ── Special attributes ───────────────────────────────────────────────────
@@ -202,7 +202,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
 
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
-  { configKey: 'isPruneMissingSelectionEnabled', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `getValue()`. The prune is silent (no select/deselect/change).' },
+  { configKey: 'shouldPruneMissingSelection', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `getValue()`. The prune is silent (no select/deselect/change).' },
   { configKey: 'optionsSource', attribute: 'data-options',                            converter: toText({ isNullable: true }), on: 'reinit', type: 'string', description: 'HTML-authoring source for the option list, parsed per `data-options-format`. Reactive: changing either attribute re-renders. Prefer the `options` property in JS; a set `options` property and declarative <option> children both win over this.' },
   { configKey: 'optionsFormat', attribute: 'data-options-format',                     converter: toEnum(OPTIONS_FORMATS, { default: 'json' }), on: 'reinit', type: "'json' | 'csv' | 'plain'", description: 'How to parse the `data-options` attribute: `json` (a JSON array of objects or [value, label] tuples), `csv` (rows split on `data-options-row-splitter`, cells on `data-options-splitter`; the first row is a header — map columns via *-member), or `plain` (bare values split on both splitters -> [value, label] tuples, value === label). Default `json`.' },
   { configKey: 'optionsSplitter', attribute: 'data-options-splitter',                 converter: toText({ default: ',' }), on: 'reinit', type: 'string', description: 'Field/cell delimiter for the `csv` and `plain` `data-options` formats. Default `,`. Escapes `\\t` `\\n` `\\r` are honoured (e.g. `data-options-splitter="\\t"` for TSV). Ignored for `json`.' },
@@ -214,7 +214,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.item` (overrides valueMember).' },
   { configKey: 'getPathCallback',         converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract a node tree path from `ctx.item` (enables tree mode; overrides pathMember).' },
   { configKey: 'getGroupCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract the group name from `ctx.item` (overrides groupMember).' },
-  { configKey: 'getIsDisabledCallback',   converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => boolean', description: 'Whether the option `ctx.item` is disabled (overrides disabledMember).' },
+  { configKey: 'getIsDisabledCallback',   converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => boolean', description: 'Whether the option `ctx.item` is disabled (overrides isDisabledMember).' },
   { configKey: 'getIsSelectableCallback', converter: cb(), on: 'reinit', type: '(ctx: TreeNodeContext) => boolean', description: 'Whether a tree node can be selected (`ctx.item`, `ctx.node`; overrides is-selectable-member).' },
   { configKey: 'getSearchValueCallback',  converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | object', description: 'What `ctx.item` is searched against (overrides searchValueMember). Internal search needs a string; an object is for a custom searchCallback (ctx.entries). Computed once per item.' },
   { configKey: 'searchCallback',          converter: cb(), on: 'reinit', type: '(ctx: MultiSelectSearchContext) => unknown[] | Promise<unknown[]>', description: 'Custom / async search. `ctx.term` (typed), `ctx.signal` (aborted when superseded), `ctx.searchTerm` (from getSearchTermCallback), `ctx.entries` (every option with its search value). Return the filtered options.' },
@@ -367,7 +367,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.flush();
     const initial = this.#resolveInitialValues() ?? [];
     // A single-select holds one value — same rule as the first build.
-    this.#picker?.setSelected(this.config.isMultipleEnabled === false ? initial.slice(0, 1) : initial);
+    this.#picker?.setSelected(this.config.isMultiple === false ? initial.slice(0, 1) : initial);
   }
 
   // ── core lifecycle hooks ──────────────────────────────────────────────────
@@ -769,16 +769,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   }
 
   // ── non-input public API ──────────────────────────────────────────────────
-
-  /** Form field name (mirrors the `name` attribute → `formFieldId`). */
-  get name(): string | null {
-    return this.getAttribute('name');
-  }
-
-  set name(value: string | null) {
-    if (value) this.setAttribute('name', value);
-    else this.removeAttribute('name');
-  }
 
   get selectedValue(): string | number | (string | number)[] | null {
     this.flush(); // apply a pending `options = …` before reading live picker state

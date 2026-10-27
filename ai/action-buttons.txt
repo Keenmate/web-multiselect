@@ -276,7 +276,7 @@ STICKY ACTIONS
 --------------
 Keep actions visible when scrolling:
 
-<web-multiselect sticky-actions="true">
+<web-multiselect actions-sticky="true">
 </web-multiselect>
 
 Behavior:
@@ -284,7 +284,7 @@ Behavior:
 - Better UX for long lists
 
 Disable:
-<web-multiselect sticky-actions="false">
+<web-multiselect actions-sticky="false">
 </web-multiselect>
 
 ASYNC ACTIONS

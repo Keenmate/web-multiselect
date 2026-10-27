@@ -57,7 +57,7 @@ Map custom object properties:
   icon-member="emoji"
   subtitle-member="description"
   group-member="category"
-  disabled-member="isDisabled">
+  is-disabled-member="isDisabled">
 </web-multiselect>
 
 Or programmatically:
@@ -67,7 +67,7 @@ select.searchValueMember = 'searchText';
 select.iconMember = 'emoji';
 select.subtitleMember = 'description';
 select.groupMember = 'category';
-select.disabledMember = 'isDisabled';
+select.isDisabledMember = 'isDisabled';
 
 Example:
 select.options = [
@@ -268,7 +268,7 @@ select.options = [
 ];
 
 Custom property:
-select.disabledMember = 'isDisabled';
+select.isDisabledMember = 'isDisabled';
 select.options = [
   { id: 1, name: 'Available', isDisabled: false },
   { id: 2, name: 'Disabled', isDisabled: true }
@@ -341,7 +341,7 @@ select.options = users;
 select.valueMember = 'userId';
 select.displayValueMember = 'firstName';
 select.groupMember = 'department';
-select.disabledMember = 'isActive';  // Note: inverted logic not possible
+select.isDisabledMember = 'isActive';  // Note: inverted logic not possible
 
 select.options = users;
 

@@ -29,7 +29,7 @@
 
     <div class="fixture">
         <div class="fixture-label">partial (max 2 badges + more)</div>
-        <web-multiselect id="mode-partial" badges-display-mode="partial" badges-max-visible="2" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="mode-partial" badges-display-mode="partial" max-visible-badge-count="2" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <div class="fixture">
@@ -64,7 +64,7 @@
 
     <div class="fixture">
         <div class="fixture-label">badges-threshold=2 with badges-threshold-mode="partial"</div>
-        <web-multiselect id="threshold-partial" badges-threshold="2" badges-threshold-mode="partial" badges-max-visible="2" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="threshold-partial" badges-threshold="2" badges-threshold-mode="partial" max-visible-badge-count="2" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <!-- selected-order fixtures (dataset `priced`: Mango/30, Apricot/10, Plum/20) -->
@@ -95,7 +95,7 @@
 
     <div class="fixture">
         <div class="fixture-label">selected-order="member" + partial (max 1) — "+N more" hides the higher-priced items</div>
-        <web-multiselect id="order-partial-member" badges-display-mode="partial" badges-max-visible="1" selected-order="member" selected-order-member="price" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="order-partial-member" badges-display-mode="partial" max-visible-badge-count="1" selected-order="member" selected-order-member="price" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <script type="module">

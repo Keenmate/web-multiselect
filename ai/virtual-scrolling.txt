@@ -60,11 +60,11 @@ OPTION HEIGHT
 -------------
 Set fixed height for each option:
 
-<web-multiselect option-height="50">
+<web-multiselect virtual-scroll-item-height="50">
 </web-multiselect>
 
 Programmatic:
-select.optionHeight = 40;
+select.virtualScrollItemHeight = 40;
 
 Default: 50px
 
@@ -77,11 +77,11 @@ BUFFER SIZE
 -----------
 Configure rendering buffer:
 
-<web-multiselect virtual-scroll-buffer="10">
+<web-multiselect virtual-scroll-overscan="10">
 </web-multiselect>
 
 Programmatic:
-select.virtualScrollBuffer = 5;
+select.virtualScrollOverscan = 5;
 
 Default: 10 items
 
@@ -146,7 +146,7 @@ Virtual scroll requires fixed item height:
     --ml-option-line-height: 1.5;
   }
 </style>
-<web-multiselect option-height="50">
+<web-multiselect virtual-scroll-item-height="50">
 </web-multiselect>
 
 ❌ Incorrect:
@@ -162,7 +162,7 @@ Measure your option height:
 const testSelect = document.querySelector('web-multiselect');
 // Open dropdown
 // Use browser devtools to measure option height
-// Set option-height attribute to measured value
+// Set virtual-scroll-item-height attribute to measured value
 
 Or calculate:
 padding-top + padding-bottom + content-height + border
@@ -174,7 +174,7 @@ Example:
 + 2px (border)
 = 50px
 
-Set: option-height="50"
+Set: virtual-scroll-item-height="50"
 
 WITH ICONS AND SUBTITLES
 -------------------------
@@ -187,7 +187,7 @@ Option with icon and subtitle:
 - Padding: 12px top + 12px bottom
 - Total: 84px
 
-<web-multiselect option-height="84">
+<web-multiselect virtual-scroll-item-height="84">
 </web-multiselect>
 
 GROUPS WITH VIRTUAL SCROLL
@@ -318,7 +318,7 @@ select.renderOptionContentCallback = (context) => {
   `;
 };
 
-IMPORTANT: Ensure rendered content matches option-height
+IMPORTANT: Ensure rendered content matches virtual-scroll-item-height
 
 TESTING PERFORMANCE
 -------------------
@@ -343,14 +343,14 @@ setCategoryLevel('MULTISELECT:UI', 'debug');
 
 Check virtual scroll state:
 console.log('Virtual scroll enabled:', select.enableVirtualScroll);
-console.log('Option height:', select.optionHeight);
-console.log('Buffer size:', select.virtualScrollBuffer);
+console.log('Option height:', select.virtualScrollItemHeight);
+console.log('Buffer size:', select.virtualScrollOverscan);
 console.log('Threshold:', select.virtualScrollThreshold);
 
 BEST PRACTICES
 --------------
 ✅ Enable for 100+ options
-✅ Set correct option-height
+✅ Set correct virtual-scroll-item-height
 ✅ Use fixed height for all options
 ✅ Test scrolling performance
 ✅ Adjust buffer for smooth scrolling
@@ -371,21 +371,21 @@ Auto-enable (default):
 Always enabled:
 <web-multiselect
   enable-virtual-scroll="true"
-  option-height="50">
+  virtual-scroll-item-height="50">
 </web-multiselect>
 
 Large dataset:
 <web-multiselect
   enable-virtual-scroll="true"
-  option-height="60"
-  virtual-scroll-buffer="10">
+  virtual-scroll-item-height="60"
+  virtual-scroll-overscan="10">
 </web-multiselect>
 
 With custom rendering:
 select.renderOptionContentCallback = (context) => {
   return `<div style="height: 50px;">...</div>`;
 };
-select.optionHeight = 50;
+select.virtualScrollItemHeight = 50;
 select.enableVirtualScroll = true;
 
 REAL-WORLD EXAMPLE
@@ -396,7 +396,7 @@ Country selector with 195 countries:
   enable-search="true"
   enable-virtual-scroll="true"
   virtual-scroll-threshold="100"
-  option-height="50">
+  virtual-scroll-item-height="50">
 </web-multiselect>
 
 select.options = countries;  // 195 items
@@ -409,7 +409,7 @@ Performance:
 
 OPTIMIZATION TIPS
 -----------------
-1. Set correct option-height
+1. Set correct virtual-scroll-item-height
    Measure actual rendered height
 
 2. Adjust buffer for hardware
@@ -428,10 +428,10 @@ OPTIMIZATION TIPS
 TROUBLESHOOTING
 ---------------
 Issue: Scroll jumpy/flickering
-Fix: Increase virtual-scroll-buffer
+Fix: Increase virtual-scroll-overscan
 
 Issue: Wrong items rendered
-Fix: Verify option-height matches actual height
+Fix: Verify virtual-scroll-item-height matches actual height
 
 Issue: Selection not working
 Fix: Virtual scroll doesn't affect selection, check other code

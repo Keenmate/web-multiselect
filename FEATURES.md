@@ -42,7 +42,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Icon member | attr/prop | `icon-member` / `iconMember` | — | Property name for icon/emoji | | |
 | Subtitle member | attr/prop | `subtitle-member` / `subtitleMember` | — | Property name for subtitle | | |
 | Group member | attr/prop | `group-member` / `groupMember` | — | Property name for group | | |
-| Disabled member | attr/prop | `disabled-member` / `disabledMember` | — | Property name for disabled flag | | |
+| Disabled member | attr/prop | `is-disabled-member` / `isDisabledMember` | — | Property name for disabled flag | | |
 | Value extraction callback | callback | `getValueCallback({ item })` | — | Complex value extraction | | |
 | Display value callback | callback | `getDisplayValueCallback({ item })` | — | Complex label extraction | | |
 | Search value callback | callback | `getSearchValueCallback({ item })` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
@@ -64,7 +64,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Pre-process search term | callback | `beforeSearchCallback({ term })` | — | Return a string to replace the term, `false` to skip the search | | |
 | Prepare search term | callback | `getSearchTermCallback({ term, target, behavior, match })` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `ctx.searchTerm`) | | |
 | Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
-| Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `isKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
+| Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `shouldKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
 | Loading message | attr/prop | `loading-message` / `loadingMessage` | `'Loading...'` | Shown during async fetch | | |
 | Empty / no-results message | attr/prop | `empty-message` / `emptyMessage` | `'No results found'` | Shown when filtered list empty | | |
 
@@ -86,12 +86,12 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Multiple vs single select | attr/prop | `multiple` / `isMultipleEnabled` | `bool(true)` | `="false"` for single-select | | |
+| Multiple vs single select | attr/prop | `multiple` / `isMultiple` | `bool(true)` | `="false"` for single-select | | |
 | Badges display mode | attr/prop | `badges-display-mode` / `badgesDisplayMode` | `'badges'` | `badges`\|`count`\|`compact`\|`partial`\|`none` | | |
 | Badges position | attr/prop | `badges-position` / `badgesPosition` | `'bottom'` | `top`\|`bottom`\|`left`\|`right` | | |
 | Badges threshold | attr/prop | `badges-threshold` / `badgesThreshold` | — | Auto-switch display when exceeded | | |
 | Badges threshold mode | attr/prop | `badges-threshold-mode` / `badgesThresholdMode` | `'count'` | `count` \| `partial` after threshold | | |
-| Max visible badges (partial) | attr/prop | `badges-max-visible` / `badgesMaxVisible` | — | Limit before "+X more" badge | | |
+| Max visible badges (partial) | attr/prop | `max-visible-badge-count` / `maxVisibleBadgeCount` | — | Limit before "+X more" badge | | |
 | In-input counter badge | attr/prop | `show-counter` / `isCounterShown` | `bool(false)` | `[3]` next to toggle | | |
 | Counter text callback (i18n) | callback | `getCounterCallback({ count, moreCount })` | — | Pluralization / "+X more" text | | |
 | Read selected options | method | `getSelected()` | — | Returns option objects | | |
@@ -144,7 +144,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Dynamic class | callback | `MultiSelectActionItem.getClassCallback(ctx)` | — | | | |
 | Dynamic tooltip | callback | `MultiSelectActionItem.getTooltipCallback(ctx)` | — | | | |
 | Cancel an action | callback | `beforeActionCallback(detail)` | — | `false` cancels the item's `onClick`, the `action` event and the built-in | | |
-| Sticky actions | attr/prop | `sticky-actions` / `isActionsSticky` | `bool(true)` | Fixed at top while scrolling | | |
+| Sticky actions | attr/prop | `actions-sticky` / `isActionsSticky` | `bool(true)` | Fixed at top while scrolling | | |
 | Actions layout | attr/prop | `actions-layout` / `actionsLayout` | `'nowrap'` | `nowrap` \| `wrap` | | |
 
 ## 8. Grouping & checkboxes
@@ -154,7 +154,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Enable grouping | attr/prop | `allow-groups` / `isGroupsAllowed` | `bool(true)` | | | |
 | Show checkboxes | attr/prop | `show-checkboxes` / `isCheckboxesShown` | `bool(true)` | Multi-select only | | |
 | Checkbox alignment | attr/prop | `checkbox-align` / `checkboxAlign` | `'center'` | `top` \| `center` \| `bottom` | | |
-| Disabled-option behavior | behavior | `disabled-member` / `getIsDisabledCallback` | — | Disabled options are non-selectable + get `.ms__option--disabled` (e2e: `disabled.spec.ts`) | | |
+| Disabled-option behavior | behavior | `is-disabled-member` / `getIsDisabledCallback` | — | Disabled options are non-selectable + get `.ms__option--disabled` (e2e: `disabled.spec.ts`) | | |
 
 ## 9. Virtual scrolling
 
@@ -162,19 +162,19 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 |---|---|---|---|---|---|---|
 | Enable virtual scroll | attr/prop | `enable-virtual-scroll` / `isVirtualScrollEnabled` | `bool(false)` | | | |
 | Virtual scroll threshold | attr/prop | `virtual-scroll-threshold` / `virtualScrollThreshold` | `100` | Min items before activating | | |
-| Option height | attr/prop | `option-height` / `optionHeight` | `50` | px; required for virtual scroll | | |
+| Option height | attr/prop | `virtual-scroll-item-height` / `virtualScrollItemHeight` | `50` | px; required for virtual scroll | | |
 | Badge height (popover) | prop | `badgeHeight` | `36` | px; popover virtual scroll | | |
-| Virtual scroll buffer | attr/prop | `virtual-scroll-buffer` / `virtualScrollBuffer` | `10` | Extra rows above/below viewport | | |
+| Virtual scroll buffer | attr/prop | `virtual-scroll-overscan` / `virtualScrollOverscan` | `10` | Extra rows above/below viewport | | |
 
 ## 10. Dropdown layout & behavior
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Close on select | attr/prop | `close-on-select` / `isCloseOnSelect` | `bool(false)` | | | |
+| Close on select | attr/prop | `close-on-select` / `shouldCloseOnSelect` | `bool(false)` | | | |
 | Auto-positioning (Floating UI) | behavior | dropdown / popover / tooltip placement | — | Auto-flip + overflow-escape (e2e: `positioning.spec.ts`, `floating-panels.spec.ts`) | | |
-| Lock placement | attr/prop | `lock-placement` / `isPlacementLocked` | `bool(true)` | Prevent flip after first open | | |
-| Keep search on close | attr/prop | `should-keep-search-on-close` / `shouldKeepSearchOnClose` | `bool(tristate)` | Preserve text + filtered results. Unset: kept in multi, cleared in single | | ✓ |
-| Tab behavior | attr/prop | `tab-behavior` / `tabBehavior` | unset | `select-highlighted` / `select-navigated` / `close`; unset = `select-highlighted` (single), `close` (multi) | | ✓ |
+| Lock placement | attr/prop | `lock-placement` / `shouldLockPlacement` | `bool(true)` | Prevent flip after first open | | |
+| Keep search on close | attr/prop | `keep-search-on-close` / `shouldKeepSearchOnClose` | `bool(tristate)` | Preserve text + filtered results. Unset: kept in multi, cleared in single | | ✓ |
+| Tab behavior | attr/prop | `tab-behavior` / `tabBehavior` | unset | `select-focused` / `select-navigated` / `close`; unset = `select-focused` (single), `close` (multi) | | ✓ |
 | Dropdown min width | attr/prop | `dropdown-min-width` / `dropdownMinWidth` | — | e.g. `'20rem'` | | |
 | Dropdown max width | attr/prop | `dropdown-max-width` / `dropdownMaxWidth` | — | e.g. `'40rem'` | | |
 | Dropdown max height | attr/prop | `max-height` / `maxHeight` | `'20rem'` | | | |
@@ -183,7 +183,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Form field name | attr/prop | `name` / `formFieldId` | — | Creates hidden input(s) in light DOM | | |
+| Form field name | attr/prop | `name` / `name` | — | Creates hidden input(s) in light DOM | | |
 | Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `csv` \| `array` | | |
 | Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization | | |
 

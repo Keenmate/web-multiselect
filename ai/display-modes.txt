@@ -91,7 +91,7 @@ Shows limited number of badges + "+X more":
 
 <web-multiselect
   badges-display-mode="partial"
-  badges-max-visible="3">
+  max-visible-badge-count="3">
 </web-multiselect>
 
 Behavior:
@@ -104,7 +104,7 @@ Display:
 [JavaScript] [TypeScript] [Python] [+2 more]
 
 Configure max visible:
-select.badgesMaxVisible = 5;
+select.maxVisibleBadgeCount = 5;
 
 Use when:
 - Show some selections, hide overflow
@@ -464,7 +464,7 @@ select.getBadgeDisplayCallback = ({ item }) => {
 Partial with tooltips:
 <web-multiselect
   badges-display-mode="partial"
-  badges-max-visible="3"
+  max-visible-badge-count="3"
   enable-badge-tooltips="true">
 </web-multiselect>
 
@@ -474,4 +474,4 @@ Inspect badge state:
 console.log('Display mode:', select.badgesDisplayMode);
 console.log('Position:', select.badgesPosition);
 console.log('Threshold:', select.badgesThreshold);
-console.log('Max visible:', select.badgesMaxVisible);
+console.log('Max visible:', select.maxVisibleBadgeCount);
