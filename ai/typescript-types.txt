@@ -96,7 +96,7 @@ Configuration interface:
 interface MultiSelectConfig<T = any> {
   multiple?: boolean;
   enableSearch?: boolean;
-  searchPlaceholder?: string;
+  labels?: MultiSelectLabels;   // every UI string: searchPlaceholder, empty, loading, …
   searchMode?: SearchMode;
   searchBehavior?: SearchBehavior;
   searchMatch?: SearchMatch;

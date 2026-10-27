@@ -281,8 +281,8 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
             label.textContent = `Dynamic picker #${++dynN}`;
             const el = document.createElement('web-multiselect');
             el.id = `dyn-${dynN}`;
-            el.setAttribute('is-multiple-enabled', 'true');
-            el.setAttribute('search-placeholder', 'Search fruits...');
+            el.setAttribute('multiple', 'true');
+            el.labels = { searchPlaceholder: 'Search fruits...' };
             wrap.append(label, el);
             host.appendChild(wrap);
             fruitCfg(el); // connectedCallback already fired on append

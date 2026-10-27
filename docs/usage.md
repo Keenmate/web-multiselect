@@ -135,13 +135,10 @@ multiselect.setSelected(['js', 'ts']);
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
+| `labels` | `JSON object` | - | Every UI string (placeholders, empty / loading text, hint, counters, "add new" prompt, popover title, ARIA labels) — partial map, unset keys stay English. See [Labels (i18n)](#labels-i18n) |
 | `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted. An ancestor `<fieldset disabled>` disables it too. Reflects |
 | `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): no selection change, the dropdown doesn't open, still focusable and submitted. Reflects |
 | `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `release()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `ready` attribute after building |
-| `search-placeholder` | `string` | `'Search...'` | Placeholder text shown while search is usable. When unset and `show-search-mode-toggle` is on, the default becomes mode-aware (`Search…` in navigate, `Filter…` in filter) and switches with the toggle; an explicit value always wins and stays fixed |
-| `select-placeholder` | `string` | `'Pick an option...'` | Placeholder shown when search is disabled (`enable-search="false"`, or `search-input-mode` `readonly`/`hidden`) — the input acts as a picker, not a search box |
-| `no-data-placeholder` | `string` | - | Opt-in placeholder shown when the option list is empty, so users see there's no data without opening. Highest priority when the list is empty. Useful for cascade multiselects (a child whose parent isn't resolved yet) |
-| `search-hint` | `string` | - | Hint text shown above input when focused |
 | `allow-groups` | `boolean` | `true` | Enable option grouping |
 | `group-select-mode` | `'none' \| 'cascade'` | `'none'` | Group-header selection in a flat (non-tree) grouped multi-select list. `none`: headers are inert labels. `cascade`: each header shows a tristate checkbox that checks/unchecks all of the group's currently-visible members (the group itself is never a selected value). No effect in tree mode (use `checkbox-mode`) or single-select |
 | `show-checkboxes` | `boolean` | `true` | Show checkboxes next to options |
@@ -162,7 +159,6 @@ multiselect.setSelected(['js', 'ts']);
 | `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `selectedValue`, `selectedOptions` and form output keep pick order; the dropdown is never reordered |
 | `selected-order-member` | `string` | - | Property used as the sort key when `selected-order="member"`. Numeric keys sort numerically. Overridden by `getSelectedOrderCallback` |
 | `enable-selected-popover` | `boolean` | `true` | Allow the selected-items popover to open (from the count/compact/"+N more" badge or the in-input counter). Turn off when you render your own selection UI |
-| `selected-popover-title` | `string` | `'Selected Items ({count})'` | Header text of the selected-items popover. `{count}` is replaced with the selection count |
 | `selected-popover-width` | `string` | - | Selected-items popover width; mirrored to the `--ms-selected-popover-width` CSS variable |
 | `show-counter` | `boolean` | `false` | Show `[3]` badge next to toggle icon |
 | `show-clear` | `boolean` | `false` | Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses |
@@ -170,15 +166,12 @@ multiselect.setSelected(['js', 'ts']);
 | `badge-tooltip-placement` | floating-ui placement: `'top' \| 'top-start' \| 'top-end' \| 'bottom' \| 'bottom-start' \| 'bottom-end' \| 'left' \| 'left-start' \| 'left-end' \| 'right' \| 'right-start' \| 'right-end'` | `'top'` | Tooltip placement relative to badge |
 | `badge-tooltip-delay` | `number` | `100` | Delay in ms before showing tooltip |
 | `badge-tooltip-offset` | `number` | `8` | Distance in pixels between badge and tooltip |
-| `remove-button-tooltip-text` | `string` | `'Remove {0}'` | Hover-tooltip text for a badge's remove (×) button; `{0}` is replaced with the item's label. Shown only with `enable-badge-tooltips`. `getRemoveButtonTooltipCallback` wins. (The button's `aria-label` comes from `labels.removeItem`, not this) |
 | `enable-option-tooltips` | `boolean` | `false` | Enable hover tooltips on dropdown options |
 | `option-tooltip-placement` | floating-ui placement (same 12 values as `badge-tooltip-placement`) | `'top-start'` | Option tooltip placement (anchored to the row's start edge by default; use `left`/`right` for the start/end side on a narrow control) |
 | `option-tooltip-delay` | `number` | inherits `badge-tooltip-delay`, then `100` | Delay in ms before showing an option tooltip |
 | `option-tooltip-offset` | `number` | inherits `badge-tooltip-offset`, then `8` | Distance in pixels between row and option tooltip |
 | `option-tooltip-follow-cursor` | `boolean` | `false` | Anchor the option tooltip to the mouse pointer and follow it across the row (best for full-width rows) |
 | `max-height` | `string` | `'20rem'` | Maximum height of dropdown |
-| `empty-message` | `string` | `'No results found'` | Message when no options found |
-| `loading-message` | `string` | `'Loading...'` | Message while loading async data |
 | `min-search-length` | `number` | `0` | Minimum characters before searching starts (local filter/navigate and async `searchCallback`); shorter terms show all options |
 | `search-debounce` | `number` | `0` | Debounce (ms) before the async `searchCallback` fires; coalesces keystroke bursts into one request. Resets on each keystroke. Async callback only — local filtering stays instant. `0` = no debounce |
 | `keep-options-on-search` | `boolean` | `true` | Keep initial options visible when `searchCallback` is active (hybrid search) |
@@ -199,8 +192,6 @@ multiselect.setSelected(['js', 'ts']);
 | `mobile-presentation` | `'auto' \| 'floating' \| 'fullscreen'` | `'auto'` | How the open dropdown is presented on phones. `auto`: floating panel on desktop/tablet, full-screen overlay on phone-sized touch devices. `floating`: anchored panel everywhere. `fullscreen`: full-screen overlay on any device (handy for previews/testing) |
 | `fullscreen-autofocus` | `boolean` | `false` | In the phone fullscreen overlay, focus the search field on open (pops the soft keyboard immediately). Default: the sheet opens with the list visible and the keyboard closed. No effect in the floating presentation |
 | `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list (fires the `add` event) |
-| `add-new-text` | `string` | `'Add "{value}"'` | Template for the "add new" prompt shown in place of the empty message when a search has no matches. `{value}` is the typed text. `getAddNewTextCallback` wins |
-| `add-new-pending-text` | `string` | `'Adding "{value}"…'` | Template for the pending prompt (spinner + text) shown while an async `beforeAddCallback` runs. `{value}` is the typed text |
 | `value-member` | `string` | `'value'` | Property name for value/ID extraction. `getValueCallback` overrides it. Primitive options (strings/numbers) are their own value |
 | `display-value-member` | `string` | `'label'` | Property name for display text extraction. `getDisplayValueCallback` overrides it. Primitive options display themselves |
 | `search-value-member` | `string` | - | Property name for search text extraction from custom objects |
@@ -579,30 +570,48 @@ multiselect.beforeAddCallback = async ({ value }) => {
   return newOption;
 };
 
-// "Add new" prompt label (plain text; wins over add-new-text)
+// "Add new" prompt label (plain text; wins over labels.addNew)
 multiselect.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
 
-// i18n of ARIA labels / short UI strings — see "Labels (i18n)" below
+// i18n of every UI string — see "Labels (i18n)" below
 multiselect.labels = { removeItem: 'Odebrat {item}', close: 'Zavřít' };
 ```
 
 ### Labels (i18n)
 
-`labels` is a property-only, partial `MultiSelectLabels` map. Any key you leave unset falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader (`aria-label`) strings; visible text (placeholders, empty/loading messages, counter, popover title) has its own attributes.
+`labels` is a partial `MultiSelectLabels` map holding **every** user-facing string — set it as a
+property (object) or as a JSON attribute (`labels='{"empty":"Nic","searchPlaceholder":"Hledat…"}'`).
+Any key you leave unset falls back to its English default. Named placeholders (`{count}`,
+`{item}`, `{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the
+picker (the selection is kept).
 
 | Key | Default | Used for |
 |-----|---------|----------|
+| `selectPlaceholder` | `Pick an option...` | Closed-input placeholder when search is not usable (picker mode) |
+| `searchPlaceholder` | `Search...` | Search input placeholder (pins one text in every mode) |
+| `filterPlaceholder` / `navigatePlaceholder` | `Filter…` / `Search…` | Mode-aware placeholder with `show-search-mode-toggle` when `searchPlaceholder` is unset |
+| `noData` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
+| `empty` | `No results found` | Dropdown text when nothing matches (also the fullscreen "no matches" counter) |
+| `loading` | `Loading...` | Dropdown text while async options load |
+| `searchHint` | (empty = no hint) | Hint under the search input while open |
+| `addNew` | `Add "{value}"` | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
+| `addNewPending` | `Adding "{value}"…` | Pending prompt while an async `beforeAddCallback` runs |
+| `selectedCount` | `{count} selected` | Badges-area count text (`getCounterCallback` wins) |
+| `moreCount` | `+{count} more` | The "+X more" badge (`getCounterCallback` wins) |
+| `selectedPopoverTitle` | `Selected Items ({count})` | Selected-items popover header |
+| `matchPosition` | `{position} of {total}` | Fullscreen navigate-mode position |
+| `matchCount` / `matchCountOne` | `{count} matches` / `{count} match` | Fullscreen navigate-mode match count |
 | `close` | `Close` | Selected-items popover / fullscreen close button |
-| `clearSelection` | `Clear selection` | Inline ✕ clear button (`show-clear`) |
-| `clearAllSelections` | `Clear all selections` | Clear (×) button on the count / compact badge |
+| `clearAllSelections` | `Clear all selections` | Inline ✕ clear button (`show-clear`) and the clear (×) on the count / compact badge |
 | `clearSearch` | `Clear search` | Fullscreen search clear (✕) |
 | `showFullLabel` | `Show full label` | Option info button that reveals a clipped label (fullscreen) |
-| `removeItem` | `Remove {item}` | Badge remove (×) button; `{item}` = the item's label |
+| `removeItem` | `Remove {item}` | Badge remove (×) aria-label and its tooltip; `{item}` = the item's label (`getRemoveButtonTooltipCallback` wins for the tooltip) |
 | `removeHiddenItems` | `Remove {count} hidden items` | "+N more" badge remove (×); `{count}` = hidden count |
-| `groupSelectedLabel` | `{count} selected` | Group-header selected-count chip |
+| `groupSelected` | `{count} selected` | Group-header selected-count chip |
 | `andMore` | `…and {count} more` | Counter tooltip overflow tail (beyond 12 items) |
-| `prevMatch` | `Previous match` | Fullscreen navigate-mode "previous match" button |
-| `nextMatch` | `Next match` | Fullscreen navigate-mode "next match" button |
+| `prevMatch` / `nextMatch` | `Previous match` / `Next match` | Fullscreen navigate-mode buttons |
+| `switchToFilterMode` / `switchToNavigateMode` | `Switch to filter mode` / `Switch to navigate mode` | Fullscreen search-mode toggle |
+| `selectAll` / `clearSelection` | `Select all` / `Clear all` | Built-in `select-all` / `clear-selection` action buttons |
 
 ### Reading back state after a write (v2)
 
@@ -638,7 +647,7 @@ You do **not** need to await between a property write and an imperative method �
 | `hideMessage()` | Dismiss the message shown by `showMessage()` |
 | `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered — see below |
 | `batch(fn: () => void)` | Run `fn` (e.g. several `setAttribute` calls) and apply the resulting changes as one update. Flushes synchronously |
-| `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `searchPlaceholder`) or their kebab attribute (`search-placeholder`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
+| `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `maxHeight`) or their kebab attribute (`max-height`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
 | `release()` | Release the `defer` render gate: build the picker once with everything wired while deferred (flushes pending property writes first). No-op if not deferred or already built. Latched. Fires the `ready` event |
 | `isReady` | Property (read-only): `true` once the picker has been built (the `ready` event has fired). `false` while a `defer` gate is still held. Reflected as the `ready` attribute |
 | `whenReady()` | `Promise<void>` resolving once the first build is live (right after the `ready` event); at once when it already is. Core `BlissElement` |

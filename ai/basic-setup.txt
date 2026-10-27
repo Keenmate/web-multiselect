@@ -82,7 +82,7 @@ Common HTML attributes:
 <web-multiselect
   multiple="false"              <!-- Single-select mode -->
   enable-search="true"           <!-- Enable search box (default) -->
-  search-placeholder="Search..."
+  labels='{"searchPlaceholder":"Search..."}'
   show-checkboxes="true"         <!-- Show checkboxes (default) -->
   close-on-select="false"        <!-- Keep open after selection -->
   max-height="20rem"             <!-- Dropdown height -->
@@ -180,7 +180,7 @@ Control search behavior:
 
 <web-multiselect
   enable-search="true"               <!-- Enable/disable search -->
-  search-placeholder="Type to search..."
+  labels='{"searchPlaceholder":"Type to search..."}'
   min-search-length="2"              <!-- Minimum chars to trigger -->
   search-mode="filter">              <!-- "filter" or "navigate" -->
 </web-multiselect>

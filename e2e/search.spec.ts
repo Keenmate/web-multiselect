@@ -501,7 +501,7 @@ test.describe('enable-search="false"', () => {
     });
 });
 
-test.describe('empty-message', () => {
+test.describe('labels.empty', () => {
     test('custom empty message shown when no results', async ({ page }) => {
         const p = picker(page, 'empty-msg');
         await openDropdown(p);

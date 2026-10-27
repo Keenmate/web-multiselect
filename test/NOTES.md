@@ -96,11 +96,11 @@ scenario fully declarative.
 ## 3. ~~Search hint stays anchored when the dropdown opens (doc drift)~~ — FIXED in 1.10.0
 
 **Where:** `src/multiselect.ts` — `positionHint()` runs only when the dropdown
-opens (in `open()`), and the hint visibility is gated on `searchHint` being
+opens (in `open()`), and the hint visibility is gated on `labels.searchHint` being
 set + the dropdown being open.
 
 **What I noticed:** The hint never appears unless the dropdown is open. That's
-intentional based on the variable name (`searchHint` — a label for the search
+intentional based on the variable name (`labels.searchHint` — a label for the search
 input area), but it's worth flagging because the comment "hint shown above the
 input when focused" in `types.ts:228` suggests it appears on input focus, not
 on dropdown open. The actual behavior is dropdown-open-driven.

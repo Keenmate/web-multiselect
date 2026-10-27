@@ -65,8 +65,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Prepare search term | callback | `getSearchTermCallback({ term, target, behavior, match })` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `ctx.searchTerm`) | | |
 | Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
 | Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `shouldKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
-| Loading message | attr/prop | `loading-message` / `loadingMessage` | `'Loading...'` | Shown during async fetch | | |
-| Empty / no-results message | attr/prop | `empty-message` / `emptyMessage` | `'No results found'` | Shown when filtered list empty | | |
+| Loading message | labels | `labels.loading` | `'Loading...'` | Shown during async fetch | | |
+| Empty / no-results message | labels | `labels.empty` | `'No results found'` | Shown when filtered list empty | | |
 
 ## 3. Search input & behavior
 
@@ -77,10 +77,10 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Search mode | attr/prop | `search-mode` / `searchMode` | `'filter'` | `filter` (hide non-matches) \| `navigate` (jump) | | |
 | Search behavior | attr/prop | `search-behavior` / `searchBehavior` | `'normalized'` | `normalized` (ignore case + diacritics) \| `case-insensitive` \| `exact`; internal search only | | |
 | Search match | attr/prop | `search-match` / `searchMatch` | `'contains'` | `contains` \| `equals` \| `starts-with` \| `word-starts-with` \| `ends-with` \| `word-ends-with` \| `regex` (raw value, no normalization) | | |
-| Search placeholder | attr/prop | `search-placeholder` / `searchPlaceholder` | `'Search...'` | Shown while search is usable | | |
-| Select placeholder | attr/prop | `select-placeholder` / `selectPlaceholder` | `'Pick an option...'` | Shown when search disabled (picker mode) | | |
-| No-data placeholder | attr/prop | `no-data-placeholder` / `noDataPlaceholder` | — | Opt-in; shown when option list empty (cascades) | | |
-| Search hint | attr/prop | `search-hint` / `searchHint` | — | Hint text above input while open | | |
+| Search placeholder | labels | `labels.searchPlaceholder` | `'Search...'` | Shown while search is usable | | |
+| Select placeholder | labels | `labels.selectPlaceholder` | `'Pick an option...'` | Shown when search disabled (picker mode) | | |
+| No-data placeholder | labels | `labels.noData` | — | Opt-in; shown when option list empty (cascades) | | |
+| Search hint | labels | `labels.searchHint` | — | Hint text above input while open | | |
 
 ## 4. Selection / display modes
 
@@ -110,7 +110,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Enable badge tooltips | attr/prop | `enable-badge-tooltips` / `isBadgeTooltipsEnabled` | `bool(false)` | | | |
 | Custom badge tooltip content | callback | `getBadgeTooltipCallback({ option, displayMode, isInPopover })` | — | string or HTMLElement | | |
 | Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ option })` | — | Per-item remove tooltip text | | |
-| Remove-button tooltip format | attr/prop | `remove-button-tooltip-text` / `removeButtonTooltipText` | `'Remove {0}'` | `{0}` = item name | | |
+| Remove-button tooltip / aria-label | labels | `labels.removeItem` | `'Remove {item}'` | `{item}` = item name | | |
 | Tooltip placement | attr/prop | `badge-tooltip-placement` / `badgeTooltipPlacement` | `'top'` | Floating-UI placements | | |
 | Tooltip delay | attr/prop | `badge-tooltip-delay` / `badgeTooltipDelay` | `100` | ms before show | | |
 | Tooltip offset | attr/prop | `badge-tooltip-offset` / `badgeTooltipOffset` | `8` | px gap from badge | | |

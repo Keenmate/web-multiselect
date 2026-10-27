@@ -53,7 +53,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `search-input-mode="readonly"` disables typing                | ✓      | `search.spec.ts`             | `search.html`             |
 | `search-input-mode="hidden"` hides input entirely             | ✓      | `search.spec.ts`             | `search.html`             |
 | `enable-search="false"` disables search subsystem             | ✓      | `search.spec.ts`             | `search.html`             |
-| Empty result shows `empty-message`                            | ✓      | `search.spec.ts`             | `search.html`             |
+| Empty result shows `labels.empty`                             | ✓      | `search.spec.ts`             | `search.html`             |
 | `min-search-length` defers search until threshold             | ✓      | `search.spec.ts`             | `search.html`             |
 | `searchCallback` async loading + loading message              | ✓      | `search.spec.ts`             | `search.html`             |
 | `keep-options-on-search` retains options when search clears   | ✓      | `search.spec.ts`             | `search.html`             |

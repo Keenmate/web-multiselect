@@ -148,16 +148,10 @@
                     <td>Input display mode: 'normal', 'readonly', or 'hidden'.</td>
                 </tr>
                 <tr>
-                    <td><code>search-placeholder</code></td>
-                    <td class="type">string</td>
-                    <td class="default">'Search...'</td>
-                    <td>Placeholder text for the search input field.</td>
-                </tr>
-                <tr>
-                    <td><code>search-hint</code></td>
-                    <td class="type">string</td>
-                    <td class="default">undefined</td>
-                    <td>Hint text shown in a popover when input is focused.</td>
+                    <td><code>labels</code></td>
+                    <td class="type">JSON object</td>
+                    <td class="default">—</td>
+                    <td>Every UI string (placeholders, empty / loading text, hint, counters, popover title, ARIA labels) as a partial map; unset keys stay English. See docs/usage.md → Labels (i18n).</td>
                 </tr>
                 <tr>
                     <td><code>min-search-length</code></td>
@@ -256,18 +250,6 @@
                     <td>Maximum height for dropdown options list.</td>
                 </tr>
                 <tr>
-                    <td><code>empty-message</code></td>
-                    <td class="type">string</td>
-                    <td class="default">'No results found'</td>
-                    <td>Message displayed when no options match search.</td>
-                </tr>
-                <tr>
-                    <td><code>loading-message</code></td>
-                    <td class="type">string</td>
-                    <td class="default">'Loading...'</td>
-                    <td>Message displayed while loading async data.</td>
-                </tr>
-                <tr>
                     <td><code>initial-values</code></td>
                     <td class="type">string</td>
                     <td class="default">undefined</td>
@@ -303,7 +285,7 @@
                 </tr>
                 <tr>
                     <td colspan="4" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
-                        All attributes listed above are also available as JavaScript options with camelCase naming (e.g., searchPlaceholder, enableSearch, etc.)
+                        All attributes listed above are also available as JavaScript options with camelCase naming (e.g., isSearchEnabled, maxHeight, etc.)
                     </td>
                 </tr>
             </tbody>
@@ -474,7 +456,7 @@
                 <tr>
                     <td><code>setAttributes</code></td>
                     <td class="type">(values: Record&lt;string, unknown&gt;) => void</td>
-                    <td>Apply several inputs as one in-place update (one re-render instead of one per property). Keys are property names (<code>configKey</code>, e.g. <code>searchPlaceholder</code>) or their kebab attribute (<code>search-placeholder</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
+                    <td>Apply several inputs as one in-place update (one re-render instead of one per property). Keys are property names (<code>configKey</code>, e.g. <code>maxHeight</code>) or their kebab attribute (<code>max-height</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
                 </tr>
                 <tr>
                     <td><code>release</code></td>

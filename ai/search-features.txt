@@ -31,7 +31,7 @@ Customize search input placeholder:
 </web-multiselect>
 
 Programmatic:
-select.searchPlaceholder = 'Type to search...';
+select.labels = { searchPlaceholder: 'Type to search...' };
 
 FILTER MODE (DEFAULT)
 ---------------------
@@ -182,7 +182,7 @@ Show hint text above search input:
 </web-multiselect>
 
 Programmatic:
-select.searchHint = 'Start typing to search...';
+select.labels = { searchHint: 'Start typing to search...' };
 
 SEARCH VALUE CUSTOMIZATION
 ---------------------------
@@ -281,7 +281,7 @@ LOADING STATE
 -------------
 Show loading indicator during async search:
 
-select.loadingMessage = 'Searching...';
+select.labels = { loading: 'Searching...' };
 
 Or customize in HTML:
 <web-multiselect labels='{"loading": "Loading results..."}'>
@@ -299,7 +299,7 @@ Customize no results message:
 </web-multiselect>
 
 Programmatic:
-select.emptyMessage = 'No matching items';
+select.labels = { empty: 'No matching items' };
 
 SEARCH PERFORMANCE
 ------------------

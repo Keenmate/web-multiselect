@@ -10,7 +10,7 @@
 </head>
 <body>
     <h1>placeholders</h1>
-    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>select-placeholder</code>), the empty-list <code>no-data-placeholder</code>, and live updates via <code>setAttributes()</code>.</p>
+    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels.selectPlaceholder</code>), the empty-list <code>labels.noData</code>, and live updates via <code>setAttributes()</code>.</p>
 
     <div class="fixture">
         <div class="fixture-label">default (search enabled)</div>
@@ -18,27 +18,27 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">enable-search="false" → select-placeholder default</div>
+        <div class="fixture-label">enable-search="false" → labels.selectPlaceholder default</div>
         <web-multiselect id="ph-nosearch" enable-search="false" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">search-input-mode="readonly" → select-placeholder default</div>
+        <div class="fixture-label">search-input-mode="readonly" → labels.selectPlaceholder default</div>
         <web-multiselect id="ph-readonly" search-input-mode="readonly" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">custom select-placeholder</div>
+        <div class="fixture-label">custom labels.selectPlaceholder</div>
         <web-multiselect id="ph-custom-select" enable-search="false" value-member="value" display-value-member="label" labels='{"selectPlaceholder": "Choose a fruit"}'></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">no-data-placeholder + empty list (cascade child)</div>
+        <div class="fixture-label"> labels.noData + empty list (cascade child)</div>
         <web-multiselect id="ph-nodata" value-member="value" display-value-member="label" labels='{"noData": "No data — pick a category first"}'></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">no-data-placeholder but list has options</div>
+        <div class="fixture-label"> labels.noData but list has options</div>
         <web-multiselect id="ph-nodata-filled" value-member="value" display-value-member="label" labels='{"noData": "No data"}'></web-multiselect>
     </div>
 

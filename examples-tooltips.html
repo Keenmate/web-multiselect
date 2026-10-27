@@ -115,8 +115,8 @@
                 The same tooltip engine drives the selected-badge tooltips. Enable with
                 <code>enable-badge-tooltips</code>; place them with <code>badge-tooltip-placement</code>, customize
                 content with <code>getBadgeTooltipCallback</code> (the <strong>custom content</strong> toggle), and
-                set the remove-button text with <code>remove-button-tooltip-text</code> (<code>{0}</code> = the
-                item name).
+                set the remove-button text with <code>labels.removeItem</code> (<code>{item}</code> = the
+                item name; also the button's aria-label).
             </p>
 
             <div class="controls">
@@ -131,8 +131,8 @@
                 <label title="Tooltip to the end (right) side of the badge."><input type="radio" name="bdg-place" value="right"> right</label>
             </div>
             <div class="controls">
-                <label title="Template for the × remove-button's own tooltip; {0} is replaced with the item name (remove-button-tooltip-text)."><code>remove-button-tooltip-text</code>:
-                    <input type="text" id="bdg-remove" value="Remove {0}" style="width:12rem"></label>
+                <label title="Template for the × remove-button tooltip and aria-label; {item} is replaced with the item name (labels.removeItem)."><code>labels.removeItem</code>:
+                    <input type="text" id="bdg-remove" value="Remove {item}" style="width:12rem"></label>
             </div>
 
             <div class="demo-area">
@@ -169,7 +169,7 @@ el.getOptionTooltipCallback = ({ option }) =&gt; string | HTMLElement
 badge-tooltip-placement    // 'top' | 'bottom' | 'left' | 'right' (default 'top')
 badge-tooltip-delay        // ms before show (default 100)
 badge-tooltip-offset       // px gap (default 8)
-remove-button-tooltip-text // {0} = item name
+labels='{"removeItem":"Remove {item}"}' // × tooltip + aria-label
 el.getBadgeTooltipCallback        = ({ option }) =&gt; string | HTMLElement
 el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
 
@@ -265,7 +265,7 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
             document.querySelectorAll('input[name="bdg-place"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) bdgTt.setAttribute('badge-tooltip-placement', e.target.value); }));
             document.getElementById('bdg-remove').addEventListener('input', (e) =>
-                bdgTt.setAttribute('remove-button-tooltip-text', e.target.value));
+                bdgTt.labels = { removeItem: e.target.value });
 
             // Persist all control switches to localStorage and restore them on
             // reload — re-applies to every picker via the listeners wired above.

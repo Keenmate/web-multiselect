@@ -432,7 +432,7 @@ EMPTY OPTIONS
 Handle empty state:
 
 select.options = [];
-select.emptyMessage = 'No options available';
+select.labels = { empty: 'No options available' };
 
 Check if empty:
 if (select.options.length === 0) {

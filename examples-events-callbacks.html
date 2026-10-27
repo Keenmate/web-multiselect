@@ -231,7 +231,7 @@ el.beforeSelectCallback = ({ option, controller }) =&gt; {
                 With <code>allow-add-new</code> on, a search that finds nothing shows a clickable
                 <strong>“Add new …”</strong> prompt instead of the empty message. Choosing it (click or
                 <kbd>Enter</kbd>) fires the <code>add</code> event. The prompt label is set statically via
-                <code>add-new-text</code> (the <code>{value}</code> placeholder is the typed text) or
+                <code>labels.addNew</code> (the <code>{value}</code> placeholder is the typed text) or
                 dynamically via <code>getAddNewTextCallback({ value })</code>. <code>beforeAddCallback({ value })</code> is
                 <strong>async and cancelable</strong> — return a rich option to create + select it,
                 <code>false</code> to abort (try adding a name that already exists, e.g. “Anna”), or nothing to just
@@ -251,7 +251,7 @@ el.beforeSelectCallback = ({ option, controller }) =&gt; {
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>&lt;web-multiselect allow-add-new add-new-text='Add new member: "{value}"'&gt;&lt;/web-multiselect&gt;
+<pre><code>&lt;web-multiselect allow-add-new labels='{"addNew": "Add new member: \"{value}\""}'&gt;&lt;/web-multiselect&gt;
 
 // Async + cancelable. Return a rich option to create + select it,
 // false to abort (no add, no `add` event, search kept),
@@ -308,8 +308,7 @@ el.getAddNewTextCallback = ({ value }) =&gt; `Create "${value}"`;</code></pre>
             <details class="mt-1">
                 <summary>Show code</summary>
 <pre><code>&lt;web-multiselect allow-add-new subtitle-member="subtitle" icon-member="icon"
-  add-new-text='➕ Add new member: "{value}"'
-  add-new-pending-text='Adding "{value}" to the project…'&gt;&lt;/web-multiselect&gt;
+  labels='{"addNew": "➕ Add new member: \"{value}\"", "addNewPending": "Adding \"{value}\" to the project…"}'&gt;&lt;/web-multiselect&gt;
 
 el.options = [
   { value: 'audrey',   label: 'Audrey Horne',   subtitle: "One Eyed Jack's",        icon: '👩' },

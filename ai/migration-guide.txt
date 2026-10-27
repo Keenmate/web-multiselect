@@ -247,7 +247,7 @@ CONFIGURATION MAPPING
 Common config across libraries:
 
 Placeholder:
-placeholder → search-placeholder
+placeholder → labels.searchPlaceholder
 
 Multiple selection:
 multiple: true → multiple="true"

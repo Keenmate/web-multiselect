@@ -221,7 +221,7 @@ Search → search-features.txt
 searchCallback → search-features.txt, events-callbacks.txt
 search-input-mode → search-features.txt
 search-mode → search-features.txt
-search-placeholder → search-features.txt
+labels (UI strings / i18n) → search-features.txt, accessibility
 searchValueMember → data-handling.txt, search-features.txt
 select-all → action-buttons.txt
 Selection → selection-modes.txt

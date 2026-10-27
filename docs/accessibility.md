@@ -18,12 +18,12 @@ This component is designed to be navigable from the keyboard alone and to work w
 
 Any key can be intercepted or overridden with `beforeKeydownCallback`, which runs before the built-in handling (return `false` to suppress the built-in handling of that key) — see [usage.md → Properties](./usage.md#properties).
 
-> 💡 To surface these shortcuts to your users, set the `search-hint` attribute — the hint floats above the input when focused. Example:
+> 💡 To surface these shortcuts to your users, set `labels.searchHint` — the hint floats above the input when focused. Example:
 >
 > ```html
 > <web-multiselect
 >   search-mode="navigate"
->   search-hint="Ctrl/Cmd + ↓ / ↑ to jump between matches">
+>   labels='{"searchHint":"Ctrl/Cmd + ↓ / ↑ to jump between matches"}'>
 > </web-multiselect>
 > ```
 
@@ -36,16 +36,16 @@ The component ships an `aria-label` on every icon-only control. All of them are 
 | Per-badge remove button | `Remove {item}` | `removeItem` |
 | Hidden-items remove badge (partial mode "+N more") | `Remove {count} hidden items` | `removeHiddenItems` |
 | Clear-all button on the count / compact badge | `Clear all selections` | `clearAllSelections` |
-| Inline ✕ clear button (`show-clear`) | `Clear selection` | `clearSelection` |
+| Inline ✕ clear button (`show-clear`) | `Clear all selections` | `clearAllSelections` |
 | Selected-items popover close / fullscreen close | `Close` | `close` |
 | Fullscreen search clear (✕) | `Clear search` | `clearSearch` |
 | Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `prevMatch` / `nextMatch` |
 | Option info button revealing a clipped label (fullscreen) | `Show full label` | `showFullLabel` |
-| Group-header selected-count chip | `{count} selected` | `groupSelectedLabel` |
+| Group-header selected-count chip | `{count} selected` | `groupSelected` |
 | Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `andMore` |
-| Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | — not yet translatable |
+| Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `switchToFilterMode` / `switchToNavigateMode` |
 
-> **Tooltip vs. accessible name.** The badge remove button's *hover tooltip* is configured separately — via `getRemoveButtonTooltipCallback` or the `remove-button-tooltip-text` attribute (`{0}` = item name), shown only with `enable-badge-tooltips`. Those do **not** change the button's `aria-label`; use `labels.removeItem` for that.
+> **Tooltip vs. accessible name.** `labels.removeItem` is both the badge remove button's `aria-label` and its hover tooltip (shown with `enable-badge-tooltips`); `getRemoveButtonTooltipCallback` overrides only the tooltip.
 
 ### Translating labels
 
@@ -60,7 +60,7 @@ multiselect.labels = {
 };
 ```
 
-All keys: `close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch` (defaults in the table above and in [usage.md → Labels (i18n)](./usage.md#labels-i18n)).
+These are the ARIA keys; `labels` also holds every visible string — all keys and defaults are in [usage.md → Labels (i18n)](./usage.md#labels-i18n).
 
 ## Other ARIA semantics
 
@@ -97,5 +97,5 @@ The component does **not** currently declare a `role="combobox"` /`role="listbox
 
 ## See also
 
-- [Keyboard shortcuts as a search hint](./usage.md#attributes) — `search-hint` attribute reference.
+- [Keyboard shortcuts as a search hint](./usage.md#attributes) — `labels.searchHint` reference.
 - [`examples-basic.html`](../examples-basic.html) — interactive demos including keyboard navigation and focus behavior.
