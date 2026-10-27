@@ -108,6 +108,15 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 - Primitive option arrays (`['Prague', 'Brno']`, `[10, 20]`) work: each option is its own value
   and label (they rendered `[N/A]` before).
 
+### Changed — BREAKING (form reset)
+
+- **`form.reset()` restores the initial selection instead of clearing it.** The default is
+  `initial-values` (attribute or property) or declarative `<option selected>` children, like a
+  native `<select>`; with no initial values the selection is cleared as before. Selecting from
+  JS never rewrites `initial-values`, so it stays the reset default (same rule as
+  web-daterangepicker's `value`). A reset no longer fires `deselect` / `change` (it is not a
+  user action, and a native `<select>` doesn't fire them either).
+
 ### Removed — BREAKING
 
 - **`show-debug-info` / `showDebugInfo`** (deprecated) and the in-component "Debug Info" panel

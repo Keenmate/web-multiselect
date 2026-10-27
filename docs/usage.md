@@ -218,7 +218,7 @@ multiselect.setSelected(['js', 'ts']);
 | `cascade-select-policy` | `'rolled-up' \| 'leaves' \| 'all'` | `'rolled-up'` | In `cascade` mode, which values a selection emits (badges / form / `change`). `rolled-up`: a fully-selected subtree collapses to its root. `leaves`: only checked leaves. `all`: every fully-checked node |
 | `name` | `string` | - | HTML form field name for form integration (creates hidden input) |
 | `value-format` | `'json' \| 'csv' \| 'array'` | `'json'` | Format for form value serialization |
-| `initial-values` | `string` (JSON array or CSV) | - | Pre-selected values. Accepts `["js","ts"]` or a bare `js,ts` |
+| `initial-values` | `string` (JSON array or CSV) | - | Pre-selected values. Accepts `["js","ts"]` or a bare `js,ts`. Also the default `form.reset()` restores (no initial values → reset clears); selecting from JS never rewrites it |
 | `data-options` | `string` | - | HTML-authoring source for the option list, parsed per `data-options-format`. Prefer the `options` property in JS. Reactive; declarative `<option>` children and a set `options` property both take precedence |
 | `data-options-format` | `'json' \| 'csv' \| 'plain'` | `'json'` | How to parse `data-options`: `json` (array of objects or `[value,label]` tuples), `csv` (first row = header → object per row, keyed by the header cells; map columns via `*-member`), or `plain` (bare values → `value=label` options) |
 | `data-options-splitter` | `string` | `','` | Field/cell delimiter for the `csv` and `plain` formats (e.g. `;`, `\|`). Escapes `\t` `\n` `\r` are honoured (`"\t"` → TSV). Ignored for `json` |

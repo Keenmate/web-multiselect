@@ -363,11 +363,18 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   }
 
   /**
-   * Called by the browser when the surrounding <form> is reset. Clears the
-   * picker's selection so the control participates in the standard reset.
+   * Called by the browser when the surrounding <form> is reset. Restores the
+   * initial selection — the `initial-values` input (or declarative
+   * `<option selected>` children), like a native `<select>` restoring its
+   * `selected` options — or clears when there is none. Selecting from JS never
+   * rewrites `initial-values` (it doesn't reflect), so it stays the reset
+   * default. A reset is not a user action: no `select`/`deselect`/`change`.
    */
   formResetCallback(): void {
-    this.#picker?.clearAll();
+    this.flush();
+    const initial = this.#resolveInitialValues() ?? [];
+    // A single-select holds one value — same rule as the first build.
+    this.#picker?.setSelected(this.config.isMultipleEnabled === false ? initial.slice(0, 1) : initial);
   }
 
   // ── core lifecycle hooks ──────────────────────────────────────────────────

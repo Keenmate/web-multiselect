@@ -247,10 +247,18 @@ select.remove();
 
 FORM RESET
 ----------
-Reset form clears selections:
+form.reset() restores the INITIAL selection — `initial-values` (attribute or
+property) or declarative <option selected> children — like a native <select>.
+No initial values → the selection is cleared. Selecting from JS (setSelected,
+user picks) never rewrites `initial-values`, so it stays the reset default.
+A reset fires no select / deselect / change events.
+
+<form id="myForm">
+  <web-multiselect name="langs" initial-values="js,ts"></web-multiselect>
+</form>
 
 const form = document.getElementById('myForm');
-form.reset();  // Clears all multiselect selections
+form.reset();  // back to ['js', 'ts']
 
 Programmatic reset:
 const select = form.querySelector('web-multiselect');

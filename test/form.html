@@ -40,6 +40,14 @@
         </form>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">&lt;form&gt; + initial-values (reset restores the initial selection)</div>
+        <form id="init-form">
+            <web-multiselect id="form-init" name="init-field" initial-values="banana,cherry"></web-multiselect>
+            <web-multiselect id="form-init-single" name="init-single" multiple="false" initial-values='["cherry"]'></web-multiselect>
+        </form>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -50,7 +58,7 @@
         ];
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['json-form', 'csv-form', 'arr-form', 'custom-fmt', 'form-in-form']) {
+            for (const id of ['json-form', 'csv-form', 'arr-form', 'custom-fmt', 'form-in-form', 'form-init', 'form-init-single']) {
                 document.getElementById(id).options = items;
             }
 

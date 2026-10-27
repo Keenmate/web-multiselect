@@ -153,7 +153,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `value-format="csv"` serialization                            | ✓      | `form.spec.ts`               | `form.html`               |
 | `value-format="array"` (multiple hidden inputs)               | ✓      | `form.spec.ts`               | `form.html`               |
 | `getValueFormatCallback` overrides serialization              | ✓      | `form.spec.ts`               | `form.html`               |
-| Form `reset` clears selections (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
+| Form `reset` restores `initial-values` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
 
 ## 12. Tooltips
 
