@@ -59,7 +59,7 @@ The first 2.6 release on npm (rc01 never reached it), so it also carries everyth
 - **Fixes — fullscreen in Firefox/Safari, group count chip, trailing spaces** — `mobile-presentation="fullscreen"` closed itself the moment it opened in Firefox and WebKit, because a zero-delay timer cleared the open-gesture guard before the follow-up `click`. The guard now lasts the whole gesture. The per-group count chip gets vertical padding so its `[N]` no longer touches the edges, and group headers grow about 4px to fit it without shifting when it toggles. Flat-list search now trims the term like tree search does, so `york ` (with a trailing space) finds `New York`.
 
 > **Breaking change in the next 2.x release — interaction model.** Every callback now takes one
-> `ctx` argument (per-option callbacks read `ctx.item`, e.g. `getDisplayValueCallback: ({ item }) => item.name`),
+> `ctx` argument (per-option callbacks read `ctx.option`, e.g. `getDisplayValueCallback: ({ option }) => option.name`),
 > `on*` properties receive the event **detail** (`el.onSelect = (detail) => detail.option`),
 > `addNewCallback` / `keydownCallback` / `getDisabledCallback` / `customStylesCallback` became
 > `beforeAddCallback` / `beforeKeydownCallback` / `getIsDisabledCallback` / `getCustomStylesCallback`,

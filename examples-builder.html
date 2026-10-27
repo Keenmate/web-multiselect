@@ -518,7 +518,7 @@
             }
             if (el.getAttribute('selected-order') === 'custom') {
                 notes.push('<!-- selected-order="custom" needs a JS comparator: -->');
-                notes.push('<!-- el.selectedOrderCompareCallback = (a, b) => a.label.localeCompare(b.label); -->');
+                notes.push('<!-- el.selectedOrderCompareCallback = ({ a, b }) => a.label.localeCompare(b.label); -->');
             }
             markupEl.textContent =
                 `<web-multiselect\n${lines.join('\n')}>\n</web-multiselect>\n\n` +
@@ -543,7 +543,7 @@
             // `selected-order="custom"` has no attribute to express the order — it needs a JS
             // comparator. Wire a demo one (shortest label first, then alphabetical) so picking
             // "custom" visibly reorders the badges/popover instead of doing nothing.
-            el.selectedOrderCompareCallback = (a, b) =>
+            el.selectedOrderCompareCallback = ({ a, b }) =>
                 (String(a.label).length - String(b.label).length) || String(a.label).localeCompare(String(b.label));
 
             dataInput.value = JSON.stringify(DEMO_DATA, null, 2);

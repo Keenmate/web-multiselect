@@ -138,7 +138,7 @@
             // each item's search value is prepared once, not on every keystroke.
             const indexed = document.getElementById('sb-index');
             window.__searchValueCalls = 0;
-            indexed.getSearchValueCallback = ({ item }) => { window.__searchValueCalls++; return item.label; };
+            indexed.getSearchValueCallback = ({ option }) => { window.__searchValueCalls++; return option.label; };
             indexed.options = Array.from({ length: 2000 }, (_, i) => ({ value: String(i), label: `Položka ${i}` }));
 
             // sm: search-match modes.
@@ -169,21 +169,21 @@
             const cb = document.getElementById('sm-callback');
             window.__entriesRefs = [];
             window.__callbackTerms = [];
-            cb.getSearchValueCallback = ({ item: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+            cb.getSearchValueCallback = ({ option: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
             cb.getSearchTermCallback = ({ term: t, target }) =>
                 target === 'callback' ? { zip: t.replace(/\s/g, ''), text: normalizeSearchText(t) } : t;
-            cb.searchCallback = ({ searchTerm, entries }) => {
+            cb.searchCallback = ({ term, entries }) => {
                 window.__entriesRefs.push(entries);
-                window.__callbackTerms.push(searchTerm);
+                window.__callbackTerms.push(term);
                 return entries
-                    .filter(e => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+                    .filter(e => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
                     .map(e => e.item);
             };
             cb.options = cities;
 
             // sm-object: object search value WITHOUT searchCallback → internal search uses the label.
             const obj = document.getElementById('sm-object');
-            obj.getSearchValueCallback = ({ item: c }) => ({ zip: c.zip });
+            obj.getSearchValueCallback = ({ option: c }) => ({ zip: c.zip });
             obj.options = cities;
 
             // popover-fs: preselect a few so the count badge (data-ms-action="show-selected")

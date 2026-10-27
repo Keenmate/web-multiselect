@@ -140,7 +140,7 @@ el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
                 A node can be marked <strong>non-selectable</strong> — set
                 <code>is-selectable-member</code> (a data flag) or
                 <code>getIsSelectableCallback</code> (a predicate whose <code>ctx</code> carries the option as
-                <code>item</code> and the built node as <code>node</code>, so it can read <code>node.hasChildren</code>). Non-selectable nodes render
+                <code>option</code> and the built node as <code>node</code>, so it can read <code>node.hasChildren</code>). Non-selectable nodes render
                 <em>normally</em> — they are <strong>not</strong> greyed out like
                 <code>disabled</code> — but they drop their checkbox, are skipped by keyboard
                 arrows, and can't be toggled or picked by Select&nbsp;All. The classic use is a
@@ -323,9 +323,9 @@ el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
                 <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code> row classes.
             </p>
             <div class="code-block"><pre>// 1) Content — compact label + child count. Style via a CSS class, not inline styles.
-el.renderOptionContentCallback = ({ item, isBranch, childCount }) =&gt; isBranch
-  ? `&lt;span&gt;&lt;strong&gt;${item.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${childCount}&lt;/small&gt;&lt;/span&gt;`
-  : `&lt;span&gt;${item.label}&lt;/span&gt;`;
+el.renderOptionContentCallback = ({ option, isBranch, childCount }) =&gt; isBranch
+  ? `&lt;span&gt;&lt;strong&gt;${option.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${childCount}&lt;/small&gt;&lt;/span&gt;`
+  : `&lt;span&gt;${option.label}&lt;/span&gt;`;
 
 // 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
 //    branch/leaf theming hooks, plus the .node-count class used above.
@@ -414,7 +414,7 @@ el.options = [
 
 // Breadcrumb per popover row (popover reuses badge rendering):
 el.fullTitleMember = 'fullTitle';
-el.getBadgeDisplayCallback = ({ item }) =&gt; item.fullTitle || item.label;
+el.getBadgeDisplayCallback = ({ option }) =&gt; option.fullTitle || option.label;
 
 // show-counter adds a compact [N] chip next to the toggle — independent of the
 // display mode, it opens the same selected-items popover. Drop the "N selected"
@@ -493,13 +493,13 @@ el.isSelectableMember = 'selectable'; // only 4-digit unit groups (leaves)
 el.options = isco;
 
 // Badge shows only the last segment; ".. /" hints at hidden ancestors.
-el.getBadgeDisplayCallback = ({ item }) =&gt; {
-  const segs = String(item.fullTitle || item.label).split(' / ');
+el.getBadgeDisplayCallback = ({ option }) =&gt; {
+  const segs = String(option.fullTitle || option.label).split(' / ');
   const last = segs[segs.length - 1];
   return segs.length &gt; 1 ? `.. / ${last}` : last;
 };
 // Full breadcrumb in the badge tooltip (needs enable-badge-tooltips).
-el.getBadgeTooltipCallback = ({ item }) =&gt; item.fullTitle || item.label;</pre></div>
+el.getBadgeTooltipCallback = ({ option }) =&gt; option.fullTitle || option.label;</pre></div>
 
             <p class="description" style="font-size: 0.85rem; opacity: 0.8;">
                 Source: <em>International Standard Classification of Occupations, ISCO-08</em>
@@ -537,7 +537,7 @@ el.getBadgeTooltipCallback = ({ item }) =&gt; item.fullTitle || item.label;</pre
             <div class="code-block"><pre>el.open();
 el.scrollToValue('2211');        // any node by value — tree is always expanded
 el.scrollToIndex(el /* count-1 */); // last visible node
-el.scrollToGroup('x');           // → false in tree mode
+el.scrollToGroup('x');           // → resolves false in tree mode
 
 // If a search filtered the node out, reveal it first:
 el.clearSearch();
@@ -775,9 +775,9 @@ el.scrollToValue('2211');</pre></div>
             render.displayValueMember = 'label';
             render.pathMember = 'path';
             render.options = categories;
-            render.renderOptionContentCallback = ({ item, isBranch, childCount }) => isBranch
-                ? `<span><strong>${item.label}</strong> <small class="node-count">${childCount}</small></span>`
-                : `<span>${item.label}</span>`;
+            render.renderOptionContentCallback = ({ option, isBranch, childCount }) => isBranch
+                ? `<span><strong>${option.label}</strong> <small class="node-count">${childCount}</small></span>`
+                : `<span>${option.label}</span>`;
             render.getCustomStylesCallback = () => `
                 .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }
                 .ms__option--tree-leaf   { background: #fff; }
@@ -829,7 +829,7 @@ el.scrollToValue('2211');</pre></div>
             count.displayValueMember = 'label';
             count.pathMember = 'path';
             count.fullTitleMember = 'fullTitle';
-            count.getBadgeDisplayCallback = ({ item }) => item.fullTitle || item.label;
+            count.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
             count.options = withFullTitles;
             count.setSelected(['apple', 'peach', 'kale']);
 
@@ -841,7 +841,7 @@ el.scrollToValue('2211');</pre></div>
             widths.displayValueMember = 'label';
             widths.pathMember = 'path';
             widths.fullTitleMember = 'fullTitle';
-            widths.getBadgeDisplayCallback = ({ item }) => item.fullTitle || item.label;
+            widths.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
             widths.options = withFullTitles;
 
             // ---- TR06 · Real data (ISCO-08) + scroll-to API --------------------
@@ -859,15 +859,15 @@ el.scrollToValue('2211');</pre></div>
                     // Built-in search matches the display value only (the title). Widen
                     // it to also match the ISCO code and the full breadcrumb, so "2211"
                     // or "health" both find their nodes (matches keep their ancestors).
-                    el.getSearchValueCallback = ({ item }) => `${item.label} ${item.value} ${item.fullTitle}`;
+                    el.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
                     // Badge = last segment only, with a ".. /" hint when ancestors exist.
-                    el.getBadgeDisplayCallback = ({ item }) => {
-                        const segs = String(item.fullTitle || item.label).split(' / ');
+                    el.getBadgeDisplayCallback = ({ option }) => {
+                        const segs = String(option.fullTitle || option.label).split(' / ');
                         const last = segs[segs.length - 1];
                         return segs.length > 1 ? `.. / ${last}` : last;
                     };
                     // Full breadcrumb in the badge tooltip.
-                    el.getBadgeTooltipCallback = ({ item }) => item.fullTitle || item.label;
+                    el.getBadgeTooltipCallback = ({ option }) => option.fullTitle || option.label;
                     el.options = isco;
 
                     // --- Scroll-to API in a tree (reuses the ISCO data) ---
@@ -878,7 +878,7 @@ el.scrollToValue('2211');</pre></div>
                         treeScroll.displayValueMember = 'label';
                         treeScroll.pathMember = 'path';
                         treeScroll.isSelectableMember = 'selectable';
-                        treeScroll.getSearchValueCallback = ({ item }) => `${item.label} ${item.value} ${item.fullTitle}`;
+                        treeScroll.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
                         treeScroll.options = isco;
 
                         const trLog = (msg) => {
@@ -918,7 +918,7 @@ el.scrollToValue('2211');</pre></div>
                                 if (spec === 'last') {
                                     const lastIndex = isco.length - 1;
                                     const ok = treeScroll.scrollToIndex(lastIndex);
-                                    trLog(`▶ scrollToIndex(${lastIndex}) → ${ok}`);
+                                    ok.then((r) => trLog(`▶ scrollToIndex(${lastIndex}) → ${r}`));
                                     setTimeout(() => trDescribe(null), 90);
                                     return;
                                 }
@@ -927,7 +927,7 @@ el.scrollToValue('2211');</pre></div>
                                 if (kind === 'value')      { ok = treeScroll.scrollToValue(arg); target = arg; }
                                 else if (kind === 'group') { ok = treeScroll.scrollToGroup(arg); }
                                 const call = kind === 'group' ? `scrollToGroup('${arg}')` : `scrollToValue('${arg}')`;
-                                trLog(`▶ ${call} → ${ok}`);
+                                ok.then((r) => trLog(`▶ ${call} → ${r}`));
                                 if (kind === 'value') setTimeout(() => trDescribe(target), 90);
                             });
                         });

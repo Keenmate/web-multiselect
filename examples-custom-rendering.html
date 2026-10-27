@@ -247,11 +247,11 @@
             </div>
 
             <div class="code-block"><pre>// 1) Own the badge CONTENT (rendered inside .ms__badge-text)
-el.renderBadgeContentCallback = ({ item }) =&gt;
-  `&lt;img class="ava" src="${item.avatar}" alt=""&gt;&lt;span&gt;${item.name}&lt;/span&gt;`;
+el.renderBadgeContentCallback = ({ option }) =&gt;
+  `&lt;img class="ava" src="${option.avatar}" alt=""&gt;&lt;span&gt;${option.name}&lt;/span&gt;`;
 
 // 2) Tag special items so their pill can be styled
-el.getBadgeClassCallback = ({ item }) =&gt; item.vip ? 'badge--vip' : '';
+el.getBadgeClassCallback = ({ option }) =&gt; option.vip ? 'badge--vip' : '';
 
 // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill)
 el.getCustomStylesCallback = () =&gt; `
@@ -292,10 +292,10 @@ el.getCustomStylesCallback = () =&gt; `
                 default pill for an item.
             </div>
 
-            <div class="code-block"><pre>el.renderBadgeCallback = ({ item }) =&gt; `
+            <div class="code-block"><pre>el.renderBadgeCallback = ({ option }) =&gt; `
   &lt;div class="icard"&gt;
-    &lt;div class="icard__tile"&gt;${item.svg}&lt;/div&gt;
-    &lt;div class="icard__title"&gt;${item.name}&lt;/div&gt;
+    &lt;div class="icard__tile"&gt;${option.svg}&lt;/div&gt;
+    &lt;div class="icard__title"&gt;${option.name}&lt;/div&gt;
     &lt;button type="button" class="icard__remove" data-ms-action="remove"&gt;Remove&lt;/button&gt;
   &lt;/div&gt;`;
 // data-value is stamped on the wrapper by the component; the click on
@@ -504,15 +504,15 @@ panel.addEventListener('click', (e) =&gt; {
         frameworks.valueMember = 'id';
         frameworks.displayValueMember = 'name';
 
-        frameworks.renderOptionContentCallback = ({ item }) => {
-            const starCount = (item.stars / 1000).toFixed(0);
+        frameworks.renderOptionContentCallback = ({ option }) => {
+            const starCount = (option.stars / 1000).toFixed(0);
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; gap: 0.25rem 0.75rem; align-items: center; width: 100%;">
-                    <span style="grid-row: 1 / 3; font-size: 1.25rem; align-self: center;">${item.trending ? '🔥' : '⭐'}</span>
-                    <strong style="grid-row: 1; grid-column: 2; font-size: 1rem;">${item.name}</strong>
+                    <span style="grid-row: 1 / 3; font-size: 1.25rem; align-self: center;">${option.trending ? '🔥' : '⭐'}</span>
+                    <strong style="grid-row: 1; grid-column: 2; font-size: 1rem;">${option.name}</strong>
                     <span style="grid-row: 1 / 3; grid-column: 3; font-size: 0.875rem; color: #666; align-self: center; white-space: nowrap;">${starCount}k stars</span>
                     <div style="grid-row: 2; grid-column: 2; font-size: 0.875rem; color: #666; line-height: 1.4;">
-                        ${item.description}
+                        ${option.description}
                     </div>
                 </div>
             `;
@@ -531,10 +531,10 @@ panel.addEventListener('click', (e) =&gt; {
         products.valueMember = 'id';
         products.displayValueMember = 'name';
 
-        products.renderOptionContentCallback = ({ item }) => {
-            const stockStatus = item.stock === 0 ? 'Out of stock' : `${item.stock} in stock`;
-            const stockColor = item.stock === 0 ? '#ef4444' : item.stock < 20 ? '#f59e0b' : '#10b981';
-            const stars = '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 >= 0.5 ? '½' : '');
+        products.renderOptionContentCallback = ({ option }) => {
+            const stockStatus = option.stock === 0 ? 'Out of stock' : `${option.stock} in stock`;
+            const stockColor = option.stock === 0 ? '#ef4444' : option.stock < 20 ? '#f59e0b' : '#10b981';
+            const stars = '★'.repeat(Math.floor(option.rating)) + (option.rating % 1 >= 0.5 ? '½' : '');
 
             // Dynamic badge based on price
             const getPriceBadge = (price) => {
@@ -542,24 +542,24 @@ panel.addEventListener('click', (e) =&gt; {
                 if (price < 50) return { text: 'Mid-Range', class: 'price-mid' };
                 return { text: 'Premium', class: 'price-premium' };
             };
-            const priceBadge = getPriceBadge(item.price);
+            const priceBadge = getPriceBadge(option.price);
 
             return `
                 <div style="display: flex; gap: 0.75rem; align-items: center;">
                     <div style="width: 50px; height: 50px; border-radius: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); flex-shrink: 0;">
                         <div style="color: white; text-align: center; line-height: 50px; font-size: 1.5rem;">
-                            ${item.name.charAt(0)}
+                            ${option.name.charAt(0)}
                         </div>
                     </div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; margin-bottom: 0.125rem;">
-                            ${item.name}
+                            ${option.name}
                             <span class="${priceBadge.class}" style="margin-left: 0.5rem; font-size: 0.7rem; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-weight: 600;">${priceBadge.text}</span>
                         </div>
-                        <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; line-height: 1.3;">${item.description}</div>
+                        <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.25rem; line-height: 1.3;">${option.description}</div>
                         <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem;">
-                            <span style="color: #10b981; font-weight: 600;">$${item.price}</span>
-                            <span style="color: #f59e0b;">${stars} ${item.rating}</span>
+                            <span style="color: #10b981; font-weight: 600;">$${option.price}</span>
+                            <span style="color: #f59e0b;">${stars} ${option.rating}</span>
                             <span style="color: ${stockColor};">${stockStatus}</span>
                         </div>
                     </div>
@@ -568,9 +568,9 @@ panel.addEventListener('click', (e) =&gt; {
         };
 
         // Add dynamic CSS classes to badges based on price
-        products.getBadgeClassCallback = ({ item }) => {
-            if (item.price < 20) return 'product-budget';
-            if (item.price < 50) return 'product-mid';
+        products.getBadgeClassCallback = ({ option }) => {
+            if (option.price < 20) return 'product-budget';
+            if (option.price < 50) return 'product-mid';
             return 'product-premium';
         };
 
@@ -608,7 +608,7 @@ panel.addEventListener('click', (e) =&gt; {
             }
         `;
 
-        products.getIsDisabledCallback = ({ item }) => item.stock === 0;
+        products.getIsDisabledCallback = ({ option }) => option.stock === 0;
 
         // 3. Article/Blog Post Selector
         const articles = document.getElementById('articles');
@@ -623,20 +623,20 @@ panel.addEventListener('click', (e) =&gt; {
         articles.valueMember = 'id';
         articles.displayValueMember = 'title';
 
-        articles.renderOptionContentCallback = ({ item }) => {
+        articles.renderOptionContentCallback = ({ option }) => {
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; gap: 0.25rem 0.75rem; width: 100%;">
-                    <span style="grid-row: 1 / 4; font-size: 1.25rem; align-self: center;">${item.icon}</span>
-                    <strong style="grid-row: 1; grid-column: 2;">${item.title}</strong>
+                    <span style="grid-row: 1 / 4; font-size: 1.25rem; align-self: center;">${option.icon}</span>
+                    <strong style="grid-row: 1; grid-column: 2;">${option.title}</strong>
                     <div style="grid-row: 2; grid-column: 2; font-size: 0.875rem; color: #666; line-height: 1.4;">
-                        ${item.excerpt}
+                        ${option.excerpt}
                     </div>
                     <div style="grid-row: 3; grid-column: 2; font-size: 0.75rem; color: #999; display: flex; gap: 0.75rem;">
-                        <span>By ${item.author}</span>
+                        <span>By ${option.author}</span>
                         <span>•</span>
-                        <span>${item.readTime} read</span>
+                        <span>${option.readTime} read</span>
                         <span>•</span>
-                        <span>${item.date}</span>
+                        <span>${option.date}</span>
                     </div>
                 </div>
             `;
@@ -655,23 +655,23 @@ panel.addEventListener('click', (e) =&gt; {
         jobs.valueMember = 'id';
         jobs.displayValueMember = 'title';
 
-        jobs.renderOptionContentCallback = ({ item }) => {
+        jobs.renderOptionContentCallback = ({ option }) => {
             return `
                 <div style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; gap: 0.375rem 0.75rem; width: 100%;">
                     <span style="grid-row: 1 / 4; font-size: 1.25rem; align-self: center;">💼</span>
                     <div style="grid-row: 1; grid-column: 2;">
-                        <div style="font-weight: 600; margin-bottom: 0.125rem;">${item.title}</div>
-                        <div style="font-size: 0.875rem; color: #666;">${item.company}</div>
+                        <div style="font-weight: 600; margin-bottom: 0.125rem;">${option.title}</div>
+                        <div style="font-size: 0.875rem; color: #666;">${option.company}</div>
                     </div>
                     <div style="grid-row: 2; grid-column: 2; font-size: 0.875rem; color: #333; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                        <span>${item.location}</span>
+                        <span>${option.location}</span>
                         <span>•</span>
-                        <span style="color: #10b981; font-weight: 600;">${item.salary}</span>
+                        <span style="color: #10b981; font-weight: 600;">${option.salary}</span>
                         <span>•</span>
-                        <span>${item.type}</span>
+                        <span>${option.type}</span>
                     </div>
                     <div style="grid-row: 3; grid-column: 2;">
-                        ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        ${option.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                     </div>
                 </div>
             `;
@@ -704,24 +704,24 @@ panel.addEventListener('click', (e) =&gt; {
         movies.valueMember = 'id';
         movies.displayValueMember = 'title';
 
-        movies.renderOptionContentCallback = ({ item }) => {
-            const stars = '★'.repeat(Math.floor(item.rating)) + (item.rating % 1 >= 0.5 ? '½' : '');
+        movies.renderOptionContentCallback = ({ option }) => {
+            const stars = '★'.repeat(Math.floor(option.rating)) + (option.rating % 1 >= 0.5 ? '½' : '');
             return `
                 <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; width: 100%;">
                     <div style="display: flex; flex-direction: column; gap: 0.375rem;">
                         <div>
-                            <strong style="font-size: 1rem;">🎬 ${item.title}</strong>
-                            <span style="color: #666; font-size: 0.875rem; margin-left: 0.5rem;">(${item.year})</span>
+                            <strong style="font-size: 1rem;">🎬 ${option.title}</strong>
+                            <span style="color: #666; font-size: 0.875rem; margin-left: 0.5rem;">(${option.year})</span>
                         </div>
                         <div style="font-size: 0.875rem; color: #666;">
-                            ${item.genre} • Dir. ${item.director}
+                            ${option.genre} • Dir. ${option.director}
                         </div>
                         <div style="font-size: 0.875rem; color: #666; line-height: 1.4;">
-                            ${item.synopsis}
+                            ${option.synopsis}
                         </div>
                     </div>
                     <div style="color: #f59e0b; font-size: 0.875rem; white-space: nowrap;">
-                        ${stars} ${item.rating}/10
+                        ${stars} ${option.rating}/10
                     </div>
                 </div>
             `;
@@ -756,14 +756,14 @@ panel.addEventListener('click', (e) =&gt; {
             return '📷';
         };
 
-        images.renderOptionContentCallback = ({ item }) => {
-            const icon = getFileIcon(item.type);
-            const fileSize = formatFileSize(item.size);
-            const dimensions = `${item.width} × ${item.height}`;
+        images.renderOptionContentCallback = ({ option }) => {
+            const icon = getFileIcon(option.type);
+            const fileSize = formatFileSize(option.size);
+            const dimensions = `${option.width} × ${option.height}`;
 
             // Use thumbnail if available, otherwise show colored placeholder
-            const thumbnailHtml = item.thumbnail
-                ? `<img src="${item.thumbnail}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">`
+            const thumbnailHtml = option.thumbnail
+                ? `<img src="${option.thumbnail}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">`
                 : `<div style="width: 50px; height: 50px; border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">${icon}</div>`;
 
             return `
@@ -771,38 +771,38 @@ panel.addEventListener('click', (e) =&gt; {
                     ${thumbnailHtml}
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 500; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${icon} ${item.filename}
+                            ${icon} ${option.filename}
                         </div>
                         <div style="display: flex; gap: 1rem; font-size: 0.8rem; color: #666;">
                             <span>${dimensions}</span>
                             <span style="color: #10b981; font-weight: 500;">${fileSize}</span>
-                            <span style="color: #999;">${item.type.split('/')[1].toUpperCase()}</span>
+                            <span style="color: #999;">${option.type.split('/')[1].toUpperCase()}</span>
                         </div>
                     </div>
                 </div>
             `;
         };
 
-        images.renderBadgeContentCallback = ({ item }) => {
-            const icon = getFileIcon(item.type);
-            return `${icon} ${item.filename}`;
+        images.renderBadgeContentCallback = ({ option }) => {
+            const icon = getFileIcon(option.type);
+            return `${icon} ${option.filename}`;
         };
 
         // Rich rendering for Selected Items popover
-        images.renderSelectedItemContentCallback = ({ item }) => {
-            const icon = getFileIcon(item.type);
-            const fileSize = formatFileSize(item.size);
-            const dimensions = `${item.width} × ${item.height}`;
+        images.renderSelectedItemContentCallback = ({ option }) => {
+            const icon = getFileIcon(option.type);
+            const fileSize = formatFileSize(option.size);
+            const dimensions = `${option.width} × ${option.height}`;
 
-            const thumbnailHtml = item.thumbnail
-                ? `<img src="${item.thumbnail}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover;">`
+            const thumbnailHtml = option.thumbnail
+                ? `<img src="${option.thumbnail}" style="width: 36px; height: 36px; border-radius: 4px; object-fit: cover;">`
                 : `<div style="width: 36px; height: 36px; border-radius: 4px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 1rem;">${icon}</div>`;
 
             return `
                 <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
                     ${thumbnailHtml}
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 500; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.filename}</div>
+                        <div style="font-weight: 500; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${option.filename}</div>
                         <div style="font-size: 0.7rem; color: #666;">${dimensions} • ${fileSize}</div>
                     </div>
                 </div>
@@ -820,39 +820,39 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         users.valueMember = 'id';
-        users.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
+        users.getDisplayValueCallback = ({ option }) => `${option.firstName} ${option.lastName}`;
 
-        users.renderOptionContentCallback = ({ item }) => {
-            const statusClass = item.status === 'online' ? 'status-online' : 'status-offline';
+        users.renderOptionContentCallback = ({ option }) => {
+            const statusClass = option.status === 'online' ? 'status-online' : 'status-offline';
             return `
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-size: 1.5rem;">${item.avatar}</span>
+                    <span style="font-size: 1.5rem;">${option.avatar}</span>
                     <div style="flex: 1;">
                         <div style="font-weight: 500;">
                             <span class="status-indicator ${statusClass}"></span>
-                            ${item.firstName} ${item.lastName}
+                            ${option.firstName} ${option.lastName}
                         </div>
-                        <div style="font-size: 0.875rem; color: #666;">${item.role}</div>
+                        <div style="font-size: 0.875rem; color: #666;">${option.role}</div>
                     </div>
                 </div>
             `;
         };
 
-        users.renderBadgeContentCallback = ({ item, isInPopover }) => {
+        users.renderBadgeContentCallback = ({ option, isInPopover }) => {
             if (isInPopover) {
                 // Detailed view in popover
                 return `
                     <div class="user-badge">
-                        <span class="user-avatar">${item.avatar}</span>
+                        <span class="user-avatar">${option.avatar}</span>
                         <div class="user-details">
-                            <span class="user-name">${item.firstName} ${item.lastName}</span>
-                            <span class="user-role">${item.role}</span>
+                            <span class="user-name">${option.firstName} ${option.lastName}</span>
+                            <span class="user-role">${option.role}</span>
                         </div>
                     </div>
                 `;
             } else {
                 // Compact view in badges
-                return `${item.avatar} ${item.firstName}`;
+                return `${option.avatar} ${option.firstName}`;
             }
         };
 
@@ -903,11 +903,11 @@ panel.addEventListener('click', (e) =&gt; {
         tags.valueMember = 'id';
         tags.displayValueMember = 'name';
 
-        tags.renderBadgeContentCallback = ({ item }) => {
+        tags.renderBadgeContentCallback = ({ option }) => {
             return `
                 <span style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                    <span>${item.icon}</span>
-                    <span>${item.name}</span>
+                    <span>${option.icon}</span>
+                    <span>${option.name}</span>
                 </span>
             `;
         };
@@ -925,11 +925,11 @@ panel.addEventListener('click', (e) =&gt; {
         sexy.displayValueMember = 'name';
 
         // 1) Own the badge CONTENT (goes inside .ms__badge-text).
-        sexy.renderBadgeContentCallback = ({ item }) =>
-            `<img class="ava" src="${item.avatar}" alt=""><span>${item.name}</span>`;
+        sexy.renderBadgeContentCallback = ({ option }) =>
+            `<img class="ava" src="${option.avatar}" alt=""><span>${option.name}</span>`;
 
         // 2) Tag special items so we can style their pill.
-        sexy.getBadgeClassCallback = ({ item }) => item.vip ? 'badge--vip' : '';
+        sexy.getBadgeClassCallback = ({ option }) => option.vip ? 'badge--vip' : '';
 
         // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill). The visible
         //    fill is split between .ms__badge-text and .ms__badge-remove, so for a
@@ -975,23 +975,23 @@ panel.addEventListener('click', (e) =&gt; {
             { id: 'bell-o',  name: 'Bell',     icon: 'bell',     filled: false, sizes: [16, 20, 24] }
         ];
         iconPicker.valueMember = 'id';
-        iconPicker.getDisplayValueCallback = ({ item }) => `${item.name} (${item.filled ? 'Filled' : 'Outline'})`;
+        iconPicker.getDisplayValueCallback = ({ option }) => `${option.name} (${option.filled ? 'Filled' : 'Outline'})`;
 
         // Compact dropdown rows: small glyph + name + style.
-        iconPicker.renderOptionContentCallback = ({ item }) => `
+        iconPicker.renderOptionContentCallback = ({ option }) => `
             <span style="display:inline-flex;align-items:center;gap:.6rem;width:100%;">
-                <span style="color:#15803d;display:inline-flex;">${iconSvg(item.icon, item.filled, 20)}</span>
-                <strong>${item.name}</strong>
-                <span style="margin-inline-start:auto;font-size:.72rem;color:#64748b;">${item.filled ? 'Filled' : 'Outline'}</span>
+                <span style="color:#15803d;display:inline-flex;">${iconSvg(option.icon, option.filled, 20)}</span>
+                <strong>${option.name}</strong>
+                <span style="margin-inline-start:auto;font-size:.72rem;color:#64748b;">${option.filled ? 'Filled' : 'Outline'}</span>
             </span>`;
 
         // The whole selected badge is a card, with its own Remove button.
-        iconPicker.renderBadgeCallback = ({ item }) => `
+        iconPicker.renderBadgeCallback = ({ option }) => `
             <div class="icard">
-                <div class="icard__title">${item.name}</div>
-                <div class="icard__chip">${item.filled ? 'Filled' : 'Outline'}</div>
-                <div class="icard__tile">${iconSvg(item.icon, item.filled, 36)}</div>
-                <div class="icard__sizes">${item.sizes.map(s => `<span>${s}px</span>`).join('')}</div>
+                <div class="icard__title">${option.name}</div>
+                <div class="icard__chip">${option.filled ? 'Filled' : 'Outline'}</div>
+                <div class="icard__tile">${iconSvg(option.icon, option.filled, 36)}</div>
+                <div class="icard__sizes">${option.sizes.map(s => `<span>${s}px</span>`).join('')}</div>
                 <button type="button" class="icard__remove" data-ms-action="remove">Remove</button>
             </div>`;
 
@@ -1028,7 +1028,7 @@ panel.addEventListener('click', (e) =&gt; {
             { id: 8, title: 'Purple Rain',            artist: 'Prince',           seconds: 520 }
         ];
         playlist.valueMember = 'id';
-        playlist.getDisplayValueCallback = ({ item }) => `${item.title} — ${item.artist}`;
+        playlist.getDisplayValueCallback = ({ option }) => `${option.title} — ${option.artist}`;
 
         const fmtDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
@@ -1090,8 +1090,8 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         person.valueMember = 'id';
-        person.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName} (${item.email})`;
-        person.renderSelectedContentCallback = ({ item }) => item.firstName; // Just first name when closed
+        person.getDisplayValueCallback = ({ option }) => `${option.firstName} ${option.lastName} (${option.email})`;
+        person.renderSelectedContentCallback = ({ option }) => option.firstName; // Just first name when closed
 
         // 9. Country Code
         const country = document.getElementById('country');
@@ -1104,8 +1104,8 @@ panel.addEventListener('click', (e) =&gt; {
         ];
 
         country.valueMember = 'code';
-        country.getDisplayValueCallback = ({ item }) => `${item.flag} ${item.name}`;
-        country.renderSelectedContentCallback = ({ item }) => item.code; // Just code when closed
+        country.getDisplayValueCallback = ({ option }) => `${option.flag} ${option.name}`;
+        country.renderSelectedContentCallback = ({ option }) => option.code; // Just code when closed
 
         // 10. Context-Aware Rendering
         const contextual = document.getElementById('contextual');
@@ -1120,27 +1120,27 @@ panel.addEventListener('click', (e) =&gt; {
         contextual.valueMember = 'id';
         contextual.displayValueMember = 'name';
 
-        contextual.renderOptionContentCallback = ({ item, isFocused }) => {
+        contextual.renderOptionContentCallback = ({ option, isFocused }) => {
             const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
             const statusIcons = { active: '▶️', planning: '📋', completed: '✅' };
 
             return `
                 <div>
                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                        <span>${statusIcons[item.status]}</span>
-                        <strong style="${isFocused ? 'color: #667eea;' : ''}">${item.name}</strong>
-                        <span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: ${priorityColors[item.priority]}; color: white; border-radius: 3px; margin-left: auto;">
-                            ${item.priority}
+                        <span>${statusIcons[option.status]}</span>
+                        <strong style="${isFocused ? 'color: #667eea;' : ''}">${option.name}</strong>
+                        <span style="font-size: 0.75rem; padding: 0.125rem 0.375rem; background: ${priorityColors[option.priority]}; color: white; border-radius: 3px; margin-left: auto;">
+                            ${option.priority}
                         </span>
                     </div>
                     <div class="tags-container">
-                        ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        ${option.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                     </div>
                 </div>
             `;
         };
 
-        contextual.renderBadgeContentCallback = ({ item, isInPopover }) => {
+        contextual.renderBadgeContentCallback = ({ option, isInPopover }) => {
             const statusIcons = { active: '▶️', planning: '📋', completed: '✅' };
             const priorityColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
 
@@ -1148,24 +1148,24 @@ panel.addEventListener('click', (e) =&gt; {
                 // In popover: Show full details with status icon and priority
                 return `
                     <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                        <span>${statusIcons[item.status]}</span>
-                        <span style="flex: 1;">${item.name}</span>
-                        <span style="font-size: 0.65rem; padding: 0.125rem 0.25rem; background: ${priorityColors[item.priority]}; color: white; border-radius: 2px;">
-                            ${item.priority}
+                        <span>${statusIcons[option.status]}</span>
+                        <span style="flex: 1;">${option.name}</span>
+                        <span style="font-size: 0.65rem; padding: 0.125rem 0.25rem; background: ${priorityColors[option.priority]}; color: white; border-radius: 2px;">
+                            ${option.priority}
                         </span>
                     </div>
                 `;
             } else {
                 // In main badges area: Compact with just status icon + name
                 return `
-                    <span>${statusIcons[item.status]} ${item.name}</span>
+                    <span>${statusIcons[option.status]} ${option.name}</span>
                 `;
             }
         };
 
-        contextual.getBadgeDisplayCallback = ({ item }) => {
+        contextual.getBadgeDisplayCallback = ({ option }) => {
             // For tooltips: show full project details
-            return `${item.name} - ${item.status} (${item.priority} priority)`;
+            return `${option.name} - ${option.status} (${option.priority} priority)`;
         };
 
         // The tag chips render in the shadow-DOM dropdown, so style them here.
@@ -1199,53 +1199,53 @@ panel.addEventListener('click', (e) =&gt; {
         priorityBadges.valueMember = 'id';
         priorityBadges.displayValueMember = 'name';
 
-        priorityBadges.renderOptionContentCallback = ({ item }) => {
+        priorityBadges.renderOptionContentCallback = ({ option }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
             const priorityLabels = { urgent: 'URGENT', important: 'Important', normal: 'Normal', low: 'Low Priority' };
 
             return `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.25rem;">${priorityIcons[item.priority]}</span>
+                    <span style="font-size: 1.25rem;">${priorityIcons[option.priority]}</span>
                     <div style="flex: 1;">
-                        <div style="font-weight: 500;">${item.name}</div>
-                        <div style="font-size: 0.75rem; color: #666; margin-top: 0.125rem;">Due: ${item.dueDate}</div>
+                        <div style="font-weight: 500;">${option.name}</div>
+                        <div style="font-size: 0.75rem; color: #666; margin-top: 0.125rem;">Due: ${option.dueDate}</div>
                     </div>
-                    <span style="font-size: 0.75rem; font-weight: 600;">${priorityLabels[item.priority]}</span>
+                    <span style="font-size: 0.75rem; font-weight: 600;">${priorityLabels[option.priority]}</span>
                 </div>
             `;
         };
 
         // Main badges area: Compact with just icon + name
-        priorityBadges.renderBadgeContentCallback = ({ item }) => {
+        priorityBadges.renderBadgeContentCallback = ({ option }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
-            return `<span>${priorityIcons[item.priority]} ${item.name}</span>`;
+            return `<span>${priorityIcons[option.priority]} ${option.name}</span>`;
         };
 
         // Selected items popover: Show full details with icon, name, due date, and priority label
-        priorityBadges.renderSelectedItemContentCallback = ({ item }) => {
+        priorityBadges.renderSelectedItemContentCallback = ({ option }) => {
             const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
             const priorityLabels = { urgent: 'URGENT', important: 'Important', normal: 'Normal', low: 'Low Priority' };
 
             return `
                 <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                    <span style="font-size: 1rem;">${priorityIcons[item.priority]}</span>
+                    <span style="font-size: 1rem;">${priorityIcons[option.priority]}</span>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 500; font-size: 0.875rem;">${item.name}</div>
-                        <div style="font-size: 0.7rem; color: #666; margin-top: 0.125rem;">Due: ${item.dueDate}</div>
+                        <div style="font-weight: 500; font-size: 0.875rem;">${option.name}</div>
+                        <div style="font-size: 0.7rem; color: #666; margin-top: 0.125rem;">Due: ${option.dueDate}</div>
                     </div>
-                    <span style="font-size: 0.65rem; font-weight: 600; white-space: nowrap;">${priorityLabels[item.priority]}</span>
+                    <span style="font-size: 0.65rem; font-weight: 600; white-space: nowrap;">${priorityLabels[option.priority]}</span>
                 </div>
             `;
         };
 
-        priorityBadges.getBadgeClassCallback = ({ item }) => {
+        priorityBadges.getBadgeClassCallback = ({ option }) => {
             // Return CSS class based on priority for semantic styling (main badges area)
-            return `badge-${item.priority}`;
+            return `badge-${option.priority}`;
         };
 
-        priorityBadges.getSelectedItemClassCallback = ({ item }) => {
+        priorityBadges.getSelectedItemClassCallback = ({ option }) => {
             // Return CSS class based on priority for selected items in popover
-            return `badge-${item.priority}`;
+            return `badge-${option.priority}`;
         };
 
         // Inject custom CSS into Shadow DOM for badge styling
@@ -1287,19 +1287,19 @@ panel.addEventListener('click', (e) =&gt; {
         gridLayout.valueMember = 'id';
         gridLayout.displayValueMember = 'name';
 
-        gridLayout.renderOptionContentCallback = ({ item }) => {
+        gridLayout.renderOptionContentCallback = ({ option }) => {
             return `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; width: 100%;">
                     <div style="font-weight: 600; font-size: 1.05rem; grid-column: 1 / -1; margin-bottom: 0.25rem;">
-                        ${item.name} <span style="color: #10b981; font-weight: 700;">${item.price}</span>
+                        ${option.name} <span style="color: #10b981; font-weight: 700;">${option.price}</span>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                        <span style="font-size: 0.875rem;"><strong>Users:</strong> ${item.users}</span>
-                        <span style="font-size: 0.875rem;"><strong>Storage:</strong> ${item.storage}</span>
+                        <span style="font-size: 0.875rem;"><strong>Users:</strong> ${option.users}</span>
+                        <span style="font-size: 0.875rem;"><strong>Storage:</strong> ${option.storage}</span>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                        <span style="font-size: 0.875rem;"><strong>Support:</strong> ${item.support}</span>
-                        <span style="font-size: 0.875rem;"><strong>Features:</strong> ${item.features}</span>
+                        <span style="font-size: 0.875rem;"><strong>Support:</strong> ${option.support}</span>
+                        <span style="font-size: 0.875rem;"><strong>Features:</strong> ${option.features}</span>
                     </div>
                 </div>
             `;
@@ -1318,19 +1318,19 @@ panel.addEventListener('click', (e) =&gt; {
         flexLayout.valueMember = 'id';
         flexLayout.displayValueMember = 'name';
 
-        flexLayout.renderOptionContentCallback = ({ item }) => {
+        flexLayout.renderOptionContentCallback = ({ option }) => {
             return `
                 <div style="display: flex; flex-direction: column; gap: 0.375rem; flex: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="font-size: 1.25rem;">${item.icon}</span>
-                            <strong>${item.name}</strong>
+                            <span style="font-size: 1.25rem;">${option.icon}</span>
+                            <strong>${option.name}</strong>
                         </div>
-                        ${item.critical ? '<span style="background: #ef4444; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Critical</span>' : ''}
+                        ${option.critical ? '<span style="background: #ef4444; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Critical</span>' : ''}
                     </div>
-                    <div style="font-size: 0.875rem; color: #666; line-height: 1.4;">${item.description}</div>
+                    <div style="font-size: 0.875rem; color: #666; line-height: 1.4;">${option.description}</div>
                     <div style="font-size: 0.75rem; color: #999; display: flex; align-items: center; gap: 0.375rem;">
-                        <span style="background: #e5e7eb; color: #374151; padding: 0.125rem 0.5rem; border-radius: 3px;">${item.frequency}</span>
+                        <span style="background: #e5e7eb; color: #374151; padding: 0.125rem 0.5rem; border-radius: 3px;">${option.frequency}</span>
                     </div>
                 </div>
             `;
@@ -1348,17 +1348,17 @@ panel.addEventListener('click', (e) =&gt; {
         largeCheckbox.valueMember = 'id';
         largeCheckbox.displayValueMember = 'name';
 
-        largeCheckbox.renderOptionContentCallback = ({ item }) => {
+        largeCheckbox.renderOptionContentCallback = ({ option }) => {
             return `
                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <strong style="font-size: 1.05rem;">${item.name}</strong>
-                        ${item.required
+                        <strong style="font-size: 1.05rem;">${option.name}</strong>
+                        ${option.required
                             ? '<span style="color: #ef4444; font-size: 0.875rem; font-weight: 600;">(Required)</span>'
                             : '<span style="color: #10b981; font-size: 0.875rem; font-weight: 600;">(Optional)</span>'
                         }
                     </div>
-                    <div style="font-size: 0.875rem; color: #666;">${item.description}</div>
+                    <div style="font-size: 0.875rem; color: #666;">${option.description}</div>
                 </div>
             `;
         };

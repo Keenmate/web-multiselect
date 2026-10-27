@@ -269,15 +269,15 @@ SINGLE-SELECT DISPLAY
 ---------------------
 Customize single-select input display:
 
-select.renderSelectedContentCallback = ({ item }) => {
-  return `${item.icon || ''} ${item.label}`;
+select.renderSelectedContentCallback = ({ option }) => {
+  return `${option.icon || ''} ${option.label}`;
 };
 
 IMPORTANT: Returns plain text, not HTML
 
 Or use display value callback:
-select.getDisplayValueCallback = ({ item }) => {
-  return item.label.toUpperCase();
+select.getDisplayValueCallback = ({ option }) => {
+  return option.label.toUpperCase();
 };
 
 MULTI-SELECT DISPLAY

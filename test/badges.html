@@ -135,7 +135,7 @@
             }
             // custom = price DESC
             document.getElementById('order-custom').selectedOrderCompareCallback =
-                (a, b) => b.price - a.price;
+                ({ a, b }) => b.price - a.price;
         });
     </script>
 </body>

@@ -90,8 +90,8 @@ interface PriorityOption extends MultiSelectOption {
   priority: 'low' | 'medium' | 'high' | 'urgent';
 }
 
-select.getBadgeClassCallback = ({ item }: { item: PriorityOption }) => {
-  return [`badge-priority`, `badge-${item.priority}`];
+select.getBadgeClassCallback = ({ option }: { option: PriorityOption }) => {
+  return [`badge-priority`, `badge-${option.priority}`];
 };
 
 select.getCustomStylesCallback = () => {

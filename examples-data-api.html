@@ -163,9 +163,9 @@ multiselect.options = languages; // Auto-detected as tuples</pre></div>
   ...
 ];
 
-multiselect.getValueCallback = ({ item }) => item.sku;
-multiselect.getDisplayValueCallback = ({ item }) => `${item.name} - $${item.price}`;
-multiselect.getIsDisabledCallback = ({ item }) => !item.inStock; // Disable out of stock
+multiselect.getValueCallback = ({ option }) => option.sku;
+multiselect.getDisplayValueCallback = ({ option }) => `${option.name} - $${option.price}`;
+multiselect.getIsDisabledCallback = ({ option }) => !option.inStock; // Disable out of stock
 multiselect.options = products;</pre></div>
 
             <div class="demo-area">
@@ -1029,10 +1029,10 @@ el.refresh();                     // silent repaint — never call both after an
                 { sku: 'PRD-005', name: 'Webcam', price: 89, inStock: true }
             ];
 
-            callbacksSelect.getValueCallback = ({ item }) => item.sku;
-            callbacksSelect.getDisplayValueCallback = ({ item }) => `${item.name} - $${item.price}`;
-            callbacksSelect.getSubtitleCallback = ({ item }) => item.inStock ? 'In Stock ✓' : 'Out of Stock';
-            callbacksSelect.getIsDisabledCallback = ({ item }) => !item.inStock;
+            callbacksSelect.getValueCallback = ({ option }) => option.sku;
+            callbacksSelect.getDisplayValueCallback = ({ option }) => `${option.name} - $${option.price}`;
+            callbacksSelect.getSubtitleCallback = ({ option }) => option.inStock ? 'In Stock ✓' : 'Out of Stock';
+            callbacksSelect.getIsDisabledCallback = ({ option }) => !option.inStock;
             callbacksSelect.options = products;
 
             callbacksSelect.addEventListener('change', () => {

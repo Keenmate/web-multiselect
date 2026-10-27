@@ -1171,9 +1171,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 
 &lt;script&gt;
   // Show just the code in the closed input
-  select.renderSelectedContentCallback = ({ item }) =&gt; item.code;
+  select.renderSelectedContentCallback = ({ option }) =&gt; option.code;
   // Show full label in dropdown
-  select.getDisplayValueCallback = ({ item }) =&gt; `${item.flag} ${item.name}`;
+  select.getDisplayValueCallback = ({ option }) =&gt; `${option.flag} ${option.name}`;
 &lt;/script&gt;</pre></div>
 
             <div class="narrow-demo-grid">
@@ -1918,9 +1918,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 countrySelect.valueMember = 'code';
                 countrySelect.displayValueMember = 'name';
                 // Show flag + name in dropdown
-                countrySelect.getDisplayValueCallback = ({ item }) => `${item.flag} ${item.name}`;
+                countrySelect.getDisplayValueCallback = ({ option }) => `${option.flag} ${option.name}`;
                 // Show just code in closed input
-                countrySelect.renderSelectedContentCallback = ({ item }) => item.code;
+                countrySelect.renderSelectedContentCallback = ({ option }) => option.code;
                 countrySelect.value = 'US';
             }
 
@@ -1930,9 +1930,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 currencySelect.valueMember = 'code';
                 currencySelect.displayValueMember = 'name';
                 // Show symbol + code + name in dropdown
-                currencySelect.getDisplayValueCallback = ({ item }) => `${item.symbol} ${item.code} - ${item.name}`;
+                currencySelect.getDisplayValueCallback = ({ option }) => `${option.symbol} ${option.code} - ${option.name}`;
                 // Show just code in closed input
-                currencySelect.renderSelectedContentCallback = ({ item }) => item.code;
+                currencySelect.renderSelectedContentCallback = ({ option }) => option.code;
                 currencySelect.value = 'USD';
             }
 
@@ -1942,9 +1942,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 prioritySelect.valueMember = 'code';
                 prioritySelect.displayValueMember = 'name';
                 // Show color + name in dropdown
-                prioritySelect.getDisplayValueCallback = ({ item }) => `${item.color} ${item.name}`;
+                prioritySelect.getDisplayValueCallback = ({ option }) => `${option.color} ${option.name}`;
                 // Show just code in closed input
-                prioritySelect.renderSelectedContentCallback = ({ item }) => item.code;
+                prioritySelect.renderSelectedContentCallback = ({ option }) => option.code;
                 prioritySelect.value = 'M';
             }
         });

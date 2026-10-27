@@ -305,24 +305,24 @@ to match the prepared option values). `null` / `''` means no search.
 
 **Your own search** (`searchCallback`) — FlexSearch, a server, anything, sync or async.
 `search-behavior` / `search-match` don't apply; you normalize however you want. Its `ctx`
-gives you the typed `term`, the abort `signal`, `searchTerm` — the term from
-`getSearchTermCallback` (any shape, with `ctx.target === 'callback'`) — and `entries`, every
+gives you `term` — the typed text, or what `getSearchTermCallback` returned for
+`ctx.target === 'callback'` (any shape) — the abort `signal`, and `entries`, every
 option paired with its raw search value — which may
 be an object:
 
 ```javascript
 import { normalizeSearchText } from '@keenmate/web-multiselect';
 
-multiselect.getSearchValueCallback = ({ item: city }) => ({
+multiselect.getSearchValueCallback = ({ option: city }) => ({
   title: normalizeSearchText(city.name),     // optional: the standard normalization
   zip: city.zip.replace(/\s/g, ''),
 });
 multiselect.getSearchTermCallback = ({ term, target }) =>
   target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
-multiselect.searchCallback = ({ searchTerm, entries }) =>
+multiselect.searchCallback = ({ term, entries }) =>
   entries
-    .filter(e => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+    .filter(e => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
     .map(e => e.item);
 ```
 
@@ -407,19 +407,19 @@ multiselect.beforeActionCallback = (detail) => {
 };
 
 // Badge display customization (show different text in badges vs dropdown)
-multiselect.getBadgeDisplayCallback = ({ item }) => {
+multiselect.getBadgeDisplayCallback = ({ option }) => {
   // Show shorter text in badges (e.g., just name instead of "name (email)")
-  return item.name; // Dropdown might show "John Doe (john@example.com)"
+  return option.name; // Dropdown might show "John Doe (john@example.com)"
 };
 
 // Badge tooltip customization
-multiselect.getBadgeTooltipCallback = ({ item }) => {
-  return `${item.label} - ${item.subtitle}`;
+multiselect.getBadgeTooltipCallback = ({ option }) => {
+  return `${option.label} - ${option.subtitle}`;
 };
 
 // Option (dropdown row) tooltip customization — requires enable-option-tooltips
-multiselect.getOptionTooltipCallback = ({ item }) => {
-  return `${item.label} — ${item.description}`;
+multiselect.getOptionTooltipCallback = ({ option }) => {
+  return `${option.label} — ${option.description}`;
 };
 
 // Action buttons (core action items). None render unless you set actionButtons.
@@ -486,35 +486,35 @@ multiselect.groupMember = 'category';
 multiselect.isDisabledMember = 'isDisabled';
 
 // Data extraction - Callback functions (for complex logic). Each takes ONE ctx;
-// the option is ctx.item.
-multiselect.getValueCallback = ({ item }) => item.id || item.value;
-multiselect.getDisplayValueCallback = ({ item }) => item.label || item.name;
-multiselect.getSearchValueCallback = ({ item }) => `${item.name} ${item.tags.join(' ')}`;
-multiselect.getIconCallback = ({ item }) => item.icon || '📄';
-multiselect.getSubtitleCallback = ({ item }) => `${item.price} - ${item.stock} in stock`;
-multiselect.getGroupCallback = ({ item }) => item.category;
-multiselect.getIsDisabledCallback = ({ item }) => item.stock === 0;
-multiselect.getFullTitleCallback = ({ item }) => `${item.name} (${item.email})`; // badges, with show-badge-full-title
+// the option is ctx.option.
+multiselect.getValueCallback = ({ option }) => option.id || option.value;
+multiselect.getDisplayValueCallback = ({ option }) => option.label || option.name;
+multiselect.getSearchValueCallback = ({ option }) => `${option.name} ${option.tags.join(' ')}`;
+multiselect.getIconCallback = ({ option }) => option.icon || '📄';
+multiselect.getSubtitleCallback = ({ option }) => `${option.price} - ${option.stock} in stock`;
+multiselect.getGroupCallback = ({ option }) => option.category;
+multiselect.getIsDisabledCallback = ({ option }) => option.stock === 0;
+multiselect.getFullTitleCallback = ({ option }) => `${option.name} (${option.email})`; // badges, with show-badge-full-title
 
 // Tree of options (alternative to path-member etc.)
-multiselect.getPathCallback = ({ item }) => item.path;            // e.g. "1.2.3"; enables tree mode
-multiselect.getIsSelectableCallback = ({ item, node }) => !item.isFolder; // node: the built tree node
+multiselect.getPathCallback = ({ option }) => option.path;            // e.g. "1.2.3"; enables tree mode
+multiselect.getIsSelectableCallback = ({ option, node }) => !option.isFolder; // node: the built tree node
 multiselect.isTreeEnabled = true; // tristate: true / false force tree mode; null (default) = auto when a path source is set
 
 // Selected-items display order (with selected-order="member" / "custom")
-multiselect.getSelectedOrderCallback = ({ item }) => item.priority;   // sort key
-multiselect.selectedOrderCompareCallback = (a, b) => a.rank - b.rank; // comparator — the one positional callback
+multiselect.getSelectedOrderCallback = ({ option }) => option.priority;   // sort key
+multiselect.selectedOrderCompareCallback = ({ a, b }) => a.rank - b.rank; // comparator ctx
 
-// Extra CSS classes (ctx: { item, displayMode, isInPopover })
-multiselect.getBadgeClassCallback = ({ item }) => item.isVip ? 'vip' : '';                // badges (string | string[])
-multiselect.getSelectedItemClassCallback = ({ item }) => item.isVip ? ['vip', 'bold'] : []; // popover items (falls back to getBadgeClassCallback)
+// Extra CSS classes (ctx: { option, displayMode, isInPopover })
+multiselect.getBadgeClassCallback = ({ option }) => option.isVip ? 'vip' : '';                // badges (string | string[])
+multiselect.getSelectedItemClassCallback = ({ option }) => option.isVip ? ['vip', 'bold'] : []; // popover items (falls back to getBadgeClassCallback)
 
 // Count chip shared by the in-input counter and group-header counts (default `[selected]`)
 multiselect.getCountLabelCallback = ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}`;
 
 // Badge remove-button hover tooltip (shown with enable-badge-tooltips; the
 // button's aria-label comes from labels.removeItem instead)
-multiselect.getRemoveButtonTooltipCallback = ({ item }) => `Unassign ${item.name}`;
+multiselect.getRemoveButtonTooltipCallback = ({ option }) => `Unassign ${option.name}`;
 
 // Custom rendering - Full HTML control
 multiselect.renderGroupLabelContentCallback = (ctx) => {
@@ -523,36 +523,36 @@ multiselect.renderGroupLabelContentCallback = (ctx) => {
   return `<strong>📦 ${ctx.groupName.toUpperCase()}</strong> ${ctx.selectedCount}/${ctx.memberCount}`;
 };
 
-// ctx: { item, index, isSelected, isFocused, isMatched, isDisabled, …tree fields }
+// ctx: { option, optionIndex, isSelected, isFocused, isMatched, isDisabled, …tree fields }
 // A [data-action] element inside fires the `action` event (source 'option') and
 // never toggles the row.
-multiselect.renderOptionContentCallback = ({ item }) => {
-  return `<strong>${item.name}</strong> <span class="badge">${item.status}</span>`;
+multiselect.renderOptionContentCallback = ({ option }) => {
+  return `<strong>${option.name}</strong> <span class="badge">${option.status}</span>`;
 };
 
-multiselect.renderBadgeContentCallback = ({ item, isInPopover }) => {
+multiselect.renderBadgeContentCallback = ({ option, isInPopover }) => {
   return isInPopover
-    ? `${item.icon} ${item.name} - ${item.description}`
-    : `${item.icon} ${item.name}`;
+    ? `${option.icon} ${option.name} - ${option.description}`
+    : `${option.icon} ${option.name}`;
 };
 
 // Replace the WHOLE badge (not just its content). Wrapped in
 // .ms__badge.ms__badge--custom; an inner [data-ms-action="remove"] (or
 // .ms__badge-remove) removes the item.
 // Return null to fall back to the default pill for that item.
-multiselect.renderBadgeCallback = ({ item }) => {
-  return `<span class="my-chip">${item.name} <button data-ms-action="remove">×</button></span>`;
+multiselect.renderBadgeCallback = ({ option }) => {
+  return `<span class="my-chip">${option.name} <button data-ms-action="remove">×</button></span>`;
 };
 
 // One selected item inside the selected-items popover (ctx.isInPopover === true)
-multiselect.renderSelectedItemContentCallback = ({ item }) => {
-  return `${item.name} <small>${item.email}</small>`;
+multiselect.renderSelectedItemContentCallback = ({ option }) => {
+  return `${option.name} <small>${option.email}</small>`;
 };
 
-multiselect.renderSelectedContentCallback = ({ item }) => {
-  // Customize selected item text in single-select mode (plain text only).
+multiselect.renderSelectedContentCallback = ({ option }) => {
+  // Customize selected option text in single-select mode (plain text only).
   // ctx also has presentation / isFullscreen / isModal
-  return item.firstName;
+  return option.firstName;
 };
 
 // Inject CSS into the Shadow DOM (wins over the custom-styles attribute)
@@ -630,9 +630,9 @@ You do **not** need to await between a property write and an imperative method �
 | `search(term: string)` | Set the search text and filter as if typed (runs `beforeSearchCallback` / `min-search-length` / `searchCallback`). Does not open the dropdown. `''` clears |
 | `clearSearch()` | Clear the search text and restore the full list (selection untouched) |
 | `searchTerm` | Property (read-only): the current search text (`''` when empty) |
-| `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `boolean` (`false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
-| `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Returns `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) — call `clearSearch()` first |
-| `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Returns `false` in tree mode or if the group is empty |
+| `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `Promise<boolean>` (`true` once scrolled, `false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
+| `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Resolves `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) — call `clearSearch()` first |
+| `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Resolves `false` in tree mode or if the group is empty |
 | `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `type` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `autoHideMs` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
 | `hideMessage()` | Dismiss the message shown by `showMessage()` |
 | `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered — see below |
@@ -651,7 +651,7 @@ You do **not** need to await between a property write and an imperative method �
 |-------|---------|
 | Read state | `selectedOptions`, `selectedValue`, `options`, `isOpen` |
 | Selection | `setSelected(values, { notify })`, `selectAll()`, `clearSelection()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
-| Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `boolean`), `refresh()` |
+| Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `Promise<boolean>`), `refresh()` |
 | Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |
 | Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()` |
 

@@ -121,13 +121,13 @@ el.searchCallback = ({ term }) =&gt; ix.search(term, 50);   // externalize the w
             </p>
             <div class="code-block"><pre>import { normalizeSearchText } from '@keenmate/web-multiselect';
 
-el.getSearchValueCallback = ({ item: c }) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+el.getSearchValueCallback = ({ option: c }) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
 el.getSearchTermCallback = ({ term, target }) =&gt;
     target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
-el.searchCallback = ({ searchTerm, entries }) =&gt;
+el.searchCallback = ({ term, entries }) =&gt;
     entries
-        .filter((e) =&gt; e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+        .filter((e) =&gt; e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
         .map((e) =&gt; e.item);</pre></div>
             <div class="demo-area">
                 <label class="demo-label">Search by city name or postal code:</label>
@@ -305,20 +305,20 @@ el.searchCallback = ({ searchTerm, entries }) =&gt;
                 el.subtitleMember = 'zip';
                 el.options = cities;
 
-                el.getSearchValueCallback = ({ item: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+                el.getSearchValueCallback = ({ option: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
                 el.getSearchTermCallback = ({ term, target }) =>
                     target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
 
                 let firstEntries = null;
                 let calls = 0;
-                el.searchCallback = ({ searchTerm, entries }) => {
+                el.searchCallback = ({ term, entries }) => {
                     firstEntries ??= entries;
                     calls++;
                     const results = entries
-                        .filter((e) => e.searchValue.zip.startsWith(searchTerm.zip) || e.searchValue.title.includes(searchTerm.text))
+                        .filter((e) => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
                         .map((e) => e.item);
                     out.textContent =
-                        `searchTerm: ${JSON.stringify(searchTerm)}\n` +
+                        `term:       ${JSON.stringify(term)}\n` +
                         `results:    ${results.length} of ${entries.length}\n` +
                         `entries is the same array as on call 1: ${entries === firstEntries} (call ${calls})`;
                     return results;

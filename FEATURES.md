@@ -15,7 +15,7 @@ How to use the matrix:
 
 > Component version this inventory was generated against: **v1.12.0-rc04**, updated for the
 > `[Unreleased]` interaction-model change (CHANGELOG): every callback takes ONE `ctx` argument
-> (per-option callbacks read `ctx.item`; `ctx.controller` / `ctx.element` are always present), `on*`
+> (per-option callbacks read `ctx.option`; `ctx.controller` / `ctx.element` are always present), `on*`
 > properties receive the event detail, before-hooks cancel with `false`, action buttons are core
 > action items (`MultiSelectActionItem`) and every activation fires the `action` event.
 > Re-check after each minor/feature release — new rows land in the attribute table
@@ -43,13 +43,13 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Subtitle member | attr/prop | `subtitle-member` / `subtitleMember` | — | Property name for subtitle | | |
 | Group member | attr/prop | `group-member` / `groupMember` | — | Property name for group | | |
 | Disabled member | attr/prop | `is-disabled-member` / `isDisabledMember` | — | Property name for disabled flag | | |
-| Value extraction callback | callback | `getValueCallback({ item })` | — | Complex value extraction | | |
-| Display value callback | callback | `getDisplayValueCallback({ item })` | — | Complex label extraction | | |
-| Search value callback | callback | `getSearchValueCallback({ item })` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
-| Icon callback | callback | `getIconCallback({ item })` | — | Computed icon per item | | |
-| Subtitle callback | callback | `getSubtitleCallback({ item })` | — | Computed subtitle per item | | |
-| Group callback | callback | `getGroupCallback({ item })` | — | Computed group per item | | |
-| Disabled callback | callback | `getIsDisabledCallback({ item })` | — | Computed disabled state per item | | |
+| Value extraction callback | callback | `getValueCallback({ option })` | — | Complex value extraction | | |
+| Display value callback | callback | `getDisplayValueCallback({ option })` | — | Complex label extraction | | |
+| Search value callback | callback | `getSearchValueCallback({ option })` | — | Searchable text per item (string for internal search; an object for your own `searchCallback`). Computed once per item | | |
+| Icon callback | callback | `getIconCallback({ option })` | — | Computed icon per item | | |
+| Subtitle callback | callback | `getSubtitleCallback({ option })` | — | Computed subtitle per item | | |
+| Group callback | callback | `getGroupCallback({ option })` | — | Computed group per item | | |
+| Disabled callback | callback | `getIsDisabledCallback({ option })` | — | Computed disabled state per item | | |
 | Initial / pre-selected values | attr | `initial-values` (JSON array) | — | Consumed at init; or `<option selected>` | | |
 | Add-new (tag creation) | attr + callback | `allow-add-new` + `beforeAddCallback({ value })` | `bool(false)` | Create options not in the list — return the option (appended + selected), `false` cancels, nothing → only the `add` event | | |
 
@@ -57,7 +57,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Custom search callback | callback | `searchCallback({ term, signal, searchTerm, entries })` | — | Sync or async `options[]`; `signal` is an `AbortSignal`; `searchTerm` = the prepared term, `entries` = options paired with their search values | | |
+| Custom search callback | callback | `searchCallback({ term, signal, entries })` | — | Sync or async `options[]`; `signal` is an `AbortSignal`; `term` = the typed text or the `getSearchTermCallback` result, `entries` = options paired with their search values | | |
 | In-flight request cancellation | callback arg | `signal` on `searchCallback` | — | Aborted when superseded / min-length / destroy | | |
 | Search debounce | attr/prop | `search-debounce` / `searchDebounce` | `0` | ms; coalesces keystroke bursts (async path only) | | |
 | Minimum search length | attr/prop | `min-search-length` / `minSearchLength` | `0` | Below threshold = no async call | | |
@@ -106,8 +106,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Enable badge tooltips | attr/prop | `enable-badge-tooltips` / `isBadgeTooltipsEnabled` | `bool(false)` | | | |
-| Custom badge tooltip content | callback | `getBadgeTooltipCallback({ item, displayMode, isInPopover })` | — | string or HTMLElement | | |
-| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ item })` | — | Per-item remove tooltip text | | |
+| Custom badge tooltip content | callback | `getBadgeTooltipCallback({ option, displayMode, isInPopover })` | — | string or HTMLElement | | |
+| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ option })` | — | Per-item remove tooltip text | | |
 | Remove-button tooltip format | attr/prop | `remove-button-tooltip-text` / `removeButtonTooltipText` | `'Remove {0}'` | `{0}` = item name | | |
 | Tooltip placement | attr/prop | `badge-tooltip-placement` / `badgeTooltipPlacement` | `'top'` | Floating-UI placements | | |
 | Tooltip delay | attr/prop | `badge-tooltip-delay` / `badgeTooltipDelay` | `100` | ms before show | | |
@@ -117,14 +117,14 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|
-| Custom dropdown option content | callback | `renderOptionContentCallback(ctx)` | HTML string or HTMLElement; `ctx` has item/index/isSelected/isFocused/isMatched/isDisabled; `data-action` elements inside fire the `action` event | | |
+| Custom dropdown option content | callback | `renderOptionContentCallback(ctx)` | HTML string or HTMLElement; `ctx` has option/optionIndex/isSelected/isFocused/isMatched/isDisabled; `data-action` elements inside fire the `action` event | | |
 | Custom badge content | callback | `renderBadgeContentCallback(ctx)` | `ctx` has item/displayMode/isInPopover | | |
-| Custom selected-item content (popover) | callback | `renderSelectedItemContentCallback({ item })` | Popover row rendering | | |
-| Custom single-select display | callback | `renderSelectedContentCallback({ item })` | Plain text, single-select | | |
+| Custom selected-item content (popover) | callback | `renderSelectedItemContentCallback({ option })` | Popover row rendering | | |
+| Custom single-select display | callback | `renderSelectedContentCallback({ option })` | Plain text, single-select | | |
 | Custom group label content | callback | `renderGroupLabelContentCallback({ groupName, … })` | HTML allowed | | |
-| Custom badge display text | callback | `getBadgeDisplayCallback({ item })` | Shorter badge text vs dropdown | | |
-| Custom badge CSS class | callback | `getBadgeClassCallback({ item })` | string or string[] | | |
-| Custom selected-item CSS class | callback | `getSelectedItemClassCallback({ item })` | Popover row classes | | |
+| Custom badge display text | callback | `getBadgeDisplayCallback({ option })` | Shorter badge text vs dropdown | | |
+| Custom badge CSS class | callback | `getBadgeClassCallback({ option })` | string or string[] | | |
+| Custom selected-item CSS class | callback | `getSelectedItemClassCallback({ option })` | Popover row classes | | |
 | Inject custom CSS into Shadow DOM | callback | `getCustomStylesCallback(ctx)` | Returns CSS string | | |
 
 > ⚠️ Rendering callbacks accept **raw HTML** — the consumer (and wrapper) must sanitize

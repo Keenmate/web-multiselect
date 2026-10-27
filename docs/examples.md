@@ -86,7 +86,7 @@ const check = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
   style="vertical-align:-3px"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>`;
 
-select.getIconCallback = ({ item }) => item.isDone ? check : '';
+select.getIconCallback = ({ option }) => option.isDone ? check : '';
 ```
 
 **Action buttons are the exception:** their `text` and `icon` are inserted as **plain text**, not HTML. Use a glyph or emoji in the `icon` field:
@@ -347,7 +347,7 @@ Perfect for different use cases and space constraints:
 
 - **`badges`** (default) — individual removable badges for each selected item. Calls `getBadgeDisplayCallback` for each item.
 - **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback({ count })`.
-- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback({ item: firstItem, … })` and `getCounterCallback({ count, moreCount })`.
+- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback({ option: firstItem, … })` and `getCounterCallback({ count, moreCount })`.
 - **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback({ count, moreCount })` for badge.
 - **`none`** — no display in badges area. No callbacks invoked. Use with `show-counter="true"` for minimal UI.
 
@@ -413,8 +413,8 @@ Enable tooltips on selected item badges with customizable placement and delay:
   const select = document.querySelector('web-multiselect');
 
   // Custom tooltip content
-  select.getBadgeTooltipCallback = ({ item }) => {
-    return `${item.label} - ${item.subtitle}`;
+  select.getBadgeTooltipCallback = ({ option }) => {
+    return `${option.label} - ${option.subtitle}`;
   };
 </script>
 ```
@@ -534,15 +534,15 @@ Customize how options appear in the dropdown:
     { id: 4, name: 'Svelte', stars: 76000, trending: true }
   ];
 
-  select.renderOptionContentCallback = ({ item }) => {
-    // ctx provides: { item, index, isSelected, isFocused, isMatched, isDisabled,
+  select.renderOptionContentCallback = ({ option }) => {
+    // ctx provides: { option, optionIndex, isSelected, isFocused, isMatched, isDisabled,
     //                 presentation, isFullscreen, controller, element, + tree fields }
 
     return `
       <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <strong>${item.name}</strong>
-        <span style="color: #666; font-size: 0.875rem;">⭐ ${(item.stars / 1000).toFixed(0)}k</span>
-        ${item.trending ? '<span style="background: #10b981; color: white; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.75rem;">🔥 Trending</span>' : ''}
+        <strong>${option.name}</strong>
+        <span style="color: #666; font-size: 0.875rem;">⭐ ${(option.stars / 1000).toFixed(0)}k</span>
+        ${option.trending ? '<span style="background: #10b981; color: white; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.75rem;">🔥 Trending</span>' : ''}
       </div>
     `;
   };
@@ -571,11 +571,11 @@ Customize how options appear in the dropdown:
 one callback (no `matchMedia` wiring; the component drives it):
 
 ```javascript
-select.renderOptionContentCallback = ({ item, isFullscreen }) =>
+select.renderOptionContentCallback = ({ option, isFullscreen }) =>
   isFullscreen
-    ? `<span>${item.name}</span>`                                  // lean on the phone sheet
-    : `<div class="rich"><strong>${item.name}</strong>
-         <small>${item.price} · ⭐${item.popularity}</small></div>`; // rich on desktop
+    ? `<span>${option.name}</span>`                                  // lean on the phone sheet
+    : `<div class="rich"><strong>${option.name}</strong>
+         <small>${option.price} · ⭐${option.popularity}</small></div>`; // rich on desktop
 ```
 
 ### Custom badge rendering
@@ -592,18 +592,18 @@ select.options = [
 ];
 
 // Custom badge rendering in main badges area
-select.renderBadgeContentCallback = ({ item }) => {
-  return `${item.avatar} ${item.name}`;
+select.renderBadgeContentCallback = ({ option }) => {
+  return `${option.avatar} ${option.name}`;
 };
 
 // Custom rendering for selected items popover (separate callback)
-select.renderSelectedItemContentCallback = ({ item }) => {
+select.renderSelectedItemContentCallback = ({ option }) => {
   return `
     <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <span>${item.avatar}</span>
+      <span>${option.avatar}</span>
       <div>
-        <div><strong>${item.name}</strong></div>
-        <div style="font-size: 0.75rem; color: #666;">${item.role}</div>
+        <div><strong>${option.name}</strong></div>
+        <div style="font-size: 0.75rem; color: #666;">${option.role}</div>
       </div>
     </div>
   `;
@@ -681,14 +681,14 @@ select.options = [
 ];
 
 // Add CSS class based on priority
-select.getBadgeClassCallback = ({ item }) => {
-  return `badge-${item.priority}`; // Returns 'badge-urgent', 'badge-normal', etc.
+select.getBadgeClassCallback = ({ option }) => {
+  return `badge-${option.priority}`; // Returns 'badge-urgent', 'badge-normal', etc.
 };
 
 // Can also return array of classes
-select.getBadgeClassCallback = ({ item }) => {
-  const classes = [`badge-${item.priority}`];
-  if (item.urgent) classes.push('badge-blink');
+select.getBadgeClassCallback = ({ option }) => {
+  const classes = [`badge-${option.priority}`];
+  if (option.urgent) classes.push('badge-blink');
   return classes;
 };
 ```
@@ -717,7 +717,7 @@ Then style with CSS:
 
 The callback:
 
-- Takes one `ctx` (`{ item, displayMode, isInPopover }`).
+- Takes one `ctx` (`{ option, displayMode, isInPopover }`).
 - Returns a string (single class) or array of strings (multiple classes).
 - Classes are added to the badge's base `.ms__badge` element.
 - Works across all rendering locations (main badges, partial mode, popover).
@@ -728,13 +728,13 @@ Similar to rendering callbacks, you can use different class callbacks for badges
 
 ```javascript
 // Add classes to badges in main area
-select.getBadgeClassCallback = ({ item }) => {
-  return `badge-${item.priority}`;
+select.getBadgeClassCallback = ({ option }) => {
+  return `badge-${option.priority}`;
 };
 
 // Add different/additional classes to selected items in popover
-select.getSelectedItemClassCallback = ({ item }) => {
-  return [`badge-${item.priority}`, 'badge-detailed'];
+select.getSelectedItemClassCallback = ({ option }) => {
+  return [`badge-${option.priority}`, 'badge-detailed'];
 };
 ```
 
@@ -750,8 +750,8 @@ Since the component uses Shadow DOM, regular page CSS cannot style shadow elemen
 ```javascript
 const select = document.querySelector('web-multiselect');
 
-select.getBadgeClassCallback = ({ item }) => {
-  return `badge-${item.priority}`;
+select.getBadgeClassCallback = ({ option }) => {
+  return `badge-${option.priority}`;
 };
 
 select.getCustomStylesCallback = () => `
@@ -795,13 +795,13 @@ select.options = [
 ];
 
 // Show just first name when closed
-select.renderSelectedContentCallback = ({ item }) => {
-  return item.firstName; // Plain text (not HTML)
+select.renderSelectedContentCallback = ({ option }) => {
+  return option.firstName; // Plain text (not HTML)
 };
 
 // While dropdown shows full details
-select.getDisplayValueCallback = ({ item }) => {
-  return `${item.firstName} ${item.lastName} (${item.email})`;
+select.getDisplayValueCallback = ({ option }) => {
+  return `${option.firstName} ${option.lastName} (${option.email})`;
 };
 ```
 
@@ -810,17 +810,17 @@ select.getDisplayValueCallback = ({ item }) => {
 Use JavaScript logic for conditional rendering:
 
 ```javascript
-select.renderOptionContentCallback = ({ item, isSelected, isFocused }) => {
+select.renderOptionContentCallback = ({ option, isSelected, isFocused }) => {
   const classes = [];
   if (isSelected) classes.push('selected');
   if (isFocused) classes.push('focused');
 
   return `
     <div class="${classes.join(' ')}">
-      ${item.isNew ? '<span class="badge-new">NEW</span>' : ''}
-      <strong>${item.name}</strong>
-      ${item.description ? `<p style="font-size: 0.875rem; color: #666;">${item.description}</p>` : ''}
-      ${item.tags ? `<div class="tags">${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+      ${option.isNew ? '<span class="badge-new">NEW</span>' : ''}
+      <strong>${option.name}</strong>
+      ${option.description ? `<p style="font-size: 0.875rem; color: #666;">${option.description}</p>` : ''}
+      ${option.tags ? `<div class="tags">${option.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
     </div>
   `;
 };
@@ -831,20 +831,20 @@ select.renderOptionContentCallback = ({ item, isSelected, isFocused }) => {
 You can also return DOM elements for more complex rendering:
 
 ```javascript
-select.renderOptionContentCallback = ({ item }) => {
+select.renderOptionContentCallback = ({ option }) => {
   const div = document.createElement('div');
   div.style.display = 'flex';
   div.style.alignItems = 'center';
   div.style.gap = '0.5rem';
 
   const img = document.createElement('img');
-  img.src = item.avatarUrl;
+  img.src = option.avatarUrl;
   img.style.width = '32px';
   img.style.height = '32px';
   img.style.borderRadius = '50%';
 
   const span = document.createElement('span');
-  span.textContent = item.name;
+  span.textContent = option.name;
 
   div.appendChild(img);
   div.appendChild(span);
@@ -869,10 +869,10 @@ When using `renderOptionContentCallback` with virtual scroll enabled:
 <script type="module">
   const select = document.getElementById('large-dataset');
 
-  select.renderOptionContentCallback = ({ item }) => {
+  select.renderOptionContentCallback = ({ option }) => {
     return `
       <div style="height: 60px; display: flex; align-items: center;">
-        <strong>${item.name}</strong>
+        <strong>${option.name}</strong>
       </div>
     `;
   };
@@ -947,28 +947,28 @@ Custom rendering callbacks support full CSS layout control:
 
 ```javascript
 // CSS Grid example
-multiselect.renderOptionContentCallback = ({ item }) => {
+multiselect.renderOptionContentCallback = ({ option }) => {
   return `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-      <div><strong>Name:</strong> ${item.name}</div>
-      <div><strong>Price:</strong> ${item.price}</div>
-      <div><strong>Stock:</strong> ${item.stock}</div>
-      <div><strong>Rating:</strong> ${item.rating}</div>
+      <div><strong>Name:</strong> ${option.name}</div>
+      <div><strong>Price:</strong> ${option.price}</div>
+      <div><strong>Stock:</strong> ${option.stock}</div>
+      <div><strong>Rating:</strong> ${option.rating}</div>
     </div>
   `;
 };
 
 // Flexbox example
-multiselect.renderOptionContentCallback = ({ item }) => {
+multiselect.renderOptionContentCallback = ({ option }) => {
   return `
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; flex-direction: column;">
-        <strong>${item.name}</strong>
-        <span style="font-size: 0.875rem; color: #666;">${item.description}</span>
+        <strong>${option.name}</strong>
+        <span style="font-size: 0.875rem; color: #666;">${option.description}</span>
       </div>
       <div style="text-align: right;">
-        <div>${item.price}</div>
-        <div style="font-size: 0.875rem;">${item.stock} in stock</div>
+        <div>${option.price}</div>
+        <div style="font-size: 0.875rem;">${option.stock} in stock</div>
       </div>
     </div>
   `;
@@ -1035,36 +1035,36 @@ For complex data extraction or conditional logic, use callbacks:
 const select = document.querySelector('web-multiselect');
 
 // Custom value extraction
-select.getValueCallback = ({ item }) => item.id || item.code || item.value;
+select.getValueCallback = ({ option }) => option.id || option.code || option.value;
 
 // Combine multiple fields for display
-select.getDisplayValueCallback = ({ item }) => {
-  return `${item.firstName} ${item.lastName}`;
+select.getDisplayValueCallback = ({ option }) => {
+  return `${option.firstName} ${option.lastName}`;
 };
 
 // Include multiple fields in search
-select.getSearchValueCallback = ({ item }) => {
-  return `${item.name} ${item.sku} ${item.tags.join(' ')}`;
+select.getSearchValueCallback = ({ option }) => {
+  return `${option.name} ${option.sku} ${option.tags.join(' ')}`;
 };
 
 // Conditional icons
-select.getIconCallback = ({ item }) => {
-  return item.inStock ? '✅' : '❌';
+select.getIconCallback = ({ option }) => {
+  return option.inStock ? '✅' : '❌';
 };
 
 // Dynamic subtitles
-select.getSubtitleCallback = ({ item }) => {
-  return `$${item.price} - ${item.stock} in stock`;
+select.getSubtitleCallback = ({ option }) => {
+  return `$${option.price} - ${option.stock} in stock`;
 };
 
 // Disable based on conditions
-select.getIsDisabledCallback = ({ item }) => {
-  return item.stock === 0 || item.discontinued;
+select.getIsDisabledCallback = ({ option }) => {
+  return option.stock === 0 || option.discontinued;
 };
 
 // Customize badge display (show different text in badges vs dropdown)
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.name;
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.name;
 };
 ```
 

@@ -145,10 +145,10 @@ export type ActionsAlign = 'stretch' | 'left' | 'right' | 'center' | 'space-betw
  */
 export interface MultiSelectContext<T = any> extends ComponentContext<MultiSelectController<T>>, PresentationContext {}
 
-/** `ctx` of the per-option callbacks (`getValueCallback`, `getIconCallback`, …): the option is `item`. */
+/** `ctx` of the per-option callbacks (`getValueCallback`, `getIconCallback`, …): the option is `option`. */
 export interface ItemContext<T = any> extends MultiSelectContext<T> {
     /** The option this call is about. */
-    item: T;
+    option: T;
 }
 
 /** `ctx` of `getIsSelectableCallback` — the option plus its built tree node. */
@@ -163,7 +163,7 @@ export interface TreeNodeContext<T = any> extends ItemContext<T> {
  */
 export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
     /** Index of the option in the filtered list */
-    index: number;
+    optionIndex: number;
     /** Whether the option is currently selected */
     isSelected: boolean;
     /** Whether the option is currently focused (keyboard navigation) */
@@ -274,8 +274,22 @@ export interface BeforeSearchContext<T = any> extends MultiSelectContext<T> {
 /** `ctx` of `getSearchTermCallback` (`term`, `target`, `behavior`, `match` from core `/search`). */
 export interface SearchTermCallbackContext<T = any> extends SearchTermContext, MultiSelectContext<T> {}
 
-/** `ctx` of `searchCallback` (`term`, `signal`, `searchTerm`, `entries` from core `/search`). */
-export interface MultiSelectSearchContext<T = any> extends SearchCallbackContext<T>, MultiSelectContext<T> {}
+/**
+ * `ctx` of `searchCallback` (`signal`, `entries` from core `/search`). `term` is the term to
+ * search for: the typed text (after `beforeSearchCallback`), or — when `getSearchTermCallback`
+ * is set — whatever it returned for `target: 'callback'` (a string, RegExp or object; type it via
+ * `TTerm`). There is no separate `searchTerm` field.
+ */
+export interface MultiSelectSearchContext<T = any, TTerm = string> extends Omit<SearchCallbackContext<T>, 'term' | 'searchTerm'>, MultiSelectContext<T> {
+    /** The term to search for (see above). */
+    term: TTerm;
+}
+
+/** `ctx` of `selectedOrderCompareCallback` — compare two selected options (`Array.prototype.sort` contract). */
+export interface SelectedOrderCompareContext<T = any> extends MultiSelectContext<T> {
+    a: T;
+    b: T;
+}
 
 /**
  * Which gesture is about to change the selection — `source` on {@link BeforeSelectContext}.
@@ -347,10 +361,10 @@ export interface MultiSelectController<T = any> {
     search(term: string): void;
     /** Clear the search box and restore the full list (does not touch the selection). */
     clearSearch(): void;
-    /** Scroll a specific option / group / index into view. `false` when it isn't in the visible list. */
-    scrollToValue(value: string | number): boolean;
-    scrollToGroup(group: string): boolean;
-    scrollToIndex(index: number): boolean;
+    /** Scroll a specific option / group / index into view. Resolves `true` once scrolled, `false` when it isn't in the visible list. */
+    scrollToValue(value: string | number): Promise<boolean>;
+    scrollToGroup(group: string): Promise<boolean>;
+    scrollToIndex(index: number): Promise<boolean>;
     /** Re-render from the current option set (after mutating options in place). */
     refresh(): void;
 
@@ -472,12 +486,12 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for value/ID extraction. Default `'value'`; `getValueCallback` overrides it. Primitive options (strings/numbers) are their own value. */
     valueMember?: string;
-    /** Callback to extract value/ID from an option (`ctx.item`) */
+    /** Callback to extract value/ID from an option (`ctx.option`) */
     getValueCallback?: (ctx: ItemContext<T>) => string | number;
 
     /** Member property name for display value extraction. Default `'label'`; `getDisplayValueCallback` overrides it. Primitive options display themselves. */
     displayValueMember?: string;
-    /** Callback to extract the display value from an option (`ctx.item`) */
+    /** Callback to extract the display value from an option (`ctx.option`) */
     getDisplayValueCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Callback to customize badge display text (defaults to display value if not provided).
@@ -505,10 +519,10 @@ export interface MultiSelectConfig<T = any> {
     /** Extract the sort key when `selectedOrder === 'member'` (overrides `selectedOrderMember`). */
     getSelectedOrderCallback?: (ctx: ItemContext<T>) => string | number;
     /**
-     * Comparator used when `selectedOrder === 'custom'`; the standard `Array.prototype.sort`
-     * `(a, b) => number` contract (the one positional exception — it is handed to `sort`).
+     * Comparator used when `selectedOrder === 'custom'`: `({ a, b }) => number` with the
+     * standard `Array.prototype.sort` result contract (negative: `a` first).
      */
-    selectedOrderCompareCallback?: (a: T, b: T) => number;
+    selectedOrderCompareCallback?: (ctx: SelectedOrderCompareContext<T>) => number;
 
     /**
      * Member property name for a "full title" — a fully-qualified label that ships with the
@@ -548,7 +562,7 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for icon extraction. Default `'icon'`; `getIconCallback` overrides it. */
     iconMember?: string;
-    /** Callback to extract the icon from an option (`ctx.item`) */
+    /** Callback to extract the icon from an option (`ctx.option`) */
     getIconCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Reserve a fixed-width icon gutter on every option row, even rows that have no
@@ -561,7 +575,7 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for subtitle extraction. Default `'subtitle'`; `getSubtitleCallback` overrides it. */
     subtitleMember?: string;
-    /** Callback to extract the subtitle from an option (`ctx.item`) */
+    /** Callback to extract the subtitle from an option (`ctx.option`) */
     getSubtitleCallback?: (ctx: ItemContext<T>) => string;
 
     // ========================================================================
@@ -623,7 +637,7 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for group extraction. Default `'group'`; `getGroupCallback` overrides it. */
     groupMember?: string;
-    /** Callback to extract the group from an option (`ctx.item`) */
+    /** Callback to extract the group from an option (`ctx.option`) */
     getGroupCallback?: (ctx: ItemContext<T>) => string;
     /**
      * Callback to customize group label content (can return HTML). `ctx` is a
@@ -644,7 +658,7 @@ export interface MultiSelectConfig<T = any> {
 
     /** Member property name for disabled state extraction. Default `'disabled'`; `getIsDisabledCallback` overrides it. */
     isDisabledMember?: string;
-    /** Callback deciding whether an option (`ctx.item`) is disabled (overrides `isDisabledMember`) */
+    /** Callback deciding whether an option (`ctx.option`) is disabled (overrides `isDisabledMember`) */
     getIsDisabledCallback?: (ctx: ItemContext<T>) => boolean;
 
     // ========================================================================
@@ -685,7 +699,7 @@ export interface MultiSelectConfig<T = any> {
     getSelectedItemClassCallback?: (ctx: BadgeContentRenderContext<T>) => string | string[];
     /**
      * Custom renderer for the selected item display in single-select mode — return plain text (it
-     * becomes the input value). `ctx.item` is the selected option.
+     * becomes the input value). `ctx.option` is the selected option.
      */
     renderSelectedContentCallback?: (ctx: SelectedContentRenderContext<T>) => string;
 
@@ -1012,7 +1026,7 @@ export interface MultiSelectConfig<T = any> {
      *   (tested against the raw search value, whatever `searchMatch` is). E.g. turn `ha-324/56`
      *   into `/ha\W*324\W*56/i`.
      * - `ctx.target === 'callback'`: return anything — it reaches `searchCallback` as
-     *   `ctx.searchTerm`, objects included.
+     *   `ctx.term`, objects included.
      *
      * `ctx.term` is the term to prepare. `null` / `undefined` / `''` means no search.
      */
@@ -1037,14 +1051,14 @@ export interface MultiSelectConfig<T = any> {
      * `(ctx) => options[] | Promise<options[]>`. Replaces internal search; `searchBehavior` /
      * `searchMatch` don't apply.
      *
-     * - `ctx.term` — the typed term (after `beforeSearchCallback`).
+     * - `ctx.term` — the term: the typed text (after `beforeSearchCallback`), or what
+     *   `getSearchTermCallback` returned for `target: 'callback'` (may be an object).
      * - `ctx.signal` — an `AbortSignal` that fires when a newer search supersedes this one (or the
      *   component is destroyed). Wire it into your `fetch`; ignoring it is fine — stale results
      *   are discarded.
-     * - `ctx.searchTerm` — the term from `getSearchTermCallback` (may be an object).
      * - `ctx.entries` — every option with its raw search value, built on first access.
      */
-    searchCallback?: ((ctx: MultiSelectSearchContext<T>) => T[] | Promise<T[]>) | null;
+    searchCallback?: ((ctx: MultiSelectSearchContext<T, any>) => T[] | Promise<T[]>) | null;
     /**
      * Runs when the user chooses to create an option from the typed text (`ctx.value`) — the
      * "add new" row or Enter, with `isAddNewAllowed` on. May be async (the prompt shows a spinner).
@@ -1122,7 +1136,7 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Callback to generate custom tooltip content for a dropdown option. Default: display value, plus
      * subtitle on the next line when present. `ctx` is the row's {@link OptionContentRenderContext}
-     * (`item`, `index`, `isSelected`, `isFocused`, `isMatched`, `isDisabled`, presentation), the
+     * (`option`, `optionIndex`, `isSelected`, `isFocused`, `isMatched`, `isDisabled`, presentation), the
      * same one {@link renderOptionContentCallback} gets.
      */
     getOptionTooltipCallback?: ((ctx: OptionContentRenderContext<T>) => string | HTMLElement) | null;

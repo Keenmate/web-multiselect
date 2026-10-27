@@ -293,22 +293,22 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 richVirtual.displayValueMember = 'name';
 
                 // Rich rendering for dropdown options
-                richVirtual.renderOptionContentCallback = ({ item }) => {
-                    const stars = '★'.repeat(Math.floor(item.rating));
-                    const stockStatus = item.stock === 0 ? 'Out of stock' : `${item.stock} in stock`;
-                    const stockColor = item.stock === 0 ? '#ef4444' : item.stock < 20 ? '#f59e0b' : '#10b981';
+                richVirtual.renderOptionContentCallback = ({ option }) => {
+                    const stars = '★'.repeat(Math.floor(option.rating));
+                    const stockStatus = option.stock === 0 ? 'Out of stock' : `${option.stock} in stock`;
+                    const stockColor = option.stock === 0 ? '#ef4444' : option.stock < 20 ? '#f59e0b' : '#10b981';
 
                     return `
                         <div style="display: flex; gap: 0.5rem; align-items: center; padding: 0.25rem 0;">
                             <div style="width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; font-weight: bold;">
-                                ${item.id}
+                                ${option.id}
                             </div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 600; font-size: 0.875rem;">${item.name}</div>
+                                <div style="font-weight: 600; font-size: 0.875rem;">${option.name}</div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-top: 0.125rem;">
-                                    <span style="color: #666;">${item.category}</span>
-                                    <span style="color: #10b981; font-weight: 600;">$${item.price}</span>
-                                    <span style="color: #f59e0b;">${stars} ${item.rating}</span>
+                                    <span style="color: #666;">${option.category}</span>
+                                    <span style="color: #10b981; font-weight: 600;">$${option.price}</span>
+                                    <span style="color: #f59e0b;">${stars} ${option.rating}</span>
                                     <span style="color: ${stockColor};">${stockStatus}</span>
                                 </div>
                             </div>
@@ -317,22 +317,22 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 };
 
                 // Compact rendering for main badges
-                richVirtual.renderBadgeContentCallback = ({ item }) => {
-                    return `${item.name}`;
+                richVirtual.renderBadgeContentCallback = ({ option }) => {
+                    return `${option.name}`;
                 };
 
                 // Rich rendering for selected items popover (virtual scroll mode)
-                richVirtual.renderSelectedItemContentCallback = ({ item }) => {
+                richVirtual.renderSelectedItemContentCallback = ({ option }) => {
                     const priorityIcons = { urgent: '🚨', important: '⚠️', normal: '📋', low: '📝' };
-                    const stars = '★'.repeat(Math.floor(item.rating));
+                    const stars = '★'.repeat(Math.floor(option.rating));
 
                     return `
                         <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                            <span style="font-size: 1rem;">${priorityIcons[item.priority]}</span>
+                            <span style="font-size: 1rem;">${priorityIcons[option.priority]}</span>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 500; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
+                                <div style="font-weight: 500; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${option.name}</div>
                                 <div style="font-size: 0.6875rem; color: #666; margin-top: 0.125rem;">
-                                    $${item.price} • ${stars} ${item.rating}
+                                    $${option.price} • ${stars} ${option.rating}
                                 </div>
                             </div>
                         </div>
@@ -340,8 +340,8 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 };
 
                 // Priority-based CSS classes for selected items
-                richVirtual.getSelectedItemClassCallback = ({ item }) => {
-                    return `product-${item.priority}`;
+                richVirtual.getSelectedItemClassCallback = ({ option }) => {
+                    return `product-${option.priority}`;
                 };
 
                 // Inject custom CSS for priority-based styling
@@ -428,7 +428,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                         const call = kind === 'value' ? `scrollToValue(${arg})`
                             : kind === 'center' ? `scrollToIndex(${arg}, {block:'center'})`
                             : `scrollToIndex(${arg})`;
-                        vsLog(`▶ ${call} → ${ok}`);
+                        ok.then((r) => vsLog(`▶ ${call} → ${r}`));
                         setTimeout(() => vsDescribe(vsLarge, targetIndex), 90);
                     });
                 });

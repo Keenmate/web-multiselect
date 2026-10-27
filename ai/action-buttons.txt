@@ -376,8 +376,8 @@ select.addEventListener('action', (e) => {
 select.onAction = (detail) => console.log(detail.action, detail.id, detail.source);
 
 // data-action inside option content fires `action` instead of toggling the row
-select.renderOptionContentCallback = ({ item }) =>
-  `<span>${item.name}</span> <button data-action="info" data-id="${item.id}">i</button>`;
+select.renderOptionContentCallback = ({ option }) =>
+  `<span>${option.name}</span> <button data-action="info" data-id="${option.id}">i</button>`;
 select.onAction = ({ id, source, option, dataset }) => {
   if (source === 'option') showInfo(option);
 };

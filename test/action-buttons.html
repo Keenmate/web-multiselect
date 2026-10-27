@@ -191,7 +191,7 @@
             // A data-action trigger inside rendered option content: fires `action` (source "option")
             // with the row's option, and does NOT toggle the row.
             im.renderOptionContentCallback = (ctx) =>
-                `<span>${ctx.item.label}</span> <button type="button" class="js-row-btn" data-action="custom" data-id="edit" data-kind="row">edit</button>`;
+                `<span>${ctx.option.label}</span> <button type="button" class="js-row-btn" data-action="custom" data-id="edit" data-kind="row">edit</button>`;
         });
     </script>
 </body>

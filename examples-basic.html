@@ -321,7 +321,7 @@
                 <summary>Show code</summary>
 <pre><code>el.open();
 el.scrollToGroup('backend');   // header centered (or the group's first row in virtual mode)
-el.scrollToValue('redis');     // → false if filtered out by the current search
+el.scrollToValue('redis');     // → Promise<false> if filtered out by the current search
 el.scrollToIndex(0);
 
 // Reveal a filtered-out option, then scroll to it:
@@ -642,7 +642,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 if (n >= 1) exDisp.setAttribute('max-visible-badge-count', String(n));
             });
             // 'custom' mode uses a comparator; install it once (ignored unless selected-order="custom").
-            exDisp.selectedOrderCompareCallback = (a, b) => b.year - a.year; // newest first
+            exDisp.selectedOrderCompareCallback = ({ a, b }) => b.year - a.year; // newest first
             document.querySelectorAll('input[name="disp-order"]').forEach((r) =>
                 r.addEventListener('change', (e) => {
                     if (!e.target.checked) return;
@@ -716,7 +716,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 const call = kind === 'index' ? `scrollToIndex(${arg})`
                     : kind === 'group' ? `scrollToGroup('${arg}')`
                     : `scrollToValue('${arg}')`;
-                scrollLog(`▶ ${call} → ${ok}`);
+                ok.then((r) => scrollLog(`▶ ${call} → ${r}`));
                 setTimeout(() => describeViewport(el, target), 90);
             };
             document.querySelectorAll('[data-scroll-grouped]').forEach((btn) =>

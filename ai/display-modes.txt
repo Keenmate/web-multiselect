@@ -76,8 +76,8 @@ Display:
 "JavaScript +2"
 
 Customize:
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.label.substring(0, 10);  // Truncate
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.label.substring(0, 10);  // Truncate
 };
 
 Use when:
@@ -204,16 +204,16 @@ Tooltip placements:
 - bottom-start, bottom-end
 
 Customize tooltip content:
-select.getBadgeTooltipCallback = ({ item }) => {
-  return `${item.label}: ${item.description}`;
+select.getBadgeTooltipCallback = ({ option }) => {
+  return `${option.label}: ${option.description}`;
 };
 
 Or return HTMLElement:
-select.getBadgeTooltipCallback = ({ item }) => {
+select.getBadgeTooltipCallback = ({ option }) => {
   const div = document.createElement('div');
   div.innerHTML = `
-    <strong>${item.label}</strong><br>
-    ${item.description}
+    <strong>${option.label}</strong><br>
+    ${option.description}
   `;
   return div;
 };
@@ -241,11 +241,11 @@ Popover shows:
 - Custom rendering via callback
 
 Customize popover content:
-select.renderSelectedItemContentCallback = ({ item }) => {
+select.renderSelectedItemContentCallback = ({ option }) => {
   return `
     <div class="custom-item">
-      <img src="${item.avatar}" />
-      <span>${item.label}</span>
+      <img src="${option.avatar}" />
+      <span>${option.label}</span>
     </div>
   `;
 };
@@ -281,15 +281,15 @@ CUSTOM BADGE CLASSES
 --------------------
 Add custom CSS classes to badges:
 
-select.getBadgeClassCallback = ({ item }) => {
-  return `badge-${item.priority}`;
+select.getBadgeClassCallback = ({ option }) => {
+  return `badge-${option.priority}`;
 };
 
 Or multiple classes:
-select.getBadgeClassCallback = ({ item }) => {
+select.getBadgeClassCallback = ({ option }) => {
   const classes = ['custom-badge'];
-  if (item.isNew) classes.push('badge-new');
-  if (item.priority === 'high') classes.push('badge-urgent');
+  if (option.isNew) classes.push('badge-new');
+  if (option.priority === 'high') classes.push('badge-urgent');
   return classes;
 };
 
@@ -307,13 +307,13 @@ CUSTOM BADGE DISPLAY
 --------------------
 Control badge text (different from dropdown display):
 
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.shortName || item.label;
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.shortName || option.label;
 };
 
 Example (initials):
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.label
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.label
     .split(' ')
     .map(word => word[0])
     .join('')
@@ -322,10 +322,10 @@ select.getBadgeDisplayCallback = ({ item }) => {
 // "John Doe" → "JD"
 
 Example (truncate):
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.label.length > 20
-    ? item.label.substring(0, 17) + '...'
-    : item.label;
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.label.length > 20
+    ? option.label.substring(0, 17) + '...'
+    : option.label;
 };
 
 BADGE REMOVAL
@@ -457,8 +457,8 @@ Auto-switch at 5:
 Compact with custom text:
 <web-multiselect badges-display-mode="compact">
 </web-multiselect>
-select.getBadgeDisplayCallback = ({ item }) => {
-  return item.code;
+select.getBadgeDisplayCallback = ({ option }) => {
+  return option.code;
 };
 
 Partial with tooltips:

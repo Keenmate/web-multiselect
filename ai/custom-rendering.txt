@@ -7,7 +7,7 @@ CRITICAL: Full control over HTML rendering
 - renderSelectedItemContentCallback: Popover items
 - renderSelectedContentCallback: Single-select input text
 - Returns HTML string or HTMLElement
-- ONE ctx argument: the option is ctx.item, plus rendering state
+- ONE ctx argument: the option is ctx.option, plus rendering state
   (and ctx.controller / ctx.element, non-enumerable)
 - A [data-action] element inside option/badge content fires the `action` event
 
@@ -42,15 +42,15 @@ RETURN TYPES
 ------------
 Return HTML string:
 
-✅ select.renderOptionContentCallback = ({ item }) => {
-  return `<span>${item.label}</span>`;
+✅ select.renderOptionContentCallback = ({ option }) => {
+  return `<span>${option.label}</span>`;
 };
 
 Return HTMLElement:
 
-✅ select.renderOptionContentCallback = ({ item }) => {
+✅ select.renderOptionContentCallback = ({ option }) => {
   const div = document.createElement('div');
-  div.textContent = item.label;
+  div.textContent = option.label;
   div.className = 'custom-option';
   return div;
 };
@@ -61,11 +61,11 @@ RENDER BADGE CONTENT
 --------------------
 Customize selected badge appearance:
 
-select.renderBadgeContentCallback = ({ item, isInPopover }) => {
+select.renderBadgeContentCallback = ({ option, isInPopover }) => {
   if (isInPopover) {
-    return `${item.label} — ${item.description}`;
+    return `${option.label} — ${option.description}`;
   }
-  return item.label;
+  return option.label;
 };
 
 Context object (BadgeContentRenderContext):
@@ -82,9 +82,9 @@ it in .ms__badge.ms__badge--custom with data-value. Removal is delegated to any 
 with data-ms-action="remove" (or class ms__badge-remove). Return null/'' to fall back to the
 default pill for that item.
 
-select.renderBadgeCallback = ({ item }) => `
+select.renderBadgeCallback = ({ option }) => `
   <span class="chip">
-    ${item.label}
+    ${option.label}
     <button type="button" data-ms-action="remove" aria-label="Remove">×</button>
   </span>
 `;
@@ -96,13 +96,13 @@ RENDER SELECTED ITEM
 --------------------
 Customize popover list item appearance:
 
-select.renderSelectedItemContentCallback = ({ item }) => {
+select.renderSelectedItemContentCallback = ({ option }) => {
   return `
     <div class="selected-item">
-      <img src="${item.avatar}" class="avatar" />
+      <img src="${option.avatar}" class="avatar" />
       <div>
-        <div class="name">${item.label}</div>
-        <div class="subtitle">${item.email}</div>
+        <div class="name">${option.label}</div>
+        <div class="subtitle">${option.email}</div>
       </div>
     </div>
   `;
@@ -117,8 +117,8 @@ RENDER SELECTED CONTENT
 -----------------------
 Customize single-select input text:
 
-select.renderSelectedContentCallback = ({ item }) => {
-  return `${item.icon || ''} ${item.label}`;
+select.renderSelectedContentCallback = ({ option }) => {
+  return `${option.icon || ''} ${option.label}`;
 };
 
 IMPORTANT: Returns plain text, not HTML
@@ -271,9 +271,9 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-select.renderOptionContentCallback = ({ item }) => {
-  const safeLabel = escapeHtml(item.label);
-  const safeDescription = escapeHtml(item.description);
+select.renderOptionContentCallback = ({ option }) => {
+  const safeLabel = escapeHtml(option.label);
+  const safeDescription = escapeHtml(option.description);
 
   return `
     <div>
@@ -284,9 +284,9 @@ select.renderOptionContentCallback = ({ item }) => {
 };
 
 Or use HTMLElement (automatic escaping):
-select.renderOptionContentCallback = ({ item }) => {
+select.renderOptionContentCallback = ({ option }) => {
   const div = document.createElement('div');
-  div.textContent = item.label;  // Automatically escaped
+  div.textContent = option.label;  // Automatically escaped
   return div;
 };
 
@@ -294,25 +294,25 @@ ICONS AND IMAGES
 ----------------
 Render custom icons/images:
 
-select.renderOptionContentCallback = ({ item }) => {
+select.renderOptionContentCallback = ({ option }) => {
   return `
     <div class="option-with-icon">
-      <img src="${item.avatar}" alt="" class="avatar" />
-      <span>${item.label}</span>
+      <img src="${option.avatar}" alt="" class="avatar" />
+      <span>${option.label}</span>
     </div>
   `;
 };
 
 With fallback:
-select.renderOptionContentCallback = ({ item }) => {
-  const avatar = item.avatar
-    ? `<img src="${item.avatar}" />`
-    : `<div class="avatar-placeholder">${item.label[0]}</div>`;
+select.renderOptionContentCallback = ({ option }) => {
+  const avatar = option.avatar
+    ? `<img src="${option.avatar}" />`
+    : `<div class="avatar-placeholder">${option.label[0]}</div>`;
 
   return `
     <div class="option">
       ${avatar}
-      <span>${item.label}</span>
+      <span>${option.label}</span>
     </div>
   `;
 };
@@ -324,13 +324,13 @@ Highlight matching text:
 let searchTerm = '';
 select.beforeSearchCallback = ({ term }) => { searchTerm = term; };  // remember the typed term
 
-select.renderOptionContentCallback = ({ item, isMatched }) => {
+select.renderOptionContentCallback = ({ option, isMatched }) => {
   if (!isMatched || !searchTerm) {
-    return item.label;
+    return option.label;
   }
 
   const term = searchTerm.toLowerCase();
-  const label = item.label;
+  const label = option.label;
   const index = label.toLowerCase().indexOf(term);
 
   if (index === -1) return label;
@@ -346,23 +346,23 @@ BADGE RENDERING
 ---------------
 Different rendering for badges:
 
-select.renderBadgeContentCallback = ({ item, displayMode, isInPopover }) => {
+select.renderBadgeContentCallback = ({ option, displayMode, isInPopover }) => {
   // Compact mode: full label on the single visible badge
   if (displayMode === 'compact') {
-    return item.label;
+    return option.label;
   }
 
   // Popover: Show full details
   if (isInPopover) {
     return `
       <div class="badge-popover">
-        ${item.icon} ${item.label}
+        ${option.icon} ${option.label}
       </div>
     `;
   }
 
   // Regular pills: Short form
-  return item.code || item.label.substring(0, 3).toUpperCase();
+  return option.code || option.label.substring(0, 3).toUpperCase();
 };
 
 ACTION TRIGGERS IN CONTENT
@@ -370,8 +370,8 @@ ACTION TRIGGERS IN CONTENT
 A [data-action] element inside rendered option content fires the `action` event
 (source 'option', detail.option = the row's option) and does NOT toggle the row:
 
-select.renderOptionContentCallback = ({ item }) => `
-  <span>${item.label}</span>
+select.renderOptionContentCallback = ({ option }) => `
+  <span>${option.label}</span>
   <button type="button" data-action="details">ⓘ</button>
 `;
 select.onAction = ({ action, source, option }) => {
@@ -449,17 +449,17 @@ select.renderBadgeContentCallback = (context) => {
 };
 
 // Item in popover
-select.renderSelectedItemContentCallback = ({ item }) => {
+select.renderSelectedItemContentCallback = ({ option }) => {
   return `
     <div class="popover-item">
-      ${item.icon} ${item.label} - ${item.description}
+      ${option.icon} ${option.label} - ${option.description}
     </div>
   `;
 };
 
 // Single-select input
-select.renderSelectedContentCallback = ({ item }) => {
-  return `${item.icon} ${item.label}`;
+select.renderSelectedContentCallback = ({ option }) => {
+  return `${option.icon} ${option.label}`;
 };
 
 UPDATING RENDERING
@@ -467,17 +467,17 @@ UPDATING RENDERING
 Change rendering at runtime:
 
 function setCompactMode() {
-  select.renderOptionContentCallback = ({ item }) => {
-    return item.label.substring(0, 20);
+  select.renderOptionContentCallback = ({ option }) => {
+    return option.label.substring(0, 20);
   };
 }
 
 function setDetailedMode() {
-  select.renderOptionContentCallback = ({ item }) => {
+  select.renderOptionContentCallback = ({ option }) => {
     return `
       <div>
-        <div>${item.label}</div>
-        <div>${item.description}</div>
+        <div>${option.label}</div>
+        <div>${option.description}</div>
       </div>
     `;
   };
@@ -530,8 +530,8 @@ BEST PRACTICES
 COMMON PATTERNS
 ---------------
 Simple with icon:
-select.renderOptionContentCallback = ({ item }) => {
-  return `${item.icon || ''} ${item.label}`;
+select.renderOptionContentCallback = ({ option }) => {
+  return `${option.icon || ''} ${option.label}`;
 };
 
 With selection indicator:
@@ -544,18 +544,18 @@ select.renderOptionContentCallback = (context) => {
 };
 
 With subtitle:
-select.renderOptionContentCallback = ({ item }) => {
+select.renderOptionContentCallback = ({ option }) => {
   return `
     <div>
-      <div class="label">${item.label}</div>
-      <div class="subtitle">${item.subtitle}</div>
+      <div class="label">${option.label}</div>
+      <div class="subtitle">${option.subtitle}</div>
     </div>
   `;
 };
 
 Badge with initials:
-select.renderBadgeContentCallback = ({ item }) => {
-  return item.label
+select.renderBadgeContentCallback = ({ option }) => {
+  return option.label
     .split(' ')
     .map(w => w[0])
     .join('')

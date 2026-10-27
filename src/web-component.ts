@@ -211,23 +211,23 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`, `selectAll`, `clearSelection`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
 
   // ── Callbacks: data shape (structural → reinit). Every callback takes ONE ctx ─
-  { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.item` (overrides valueMember).' },
-  { configKey: 'getPathCallback',         converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract a node tree path from `ctx.item` (enables tree mode; overrides pathMember).' },
-  { configKey: 'getGroupCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract the group name from `ctx.item` (overrides groupMember).' },
-  { configKey: 'getIsDisabledCallback',   converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => boolean', description: 'Whether the option `ctx.item` is disabled (overrides isDisabledMember).' },
-  { configKey: 'getIsSelectableCallback', converter: cb(), on: 'reinit', type: '(ctx: TreeNodeContext) => boolean', description: 'Whether a tree node can be selected (`ctx.item`, `ctx.node`; overrides is-selectable-member).' },
-  { configKey: 'getSearchValueCallback',  converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | object', description: 'What `ctx.item` is searched against (overrides searchValueMember). Internal search needs a string; an object is for a custom searchCallback (ctx.entries). Computed once per item.' },
-  { configKey: 'searchCallback',          converter: cb(), on: 'reinit', type: '(ctx: MultiSelectSearchContext) => unknown[] | Promise<unknown[]>', description: 'Custom / async search. `ctx.term` (typed), `ctx.signal` (aborted when superseded), `ctx.searchTerm` (from getSearchTermCallback), `ctx.entries` (every option with its search value). Return the filtered options.' },
+  { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.option` (overrides valueMember).' },
+  { configKey: 'getPathCallback',         converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract a node tree path from `ctx.option` (enables tree mode; overrides pathMember).' },
+  { configKey: 'getGroupCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string', description: 'Extract the group name from `ctx.option` (overrides groupMember).' },
+  { configKey: 'getIsDisabledCallback',   converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => boolean', description: 'Whether the option `ctx.option` is disabled (overrides isDisabledMember).' },
+  { configKey: 'getIsSelectableCallback', converter: cb(), on: 'reinit', type: '(ctx: TreeNodeContext) => boolean', description: 'Whether a tree node can be selected (`ctx.option`, `ctx.node`; overrides is-selectable-member).' },
+  { configKey: 'getSearchValueCallback',  converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | object', description: 'What `ctx.option` is searched against (overrides searchValueMember). Internal search needs a string; an object is for a custom searchCallback (ctx.entries). Computed once per item.' },
+  { configKey: 'searchCallback',          converter: cb(), on: 'reinit', type: '(ctx: MultiSelectSearchContext) => unknown[] | Promise<unknown[]>', description: 'Custom / async search. `ctx.term` (typed, or what getSearchTermCallback returned), `ctx.signal` (aborted when superseded), `ctx.entries` (every option with its search value). Return the filtered options.' },
 
   // ── Callbacks: display / render (cosmetic → update) ──────────────────────
-  { configKey: 'getDisplayValueCallback',        converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Compute the display label for `ctx.item` (overrides displayValueMember).' },
+  { configKey: 'getDisplayValueCallback',        converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Compute the display label for `ctx.option` (overrides displayValueMember).' },
   { configKey: 'getBadgeDisplayCallback',        converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string', description: 'Compute the text shown on a badge.' },
   { configKey: 'getBadgeClassCallback',          converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | string[]', description: 'Extra CSS class(es) for a badge.' },
   { configKey: 'getSelectedOrderCallback',       converter: cb(), on: 'update', type: '(ctx: ItemContext) => string | number', description: 'Sort key for the selected-items display when `selected-order="member"` (overrides `selected-order-member`).' },
-  { configKey: 'selectedOrderCompareCallback',   converter: cb(), on: 'update', type: '(a: unknown, b: unknown) => number', description: 'Comparator for the selected-items display when `selected-order="custom"` (the standard `Array.prototype.sort` contract).' },
-  { configKey: 'getIconCallback',                converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Icon for `ctx.item` (overrides iconMember).' },
-  { configKey: 'getSubtitleCallback',            converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Subtitle for `ctx.item` (overrides subtitleMember).' },
-  { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Full title for `ctx.item` (used by badges when show-badge-full-title is on).' },
+  { configKey: 'selectedOrderCompareCallback',   converter: cb(), on: 'update', type: '(ctx: SelectedOrderCompareContext) => number', description: 'Comparator for the selected-items display when `selected-order="custom"`: `({ a, b }) => number` (the `Array.prototype.sort` result contract).' },
+  { configKey: 'getIconCallback',                converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Icon for `ctx.option` (overrides iconMember).' },
+  { configKey: 'getSubtitleCallback',            converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Subtitle for `ctx.option` (overrides subtitleMember).' },
+  { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Full title for `ctx.option` (used by badges when show-badge-full-title is on).' },
   { configKey: 'getCounterCallback',             converter: cb(), on: 'update', type: '(ctx: CounterContext) => string', description: 'Render the badges-area count text: `ctx.count` ("N selected"), plus `ctx.moreCount` for the "+X more" badge.' },
   { configKey: 'getCountLabelCallback',          converter: cb(), on: 'update', type: '(ctx: CountLabelContext) => string', description: 'Format the small count chip shared by the in-input counter and each group header count (`ctx.selectedCount`, `ctx.totalCount`, `ctx.groupName` on a header; default `[selected]`). One callback drives both.' },
   { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(ctx: ValueFormatContext) => string', description: 'Serialize `ctx.selectedValues` for form submission.' },
@@ -239,13 +239,13 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'renderBadgeContentCallback',     converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for a badge content (fills the built-in pill); may return HTML or an element.' },
   { configKey: 'renderBadgeCallback',            converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement | null', description: 'Custom render for the WHOLE badge (main area), not just its content — return the entire pill/card. The component wraps it in `.ms__badge.ms__badge--custom` with `data-value` and delegates removal to any inner element with `data-ms-action="remove"` (or `.ms__badge-remove`); a `[data-action]` element fires the `action` event (source `badge`). Return null/empty to fall back to the default pill for that item.' },
   { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(ctx: GroupLabelRenderContext) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element. `ctx` carries `groupName` plus the group members + selection (e.g. `ctx.selectedCount`) so a custom header can show a per-group count.' },
-  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(ctx: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (`ctx.item`).' },
+  { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(ctx: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (`ctx.option`).' },
   { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for one selected item in the popover (`ctx.isInPopover` is true).' },
   { configKey: 'getCustomStylesCallback',        converter: cb(), on: 'update', type: '(ctx: MultiSelectContext) => string | null', description: 'Return a CSS string injected into the component via a replaceable style slot (§12.8). Takes precedence over the `custom-styles` attribute when both are set.' },
 
   // ── Callbacks: before-hooks (`false` cancels; a value replaces) ──────────
   { configKey: 'beforeSearchCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSearchContext) => string | false | void | Promise<string | false | void>', description: 'Runs before a search with `ctx.term`: return a rewritten term, `false` to skip the search (the full list shows), or nothing to continue.' },
-  { configKey: 'getSearchTermCallback',   converter: cb(), on: 'update', type: "(ctx: SearchTermCallbackContext) => string | RegExp | object | null", description: 'Prepare `ctx.term` for matching (after beforeSearchCallback). For internal search (`ctx.target === "internal"`) return a string (used as-is) or RegExp; for searchCallback return anything — it arrives as ctx.searchTerm. Live: re-runs the current search.' },
+  { configKey: 'getSearchTermCallback',   converter: cb(), on: 'update', type: "(ctx: SearchTermCallbackContext) => string | RegExp | object | null", description: 'Prepare `ctx.term` for matching (after beforeSearchCallback). For internal search (`ctx.target === "internal"`) return a string (used as-is) or RegExp; for searchCallback return anything — it arrives as ctx.term. Live: re-runs the current search.' },
   { configKey: 'beforeSelectCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSelectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture selects an option (`ctx.option`, `ctx.source`) — once per option, also for Select-All / group checkboxes. Return `false` to veto (explain it with `ctx.controller.showMessage`). May be async.' },
   { configKey: 'beforeDeselectCallback',  converter: cb(), on: 'update', type: '(ctx: BeforeDeselectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture deselects an option (row, badge ×, Clear-All, inline ✕, …) — once per option. Return `false` to veto. May be async.' },
   { configKey: 'beforeAddCallback',       converter: cb(), on: 'update', type: '(ctx: AddContext) => unknown | false | void | Promise<unknown | false | void>', description: 'Runs when the user creates an option from the typed text (`ctx.value`). Return the new option (appended + selected), `false` to cancel (no `add` event), or nothing to only fire `add` and create it yourself. May be async (a spinner shows).' },
@@ -855,32 +855,32 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   }
 
   /**
-   * Scroll the open dropdown to the option at `index` (into the current filtered list). Returns
-   * false if closed or out of range. Deferred internally so `el.open(); el.scrollToIndex(i)` works.
+   * Scroll the open dropdown to the option at `index` (into the current filtered list). Resolves
+   * `true` once scrolled, `false` if closed or out of range. Deferred internally so `el.open(); el.scrollToIndex(i)` works.
    */
-  scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): boolean {
+  scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
     this.flush();
-    return this.#picker?.scrollToIndex(index, opts) ?? false;
+    return this.#picker?.scrollToIndex(index, opts) ?? Promise.resolve(false);
   }
 
   /**
-   * Scroll the open dropdown to the option with this `value`. Returns false if it isn't in the
+   * Scroll the open dropdown to the option with this `value`. Resolves `false` if it isn't in the
    * currently visible list (filtered out by search, or under a collapsed tree branch) — call
    * {@link clearSearch} / expand first.
    */
-  scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): boolean {
+  scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
     this.flush();
-    return this.#picker?.scrollToValue(value, opts) ?? false;
+    return this.#picker?.scrollToValue(value, opts) ?? Promise.resolve(false);
   }
 
   /**
    * Scroll to a group: its header in standard rendering, or the group's first option in
-   * virtual-scroll mode (no headers there). Returns false in tree mode or if the group is empty
+   * virtual-scroll mode (no headers there). Resolves `false` in tree mode or if the group is empty
    * in the current filtered list.
    */
-  scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): boolean {
+  scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
     this.flush();
-    return this.#picker?.scrollToGroup(name, opts) ?? false;
+    return this.#picker?.scrollToGroup(name, opts) ?? Promise.resolve(false);
   }
 
   // ── imperative open/close API (flush pending writes, then delegate) ─────────
@@ -951,9 +951,9 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       toggle: call('toggle'),
       search: call('search'),
       clearSearch: call('clearSearch'),
-      scrollToValue: (value) => engine()?.scrollToValue(value) ?? false,
-      scrollToGroup: (group) => engine()?.scrollToGroup(group) ?? false,
-      scrollToIndex: (index) => engine()?.scrollToIndex(index) ?? false,
+      scrollToValue: (value) => engine()?.scrollToValue(value) ?? Promise.resolve(false),
+      scrollToGroup: (group) => engine()?.scrollToGroup(group) ?? Promise.resolve(false),
+      scrollToIndex: (index) => engine()?.scrollToIndex(index) ?? Promise.resolve(false),
       refresh: call('refresh'),
       focusNext: call('focusNext'),
       focusPrevious: call('focusPrevious'),

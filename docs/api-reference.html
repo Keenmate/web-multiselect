@@ -323,7 +323,7 @@
             <tbody>
                 <tr>
                     <td><code>searchCallback</code></td>
-                    <td class="type">(ctx: { term, signal, searchTerm, entries }) =&gt; T[] | Promise&lt;T[]&gt;</td>
+                    <td class="type">(ctx: { term, signal, entries }) =&gt; T[] | Promise&lt;T[]&gt;</td>
                     <td>Load options for the typed <code>ctx.term</code> (sync or async). <code>ctx.signal</code> aborts when a newer search supersedes this one — forward it to <code>fetch</code> to cancel the stale request. <code>ctx.searchTerm</code> is the term from <code>getSearchTermCallback</code>; <code>ctx.entries</code> pairs every option with its search value.</td>
                 </tr>
                 <tr>
@@ -388,7 +388,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
-                        Every callback takes ONE <code>ctx</code> argument; per-option callbacks (<code>getValueCallback</code>, <code>getDisplayValueCallback</code>, <code>getIsDisabledCallback</code>, render callbacks, …) read the option from <code>ctx.item</code>. Every <code>ctx</code> also carries <code>controller</code>, <code>element</code> and the presentation flags. The only positional exception is <code>selectedOrderCompareCallback(a, b)</code>.
+                        Every callback takes ONE <code>ctx</code> argument; per-option callbacks (<code>getValueCallback</code>, <code>getDisplayValueCallback</code>, <code>getIsDisabledCallback</code>, render callbacks, …) read the option from <code>ctx.option</code>. Every <code>ctx</code> also carries <code>controller</code>, <code>element</code> and the presentation flags. The comparator is <code>selectedOrderCompareCallback({ a, b })</code>.
                     </td>
                 </tr>
             </tbody>
@@ -446,7 +446,7 @@
 
         <!-- PUBLIC METHODS -->
         <h2>Public Methods</h2>
-        <p class="section-intro">Methods available on the <code>&lt;web-multiselect&gt;</code> element. The element also exposes <code>el.controller</code> (<code>MultiSelectController</code>) — the public facade also passed as <code>ctx.controller</code> to every callback and event detail: <code>getSelected</code>, <code>getValue</code>, <code>getOptions</code>, <code>isOpen</code>, <code>setSelected(values, { notify })</code>, <code>selectAll</code>, <code>clearSelection</code>, <code>toggleValue</code>, <code>selectValue</code>, <code>deselectValue</code>, <code>toggleFocused</code>, <code>open</code>, <code>close</code>, <code>toggle</code>, <code>search</code>, <code>clearSearch</code>, <code>scrollToValue</code> / <code>scrollToGroup</code> / <code>scrollToIndex</code> (return <code>boolean</code>), <code>refresh</code>, the focus methods (<code>focusNext</code>, <code>focusPrevious</code>, <code>focusFirst</code>, <code>focusLast</code>, <code>focusPageUp</code>, <code>focusPageDown</code>, <code>focusNextMatch</code>, <code>focusPreviousMatch</code>, <code>focusIndex</code>), <code>showMessage(content, { type, autoHideMs, placement })</code> and <code>hideMessage</code>.</p>
+        <p class="section-intro">Methods available on the <code>&lt;web-multiselect&gt;</code> element. The element also exposes <code>el.controller</code> (<code>MultiSelectController</code>) — the public facade also passed as <code>ctx.controller</code> to every callback and event detail: <code>selectedOptions</code>, <code>selectedOption</code>, <code>selectedValue</code>, <code>options</code>, <code>searchTerm</code>, <code>isOpen</code>, <code>setSelected(values, { notify })</code>, <code>selectAll</code>, <code>clearSelection</code>, <code>toggleValue</code>, <code>selectValue</code>, <code>deselectValue</code>, <code>toggleFocused</code>, <code>open</code>, <code>close</code>, <code>toggle</code>, <code>search</code>, <code>clearSearch</code>, <code>scrollToValue</code> / <code>scrollToGroup</code> / <code>scrollToIndex</code> (return <code>Promise&lt;boolean&gt;</code>), <code>refresh</code>, the focus methods (<code>focusNext</code>, <code>focusPrevious</code>, <code>focusFirst</code>, <code>focusLast</code>, <code>focusPageUp</code>, <code>focusPageDown</code>, <code>focusNextMatch</code>, <code>focusPreviousMatch</code>, <code>focusIndex</code>), <code>showMessage(content, { type, autoHideMs, placement })</code> and <code>hideMessage</code>.</p>
         <table>
             <thead>
                 <tr>

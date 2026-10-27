@@ -115,15 +115,15 @@ getSearchTermCallback({ term, target, behavior, match }):
     select.getSearchTermCallback = ({ term }) =>
       new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
     // "ha-324/56" finds "HA 324-56", "HA32456"
-- target 'callback': return anything (objects too) — arrives as ctx.searchTerm.
+- target 'callback': return anything (objects too) — arrives as ctx.term.
 
-searchCallback({ term, signal, searchTerm, entries }) — sync or async (signal is aborted
+searchCallback({ term, signal, entries }) — sync or async (signal is aborted
 when a newer search supersedes this one):
 - entries: [{ item, searchValue }] with the RAW getSearchValueCallback output (may be an
   object). Built on first access, each value computed once, SAME array until options change.
-    select.getSearchValueCallback = ({ item }) => ({ title: normalizeSearchText(item.name), zip: item.zip });
-    select.searchCallback = ({ searchTerm, entries }) =>
-      entries.filter(e => e.searchValue.zip.startsWith(searchTerm.zip)).map(e => e.item);
+    select.getSearchValueCallback = ({ option }) => ({ title: normalizeSearchText(option.name), zip: option.zip });
+    select.searchCallback = ({ term, entries }) =>
+      entries.filter(e => e.searchValue.zip.startsWith(term.zip)).map(e => e.item);
 - An object search value WITHOUT searchCallback: internal search uses the display value (warns).
 
 normalizeSearchText(text, behavior = 'normalized') is exported for custom search:
@@ -206,8 +206,8 @@ select.options = [
 // Searches "javascript js ecmascript"
 
 Callback:
-select.getSearchValueCallback = ({ item }) => {
-  return `${item.name} ${item.aliases.join(' ')} ${item.tags.join(' ')}`;
+select.getSearchValueCallback = ({ option }) => {
+  return `${option.name} ${option.aliases.join(' ')} ${option.tags.join(' ')}`;
 };
 // Searches name + aliases + tags
 
@@ -454,12 +454,12 @@ Custom highlighting (via renderOptionContentCallback):
 let searchTerm = '';
 select.beforeSearchCallback = ({ term }) => { searchTerm = term; };  // remember the term
 
-select.renderOptionContentCallback = ({ item, isMatched }) => {
+select.renderOptionContentCallback = ({ option, isMatched }) => {
   if (!isMatched || !searchTerm) {
-    return item.label;
+    return option.label;
   }
 
-  const label = item.label;
+  const label = option.label;
   const index = label.toLowerCase().indexOf(searchTerm.toLowerCase());
 
   if (index === -1) return label;
@@ -481,13 +481,13 @@ select.options = [
 ];
 
 Search label + subtitle:
-select.getSearchValueCallback = ({ item }) => {
-  return `${item.label} ${item.subtitle || ''}`;
+select.getSearchValueCallback = ({ option }) => {
+  return `${option.label} ${option.subtitle || ''}`;
 };
 
 Search all fields:
-select.getSearchValueCallback = ({ item }) => {
-  return Object.values(item).join(' ');
+select.getSearchValueCallback = ({ option }) => {
+  return Object.values(option).join(' ');
 };
 
 DISABLING SEARCH TEMPORARILY

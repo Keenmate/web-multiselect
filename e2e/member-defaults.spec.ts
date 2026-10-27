@@ -65,8 +65,8 @@ test('a get*Callback overrides its default member', async ({ page }) => {
         const el = document.createElement('web-multiselect') as any;
         el.id = id;
         document.body.appendChild(el);
-        el.getValueCallback = ({ item }: any) => 'c' + item.value;
-        el.getDisplayValueCallback = ({ item }: any) => item.label.toUpperCase();
+        el.getValueCallback = ({ option }: any) => 'c' + option.value;
+        el.getDisplayValueCallback = ({ option }: any) => option.label.toUpperCase();
         el.options = [{ value: 1, label: 'Prague' }];
     }, id);
     const p = page.locator('#' + id);

@@ -522,7 +522,8 @@ export class MultiSelectEngine<T = any> {
                 break;
             case 'custom':
                 if (this.options.selectedOrderCompareCallback) {
-                    sorted.sort(this.options.selectedOrderCompareCallback);
+                    const compare = this.options.selectedOrderCompareCallback;
+                    sorted.sort((a, b) => compare(this.ctx({ a, b })));
                 }
                 break;
         }
@@ -1723,8 +1724,8 @@ export class MultiSelectEngine<T = any> {
         // Check if custom render callback is provided
         if (this.options.renderOptionContentCallback) {
             const context: OptionContentRenderContext<T> = this.ctx({
-                item: option,
-                index,
+                option,
+                optionIndex: index,
                 isSelected,
                 isFocused,
                 isMatched,
@@ -1830,8 +1831,8 @@ export class MultiSelectEngine<T = any> {
 
         if (this.options.renderOptionContentCallback) {
             const context: OptionContentRenderContext<T> = this.ctx({
-                item: option,
-                index,
+                option,
+                optionIndex: index,
                 isSelected,
                 isFocused,
                 isMatched,
@@ -2028,7 +2029,7 @@ export class MultiSelectEngine<T = any> {
             if (selectedOptions[0]) {
                 // Check if custom render callback is provided
                 if (this.options.renderSelectedContentCallback) {
-                    selectedLabel = this.options.renderSelectedContentCallback(this.ctx({ item: selectedOptions[0] }));
+                    selectedLabel = this.options.renderSelectedContentCallback(this.ctx({ option: selectedOptions[0] }));
                 } else {
                     selectedLabel = this.getItemDisplayValue(selectedOptions[0]);
                 }
@@ -2381,11 +2382,11 @@ export class MultiSelectEngine<T = any> {
                     this.searchDebounceTimer = undefined;
                     // Drop this run if a newer keystroke superseded the value while we waited.
                     if (this.typedTerm === value) {
-                        void this.performAsyncSearch(value, processedValue, callbackTerm as MultiSelectSearchContext<T>['searchTerm']);
+                        void this.performAsyncSearch(value, processedValue, callbackTerm);
                     }
                 }, debounceMs);
             } else {
-                await this.performAsyncSearch(value, processedValue, callbackTerm as MultiSelectSearchContext<T>['searchTerm']);
+                await this.performAsyncSearch(value, processedValue, callbackTerm);
             }
         } else {
             // LOCAL SEARCH PATH
@@ -2488,7 +2489,7 @@ export class MultiSelectEngine<T = any> {
      * into their fetch get the request actually cancelled, not just ignored. The
      * `aborted` / `searchTerm === value` guards drop superseded or out-of-order responses.
      */
-    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: MultiSelectSearchContext<T>['searchTerm']): Promise<void> {
+    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: unknown): Promise<void> {
         // Cancel any previous in-flight request; only the latest query should win.
         this.abortInFlightSearch();
         const controller = new AbortController();
@@ -2500,10 +2501,9 @@ export class MultiSelectEngine<T = any> {
 
         try {
             const self = this;
-            const context: MultiSelectSearchContext<T> = this.ctx({
-                term: processedValue,
+            const context: MultiSelectSearchContext<T, unknown> = this.ctx({
+                term: callbackTerm,
                 signal: controller.signal,
-                searchTerm: callbackTerm,
                 get entries() { return self.getSearchEntries(); }
             });
             const results = await this.options.searchCallback!(context);
@@ -3138,11 +3138,11 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * The per-option ctx (`{ item }`) for the data accessors (`getValueCallback`, …), which run
+     * The per-option ctx (`{ option }`) for the data accessors (`getValueCallback`, …), which run
      * for every option on every pass: one shared prototype carries `controller` / `element` /
      * the presentation flags as getters, so a call allocates one small object.
      */
-    private itemCtx(item: T): ItemContext<T> {
+    private itemCtx(option: T): ItemContext<T> {
         if (!this.itemCtxProto) {
             const self = this;
             this.itemCtxProto = Object.create(Object.prototype, {
@@ -3154,7 +3154,7 @@ export class MultiSelectEngine<T = any> {
             });
         }
         const ctx = Object.create(this.itemCtxProto) as ItemContext<T>;
-        ctx.item = item;
+        ctx.option = option;
         return ctx;
     }
 
@@ -3318,20 +3318,20 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Scroll the open dropdown so the option at `index` (into the current `filteredOptions`) is
-     * visible. Works in floating, fullscreen (mobile), virtual-scroll and tree modes. Returns
-     * false if the dropdown is closed or the index is out of range. The scroll is deferred a frame
+     * visible. Works in floating, fullscreen (mobile), virtual-scroll and tree modes. Resolves
+     * `true` once scrolled, `false` if the dropdown is closed or the index is out of range. The scroll is deferred a frame
      * when the list isn't rendered yet (e.g. right after `open()` in virtual mode / the fullscreen
      * sheet build), so `el.open(); el.scrollToIndex(i)` works.
      */
-    public scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): boolean {
+    public scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
         const block = opts?.block ?? 'start';
         if (!this.#isOpen) {
             interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}) → false (closed)`);
-            return false;
+            return Promise.resolve(false);
         }
         if (index < 0 || index >= this.filteredOptions.length) {
             interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}) → false (out of range, ${this.filteredOptions.length} options)`);
-            return false;
+            return Promise.resolve(false);
         }
         interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}, block=${block}) — virtual=${!!this.virtualScroll}, mode=${this.presentationMode}`);
         // Re-driving the open panel from an external control's click handler: shield the
@@ -3339,8 +3339,7 @@ export class MultiSelectEngine<T = any> {
         // Re-driving the open panel from an external control's click handler: shield the
         // trailing click so it doesn't bubble to our outside-click listener and close.
         this.armClickGuard();
-        this.scrollToRenderedIndex(index, { block });
-        return true;
+        return this.scrollToRenderedIndex(index, { block });
     }
 
     /**
@@ -3349,10 +3348,10 @@ export class MultiSelectEngine<T = any> {
      * out by a search, or (tree) under a collapsed ancestor. Call `clearSearch()` (or expand the
      * branch) first to reveal it, then scroll.
      */
-    public scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): boolean {
+    public scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
         const index = this.filteredOptions.findIndex(o => String(this.getItemValue(o)) === String(value));
         interactionLogger.debug(`[${this.instanceId}] scrollToValue(${String(value)}) → index ${index} of ${this.filteredOptions.length}`);
-        if (index < 0) return false;
+        if (index < 0) return Promise.resolve(false);
         return this.scrollToIndex(index, opts);
     }
 
@@ -3362,11 +3361,11 @@ export class MultiSelectEngine<T = any> {
      * option instead. Returns false in tree mode (groups don't apply) or if the group has no
      * options in the current filtered list.
      */
-    public scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): boolean {
+    public scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
         const block = opts?.block ?? 'start';
         if (!this.#isOpen || this.isTreeMode()) {
             interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) → false (${this.isTreeMode() ? 'tree mode' : 'closed'})`);
-            return false;
+            return Promise.resolve(false);
         }
         // Shield the driving click (see scrollToIndex). The header branch below scrolls
         // directly without routing through scrollToIndex, so arm here to cover it too.
@@ -3379,14 +3378,14 @@ export class MultiSelectEngine<T = any> {
             if (label) {
                 interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — header found, scrolling label into view (block=${block})`);
                 this.applyScrollIntoView(label, { block });
-                return true;
+                return Promise.resolve(true);
             }
         }
         // Virtual mode (no headers), or the header isn't rendered yet: scroll to the group's first
         // option by index.
         const index = this.filteredOptions.findIndex(o => (this.getItemGroup(o) || '') === name);
         interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — no header (virtual=${!!this.virtualScroll}), first member index ${index}`);
-        if (index < 0) return false;
+        if (index < 0) return Promise.resolve(false);
         return this.scrollToIndex(index, { block });
     }
 
@@ -3396,28 +3395,32 @@ export class MultiSelectEngine<T = any> {
      * `.ms__option[data-index]` element into view. Defers one frame if the list isn't ready yet
      * (post-open virtual init / fullscreen sheet build), then retries once.
      */
-    private scrollToRenderedIndex(index: number, opts?: { block?: ScrollLogicalPosition }, retried = false): void {
-        if (!this.#isOpen || index < 0 || index >= this.filteredOptions.length) return;
-        if (this.virtualScroll) {
-            // Map the DOM ScrollLogicalPosition to the virtual list's supported blocks ('end' → nearest).
-            const vBlock = opts?.block === 'center' ? 'center'
-                : opts?.block === 'nearest' ? 'nearest'
-                : 'start';
-            this.virtualScroll.scrollToIndex(index, vBlock);
-            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${vBlock})`);
-            return;
-        }
-        const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
-        if (el) {
-            this.applyScrollIntoView(el, opts);
-            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via DOM scrollIntoView`);
-            return;
-        }
-        // Not rendered yet (virtual instance still initializing, or sheet mid-build): retry once.
-        if (!retried) {
-            interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) not rendered yet — deferring one frame`);
-            requestAnimationFrame(() => this.scrollToRenderedIndex(index, opts, true));
-        }
+    private scrollToRenderedIndex(index: number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
+            const attempt = (retried: boolean): void => {
+                if (!this.#isOpen || index < 0 || index >= this.filteredOptions.length) return resolve(false);
+                if (this.virtualScroll) {
+                    // Map the DOM ScrollLogicalPosition to the virtual list's supported blocks ('end' → nearest).
+                    const vBlock = opts?.block === 'center' ? 'center'
+                        : opts?.block === 'nearest' ? 'nearest'
+                        : 'start';
+                    this.virtualScroll.scrollToIndex(index, vBlock);
+                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${vBlock})`);
+                    return resolve(true);
+                }
+                const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
+                if (el) {
+                    this.applyScrollIntoView(el, opts);
+                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via DOM scrollIntoView`);
+                    return resolve(true);
+                }
+                // Not rendered yet (virtual instance still initializing, or sheet mid-build): retry once.
+                if (retried) return resolve(false);
+                interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) not rendered yet — deferring one frame`);
+                requestAnimationFrame(() => attempt(true));
+            };
+            attempt(false);
+        });
     }
 
     private toggleOption(option: T): void {
@@ -5030,8 +5033,8 @@ export class MultiSelectEngine<T = any> {
     }
 
     /** The {@link BadgeContentRenderContext} for `item` — outside a render: configured mode, not in the popover. */
-    private badgeCtx(item: T, info?: BadgeRenderInfo): BadgeContentRenderContext<T> {
-        return this.ctx({ item, ...(info ?? this.badgeRenderContext(false)) });
+    private badgeCtx(option: T, info?: BadgeRenderInfo): BadgeContentRenderContext<T> {
+        return this.ctx({ option, ...(info ?? this.badgeRenderContext(false)) });
     }
 
     /** Badges-area count text ("N selected" / "+X more") — `getCounterCallback(ctx)` or the default. */
@@ -5606,8 +5609,8 @@ export class MultiSelectEngine<T = any> {
             // tree-only fields are left unset, matching the non-tree render path.
             const value = this.getItemValue(option);
             const context: OptionContentRenderContext<T> = this.ctx({
-                item: option,
-                index,
+                option,
+                optionIndex: index,
                 isSelected: this.selectedValues.has(String(value)),
                 isFocused: index === this.focusedIndex,
                 isMatched: this.matchingIndices.has(index),
@@ -5680,8 +5683,8 @@ export class MultiSelectEngine<T = any> {
 
         const value = this.getItemValue(option);
         const content = this.buildOptionTooltipContent(option, this.ctx({
-            item: option,
-            index,
+            option,
+            optionIndex: index,
             isSelected: this.selectedValues.has(String(value)),
             isFocused: index === this.focusedIndex,
             isMatched: this.matchingIndices.has(index),

@@ -63,6 +63,18 @@ property on the element AND the controller (no `get*()` duplicates).
 | `controller.getOptions()` | `controller.options` |
 | `el.searchText` | `el.searchTerm`, `controller.searchTerm` |
 
+**Callback ctx nouns.** `item` is reserved for the action item (`/actions`); a per-option
+ctx names the option `option`; no bare `index`; search text is `term`; every callback takes
+one ctx.
+
+| Old | New |
+|---|---|
+| per-option ctx `{ item }` (`getValueCallback`, `getDisplayValueCallback`, `getIconCallback`, `getIsDisabledCallback`, `getIsSelectableCallback({ item, node })`, all badge / render / tooltip callbacks, `renderSelectedContentCallback`, …) | `{ option }` (`ItemContext.option`) |
+| `renderOptionContentCallback` / `getOptionTooltipCallback` ctx `index` | `optionIndex` |
+| `searchCallback({ term, signal, searchTerm, entries })` | `searchCallback({ term, signal, entries })` — `term` is the `getSearchTermCallback` result for `target: 'callback'` when set, else the typed text (`MultiSelectSearchContext<T, TTerm>`) |
+| `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
+| `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element + controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model

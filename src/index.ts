@@ -72,6 +72,7 @@ export type {
   MessageOptions,
   MultiSelectContext,
   ItemContext,
+  SelectedOrderCompareContext,
   TreeNodeContext,
   OptionContentRenderContext,
   BadgeContentRenderContext,

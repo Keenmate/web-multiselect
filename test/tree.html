@@ -145,7 +145,7 @@
             document.getElementById('tree-single').options = items;
 
             const cb = document.getElementById('tree-cb');
-            cb.getPathCallback = ({ item }) => item.p;
+            cb.getPathCallback = ({ option }) => option.p;
             cb.options = slashItems;
 
             // Leaves-only via a data flag: a node is a branch when another path extends it.
@@ -190,7 +190,7 @@
             renderCtx.renderOptionContentCallback = (ctx) => {
                 const span = document.createElement('span');
                 span.className = 'ctx-probe';
-                span.textContent = ctx.item.label;
+                span.textContent = ctx.option.label;
                 span.dataset.isTreeNode = String(ctx.isTreeNode);
                 span.dataset.isBranch = String(ctx.isBranch);
                 span.dataset.isLeaf = String(ctx.isLeaf);

@@ -6,7 +6,7 @@ CRITICAL: Two ways to handle component interactions
 - on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady —
   receive the DETAIL (not the CustomEvent): el.onSelect = (detail) => detail.option
 - Callback Functions: all get*/render*/before* callbacks take ONE `ctx` argument
-  (per-option callbacks read ctx.item). Only exception: selectedOrderCompareCallback(a, b)
+  (per-option callbacks read ctx.option; selectedOrderCompareCallback({ a, b }))
 - Before-hooks: return false to cancel, nothing to continue, a value to replace
 - Every ctx and every event detail carries `controller` (the public facade, also
   el.controller) and `element` (the host) — both non-enumerable, so JSON.stringify / logs /
@@ -99,30 +99,30 @@ CALLBACK FUNCTIONS
 ------------------
 All available callbacks (every one takes ONE ctx argument):
 
-Data extraction (ctx.item = the option):
-- getValueCallback({ item }): Extract value
-- getDisplayValueCallback({ item }): Display text
-- getBadgeDisplayCallback({ item, displayMode, isInPopover }): Badge text
-- getSearchValueCallback({ item }): Search text (or object for searchCallback)
-- getIconCallback({ item }): Icon
-- getSubtitleCallback({ item }): Subtitle
-- getGroupCallback({ item }): Group name
-- getFullTitleCallback({ item }): Full title
-- getIsDisabledCallback({ item }): Disabled state
-- getIsSelectableCallback({ item, node }): Tree node selectable
-- getPathCallback({ item }): Tree path
-- getSelectedOrderCallback({ item }): Selected-order sort key
-- selectedOrderCompareCallback(a, b): Comparator (positional — the one exception)
+Data extraction (ctx.option = the option):
+- getValueCallback({ option }): Extract value
+- getDisplayValueCallback({ option }): Display text
+- getBadgeDisplayCallback({ option, displayMode, isInPopover }): Badge text
+- getSearchValueCallback({ option }): Search text (or object for searchCallback)
+- getIconCallback({ option }): Icon
+- getSubtitleCallback({ option }): Subtitle
+- getGroupCallback({ option }): Group name
+- getFullTitleCallback({ option }): Full title
+- getIsDisabledCallback({ option }): Disabled state
+- getIsSelectableCallback({ option, node }): Tree node selectable
+- getPathCallback({ option }): Tree path
+- getSelectedOrderCallback({ option }): Selected-order sort key
+- selectedOrderCompareCallback({ a, b }): Comparator (Array.prototype.sort result contract)
 
 Custom rendering:
-- renderOptionContentCallback({ item, index, isSelected, isFocused, … }): Dropdown option HTML
-- renderBadgeContentCallback({ item, displayMode, isInPopover }): Badge HTML
-- renderBadgeCallback({ item, displayMode, isInPopover }): Whole badge HTML
-- renderSelectedItemContentCallback({ item, … }): Popover item HTML
-- renderSelectedContentCallback({ item }): Single-select text
+- renderOptionContentCallback({ option, optionIndex, isSelected, isFocused, … }): Dropdown option HTML
+- renderBadgeContentCallback({ option, displayMode, isInPopover }): Badge HTML
+- renderBadgeCallback({ option, displayMode, isInPopover }): Whole badge HTML
+- renderSelectedItemContentCallback({ option, … }): Popover item HTML
+- renderSelectedContentCallback({ option }): Single-select text
 - renderGroupLabelContentCallback({ groupName, members, selectedCount, … }): Group header
-- getBadgeClassCallback({ item, … }): Badge CSS classes
-- getSelectedItemClassCallback({ item, … }): Popover item classes
+- getBadgeClassCallback({ option, … }): Badge CSS classes
+- getSelectedItemClassCallback({ option, … }): Popover item classes
 - getCustomStylesCallback(ctx): Inject CSS
 
 Before-hooks (false cancels, nothing continues, a value replaces):
@@ -135,14 +135,14 @@ Before-hooks (false cancels, nothing continues, a value replaces):
 
 Search:
 - getSearchTermCallback({ term, target, behavior, match }): Prepare the term
-- searchCallback({ term, signal, searchTerm, entries }): Custom / async search
+- searchCallback({ term, signal, entries }): Custom / async search (term = getSearchTermCallback result when set)
 
 Formatting:
 - getCounterCallback({ count, moreCount }): Counter text
 - getCountLabelCallback({ selectedCount, totalCount, groupName }): Count chip
-- getBadgeTooltipCallback({ item, … }): Badge tooltip
-- getOptionTooltipCallback({ item, … }): Option tooltip
-- getRemoveButtonTooltipCallback({ item, … }): Remove-button tooltip
+- getBadgeTooltipCallback({ option, … }): Badge tooltip
+- getOptionTooltipCallback({ option, … }): Option tooltip
+- getRemoveButtonTooltipCallback({ option, … }): Remove-button tooltip
 - getValueFormatCallback({ selectedValues, selectedOptions }): Form value format
 - getAddNewTextCallback({ value }): "Add new" prompt text
 
@@ -258,14 +258,14 @@ Control text display:
 getDisplayValueCallback:
 Dropdown display text
 
-select.getDisplayValueCallback = ({ item }) => `${item.firstName} ${item.lastName}`;
+select.getDisplayValueCallback = ({ option }) => `${option.firstName} ${option.lastName}`;
 
 getBadgeDisplayCallback:
 Badge display text (can differ from dropdown)
 
-select.getBadgeDisplayCallback = ({ item }) => {
+select.getBadgeDisplayCallback = ({ option }) => {
   // Show initials in badges
-  return item.firstName[0] + item.lastName[0];
+  return option.firstName[0] + option.lastName[0];
 };
 
 COUNTER CALLBACK
@@ -316,14 +316,14 @@ TOOLTIP CALLBACK
 ----------------
 Customize badge tooltips:
 
-select.getBadgeTooltipCallback = ({ item }) => `${item.label}\n${item.description}`;
+select.getBadgeTooltipCallback = ({ option }) => `${option.label}\n${option.description}`;
 
 Or return HTMLElement:
-select.getBadgeTooltipCallback = ({ item }) => {
+select.getBadgeTooltipCallback = ({ option }) => {
   const div = document.createElement('div');
   div.innerHTML = `
-    <strong>${item.label}</strong><br>
-    <small>${item.description}</small>
+    <strong>${option.label}</strong><br>
+    <small>${option.description}</small>
   `;
   return div;
 };
@@ -515,35 +515,35 @@ MULTIPLE CALLBACKS
 Set multiple callbacks:
 
 // Data callbacks
-select.getValueCallback = ({ item }) => item.id;
-select.getDisplayValueCallback = ({ item }) => item.name;
-select.getSearchValueCallback = ({ item }) => `${item.name} ${item.email}`;
+select.getValueCallback = ({ option }) => option.id;
+select.getDisplayValueCallback = ({ option }) => option.name;
+select.getSearchValueCallback = ({ option }) => `${option.name} ${option.email}`;
 
 // Interaction (event twins)
 select.onSelect = ({ option }) => console.log('Select:', option);
 select.onChange = ({ selectedOptions }) => updateUI(selectedOptions);
 
 // Rendering callbacks
-select.renderOptionContentCallback = ({ item }) => `${item.name}`;
-select.getBadgeDisplayCallback = ({ item }) => item.code;
+select.renderOptionContentCallback = ({ option }) => `${option.name}`;
+select.getBadgeDisplayCallback = ({ option }) => option.code;
 
 CALLBACK PERFORMANCE
 --------------------
 Optimize callbacks for performance:
 
 ❌ Slow: Expensive operation every render
-select.renderOptionContentCallback = ({ item }) => {
-  const data = expensiveCalculation(item);  // Called many times!
+select.renderOptionContentCallback = ({ option }) => {
+  const data = expensiveCalculation(option);  // Called many times!
   return `<div>${data}</div>`;
 };
 
 ✅ Fast: Cache results
 const cache = new Map();
-select.renderOptionContentCallback = ({ item }) => {
-  if (!cache.has(item.value)) {
-    cache.set(item.value, expensiveCalculation(item));
+select.renderOptionContentCallback = ({ option }) => {
+  if (!cache.has(option.value)) {
+    cache.set(option.value, expensiveCalculation(option));
   }
-  return `<div>${cache.get(item.value)}</div>`;
+  return `<div>${cache.get(option.value)}</div>`;
 };
 
 REMOVING CALLBACKS

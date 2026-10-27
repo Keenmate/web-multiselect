@@ -64,7 +64,7 @@ const options: MultiSelectOption[] = [
 GENERIC TYPE SUPPORT
 --------------------
 Use generics for custom objects. Every callback takes ONE ctx; per-option callbacks read
-ctx.item:
+ctx.option:
 
 interface User {
   id: number;
@@ -77,9 +77,9 @@ const users: User[] = [...];
 const select = document.querySelector('web-multiselect') as MultiSelectElement<User>;
 
 // Type-safe callbacks
-select.getValueCallback = ({ item }: ItemContext<User>): number => item.id;
-select.getDisplayValueCallback = ({ item }: ItemContext<User>): string =>
-  `${item.firstName} ${item.lastName}`;
+select.getValueCallback = ({ option }: ItemContext<User>): number => option.id;
+select.getDisplayValueCallback = ({ option }: ItemContext<User>): string =>
+  `${option.firstName} ${option.lastName}`;
 
 Or extend MultiSelectOption:
 interface UserOption extends Partial<MultiSelectOption> {
@@ -177,7 +177,7 @@ type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 
 interface SearchTermContext { term: string; target: 'internal' | 'callback'; behavior: SearchBehavior; match: SearchMatch; }
 type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
 interface SearchEntry<T> { item: T; searchValue: unknown; }
-interface SearchCallbackContext<T> { term: string; signal: AbortSignal; searchTerm: string | RegExp | Record<string, unknown>; readonly entries: ReadonlyArray<SearchEntry<T>>; }
+interface MultiSelectSearchContext<T, TTerm = string> { term: TTerm; signal: AbortSignal; readonly entries: ReadonlyArray<SearchEntry<T>>; }
 type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-selection' | 'clear';
 type MessageType = 'info' | 'warning' | 'error' | 'success';
 type MultiSelectAction = 'select-all' | 'clear-selection';
@@ -243,8 +243,7 @@ select.actionButtons = actions;
 
 CALLBACK FUNCTION TYPES
 -----------------------
-All callback signatures (ONE ctx argument each; selectedOrderCompareCallback(a, b) is the
-only positional exception):
+All callback signatures (ONE ctx argument each):
 
 getValueCallback?:        (ctx: ItemContext<T>) => string | number;
 getDisplayValueCallback?: (ctx: ItemContext<T>) => string;
@@ -253,9 +252,9 @@ getIconCallback?:         (ctx: ItemContext<T>) => string;
 getSubtitleCallback?:     (ctx: ItemContext<T>) => string;
 getGroupCallback?:        (ctx: ItemContext<T>) => string;
 getIsDisabledCallback?:   (ctx: ItemContext<T>) => boolean;
-getIsSelectableCallback?: (ctx: TreeNodeContext<T>) => boolean;      // { item, node }
+getIsSelectableCallback?: (ctx: TreeNodeContext<T>) => boolean;      // { option, node }
 
-searchCallback?:          (ctx: MultiSelectSearchContext<T>) => T[] | Promise<T[]>;   // { term, signal, searchTerm, entries }
+searchCallback?:          (ctx: MultiSelectSearchContext<T>) => T[] | Promise<T[]>;   // { term, signal, entries }
 getSearchTermCallback?:   (ctx: SearchTermCallbackContext<T>) => PreparedSearchTerm;  // { term, target, behavior, match }
 beforeSearchCallback?:    (ctx: BeforeSearchContext<T>) => string | false | void;     // string replaces, false skips
 beforeSelectCallback?:    (ctx: BeforeSelectContext<T>) => void | false | Promise<void | false>;
@@ -319,7 +318,7 @@ MultiSelectElement<T> exposes:
 MultiSelectController<T> (el.controller, ctx.controller):
   selectedOptions, selectedValue, getOptions(), isOpen, setSelected(), selectAll(), clearSelection(),
   toggleValue(), selectValue(), deselectValue(), toggleFocused(), open(), close(), toggle(),
-  search(), clearSearch(), scrollToValue/Group/Index() → boolean, refresh(),
+  search(), clearSearch(), scrollToValue/Group/Index() → Promise<boolean>, refresh(),
   focusNext/Previous/First/Last/PageUp/PageDown(), focusNextMatch/PreviousMatch(),
   focusIndex(), showMessage(content, { type, autoHideMs, placement }), hideMessage()
 
@@ -507,7 +506,7 @@ const options = [
   { value: 2, label: 'TypeScript' }
 ];  // Type inferred as { value: number; label: string; }[]
 
-select.getValueCallback = ({ item }) => item.value;  // ctx type inferred from the property
+select.getValueCallback = ({ option }) => option.value;  // ctx type inferred from the property
 
 BEST PRACTICES
 --------------
@@ -540,8 +539,8 @@ interface Product {
   name: string;
 }
 
-select.getValueCallback = ({ item }: { item: Product }) => item.id;
-select.getDisplayValueCallback = ({ item }: { item: Product }) => item.name;
+select.getValueCallback = ({ option }: { option: Product }) => option.id;
+select.getDisplayValueCallback = ({ option }: { option: Product }) => option.name;
 
 Event handling:
 select.addEventListener('change', (e: Event) => {

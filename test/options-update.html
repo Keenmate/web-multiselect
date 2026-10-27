@@ -72,7 +72,7 @@
 
             // #cb: disabled derived purely from external state (no `disabled` field on data).
             const cb = document.getElementById('cb');
-            cb.getIsDisabledCallback = ({ item }) => window.disabledIds.has(item.value);
+            cb.getIsDisabledCallback = ({ option }) => window.disabledIds.has(option.value);
             cb.options = window.makeItems(6, 'opt');
 
             // #vs: start SMALL (below threshold → normal render); tests grow it in place.

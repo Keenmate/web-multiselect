@@ -282,8 +282,8 @@ Web Multiselect (default):
 {value: 1, label: 'Option 1'}
 
 Or use callbacks:
-select.getValueCallback = ({ item }) => item.id;
-select.getDisplayValueCallback = ({ item }) => item.text;
+select.getValueCallback = ({ option }) => option.id;
+select.getDisplayValueCallback = ({ option }) => option.text;
 
 EVENT HANDLING MIGRATION
 ------------------------
@@ -353,8 +353,8 @@ $('#select').select2({
 });
 
 New:
-select.renderOptionContentCallback = ({ item }) => {
-  return `<span>${item.label}</span>`;
+select.renderOptionContentCallback = ({ option }) => {
+  return `<span>${option.label}</span>`;
 };
 
 PLUGINS/EXTENSIONS
@@ -410,10 +410,10 @@ FROM WEB-MULTISELECT 2.x (INTERACTION MODEL)
 The interaction-model release is BREAKING, with no aliases. Full old → new table:
 CHANGELOG.md, section [Unreleased]. The essentials:
 
-- Every callback takes ONE ctx; per-option callbacks read ctx.item:
-    getDisplayValueCallback = (item) => item.name      →  ({ item }) => item.name
-    renderOptionContentCallback = (item, ctx) => …     →  (ctx) => … ctx.item …
-  Exception: selectedOrderCompareCallback(a, b) stays positional.
+- Every callback takes ONE ctx; per-option callbacks read ctx.option:
+    getDisplayValueCallback = (item) => item.name      →  ({ option }) => option.name
+    renderOptionContentCallback = (item, ctx) => …     →  (ctx) => … ctx.option …
+  selectedOrderCompareCallback(a, b) → ({ a, b }) (v3 naming pass).
 - Renames: getDisabledCallback → getIsDisabledCallback; customStylesCallback() →
   getCustomStylesCallback(ctx); addNewCallback(value) → beforeAddCallback({ value });
   keydownCallback (return true = handled) → beforeKeydownCallback (return false = suppress
@@ -424,7 +424,7 @@ CHANGELOG.md, section [Unreleased]. The essentials:
     ctx.controller.showMessage('…', { type: 'warning' }) and return false.
     beforeSearchCallback: return false to skip (was null). beforeAddCallback: false cancels
     (was null); nothing → only the `add` event fires.
-- searchCallback(term, signal, ctx) → searchCallback({ term, signal, searchTerm, entries });
+- searchCallback(term, signal, ctx) → searchCallback({ term, signal, entries }) (term = getSearchTermCallback result when set);
   getSearchTermCallback(term, opts) → ({ term, target, behavior, match });
   getCounterCallback(count, more) → ({ count, moreCount });
   getCountLabelCallback(s, t) → ({ selectedCount, totalCount, groupName });

@@ -65,25 +65,25 @@
                 document.getElementById(id).options = items;
             }
 
-            document.getElementById('opt-content').renderOptionContentCallback = ({ item }) =>
-                `<span class="js-opt-tag">[opt]</span>${item.label}`;
+            document.getElementById('opt-content').renderOptionContentCallback = ({ option }) =>
+                `<span class="js-opt-tag">[opt]</span>${option.label}`;
 
-            document.getElementById('badge-content').renderBadgeContentCallback = ({ item }) =>
-                `<span class="js-badge-tag">[badge]</span>${item.label}`;
+            document.getElementById('badge-content').renderBadgeContentCallback = ({ option }) =>
+                `<span class="js-badge-tag">[badge]</span>${option.label}`;
 
-            document.getElementById('badge-class').getBadgeClassCallback = ({ item }) =>
-                `js-${item.value}-class`;
+            document.getElementById('badge-class').getBadgeClassCallback = ({ option }) =>
+                `js-${option.value}-class`;
 
             document.getElementById('custom-styles').getCustomStylesCallback = () =>
                 `.ms__option { outline: 2px dashed magenta; }`;
 
             // Single-select: the ctx carries the presentation — encode it into the label.
-            document.getElementById('sel-content').renderSelectedContentCallback = ({ item, presentation }) =>
-                `${item.label}·${presentation}`;
+            document.getElementById('sel-content').renderSelectedContentCallback = ({ option, presentation }) =>
+                `${option.label}·${presentation}`;
 
             // Popover item: the ctx is a BadgeContentRenderContext — surface isInPopover.
-            document.getElementById('sel-item').renderSelectedItemContentCallback = ({ item, isInPopover }) =>
-                `<span class="js-sel-item" data-pop="${isInPopover}">${item.label}</span>`;
+            document.getElementById('sel-item').renderSelectedItemContentCallback = ({ option, isInPopover }) =>
+                `<span class="js-sel-item" data-pop="${isInPopover}">${option.label}</span>`;
         });
     </script>
 </body>
