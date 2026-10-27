@@ -3072,6 +3072,7 @@ export class MultiSelectEngine<T = any> {
             get options() { return self.allOptions; },
             get searchTerm() { return self.searchTerm; },
             get isOpen() { return self.isOpen; },
+            get isMessageShown() { return self.isMessageShown; },
             setSelected: (values, opts) => this.setSelected(values, opts),
             selectAll: () => { void this.userSelectAll(); },
             clearSelection: () => { void this.userClearSelection('clear-selection'); },
@@ -5870,6 +5871,11 @@ export class MultiSelectEngine<T = any> {
     }
 
     /** Dismiss the transient message, if shown. Idempotent. */
+    /** Whether a {@link showMessage} message is currently shown. */
+    public get isMessageShown(): boolean {
+        return !!this.messageEl;
+    }
+
     public hideMessage(): void {
         if (this.messageTimer !== null) { clearTimeout(this.messageTimer); this.messageTimer = null; }
         if (this.messageCleanup) { this.messageCleanup(); this.messageCleanup = null; }

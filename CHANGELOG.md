@@ -102,6 +102,7 @@ The per-string inputs are removed:
 - `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,
   not focusable, not submitted (an ancestor `<fieldset disabled>` disables it too, via core);
   readonly = no selection change and no dropdown, but focusable and submitted.
+- `isMessageShown` (element + controller), next to `showMessage()` / `hideMessage()`.
 - `open` / `close` events (+ `onOpen` / `onClose` twins): the dropdown opened / closed, any
   reason. `detail` is the context (`controller`, `element`, presentation flags).
 

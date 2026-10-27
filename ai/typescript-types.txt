@@ -320,7 +320,7 @@ MultiSelectController<T> (el.controller, ctx.controller):
   toggleValue(), selectValue(), deselectValue(), toggleFocused(), open(), close(), toggle(),
   search(), clearSearch(), scrollToValue/Group/Index() → Promise<boolean>, refresh(),
   focusNext/Previous/First/Last/PageUp/PageDown(), focusNextMatch/PreviousMatch(),
-  focusIndex(), showMessage(content, { type, autoHideMs, placement }), hideMessage()
+  focusIndex(), showMessage(content, { type, autoHideMs, placement }), hideMessage(), isMessageShown
 
 GENERIC COMPONENT TYPE
 ----------------------

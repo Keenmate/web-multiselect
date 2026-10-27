@@ -425,6 +425,8 @@ export interface MultiSelectController<T = any> {
     showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
     /** Dismiss the transient message, if any. */
     hideMessage(): void;
+    /** Whether a message is currently shown (same as `el.isMessageShown`). */
+    readonly isMessageShown: boolean;
 }
 
 /**

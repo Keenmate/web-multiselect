@@ -645,6 +645,7 @@ You do **not** need to await between a property write and an imperative method �
 | `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Resolves `false` in tree mode or if the group is empty |
 | `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `type` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `autoHideMs` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
 | `hideMessage()` | Dismiss the message shown by `showMessage()` |
+| `isMessageShown` | Property (read-only): whether a `showMessage()` message is shown (also on the controller) |
 | `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered — see below |
 | `batch(fn: () => void)` | Run `fn` (e.g. several `setAttribute` calls) and apply the resulting changes as one update. Flushes synchronously |
 | `setAttributes(values: Record<string, unknown>)` | Apply several inputs as a single in-place update (one re-render instead of one per property). Keys are property names (`configKey`, e.g. `maxHeight`) or their kebab attribute (`max-height`); values are **typed property values**, validated exactly like a direct property assignment — not raw attribute strings. Flushes synchronously. Handy for i18n switches that change several strings at once. To batch raw attribute **strings** instead, use `batch(() => { setAttribute('search-placeholder', '…'); … })` |
@@ -663,7 +664,7 @@ You do **not** need to await between a property write and an imperative method �
 | Selection | `setSelected(values, { notify })`, `selectAll()`, `clearSelection()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
 | Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `Promise<boolean>`), `refresh()` |
 | Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |
-| Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()` |
+| Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()`, `isMessageShown` |
 
 ```javascript
 document.querySelector('web-multiselect').controller.selectAll();

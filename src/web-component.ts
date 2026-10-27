@@ -840,6 +840,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker?.hideMessage();
   }
 
+  /** Whether a {@link showMessage} message is currently shown. Same as `controller.isMessageShown`. */
+  get isMessageShown(): boolean {
+    return this.#picker?.isMessageShown ?? false;
+  }
+
   // ── scroll-to API ───────────────────────────────────────────────────────────
 
   /**
@@ -953,6 +958,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       get options() { return engine()?.options ?? []; },
       get searchTerm() { return engine()?.searchTerm ?? ''; },
       get isOpen() { return engine()?.isOpen ?? false; },
+      get isMessageShown() { return engine()?.isMessageShown ?? false; },
       setSelected: call('setSelected'),
       selectAll: call('selectAll'),
       clearSelection: call('clearSelection'),
