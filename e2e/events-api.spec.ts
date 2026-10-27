@@ -95,7 +95,7 @@ test.describe('attribute changes preserve selection', () => {
         expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
 
         // Change a benign attribute — selection should survive.
-        await p.evaluate(el => el.setAttribute('search-placeholder', 'New ph'));
+        await p.evaluate(el => el.setAttribute('max-height', '15rem'));
         expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
     });
 });

@@ -47,46 +47,45 @@ describe('setAttributes — typed property batch', () => {
         await el.whenSettled(); // let the initial options reinit settle first
         const spy = vi.spyOn(MultiSelectEngine.prototype, 'updateOptions');
         el.setAttributes({
-            searchPlaceholder: 'Search…',
-            selectPlaceholder: 'Pick…',
-            noDataPlaceholder: 'Empty'
+            maxHeight: '15rem',
+            badgeTooltipDelay: 50,
+            searchDebounce: 20
         });
         // setAttributes flushes synchronously → exactly one coalesced update.
         expect(spy).toHaveBeenCalledTimes(1);
         expect(spy.mock.calls[0][0]).toMatchObject({
-            searchPlaceholder: 'Search…',
-            selectPlaceholder: 'Pick…',
-            noDataPlaceholder: 'Empty'
+            maxHeight: '15rem',
+            badgeTooltipDelay: 50,
+            searchDebounce: 20
         });
     });
 
-    it('applies the change so the live placeholder updates (i18n switch)', () => {
-        el.setAttributes({ searchPlaceholder: 'Buscar…' });
+    it('applies the change so the live placeholder updates (i18n switch via labels)', () => {
+        el.setAttributes({ labels: { searchPlaceholder: 'Buscar…' } });
         expect(input().placeholder).toBe('Buscar…');
     });
 
     it('reflects only inputs marked reflect:true (members), not plain ones', () => {
-        el.setAttributes({ valueMember: 'id', searchPlaceholder: 'Search…' });
-        // valueMember reflects; searchPlaceholder does not.
+        el.setAttributes({ valueMember: 'id', searchDebounce: 5 });
+        // valueMember reflects; searchDebounce does not.
         expect(el.getAttribute('value-member')).toBe('id');
-        expect(el.hasAttribute('search-placeholder')).toBe(false);
+        expect(el.hasAttribute('search-debounce')).toBe(false);
     });
 });
 
 describe('batch — attribute-string coalescing', () => {
-    it('writes attribute strings and applies them in one update', () => {
+    it('writes attribute strings and applies them in one flush', () => {
         el.batch(() => {
-            el.setAttribute('search-placeholder', 'Search…');
-            el.setAttribute('select-placeholder', 'Pick…');
+            el.setAttribute('labels', '{"searchPlaceholder":"Search…","selectPlaceholder":"Pick…"}');
+            el.setAttribute('max-height', '15rem');
         });
-        expect(el.getAttribute('search-placeholder')).toBe('Search…');
-        expect(el.getAttribute('select-placeholder')).toBe('Pick…');
+        expect(el.getAttribute('max-height')).toBe('15rem');
         expect(input().placeholder).toBe('Search…');
     });
 
     it('resets an input to its default when its attribute is removed', () => {
-        el.setAttribute('search-placeholder', 'Search…');
-        el.batch(() => el.removeAttribute('search-placeholder'));
+        el.setAttribute('labels', '{"searchPlaceholder":"Search…"}');
+        el.batch(() => el.removeAttribute('labels'));
         // Absent attribute == the converter default.
         expect(input().placeholder).toBe('Search...');
     });
@@ -94,7 +93,7 @@ describe('batch — attribute-string coalescing', () => {
     it('coalesces an emptied search + select placeholder together', () => {
         el.batch(() => {
             el.setAttribute('enable-search', 'false');
-            el.setAttribute('select-placeholder', 'Choose');
+            el.setAttribute('labels', '{"selectPlaceholder":"Choose"}');
         });
         expect(input().placeholder).toBe('Choose');
     });

@@ -50,8 +50,7 @@
                 <web-multiselect
                     id="events-select"
                     value-member="value"
-                    display-value-member="label"
-                    search-placeholder="Select skills...">
+                    display-value-member="label" labels='{"searchPlaceholder": "Select skills..."}'>
                 </web-multiselect>
                 <small class="form-text legend">
                     <span class="tag-prop">[prop]</span> = <code>on*</code> property handler &nbsp;·&nbsp;
@@ -93,8 +92,7 @@ el.addEventListener('change', (e) =&gt; {
                 <web-multiselect
                     id="exclusive-select"
                     value-member="value"
-                    display-value-member="label"
-                    search-placeholder="Choose availability...">
+                    display-value-member="label" labels='{"searchPlaceholder": "Choose availability..."}'>
                 </web-multiselect>
                 <small class="form-text">Try selecting Full-time, then Part-time.</small>
             </div>
@@ -135,8 +133,7 @@ el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
                 <web-multiselect
                     id="required-select"
                     value-member="value"
-                    display-value-member="label"
-                    search-placeholder="Build the team...">
+                    display-value-member="label" labels='{"searchPlaceholder": "Build the team..."}'>
                 </web-multiselect>
                 <small class="form-text">Team Lead can't be removed; the others can.</small>
             </div>
@@ -174,8 +171,7 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
             </p>
             <div class="form-group">
                 <label>Pick something (or just fire a message)</label>
-                <web-multiselect id="message-select" value-member="value" display-value-member="label"
-                    search-placeholder="Filter…"></web-multiselect>
+                <web-multiselect id="message-select" value-member="value" display-value-member="label" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
                 <small class="form-text">
                     The ⚠ / ⛔ / ✅ options fire a message from <code>beforeSelectCallback</code> — the same
                     toasts the buttons below fire imperatively. Turn on “fullscreen preview”, open the
@@ -247,9 +243,7 @@ el.beforeSelectCallback = ({ option, controller }) =&gt; {
                     id="create-select"
                     value-member="value"
                     display-value-member="label"
-                    allow-add-new
-                    add-new-text="Add new member: “{value}”"
-                    search-placeholder="Search or add a member...">
+                    allow-add-new labels='{"addNew": "Add new member: “{value}”", "searchPlaceholder": "Search or add a member..."}'>
                 </web-multiselect>
                 <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
             </div>
@@ -302,10 +296,7 @@ el.getAddNewTextCallback = ({ value }) =&gt; `Create "${value}"`;</code></pre>
                     display-value-member="label"
                     subtitle-member="subtitle"
                     icon-member="icon"
-                    allow-add-new
-                    add-new-text="➕ Add new member: “{value}”"
-                    add-new-pending-text="Adding “{value}” to the project…"
-                    search-placeholder="Search or add a member...">
+                    allow-add-new labels='{"addNew": "➕ Add new member: “{value}”", "addNewPending": "Adding “{value}” to the project…", "searchPlaceholder": "Search or add a member..."}'>
                 </web-multiselect>
                 <small class="form-text">
                     Seeded with the Hornes — Audrey, Benjamin &amp; Jerry.

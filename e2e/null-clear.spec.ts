@@ -45,30 +45,30 @@ test.beforeEach(async ({ page }) => {
 
 // ── update path (on: 'update') — cleared null forwarded verbatim ────────────────
 
-test('update path: clearing search-placeholder reverts to the default', async ({ page }) => {
-    const p = await makePicker(page, { 'search-placeholder': 'Custom search text' }, FRUIT);
+test('clearing the labels attribute reverts the search placeholder to the default', async ({ page }) => {
+    const p = await makePicker(page, { 'labels': '{"searchPlaceholder":"Custom search text"}' }, FRUIT);
     await expect.poll(() => placeholder(p)).toBe('Custom search text');
 
-    await p.evaluate((el) => el.removeAttribute('search-placeholder'));
+    await p.evaluate((el) => el.removeAttribute('labels'));
     // Default search placeholder returns (not stuck on the stale custom value, not blank).
     await expect.poll(() => placeholder(p)).toBe('Search...');
 });
 
-test('update path: clearing no-data-placeholder reverts to the default', async ({ page }) => {
-    const p = await makePicker(page, { 'no-data-placeholder': 'Pick a category first' }, []);
+test('clearing the labels attribute drops the no-data placeholder', async ({ page }) => {
+    const p = await makePicker(page, { 'labels': '{"noData":"Pick a category first"}' }, []);
     await expect.poll(() => placeholder(p)).toBe('Pick a category first');
 
-    await p.evaluate((el) => el.removeAttribute('no-data-placeholder'));
+    await p.evaluate((el) => el.removeAttribute('labels'));
     // Empty list with no custom no-data text falls back to the search placeholder.
     await expect.poll(() => placeholder(p)).toBe('Search...');
 });
 
-test('update path: clearing search-hint removes the hint element', async ({ page }) => {
-    const p = await makePicker(page, { 'search-hint': 'Type to filter' }, FRUIT);
+test('clearing labels.searchHint removes the hint element', async ({ page }) => {
+    const p = await makePicker(page, { 'labels': '{"searchHint":"Type to filter"}' }, FRUIT);
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__hint')).toHaveText('Type to filter');
 
-    await p.evaluate((el) => el.removeAttribute('search-hint'));
+    await p.evaluate((el) => el.removeAttribute('labels'));
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__hint')).toHaveCount(0);
 });

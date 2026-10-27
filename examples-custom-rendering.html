@@ -279,7 +279,7 @@ el.getCustomStylesCallback = () =&gt; `
             </p>
             <div class="form-group">
                 <label for="icon-picker">Add icons to your pack</label>
-                <web-multiselect id="icon-picker" search-placeholder="Search icons…"></web-multiselect>
+                <web-multiselect id="icon-picker" labels='{"searchPlaceholder": "Search icons…"}'></web-multiselect>
                 <small class="form-text">Each selected icon renders as a card; the card's Remove button deselects it.</small>
             </div>
 
@@ -318,7 +318,7 @@ el.getCustomStylesCallback = () =&gt; `
             </p>
             <div class="form-group">
                 <label for="playlist">Add tracks</label>
-                <web-multiselect id="playlist" badges-display-mode="none" show-counter="true" enable-selected-popover="false" search-placeholder="Search tracks…"></web-multiselect>
+                <web-multiselect id="playlist" badges-display-mode="none" show-counter="true" enable-selected-popover="false" labels='{"searchPlaceholder": "Search tracks…"}'></web-multiselect>
                 <small class="form-text">The field shows only a <code>[N]</code> counter; the playlist below is entirely yours.</small>
             </div>
 

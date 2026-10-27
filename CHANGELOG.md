@@ -75,6 +75,28 @@ one ctx.
 | `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
 | `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element + controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
 
+**UI strings → `labels`** (rulebook D-NC-24). Every visible text and ARIA label is a key of
+the one `labels` map — property (partial object) or JSON attribute
+(`labels='{"empty":"Nic","searchPlaceholder":"Hledat…"}'`); unset keys fall back to English.
+The per-string inputs are removed:
+
+| Old (attribute / property) | New `labels` key |
+|---|---|
+| `search-placeholder` / `searchPlaceholder` | `searchPlaceholder` (+ `filterPlaceholder` / `navigatePlaceholder` for the mode-aware default with `show-search-mode-toggle`) |
+| `select-placeholder` / `selectPlaceholder` | `selectPlaceholder` |
+| `no-data-placeholder` / `noDataPlaceholder` | `noData` |
+| `empty-message` / `emptyMessage` | `empty` (also the fullscreen "no matches" counter) |
+| `loading-message` / `loadingMessage` | `loading` |
+| `search-hint` / `searchHint` | `searchHint` |
+| `add-new-text` / `addNewText` | `addNew` (`{value}`) |
+| `add-new-pending-text` / `addNewPendingText` | `addNewPending` (`{value}`) |
+| `remove-button-tooltip-text` / `removeButtonTooltipText` (`{0}`) | `removeItem` (`{item}`) — one text for the × aria-label and its tooltip |
+| `selected-popover-title` / `selectedPopoverTitle` | `selectedPopoverTitle` (`{count}`) |
+| `labels.groupSelectedLabel` | `labels.groupSelected` |
+| hard-coded `N selected` / `+N more` / `N of M` / `N matches` / `Switch to … mode` | `selectedCount`, `moreCount`, `matchPosition`, `matchCount` / `matchCountOne`, `switchToFilterMode` / `switchToNavigateMode` |
+
+`labels` is now also an attribute (JSON). A `labels` change rebuilds the picker (the selection is kept).
+
 ### Added (naming unification)
 
 - `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,

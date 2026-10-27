@@ -22,8 +22,7 @@ $('#mySelect').select2({
 });
 
 Web Multiselect:
-<web-multiselect
-  search-placeholder="Select options">
+<web-multiselect labels='{"searchPlaceholder": "Select options"}'>
 </web-multiselect>
 
 <script>
@@ -64,8 +63,7 @@ const choices = new Choices('#mySelect', {
 });
 
 Web Multiselect:
-<web-multiselect
-  search-placeholder="Select options">
+<web-multiselect labels='{"searchPlaceholder": "Select options"}'>
 </web-multiselect>
 
 <script>

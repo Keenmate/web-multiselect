@@ -92,13 +92,45 @@ export interface MessageOptions {
 }
 
 /**
- * User-facing ARIA labels and short UI strings, for internationalization. Pass a partial map
- * via the `labels` config / property; any unset key falls back to its English default. Two
- * placeholders are interpolated where noted: `{item}` (an item's display label) and `{count}`
- * (a number). These are mostly accessibility (screen-reader) strings — visible text like the
- * placeholder, empty/loading messages, counter, and popover title have their own options.
+ * Every user-facing string of the component (rulebook D-NC-24), for internationalization: the
+ * visible texts (placeholders, empty / loading messages, counters, popover title, "add new"
+ * prompt) and the ARIA labels. Set a partial map via the `labels` property or the `labels`
+ * JSON attribute (`labels='{"empty":"Nic"}'`); any unset key falls back to its English default.
+ * Named placeholders are interpolated where noted (`{count}`, `{item}`, `{value}`, …).
  */
 export interface MultiSelectLabels {
+    /** Closed-input placeholder when search is not usable (picker mode). Default: `Pick an option...`. */
+    selectPlaceholder?: string;
+    /** Search input placeholder. Default: `Search...`. Set it to pin one text in every search mode. */
+    searchPlaceholder?: string;
+    /** Search placeholder in `filter` mode while the fullscreen mode toggle is shown (`show-search-mode-toggle`) and `searchPlaceholder` is not set. Default: `Filter…`. */
+    filterPlaceholder?: string;
+    /** Search placeholder in `navigate` mode while the fullscreen mode toggle is shown and `searchPlaceholder` is not set. Default: `Search…`. */
+    navigatePlaceholder?: string;
+    /** Closed-input placeholder when there are no options at all (e.g. an unresolved cascade parent). Default: empty = off (the normal placeholder shows). */
+    noData?: string;
+    /** Dropdown text when nothing matches (also the fullscreen match counter's "none"). Default: `No results found`. */
+    empty?: string;
+    /** Dropdown text while async options load. Default: `Loading...`. */
+    loading?: string;
+    /** Small hint under the search input while the dropdown is open. Default: empty = no hint. */
+    searchHint?: string;
+    /** "Add new" prompt (`allow-add-new`). `{value}` → the typed text (escaped). Trusted HTML otherwise. `getAddNewTextCallback` wins. Default: `Add "{value}"`. */
+    addNew?: string;
+    /** Pending "add new" prompt while an async `beforeAddCallback` runs. `{value}` → the typed text. Default: `Adding "{value}"…`. */
+    addNewPending?: string;
+    /** Badges-area count text. `{count}` → selection count. `getCounterCallback` wins. Default: `{count} selected`. */
+    selectedCount?: string;
+    /** The "+X more" badge text. `{count}` → hidden count. `getCounterCallback` wins. Default: `+{count} more`. */
+    moreCount?: string;
+    /** Selected-items popover header. `{count}` → selection count. Default: `Selected Items ({count})`. */
+    selectedPopoverTitle?: string;
+    /** Fullscreen navigate-mode position. `{position}`, `{total}`. Default: `{position} of {total}`. */
+    matchPosition?: string;
+    /** Fullscreen navigate-mode match count (more than one). `{count}`. Default: `{count} matches`. */
+    matchCount?: string;
+    /** Fullscreen navigate-mode match count (exactly one). `{count}`. Default: `{count} match`. */
+    matchCountOne?: string;
     /** Popover / fullscreen close button. Default: `Close`. */
     close?: string;
     /** Inline ✕ clear button (`show-clear`) and the count-mode clear (×) button. Default: `Clear all selections`. */
@@ -107,18 +139,22 @@ export interface MultiSelectLabels {
     clearSearch?: string;
     /** Option info affordance that reveals a clipped label. Default: `Show full label`. */
     showFullLabel?: string;
-    /** Badge remove (×). `{item}` → the item's label. Default: `Remove {item}`. */
+    /** Badge remove (×) aria-label and tooltip. `{item}` → the item's label. `getRemoveButtonTooltipCallback` wins for the tooltip. Default: `Remove {item}`. */
     removeItem?: string;
     /** "+N more" badge remove (×). `{count}` → hidden count. Default: `Remove {count} hidden items`. */
     removeHiddenItems?: string;
     /** Group-header selected-count chip aria-label. `{count}` → selected count. Default: `{count} selected`. */
-    groupSelectedLabel?: string;
+    groupSelected?: string;
     /** Counter tooltip overflow tail (beyond 12 items). `{count}` → remaining count. Default: `…and {count} more`. */
     andMore?: string;
     /** Fullscreen navigate-mode "previous match" button. Default: `Previous match`. */
     prevMatch?: string;
     /** Fullscreen navigate-mode "next match" button. Default: `Next match`. */
     nextMatch?: string;
+    /** Fullscreen search-mode toggle (`show-search-mode-toggle`) while in navigate mode. Default: `Switch to filter mode`. */
+    switchToFilterMode?: string;
+    /** Fullscreen search-mode toggle while in filter mode. Default: `Switch to navigate mode`. */
+    switchToNavigateMode?: string;
     /** Text of the built-in `select-all` action button. Default: `Select all`. */
     selectAll?: string;
     /** Text of the built-in `clear-selection` action button. Default: `Clear all`. */
@@ -783,29 +819,17 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Allow adding new options not in the list (internal: isAddNewAllowed).
      * When on and a search yields no matches, the empty dropdown shows a clickable
-     * "add new" prompt (text from `addNewText` / `getAddNewTextCallback`) instead of
-     * the `emptyMessage`; choosing it (click or Enter) runs `beforeAddCallback` and fires
+     * "add new" prompt (text from `labels.addNew` / `getAddNewTextCallback`) instead of
+     * the `labels.empty` text; choosing it (click or Enter) runs `beforeAddCallback` and fires
      * the `add` event.
      */
     isAddNewAllowed?: boolean;
     /**
-     * Template for the clickable "add new" prompt (see `isAddNewAllowed`). The substring
-     * `{value}` is replaced with the (HTML-escaped) typed text. Default: `Add "{value}"`.
-     * `getAddNewTextCallback` takes precedence. (internal: addNewText)
-     */
-    addNewText?: string;
-    /**
      * Dynamically compute the "add new" prompt label from the typed text (`ctx.value`). Takes
-     * precedence over `addNewText`. Returns plain text (inserted as text, not HTML). Use it for
+     * precedence over `labels.addNew`. Returns plain text (inserted as text, not HTML). Use it for
      * i18n or context-aware wording, e.g. `({ value }) => \`Add new member: ${value}\``.
      */
     getAddNewTextCallback?: ((ctx: AddContext<T>) => string) | null;
-    /**
-     * Template for the pending prompt shown (spinner + this text) while an async `beforeAddCallback`
-     * is in flight. `{value}` is replaced with the (HTML-escaped) typed text. Default:
-     * `Adding "{value}"…`. (internal: addNewPendingText)
-     */
-    addNewPendingText?: string;
     /** Show count badge next to toggle icon (internal: isCounterShown) */
     isCounterShown?: boolean;
     /**
@@ -860,22 +884,6 @@ export interface MultiSelectConfig<T = any> {
      */
     checkboxAlign?: 'top' | 'center' | 'bottom';
 
-    /** Hint text shown above the input while the dropdown is open. */
-    searchHint?: string;
-    /** Placeholder text for the search input (shown while search is usable) */
-    searchPlaceholder?: string;
-    /**
-     * Placeholder shown when search is disabled (input acts as a picker rather than a search box).
-     * Applies when `isSearchEnabled` is false or `searchInputMode` is 'readonly'/'hidden'.
-     * Default: "Pick an option..."
-     */
-    selectPlaceholder?: string;
-    /**
-     * Placeholder shown when there are no options to choose from (e.g. an unresolved cascade parent).
-     * Opt-in: when unset, the normal search/select placeholder is used even with an empty list.
-     * Lets users see there is no data without opening the dropdown.
-     */
-    noDataPlaceholder?: string;
     /** Minimum width for the dropdown (e.g., '20rem', '300px') */
     dropdownMinWidth?: string | null;
     /** Maximum width for the dropdown (e.g., '40rem', '500px') */
@@ -908,13 +916,6 @@ export interface MultiSelectConfig<T = any> {
     badgesThresholdMode?: BadgesThresholdMode;
     /** Maximum height for dropdown */
     maxHeight?: string;
-    /** Message shown when no results found */
-    emptyMessage?: string;
-    /** Message shown while loading async data */
-    loadingMessage?: string;
-    /** Header text of the selected-items popover. Translatable; `{count}` is replaced with the
-     *  selection count. Default: "Selected Items ({count})". */
-    selectedPopoverTitle?: string;
     /** ARIA labels / short UI strings for i18n (see {@link MultiSelectLabels}). Partial; unset
      *  keys fall back to their English defaults. */
     labels?: MultiSelectLabels;
@@ -922,7 +923,7 @@ export interface MultiSelectConfig<T = any> {
      * How the search input behaves. Default: `normal`.
      *
      * - `normal` — editable search box
-     * - `readonly` — visible but not editable (acts as a picker; uses `selectPlaceholder`)
+     * - `readonly` — visible but not editable (acts as a picker; uses `labels.selectPlaceholder`)
      * - `hidden` — no search box at all
      */
     searchInputMode?: SearchInputMode;
@@ -1132,8 +1133,6 @@ export interface MultiSelectConfig<T = any> {
     getBadgeTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string | HTMLElement) | null;
     /** Callback to generate custom tooltip text for a remove button (`ctx`: the badge's {@link BadgeContentRenderContext}). */
     getRemoveButtonTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string) | null;
-    /** Format string for remove button tooltip text. Use {0} as placeholder for item name. Default: "Remove {0}" */
-    removeButtonTooltipText?: string;
     /**
      * Tooltip placement relative to the badge (Floating UI `Placement`). Default: `top`.
      *

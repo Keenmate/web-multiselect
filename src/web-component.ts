@@ -26,6 +26,7 @@ import {
   toText,
   toFunction,
   toObjectArray,
+  toObject,
   toValue,
   adoptStyles,
   createStyleSlot,
@@ -67,6 +68,10 @@ const PLACEMENTS = [
   'right', 'right-start', 'right-end',
 ] as const;
 
+/** `labels`: a plain object of strings (property or JSON attribute). */
+const isLabels = (v: unknown): v is Record<string, string> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && Object.values(v).every((x) => typeof x === 'string');
+
 /** Any callback input. */
 const cb = (): ReturnType<typeof toFunction> => toFunction();
 
@@ -75,19 +80,9 @@ const cb = (): ReturnType<typeof toFunction> => toFunction();
 // ============================================================================
 const INPUTS: readonly InputDef[] = [
   // ── Strings (cosmetic → update). Optional ones are nullable: absent → null ─
-  { configKey: 'searchHint',              attribute: 'search-hint',                 converter: toText({ isNullable: true }),            on: 'update', description: 'Small hint text shown beneath the search input.' },
-  { configKey: 'searchPlaceholder',       attribute: 'search-placeholder',          converter: toText({ isNullable: true }),          on: 'update', description: 'Placeholder text for the search input. When unset it defaults to "Search..."; if `show-search-mode-toggle` is on, the default instead becomes mode-aware ("Search…" in navigate, "Filter…" in filter). An explicit value always wins and stays fixed.' },
-  { configKey: 'selectPlaceholder',       attribute: 'select-placeholder',          converter: toText({ default: 'Pick an option...' }), on: 'update', description: 'Placeholder shown on the control when nothing is selected.' },
-  { configKey: 'noDataPlaceholder',       attribute: 'no-data-placeholder',         converter: toText({ isNullable: true }),            on: 'update', description: 'Text shown when there are no options at all.' },
   { configKey: 'dropdownMinWidth',        attribute: 'dropdown-min-width',          converter: toText({ isNullable: true }),            on: 'update', description: 'Minimum width of the dropdown panel (any CSS length).' },
   { configKey: 'dropdownMaxWidth',        attribute: 'dropdown-max-width',          converter: toText({ isNullable: true }),            on: 'update', description: 'Maximum width of the dropdown panel (any CSS length).' },
   { configKey: 'maxHeight',               attribute: 'max-height',                  converter: toText({ default: '20rem' }),          on: 'update', description: 'Maximum height of the dropdown list before it scrolls.' },
-  { configKey: 'emptyMessage',            attribute: 'empty-message',               converter: toText({ default: 'No results found' }), on: 'update', description: 'Message shown when a search yields no matches.' },
-  { configKey: 'addNewText',              attribute: 'add-new-text',                converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the clickable "add new" prompt shown (when `allow-add-new` is on) in place of the empty message once a search yields no matches. `{value}` is replaced with the typed text. Default: `Add "{value}"`. A `getAddNewTextCallback` wins.' },
-  { configKey: 'addNewPendingText',       attribute: 'add-new-pending-text',        converter: toText({ isNullable: true }),          on: 'update', description: 'Template for the pending prompt (spinner + text) shown while an async `beforeAddCallback` runs. `{value}` is replaced with the typed text. Default: `Adding "{value}"…`.' },
-  { configKey: 'loadingMessage',          attribute: 'loading-message',             converter: toText({ default: 'Loading...' }),     on: 'update', description: 'Message shown while options are loading.' },
-  { configKey: 'removeButtonTooltipText', attribute: 'remove-button-tooltip-text',  converter: toText({ isNullable: true }),            on: 'update', description: 'Tooltip text for a badge remove (×) button.' },
-  { configKey: 'selectedPopoverTitle',    attribute: 'selected-popover-title',      converter: toText({ default: 'Selected Items ({count})' }), on: 'update', description: 'Header text of the selected-items popover. Translatable; the `{count}` placeholder is replaced with the current selection count (e.g. `Vybrané položky ({count})`). Default: `Selected Items ({count})`.' },
   { configKey: 'name',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
   { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `getCustomStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `getCustomStylesCallback` takes precedence when both are set.' },
 
@@ -212,7 +207,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'optionsSplitter', attribute: 'data-options-splitter',                 converter: toText({ default: ',' }), on: 'reinit', type: 'string', description: 'Field/cell delimiter for the `csv` and `plain` `data-options` formats. Default `,`. Escapes `\\t` `\\n` `\\r` are honoured (e.g. `data-options-splitter="\\t"` for TSV). Ignored for `json`.' },
   { configKey: 'optionsRowSplitter', attribute: 'data-options-row-splitter',          converter: toText({ default: '\n' }), on: 'reinit', type: 'string', description: 'Row/record delimiter for the `csv` and `plain` `data-options` formats. Default newline. Escapes honoured (e.g. `data-options-row-splitter=";"` for single-line data). Ignored for `json`.' },
   { configKey: 'actionButtons',                                                      converter: toValue({ validate: (v): v is unknown[] => Array.isArray(v) }), on: 'reinit', type: "Array<'select-all' | 'clear-selection' | MultiSelectActionItem>", description: 'Action buttons (core action items) in the dropdown header/footer: built-ins as strings or items (`[\'select-all\', \'clear-all\']`) and custom items (`{ id, text, icon, onClick }`). Each activation fires the `action` event. Property-only; none when unset.' },
-  { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`, `selectAll`, `clearSelection`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
+  { configKey: 'labels',                  attribute: 'labels',                      converter: toObject({ validate: isLabels }), on: 'update', type: 'MultiSelectLabels', description: 'Every UI string (rulebook D-NC-24): placeholders (`selectPlaceholder`, `searchPlaceholder`, `filterPlaceholder`, `navigatePlaceholder`, `noData`), `empty`, `loading`, `searchHint`, `addNew` / `addNewPending` (`{value}`), counters (`selectedCount`, `moreCount`, `{count}`), `selectedPopoverTitle`, fullscreen match counters, and the ARIA labels (`close`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem` `{item}`, `removeHiddenItems`, `groupSelected`, `andMore`, `prevMatch`, `nextMatch`) plus the action-button texts (`selectAll`, `clearSelection`). Partial — an unset key falls back to its English default. Property (object) or JSON attribute (`labels=\'{"empty":"Nic"}\'`). A change rebuilds the picker (selection kept).' },
 
   // ── Callbacks: data shape (structural → reinit). Every callback takes ONE ctx ─
   { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.option` (overrides valueMember).' },

@@ -4,9 +4,9 @@ import type { MultiSelectConfig } from '../../src/types';
 
 /**
  * Unit tests for input placeholder resolution (getPlaceholderText):
- *   - searchPlaceholder        when search is usable
- *   - selectPlaceholder        when search is disabled / readonly / hidden
- *   - noDataPlaceholder        when the option list is empty (opt-in, highest priority)
+ *   - labels.searchPlaceholder  when search is usable
+ *   - labels.selectPlaceholder  when search is disabled / readonly / hidden
+ *   - labels.noData             when the option list is empty (opt-in, highest priority)
  *
  * Exercised against the core MultiSelectEngine class on a plain <div> so no dropdown
  * is ever opened (Floating UI / positioning stay out of the way).
@@ -47,8 +47,8 @@ describe('placeholder — search usable', () => {
         expect(input.placeholder).toBe('Search...');
     });
 
-    it('honours a custom searchPlaceholder', () => {
-        const input = make({ options: ITEMS, searchPlaceholder: 'Type to filter…' });
+    it('honours a custom labels.searchPlaceholder', () => {
+        const input = make({ options: ITEMS, labels: { searchPlaceholder: 'Type to filter…' } });
         expect(input.placeholder).toBe('Type to filter…');
     });
 });
@@ -69,50 +69,49 @@ describe('placeholder — search disabled', () => {
         expect(input.placeholder).toBe('Pick an option...');
     });
 
-    it('honours a custom selectPlaceholder', () => {
-        const input = make({ options: ITEMS, isSearchEnabled: false, selectPlaceholder: 'Choose one' });
+    it('honours a custom labels.selectPlaceholder', () => {
+        const input = make({ options: ITEMS, isSearchEnabled: false, labels: { selectPlaceholder: 'Choose one' } });
         expect(input.placeholder).toBe('Choose one');
     });
 });
 
 describe('placeholder — no data', () => {
-    it('shows noDataPlaceholder when the list is empty', () => {
-        const input = make({ options: [], noDataPlaceholder: 'No data' });
+    it('shows labels.noData when the list is empty', () => {
+        const input = make({ options: [], labels: { noData: 'No data' } });
         expect(input.placeholder).toBe('No data');
     });
 
-    it('is opt-in: empty list without noDataPlaceholder keeps the search placeholder', () => {
+    it('is opt-in: empty list without labels.noData keeps the search placeholder', () => {
         const input = make({ options: [] });
         expect(input.placeholder).toBe('Search...');
     });
 
     it('does not apply once options are present', () => {
-        const input = make({ options: ITEMS, noDataPlaceholder: 'No data' });
+        const input = make({ options: ITEMS, labels: { noData: 'No data' } });
         expect(input.placeholder).toBe('Search...');
     });
 
     it('takes priority over the select placeholder when search is also disabled', () => {
-        const input = make({ options: [], isSearchEnabled: false, noDataPlaceholder: 'No data' });
+        const input = make({ options: [], isSearchEnabled: false, labels: { noData: 'No data' } });
         expect(input.placeholder).toBe('No data');
     });
 });
 
 describe('placeholder — live updates (cascade / i18n)', () => {
-    it('reflects a changed searchPlaceholder via updateOptions', () => {
-        const input = make({ options: ITEMS });
-        instance!.updateOptions({ searchPlaceholder: 'Buscar…' });
-        expect(input.placeholder).toBe('Buscar…');
+    it('a labels change asks the element for a rebuild (updateOptions returns false)', () => {
+        make({ options: ITEMS });
+        expect(instance!.updateOptions({ labels: { searchPlaceholder: 'Buscar…' } })).toBe(false);
     });
 
-    it('switches to noDataPlaceholder when options are emptied (cascade clear)', () => {
-        const input = make({ options: ITEMS, noDataPlaceholder: 'No data' });
+    it('switches to labels.noData when options are emptied (cascade clear)', () => {
+        const input = make({ options: ITEMS, labels: { noData: 'No data' } });
         expect(input.placeholder).toBe('Search...');
         instance!.updateOptions({ options: [] });
         expect(input.placeholder).toBe('No data');
     });
 
     it('returns to the search placeholder when options are repopulated', () => {
-        const input = make({ options: [], noDataPlaceholder: 'No data' });
+        const input = make({ options: [], labels: { noData: 'No data' } });
         expect(input.placeholder).toBe('No data');
         instance!.updateOptions({ options: ITEMS });
         expect(input.placeholder).toBe('Search...');

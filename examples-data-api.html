@@ -452,9 +452,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                     value-member="value"
                     display-value-member="label"
                     subtitle-member="subtitle"
-                    icon-member="icon"
-                    search-placeholder="Type to search GitHub users..."
-                    search-hint="💡 Type at least 2 characters to search"></web-multiselect>
+                    icon-member="icon" labels='{"searchPlaceholder": "Type to search GitHub users...", "searchHint": "💡 Type at least 2 characters to search"}'></web-multiselect>
 
                 <div class="log-panel log-panel--dark req-log" id="github-log"></div>
 
@@ -483,10 +481,9 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                 <web-multiselect
                     id="product-search"
                     min-search-length="1"
-                    search-placeholder="Search products..."
                     display-value-member="name"
                     subtitle-member="category"
-                    value-member="id"></web-multiselect>
+                    value-member="id" labels='{"searchPlaceholder": "Search products..."}'></web-multiselect>
 
                 <div class="log-panel log-panel--dark req-log" id="product-log"></div>
 
@@ -521,10 +518,9 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                     id="debounce-search"
                     min-search-length="1"
                     search-debounce="300"
-                    search-placeholder="Search products (debounced)..."
                     display-value-member="name"
                     subtitle-member="category"
-                    value-member="id"></web-multiselect>
+                    value-member="id" labels='{"searchPlaceholder": "Search products (debounced)..."}'></web-multiselect>
 
                 <div class="log-panel log-panel--dark req-log" id="debounce-log"></div>
             </div>
@@ -535,10 +531,9 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                 <web-multiselect
                     id="country-search"
                     min-search-length="2"
-                    search-placeholder="Search countries..."
                     value-member="code"
                     display-value-member="name"
-                    icon-member="flag"></web-multiselect>
+                    icon-member="flag" labels='{"searchPlaceholder": "Search countries..."}'></web-multiselect>
 
                 <div class="output">
                     <div class="output-label">Selected Country Codes:</div>
@@ -597,8 +592,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                             id="cascade-org"
                             multiple="false"
                             value-member="value"
-                            display-value-member="label"
-                            search-placeholder="Select organization..."
+                            display-value-member="label" labels='{"searchPlaceholder": "Select organization..."}'
                         ></web-multiselect>
                     </div>
 
@@ -611,8 +605,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                             id="cascade-bu"
                             multiple="false"
                             value-member="value"
-                            display-value-member="label"
-                            search-placeholder="Select business unit..."
+                            display-value-member="label" labels='{"searchPlaceholder": "Select business unit..."}'
                         ></web-multiselect>
                     </div>
 
@@ -625,8 +618,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                             id="cascade-dept"
                             multiple="false"
                             value-member="value"
-                            display-value-member="label"
-                            search-placeholder="Select department..."
+                            display-value-member="label" labels='{"searchPlaceholder": "Select department..."}'
                         ></web-multiselect>
                     </div>
 
@@ -722,8 +714,7 @@ buSelect.addEventListener('change', async (e) =&gt; {
                 <web-multiselect
                     id="events-select"
                     value-member="value"
-                    display-value-member="label"
-                    search-placeholder="Select options...">
+                    display-value-member="label" labels='{"searchPlaceholder": "Select options..."}'>
                 </web-multiselect>
                 <small class="form-text">Open browser console to see events</small>
             </div>

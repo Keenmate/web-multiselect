@@ -26,22 +26,22 @@ test('search-input-mode="readonly" shows the select placeholder', async ({ page 
     await expect(picker(page, 'ph-readonly').locator('.ms__input')).toHaveAttribute('placeholder', 'Pick an option...');
 });
 
-test('custom select-placeholder is honoured when search is disabled', async ({ page }) => {
+test('custom labels.selectPlaceholder is honoured when search is disabled', async ({ page }) => {
     await expect(picker(page, 'ph-custom-select').locator('.ms__input')).toHaveAttribute('placeholder', 'Choose a fruit');
 });
 
-test('no-data-placeholder is shown for an empty list without opening', async ({ page }) => {
+test('labels.noData is shown for an empty list without opening', async ({ page }) => {
     await expect(picker(page, 'ph-nodata').locator('.ms__input'))
         .toHaveAttribute('placeholder', 'No data — pick a category first');
 });
 
-test('no-data-placeholder does not apply when the list has options', async ({ page }) => {
+test('labels.noData does not apply when the list has options', async ({ page }) => {
     await expect(picker(page, 'ph-nodata-filled').locator('.ms__input')).toHaveAttribute('placeholder', 'Search...');
 });
 
-test('placeholder updates live when search-placeholder changes (i18n)', async ({ page }) => {
+test('placeholder updates live when labels change (i18n)', async ({ page }) => {
     const p = picker(page, 'ph-search');
-    await p.evaluate((el) => el.setAttribute('search-placeholder', 'Buscar…'));
+    await p.evaluate((el: any) => { el.labels = { searchPlaceholder: 'Buscar…' }; });
     await expect(p.locator('.ms__input')).toHaveAttribute('placeholder', 'Buscar…');
 });
 
@@ -59,17 +59,11 @@ test('repopulating the option list returns to the search placeholder', async ({ 
     await expect(p.locator('.ms__input')).toHaveAttribute('placeholder', 'Search...');
 });
 
-test('setAttributes applies several placeholder attributes at once', async ({ page }) => {
+test('the labels JSON attribute sets several placeholders at once', async ({ page }) => {
     const p = picker(page, 'ph-nosearch');
-    // v2: batch attribute STRINGS via batch() (setAttributes now takes typed
-    // property values by configKey). Coalesced into a single update.
-    await p.evaluate((el: any) => el.batch(() => {
-        el.setAttribute('search-placeholder', 'Search items');
-        el.setAttribute('select-placeholder', 'Pick one please');
-        el.setAttribute('no-data-placeholder', 'Nothing here');
-    }));
+    await p.evaluate((el: any) => el.setAttribute('labels',
+        JSON.stringify({ searchPlaceholder: 'Search items', selectPlaceholder: 'Pick one please', noData: 'Nothing here' })));
     // search is disabled on this instance → the select placeholder is what shows.
     await expect(p.locator('.ms__input')).toHaveAttribute('placeholder', 'Pick one please');
-    await expect(p).toHaveAttribute('search-placeholder', 'Search items');
-    await expect(p).toHaveAttribute('no-data-placeholder', 'Nothing here');
+    expect(await p.evaluate((el: any) => el.labels.noData)).toBe('Nothing here');
 });

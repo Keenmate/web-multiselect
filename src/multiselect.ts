@@ -16,18 +16,36 @@ import { lockBodyScroll, observeKeyboardInset, createPresentationContext, regist
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
 
-/** English fallbacks for the i18n `labels` map. A `{item}`/`{count}` placeholder in a value is
+/** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
+    selectPlaceholder: 'Pick an option...',
+    searchPlaceholder: 'Search...',
+    filterPlaceholder: 'Filter…',
+    navigatePlaceholder: 'Search…',
+    noData: '',
+    empty: 'No results found',
+    loading: 'Loading...',
+    searchHint: '',
+    addNew: 'Add "{value}"',
+    addNewPending: 'Adding "{value}"…',
+    selectedCount: '{count} selected',
+    moreCount: '+{count} more',
+    selectedPopoverTitle: 'Selected Items ({count})',
+    matchPosition: '{position} of {total}',
+    matchCount: '{count} matches',
+    matchCountOne: '{count} match',
     close: 'Close',
     clearAllSelections: 'Clear all selections',
     clearSearch: 'Clear search',
     showFullLabel: 'Show full label',
     removeItem: 'Remove {item}',
     removeHiddenItems: 'Remove {count} hidden items',
-    groupSelectedLabel: '{count} selected',
+    groupSelected: '{count} selected',
     andMore: '…and {count} more',
     prevMatch: 'Previous match',
+    switchToFilterMode: 'Switch to filter mode',
+    switchToNavigateMode: 'Switch to navigate mode',
     nextMatch: 'Next match',
     selectAll: 'Select all',
     clearSelection: 'Clear all',
@@ -600,20 +618,12 @@ export class MultiSelectEngine<T = any> {
         // Merge options with defaults (using internal naming with 'is' prefix for booleans)
         this.options = {
             // String options
-            searchHint: element.dataset.searchHint || '',
-            searchPlaceholder: element.dataset.searchPlaceholder || undefined,
-            selectPlaceholder: element.dataset.selectPlaceholder || 'Pick an option...',
-            noDataPlaceholder: element.dataset.noDataPlaceholder || undefined,
             dropdownMinWidth: element.dataset.dropdownMinWidth || undefined,
             dropdownMaxWidth: element.dataset.dropdownMaxWidth || undefined,
             badgesDisplayMode: (element.dataset.badgesDisplayMode as any) || 'badges',
             badgesPosition: (element.dataset.badgesPosition as BadgesPosition) || 'bottom',
             badgesThresholdMode: (element.dataset.badgesThresholdMode as any) || 'count',
             maxHeight: element.dataset.maxHeight || '20rem',
-            emptyMessage: element.dataset.emptyMessage || 'No results found',
-            addNewText: element.dataset.addNewText || undefined,
-            addNewPendingText: element.dataset.addNewPendingText || undefined,
-            loadingMessage: element.dataset.loadingMessage || 'Loading...',
             searchInputMode: (element.dataset.searchInputMode as SearchInputMode) || 'normal',
             searchMode: (element.dataset.searchMode as SearchMode) || 'filter',
             searchBehavior: (element.dataset.searchBehavior as SearchBehavior) || 'normalized',
@@ -666,7 +676,7 @@ export class MultiSelectEngine<T = any> {
         this.applyInteractionState();
 
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
-            placeholder: this.options.searchPlaceholder,
+            placeholder: this.getPlaceholderText(),
             totalOptions: this.allOptions.length,
             shouldCloseOnSelect: this.options.shouldCloseOnSelect,
             dataAttribute: this.element.dataset.closeOnSelect
@@ -1144,11 +1154,12 @@ export class MultiSelectEngine<T = any> {
         container.appendChild(this.dropdown);
 
         // Create hint if provided (attached to container)
-        if (this.options.searchHint) {
+        const searchHint = this.resolveLabel('searchHint');
+        if (searchHint) {
             this.hint = document.createElement('div');
             this.hint.className = 'ms__hint';
             if (panelDir) this.hint.dir = panelDir;
-            this.hint.textContent = this.options.searchHint;
+            this.hint.textContent = searchHint;
             container.appendChild(this.hint);
         }
 
@@ -1267,7 +1278,7 @@ export class MultiSelectEngine<T = any> {
     private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
         const label = this.formatCountLabel(selectedCount, total, groupName);
-        return `<span class="ms__group-count" aria-label="${this.escapeHtml(this.resolveLabel('groupSelectedLabel', { count: selectedCount }))}">${this.escapeHtml(label)}</span>`;
+        return `<span class="ms__group-count" aria-label="${this.escapeHtml(this.resolveLabel('groupSelected', { count: selectedCount }))}">${this.escapeHtml(label)}</span>`;
     }
 
     /**
@@ -1325,7 +1336,7 @@ export class MultiSelectEngine<T = any> {
         if (this.isLoading) {
             html += '<div class="ms__loader">';
             html += '<div class="pa-loader pa-loader--sm"></div>';
-            html += `<div class="ms__loading-text">${this.options.loadingMessage}</div>`;
+            html += `<div class="ms__loading-text">${this.resolveLabel('loading')}</div>`;
             html += '</div>';
             this.dropdownInner.innerHTML = html;
             return;
@@ -1897,7 +1908,7 @@ export class MultiSelectEngine<T = any> {
                 + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
                 + `</div>`;
         }
-        return `<div class="ms__empty">${this.options.emptyMessage}</div>`;
+        return `<div class="ms__empty">${this.resolveLabel('empty')}</div>`;
     }
 
     /** True when the empty dropdown is currently showing the clickable "add new" prompt. */
@@ -1909,21 +1920,19 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Resolve the "add new" prompt label for the typed text. Priority: getAddNewTextCallback
-     * (returns plain text — fully escaped here) → addNewText template (trusted config string;
+     * (returns plain text — fully escaped here) → `labels.addNew` template (trusted config string;
      * only the `{value}` substitution is escaped) → the default `Add "{value}"`.
      */
     private getAddNewText(value: string): string {
         if (this.options.getAddNewTextCallback) {
             return this.escapeHtml(this.options.getAddNewTextCallback(this.ctx({ value })));
         }
-        const template = this.options.addNewText ?? 'Add "{value}"';
-        return template.replace(/\{value\}/g, this.escapeHtml(value));
+        return this.resolveLabel('addNew', { value: this.escapeHtml(value) });
     }
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
-        const template = this.options.addNewPendingText ?? 'Adding "{value}"…';
-        return template.replace(/\{value\}/g, this.escapeHtml(value));
+        return this.resolveLabel('addNewPending', { value: this.escapeHtml(value) });
     }
 
     /** Minimal HTML entity escape for untrusted text spliced into an innerHTML string. */
@@ -1981,28 +1990,28 @@ export class MultiSelectEngine<T = any> {
      * search is unusable → the search placeholder.
      */
     private getPlaceholderText(): string {
-        if (this.options.noDataPlaceholder && this.allOptions.length === 0) {
-            return this.options.noDataPlaceholder;
+        const noData = this.resolveLabel('noData');
+        if (noData && this.allOptions.length === 0) {
+            return noData;
         }
         if (!this.isSearchUsable) {
-            return this.options.selectPlaceholder || this.getSearchPlaceholder();
+            return this.resolveLabel('selectPlaceholder') || this.getSearchPlaceholder();
         }
         return this.getSearchPlaceholder();
     }
 
     /**
-     * The search field placeholder. An explicit `searchPlaceholder` always wins and stays
-     * fixed. Otherwise the default is "Search..." — except when the in-overlay mode toggle
-     * is enabled (`isSearchModeToggleShown`), where it becomes mode-aware so the field labels
-     * the current behavior: "Search…" in navigate mode, "Filter…" in filter mode. Refreshed
-     * on a live mode switch (see setSearchModeLive → refreshSearchPlaceholder).
+     * The search field placeholder: `labels.searchPlaceholder`. When the in-overlay mode toggle
+     * is enabled (`isSearchModeToggleShown`) and no `searchPlaceholder` label was set, it is
+     * mode-aware so the field labels the current behavior: `labels.filterPlaceholder` in filter
+     * mode, `labels.navigatePlaceholder` in navigate mode. Refreshed on a live mode switch (see
+     * setSearchModeLive → refreshSearchPlaceholder).
      */
     private getSearchPlaceholder(): string {
-        if (this.options.searchPlaceholder) return this.options.searchPlaceholder;
-        if (this.options.isSearchModeToggleShown) {
-            return (this.options.searchMode || 'filter') === 'navigate' ? 'Search…' : 'Filter…';
+        if (this.options.isSearchModeToggleShown && !this.hasLabel('searchPlaceholder')) {
+            return this.resolveLabel((this.options.searchMode || 'filter') === 'navigate' ? 'navigatePlaceholder' : 'filterPlaceholder');
         }
-        return 'Search...';
+        return this.resolveLabel('searchPlaceholder');
     }
 
     /** Re-apply the (possibly mode-aware) placeholder to the live inputs after a mode switch. */
@@ -2762,7 +2771,6 @@ export class MultiSelectEngine<T = any> {
                 value,
                 optionIndex,
                 closeOnSelect: this.options.shouldCloseOnSelect,
-                placeholder: this.options.searchPlaceholder
             });
             if (optionIndex >= 0) {
                 // Anchor keyboard focus to the clicked option so subsequent
@@ -4672,9 +4680,9 @@ export class MultiSelectEngine<T = any> {
         this.fullscreenModeToggle.dataset.mode = mode;
         // The button switches TO the other mode; label it by the action, expose current
         // mode via aria-pressed(=navigate) for assistive tech.
-        const target = mode === 'navigate' ? 'filter' : 'navigate';
-        this.fullscreenModeToggle.setAttribute('aria-label', `Switch to ${target} mode`);
-        this.fullscreenModeToggle.setAttribute('title', `Switch to ${target} mode`);
+        const label = this.resolveLabel(mode === 'navigate' ? 'switchToFilterMode' : 'switchToNavigateMode');
+        this.fullscreenModeToggle.setAttribute('aria-label', label);
+        this.fullscreenModeToggle.setAttribute('title', label);
         this.fullscreenModeToggle.setAttribute('aria-pressed', String(mode === 'navigate'));
     }
 
@@ -4694,13 +4702,13 @@ export class MultiSelectEngine<T = any> {
 
         if (this.fullscreenNavCount) {
             if (total === 0) {
-                this.fullscreenNavCount.textContent = this.options.emptyMessage || 'No matches';
+                this.fullscreenNavCount.textContent = this.resolveLabel('empty');
             } else {
                 const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
                 const pos = matched.indexOf(this.focusedIndex);
                 this.fullscreenNavCount.textContent = pos >= 0
-                    ? `${pos + 1} of ${total}`
-                    : `${total} match${total === 1 ? '' : 'es'}`;
+                    ? this.resolveLabel('matchPosition', { position: pos + 1, total })
+                    : this.resolveLabel(total === 1 ? 'matchCountOne' : 'matchCount', { count: total });
             }
         }
 
@@ -4939,9 +4947,15 @@ export class MultiSelectEngine<T = any> {
         this.attachBadgeTooltips(this.selectedPopover);
     }
 
-    /** Resolve an i18n label: the consumer's `labels[key]` if set, else the English default,
-     *  with any `{item}`/`{count}` placeholders interpolated. Returns raw text (not escaped) —
-     *  escape at the call site when it goes into innerHTML; `setAttribute` contexts need none. */
+    /** Whether the consumer set `labels[key]` (vs the English default). */
+    private hasLabel(key: keyof MultiSelectLabels): boolean {
+        return typeof this.options.labels?.[key] === 'string';
+    }
+
+    /** Resolve a UI string — THE label seam (rulebook D-NC-24; core `/locale` plugs in here):
+     *  the instance `labels[key]` if set, else the English default, with named `{…}`
+     *  placeholders interpolated. Returns raw text (not escaped) — escape at the call site
+     *  when it goes into innerHTML; `setAttribute` / `textContent` contexts need none. */
     private resolveLabel(key: keyof MultiSelectLabels, vars?: Record<string, string | number>): string {
         let text = this.options.labels?.[key] ?? DEFAULT_LABELS[key];
         if (vars) {
@@ -4952,11 +4966,9 @@ export class MultiSelectEngine<T = any> {
         return text;
     }
 
-    /** The selected-items popover header text, translatable via `selectedPopoverTitle`. The
-     *  `{count}` placeholder is replaced with the current selection count. */
+    /** The selected-items popover header text (`labels.selectedPopoverTitle`, `{count}` = selection count). */
     private selectedPopoverTitleText(count: number): string {
-        const template = this.options.selectedPopoverTitle ?? 'Selected Items ({count})';
-        return template.replace(/\{count\}/g, String(count));
+        return this.resolveLabel('selectedPopoverTitle', { count });
     }
 
     private renderSelectedPopoverVirtual(selectedOptions: T[], count: number): void {
@@ -5055,7 +5067,9 @@ export class MultiSelectEngine<T = any> {
     private counterText(count: number, moreCount?: number): string {
         const callback = this.options.getCounterCallback;
         if (callback) return callback(this.ctx(moreCount === undefined ? { count } : { count, moreCount }));
-        return moreCount !== undefined ? `+${moreCount} more` : `${count} selected`;
+        return moreCount !== undefined
+            ? this.resolveLabel('moreCount', { count: moreCount })
+            : this.resolveLabel('selectedCount', { count });
     }
 
     /**
@@ -5312,11 +5326,9 @@ export class MultiSelectEngine<T = any> {
     }
 
     public updateOptions(partial: Partial<MultiSelectConfig<T>>): boolean {
-        // Adding/removing the hint element after init isn't supported in place — buildHTML decides
-        // whether to create it. Force a rebuild.
-        const hintExists = !!this.hint;
-        const hintWanted = 'searchHint' in partial ? !!partial.searchHint : hintExists;
-        if (hintExists !== hintWanted) return false;
+        // A `labels` change rebuilds: the hint element and the build-time ARIA labels / texts
+        // are created by buildHTML (the element preserves the selection across a rebuild).
+        if ('labels' in partial) return false;
 
         Object.assign(this.options, partial);
 
@@ -5425,11 +5437,6 @@ export class MultiSelectEngine<T = any> {
             // Hide via `visibility` (not `display`) so the input keeps its flex space
             // and the trailing toggle stays at the trailing edge (see reinit path).
             this.input.style.visibility = this.options.searchInputMode === 'hidden' ? 'hidden' : '';
-        }
-
-        // Hint text (element exists; just refresh content)
-        if ('searchHint' in partial && this.hint) {
-            this.hint.textContent = this.options.searchHint || '';
         }
 
         // An in-place options swap keeps the dropdown open — preserve the scroll offset so the
@@ -5567,11 +5574,10 @@ export class MultiSelectEngine<T = any> {
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
     }
 
-    /** Build the remove-button tooltip text (callback > format string with {0} > "Remove {name}"). */
+    /** Build the remove-button tooltip text (callback > `labels.removeItem`). */
     private buildRemoveButtonTooltipText(itemName: string, option?: T, info?: BadgeRenderInfo): string {
         if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(this.badgeCtx(option, info));
-        if (this.options.removeButtonTooltipText) return this.options.removeButtonTooltipText.replace('{0}', itemName);
-        return `Remove ${itemName}`;
+        return this.resolveLabel('removeItem', { item: itemName });
     }
 
     private attachBadgeTooltips(container?: HTMLElement): void {

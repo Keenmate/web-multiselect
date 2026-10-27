@@ -118,9 +118,7 @@ select.options = [
 <web-multiselect
   id="async-select"
   min-search-length="2"
-  search-debounce="300"
-  loading-message="Searching..."
-  empty-message="No products found">
+  search-debounce="300" labels='{"loading": "Searching...", "empty": "No products found"}'>
 </web-multiselect>
 
 <script type="module">
@@ -452,11 +450,11 @@ Full RTL support for Arabic, Hebrew, Persian, Urdu, and other right-to-left lang
 
 ```html
 <!-- Automatic RTL detection from dir attribute -->
-<web-multiselect dir="rtl" search-placeholder="ابحث..."></web-multiselect>
+<web-multiselect dir="rtl" labels='{"searchPlaceholder": "ابحث..."}'></web-multiselect>
 
 <!-- RTL inherited from parent element -->
 <div dir="rtl">
-  <web-multiselect search-placeholder="חיפוש..."></web-multiselect>
+  <web-multiselect labels='{"searchPlaceholder": "חיפוש..."}'></web-multiselect>
 </div>
 
 <!-- RTL on page level -->

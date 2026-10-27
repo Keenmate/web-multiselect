@@ -29,17 +29,17 @@
 
     <div class="fixture">
         <div class="fixture-label">custom select-placeholder</div>
-        <web-multiselect id="ph-custom-select" enable-search="false" select-placeholder="Choose a fruit" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="ph-custom-select" enable-search="false" value-member="value" display-value-member="label" labels='{"selectPlaceholder": "Choose a fruit"}'></web-multiselect>
     </div>
 
     <div class="fixture">
         <div class="fixture-label">no-data-placeholder + empty list (cascade child)</div>
-        <web-multiselect id="ph-nodata" no-data-placeholder="No data — pick a category first" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="ph-nodata" value-member="value" display-value-member="label" labels='{"noData": "No data — pick a category first"}'></web-multiselect>
     </div>
 
     <div class="fixture">
         <div class="fixture-label">no-data-placeholder but list has options</div>
-        <web-multiselect id="ph-nodata-filled" no-data-placeholder="No data" value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="ph-nodata-filled" value-member="value" display-value-member="label" labels='{"noData": "No data"}'></web-multiselect>
     </div>
 
     <script type="module">

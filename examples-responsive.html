@@ -114,8 +114,7 @@
             <div class="form-group" style="max-width:320px;">
                 <label>Open me</label>
                 <web-multiselect id="intro-select" multiple="true" value-member="value"
-                    display-value-member="label" group-member="group"
-                    search-placeholder="Filter…"></web-multiselect>
+                    display-value-member="label" group-member="group" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
                 <small class="form-text">~50 grouped options — on a phone this opens fullscreen automatically.</small>
             </div>
 
@@ -154,15 +153,14 @@
                 <div class="form-group" style="flex:1; min-width:220px;">
                     <label>Default — keyboard off (tap search to type)</label>
                     <web-multiselect id="kb-off-select" multiple="true" value-member="value"
-                        display-value-member="label"
-                        search-placeholder="Tap here to search…"></web-multiselect>
+                        display-value-member="label" labels='{"searchPlaceholder": "Tap here to search…"}'></web-multiselect>
                     <small class="form-text">On a phone: the list shows, search is <em>not</em> focused.</small>
                 </div>
                 <div class="form-group" style="flex:1; min-width:220px;">
                     <label>Opt-in — <code>fullscreen-autofocus="true"</code></label>
                     <web-multiselect id="kb-on-select" multiple="true" value-member="value"
                         display-value-member="label"
-                        fullscreen-autofocus="true" search-placeholder="Search…"></web-multiselect>
+                        fullscreen-autofocus="true" labels='{"searchPlaceholder": "Search…"}'></web-multiselect>
                     <small class="form-text">On a phone: search is focused, keyboard pops on open.</small>
                 </div>
             </div>
@@ -257,7 +255,7 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
             <div class="form-group" style="max-width:340px;">
                 <label>Pick a plan</label>
                 <web-multiselect id="responsive-select" multiple="true" value-member="value"
-                    display-value-member="label" search-placeholder="Search plans…"></web-multiselect>
+                    display-value-member="label" labels='{"searchPlaceholder": "Search plans…"}'></web-multiselect>
                 <small class="form-text">Open it, then toggle fullscreen: the desktop rows show price · ⭐ popularity · chip; the phone rows drop to just the name + price.</small>
             </div>
 
@@ -296,8 +294,7 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
             <div class="form-group" style="max-width:320px;">
                 <label>الأقسام — Departments</label>
                 <web-multiselect id="rtl-select" dir="rtl" multiple="true" search-mode="navigate"
-                    value-member="value" display-value-member="label" group-member="group"
-                    search-placeholder="ابحث… (search)"></web-multiselect>
+                    value-member="value" display-value-member="label" group-member="group" labels='{"searchPlaceholder": "ابحث… (search)"}'></web-multiselect>
                 <small class="form-text">Checkbox on the right, toggle on the left, navigator mirrored.</small>
             </div>
 
@@ -356,8 +353,7 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
                 <div class="form-group">
                     <label>Cloud services</label>
                     <web-multiselect id="drag-select" multiple="true" collapse-badges-below="360"
-                        value-member="value" display-value-member="label" group-member="group"
-                        search-placeholder="Filter…"></web-multiselect>
+                        value-member="value" display-value-member="label" group-member="group" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
                     <small class="form-text">Preselected with 4 so the collapse is visible. Threshold: 360px.</small>
                 </div>
             </div>
@@ -391,8 +387,7 @@ el.collapseBadgesBelow = null;</code></pre>
                     <div class="form-group" style="margin-bottom:0;">
                         <label>Filters</label>
                         <web-multiselect id="sidebar-select" multiple="true" collapse-badges-below="300"
-                            value-member="value" display-value-member="label" group-member="group"
-                            search-placeholder="Filter…"></web-multiselect>
+                            value-member="value" display-value-member="label" group-member="group" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
                         <small class="form-text">260px column · threshold 300px → collapsed.</small>
                     </div>
                 </div>

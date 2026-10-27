@@ -170,7 +170,7 @@ test.describe('tree — fullscreen search-mode toggle (show-search-mode-toggle)'
     test('the placeholder is mode-aware and switches with the toggle', async ({ page }) => {
         const p = picker(page, 'tree-navigate-fs-toggle');
         await openFullscreen(p);
-        // No explicit search-placeholder + toggle on → mode-aware default.
+        // No labels.searchPlaceholder + toggle on → mode-aware default.
         await expect(fsSearch(p)).toHaveAttribute('placeholder', 'Filter…');
         await toggle(p).click();
         await expect(fsSearch(p)).toHaveAttribute('placeholder', 'Search…');

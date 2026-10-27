@@ -27,7 +27,7 @@ SEARCH PLACEHOLDER
 ------------------
 Customize search input placeholder:
 
-<web-multiselect search-placeholder="Search languages...">
+<web-multiselect labels='{"searchPlaceholder": "Search languages..."}'>
 </web-multiselect>
 
 Programmatic:
@@ -178,7 +178,7 @@ SEARCH HINT
 -----------
 Show hint text above search input:
 
-<web-multiselect search-hint="Type at least 3 characters">
+<web-multiselect labels='{"searchHint": "Type at least 3 characters"}'>
 </web-multiselect>
 
 Programmatic:
@@ -284,7 +284,7 @@ Show loading indicator during async search:
 select.loadingMessage = 'Searching...';
 
 Or customize in HTML:
-<web-multiselect loading-message="Loading results...">
+<web-multiselect labels='{"loading": "Loading results..."}'>
 </web-multiselect>
 
 Component automatically shows loading state when:
@@ -295,7 +295,7 @@ EMPTY SEARCH RESULTS
 --------------------
 Customize no results message:
 
-<web-multiselect empty-message="No results found">
+<web-multiselect labels='{"empty": "No results found"}'>
 </web-multiselect>
 
 Programmatic:
@@ -539,7 +539,7 @@ BEST PRACTICES
 COMMON PATTERNS
 ---------------
 Simple filter:
-<web-multiselect search-placeholder="Search...">
+<web-multiselect labels='{"searchPlaceholder": "Search..."}'>
   <option value="1">Option 1</option>
 </web-multiselect>
 

@@ -34,7 +34,7 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
 /**
  * {count} interpolation across the three labels that use it. The `#lbl-count` fixture is
  * built to surface all three at once (grouped data + partial badges + counter, 14 selected):
- *   - groupSelectedLabel → the `.ms__group-count` header chip aria-label
+ *   - groupSelected      → the `.ms__group-count` header chip aria-label
  *   - removeHiddenItems  → the "+N more" badge's remove button aria-label
  *   - andMore            → the counter chip's native `title` (cap is 12, so 14 → "…and 2 more")
  */
@@ -44,7 +44,7 @@ test('labels map interpolates {count} in group count, remove-hidden, and counter
 
     await p.evaluate((el: any) => {
         el.labels = {
-            groupSelectedLabel: '{count} vybráno',
+            groupSelected: '{count} vybráno',
             removeHiddenItems: 'Odebrat {count} skrytých',
             andMore: '…a {count} dalších',
         };
@@ -57,7 +57,7 @@ test('labels map interpolates {count} in group count, remove-hidden, and counter
     await expect(p.locator('.ms__badge--more .ms__badge-remove'))
         .toHaveAttribute('aria-label', 'Odebrat 12 skrytých');
 
-    // groupSelectedLabel — open the dropdown; Group A header has 10 selected.
+    // groupSelected — open the dropdown; Group A header has 10 selected.
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__dropdown')).toBeVisible();
     await expect(p.locator('.ms__group-count').first()).toHaveAttribute('aria-label', '10 vybráno');

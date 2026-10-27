@@ -102,8 +102,7 @@ For dynamic data and advanced features:
 <!-- Multi-select -->
 <web-multiselect
   id="my-select"
-  search-placeholder="Search options..."
-  initial-values='["js","ts"]'>
+  initial-values='["js","ts"]' labels='{"searchPlaceholder": "Search options..."}'>
 </web-multiselect>
 ```
 

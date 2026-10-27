@@ -11,7 +11,7 @@ import '../../src/web-component'; // registers <web-multiselect>
  *
  * Parser correctness lives in option-formats.test.ts; here we assert the wiring:
  * options-presence via the input placeholder (present -> "Search..."; empty +
- * a no-data-placeholder -> that text), and a select round-trip for content.
+ * labels.noData -> that text), and a select round-trip for content.
  */
 
 let el: any;
@@ -36,7 +36,7 @@ afterEach(() => {
 
 describe('data-options — json (default format)', () => {
     it('renders options from a JSON array set before connect', async () => {
-        make({ 'data-options': '[{"value":"js","label":"JavaScript"}]', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': '[{"value":"js","label":"JavaScript"}]', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Search...'); // options present
         el.setSelected(['js']);
@@ -45,7 +45,7 @@ describe('data-options — json (default format)', () => {
     });
 
     it('falls back to an empty list (no throw) on invalid JSON', async () => {
-        make({ 'data-options': '{not valid json', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': '{not valid json', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Empty');
     });
@@ -76,7 +76,7 @@ describe('data-options — custom delimiters', () => {
     });
 
     it('plain honours a pipe data-options-splitter', async () => {
-        make({ 'data-options': 'apple|banana', 'data-options-format': 'plain', 'data-options-splitter': '|', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': 'apple|banana', 'data-options-format': 'plain', 'data-options-splitter': '|', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['banana']);
@@ -86,7 +86,7 @@ describe('data-options — custom delimiters', () => {
 
 describe('data-options — plain', () => {
     it('parses comma/newline bare values into selectable value=label options', async () => {
-        make({ 'data-options': 'apple,banana,cherry', 'data-options-format': 'plain', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': 'apple,banana,cherry', 'data-options-format': 'plain', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['banana']);
@@ -96,7 +96,7 @@ describe('data-options — plain', () => {
 
 describe('data-options — reactivity', () => {
     it('re-renders when data-options changes', async () => {
-        make({ 'data-options': '[{"value":"a","label":"A"},{"value":"b","label":"B"}]', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': '[{"value":"a","label":"A"},{"value":"b","label":"B"}]', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setAttribute('data-options', '[]');
@@ -106,7 +106,7 @@ describe('data-options — reactivity', () => {
 
     it('re-parses when ONLY data-options-format changes (same data-options)', async () => {
         // "apple,banana" is invalid JSON (the default format) -> empty list.
-        make({ 'data-options': 'apple,banana', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': 'apple,banana', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         expect(placeholder()).toBe('Empty');
         // Switch the format only; the same attribute now parses as plain.
@@ -116,7 +116,7 @@ describe('data-options — reactivity', () => {
     });
 
     it('resets to empty when the attribute is removed', async () => {
-        make({ 'data-options': '[{"value":"a","label":"A"}]', 'no-data-placeholder': 'Empty' });
+        make({ 'data-options': '[{"value":"a","label":"A"}]', 'labels': '{"noData":"Empty"}' });
         await el.whenSettled();
         el.removeAttribute('data-options');
         await el.whenSettled();

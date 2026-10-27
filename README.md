@@ -93,7 +93,7 @@ npm install @keenmate/web-multiselect
 **Programmatic — dynamic data + events:**
 
 ```html
-<web-multiselect id="picker" search-placeholder="Search…"></web-multiselect>
+<web-multiselect id="picker" labels='{"searchPlaceholder": "Search…"}'></web-multiselect>
 
 <script type="module">
   import '@keenmate/web-multiselect';

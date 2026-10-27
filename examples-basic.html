@@ -53,8 +53,7 @@
                     id="ex-selection"
                     value-member="value"
                     display-value-member="label"
-                    icon-member="icon"
-                    search-placeholder="Search…">
+                    icon-member="icon" labels='{"searchPlaceholder": "Search…"}'>
                 </web-multiselect>
             </div>
         </div>
@@ -108,8 +107,7 @@
                     value-member="value"
                     display-value-member="label"
                     icon-member="icon"
-                    subtitle-member="subtitle"
-                    search-placeholder="Search frameworks…">
+                    subtitle-member="subtitle" labels='{"searchPlaceholder": "Search frameworks…"}'>
                 </web-multiselect>
             </div>
 
@@ -127,8 +125,7 @@
                     id="ex-reserve"
                     value-member="value"
                     display-value-member="label"
-                    icon-member="icon"
-                    search-placeholder="Mixed icon / no-icon rows — open me…">
+                    icon-member="icon" labels='{"searchPlaceholder": "Mixed icon / no-icon rows — open me…"}'>
                 </web-multiselect>
             </div>
         </div>
@@ -170,8 +167,7 @@
                     display-value-member="label"
                     icon-member="icon"
                     group-member="group"
-                    show-counter
-                    search-placeholder="Search…">
+                    show-counter labels='{"searchPlaceholder": "Search…"}'>
                 </web-multiselect>
             </div>
 
@@ -196,7 +192,7 @@
             <div class="grid">
                 <div class="form-group">
                     <label>Simple choice (single-select)</label>
-                    <web-multiselect id="decl-single" multiple="false" search-placeholder="Select your answer…">
+                    <web-multiselect id="decl-single" multiple="false" labels='{"searchPlaceholder": "Select your answer…"}'>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                         <option value="maybe" selected>Maybe / I don't know</option>
@@ -206,8 +202,8 @@
 
                 <div class="form-group">
                     <label>Multiple fruits (icons + <code>custom-styles</code>)</label>
-                    <web-multiselect id="decl-fruits" search-placeholder="Select fruits…"
-                        custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }">
+                    <web-multiselect id="decl-fruits"
+                        custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"searchPlaceholder": "Select fruits…"}'>
                         <option value="apple" data-icon="🍎">Apple</option>
                         <option value="banana" data-icon="🍌" selected>Banana</option>
                         <option value="orange" data-icon="🍊">Orange</option>
@@ -221,7 +217,7 @@
             <div class="grid mt-1">
                 <div class="form-group">
                     <label>Grouped options (<code>&lt;optgroup&gt;</code>)</label>
-                    <web-multiselect id="decl-grouped" search-placeholder="Select languages…">
+                    <web-multiselect id="decl-grouped" labels='{"searchPlaceholder": "Select languages…"}'>
                         <optgroup label="Frontend">
                             <option value="js" data-icon="🟨">JavaScript</option>
                             <option value="ts" data-icon="🔷">TypeScript</option>
@@ -238,7 +234,7 @@
 
                 <div class="form-group">
                     <label>With subtitles (<code>data-subtitle</code>)</label>
-                    <web-multiselect id="decl-subtitles" search-placeholder="Select framework…">
+                    <web-multiselect id="decl-subtitles" labels='{"searchPlaceholder": "Select framework…"}'>
                         <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
                         <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
                         <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
@@ -366,8 +362,7 @@ el.scrollToValue('jp');</code></pre>
                     search-mode="filter"
                     value-member="id"
                     display-value-member="name"
-                    icon-member="flag"
-                    search-placeholder="Type to search countries…">
+                    icon-member="flag" labels='{"searchPlaceholder": "Type to search countries…"}'>
                 </web-multiselect>
             </div>
             <div class="note">
@@ -417,8 +412,7 @@ el.scrollToValue('jp');</code></pre>
                 <web-multiselect
                     id="ex-search-match"
                     value-member="value"
-                    display-value-member="label"
-                    search-placeholder="Try cesky, nad, kralove, ^(Ústí|Nové)…">
+                    display-value-member="label" labels='{"searchPlaceholder": "Try cesky, nad, kralove, ^(Ústí|Nové)…"}'>
                 </web-multiselect>
             </div>
             <div class="note">
@@ -470,8 +464,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                     id="ex-part-numbers"
                     value-member="value"
                     display-value-member="label"
-                    subtitle-member="subtitle"
-                    search-placeholder="Try ha-324/56, xk 100 2, ha32…">
+                    subtitle-member="subtitle" labels='{"searchPlaceholder": "Try ha-324/56, xk 100 2, ha32…"}'>
                 </web-multiselect>
             </div>
 

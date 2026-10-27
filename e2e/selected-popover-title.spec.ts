@@ -1,8 +1,8 @@
 import { test, expect } from './fixtures';
 
 /**
- * The selected-items popover header is translatable via the `selected-popover-title`
- * attribute / `selectedPopoverTitle` property. The `{count}` placeholder is replaced with
+ * The selected-items popover header is translatable via `labels.selectedPopoverTitle`
+ * (property or the `labels` JSON attribute). The `{count}` placeholder is replaced with
  * the current selection count, so translators control both the wording and the count
  * placement. Reuses the floating-panels fixture, whose `#popover-picker` is count-mode with
  * three pre-selected values.
@@ -10,7 +10,7 @@ import { test, expect } from './fixtures';
 
 const PAGE = '/test/floating-panels.html';
 
-test('selected-popover-title translates the header and interpolates {count}', async ({ page }) => {
+test('labels.selectedPopoverTitle translates the header and interpolates {count}', async ({ page }) => {
     await page.goto(PAGE);
     const p = page.locator('#popover-picker');
     const badge = p.locator('.ms__badge[data-ms-action="show-selected"]');
@@ -24,7 +24,7 @@ test('selected-popover-title translates the header and interpolates {count}', as
     await p.locator('.ms__selected-popover-close').click();
 
     // Translated header — {count} is substituted; wording and placement are the author's.
-    await p.evaluate((el: any) => el.setAttribute('selected-popover-title', 'Vybrané položky ({count})'));
+    await p.evaluate((el: any) => el.setAttribute('labels', JSON.stringify({ selectedPopoverTitle: 'Vybrané položky ({count})' })));
     await badge.click();
     await expect(header).toHaveText('Vybrané položky (3)');
 });

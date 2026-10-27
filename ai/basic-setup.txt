@@ -254,9 +254,7 @@ EMPTY STATES
 ------------
 Customize messages:
 
-<web-multiselect
-  empty-message="No results found"
-  loading-message="Loading options...">
+<web-multiselect labels='{"empty": "No results found", "loading": "Loading options..."}'>
 </web-multiselect>
 
 FRAMEWORK INTEGRATION
@@ -366,8 +364,7 @@ Minimal (defaults):
 
 Single-select with search:
 <web-multiselect
-  multiple="false"
-  search-placeholder="Select one...">
+  multiple="false" labels='{"searchPlaceholder": "Select one..."}'>
   <option value="1">Option 1</option>
 </web-multiselect>
 
