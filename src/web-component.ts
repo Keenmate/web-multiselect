@@ -50,6 +50,8 @@ import type {
   ChangeEventDetail,
   AddEventDetail,
   ReadyEventDetail,
+  OpenEventDetail,
+  CloseEventDetail,
   MultiSelectActionEventDetail,
 } from './types';
 import { toInitialValues } from './converters';
@@ -264,6 +266,8 @@ type MultiSelectEvents = {
   add: AddEventDetail;
   action: MultiSelectActionEventDetail;
   ready: ReadyEventDetail;
+  open: OpenEventDetail;
+  close: CloseEventDetail;
 };
 const EVENTS = [
   { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onSelect(detail)`.' },
@@ -272,6 +276,8 @@ const EVENTS = [
   { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `beforeAddCallback` returned one. Twin: `onAdd(detail)`.' },
   { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-selection` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick` and the built-in behaviour (the selection snapshot is the state after it). Twin: `onAction(detail)`.' },
   { name: 'ready', description: 'The picker was built for the first time (once per element lifetime; core `BlissElement`). Fires right after the first build — during upgrade for a normal element, or when the `defer` gate is released (`el.release()` / removing `defer`). The host then also has the `ready` attribute and matches `:state(ready)`; `el.whenReady()` resolves. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
+  { name: 'open', description: 'The dropdown opened (floating panel or the phone fullscreen overlay) — by the user or `open()`. `detail`: `controller` / `element` + the presentation flags. Twin: `onOpen(detail)`.' },
+  { name: 'close', description: 'The dropdown closed — any reason (Escape, outside click, selection with `close-on-select`, Tab, another overlay opening, `close()`). `detail`: `controller` / `element` + the presentation flags. Twin: `onClose(detail)`.' },
 ] as const;
 
 /**
@@ -312,6 +318,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   declare onAdd: ((detail: AddEventDetail<T>) => void) | null;
   declare onAction: ((detail: MultiSelectActionEventDetail<T>) => void) | null;
   declare onReady: ((detail: ReadyEventDetail<T>) => void) | null;
+  declare onOpen: ((detail: OpenEventDetail<T>) => void) | null;
+  declare onClose: ((detail: CloseEventDetail<T>) => void) | null;
 
   #shadow: ShadowRoot;
   #picker?: MultiSelectEngine<T>;
@@ -620,6 +628,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     cfg.onChange = (detail: ChangeEventDetail<T>) => this.emit('change', detail);
     cfg.onAdd = (detail: AddEventDetail<T>) => this.emit('add', detail);
     cfg.onAction = (detail: MultiSelectActionEventDetail<T>) => this.emit('action', detail);
+    cfg.onOpen = (detail: OpenEventDetail<T>) => this.emit('open', detail);
+    cfg.onClose = (detail: CloseEventDetail<T>) => this.emit('close', detail);
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.

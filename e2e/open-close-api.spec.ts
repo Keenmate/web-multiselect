@@ -77,3 +77,23 @@ test('isOpen property setter opens and closes', async ({ page }) => {
     await expect(dropdown(page)).toBeHidden();
     expect(await isOpen(page)).toBe(false);
 });
+
+test('open / close events (+ onOpen / onClose twins) fire once per transition', async ({ page }) => {
+    await page.locator('#ms').evaluate((el: any) => {
+        const w = window as any;
+        w.__oc = [];
+        el.addEventListener('open', (e: CustomEvent) => w.__oc.push(['open', !!e.detail.controller, e.detail.presentation]));
+        el.addEventListener('close', (e: CustomEvent) => w.__oc.push(['close', !!e.detail.controller]));
+        el.onOpen = () => w.__oc.push(['onOpen']);
+        el.onClose = () => w.__oc.push(['onClose']);
+    });
+    await page.locator('#btn-open').click();
+    await expect(dropdown(page)).toBeVisible();
+    await page.locator('#btn-open').click(); // already open: no second event
+    await page.locator('#btn-close').click();
+    await expect(dropdown(page)).toBeHidden();
+    await page.locator('#btn-close').click(); // already closed: no second event
+    expect(await page.evaluate(() => (window as any).__oc)).toEqual([
+        ['onOpen'], ['open', true, 'floating'], ['onClose'], ['close', true],
+    ]);
+});

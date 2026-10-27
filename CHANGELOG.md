@@ -75,6 +75,11 @@ one ctx.
 | `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
 | `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element + controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
 
+### Added (naming unification)
+
+- `open` / `close` events (+ `onOpen` / `onClose` twins): the dropdown opened / closed, any
+  reason. `detail` is the context (`controller`, `element`, presentation flags).
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model

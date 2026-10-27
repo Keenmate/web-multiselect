@@ -3,7 +3,7 @@ EVENTS & CALLBACKS
 
 CRITICAL: Two ways to handle component interactions
 - DOM Events: select, deselect, change, add, action, ready (CustomEvent, detail in e.detail)
-- on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady —
+- on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady, onOpen, onClose —
   receive the DETAIL (not the CustomEvent): el.onSelect = (detail) => detail.option
 - Callback Functions: all get*/render*/before* callbacks take ONE `ctx` argument
   (per-option callbacks read ctx.option; selectedOrderCompareCallback({ a, b }))
@@ -81,6 +81,12 @@ select.addEventListener('ready', (e) => {
 
 // See advanced-patterns.txt (DEFERRED INITIALIZATION) for defer / release() / isReady.
 
+open / close events:
+Fired when the dropdown opens / closes (any reason, incl. open() / close()). detail:
+{ controller, element, presentation… }. Twins: onOpen / onClose.
+
+select.addEventListener('close', (e) => saveDraft(e.detail.controller.selectedValue));
+
 ON* PROPERTY TWINS
 ------------------
 Each event has a camelCase property twin, called with the DETAIL right before the event
@@ -92,6 +98,8 @@ select.onChange   = ({ selectedValues }) => console.log('Now', selectedValues);
 select.onAdd      = ({ value, option }) => console.log('Added', value, option);
 select.onAction   = ({ action, id, source }) => console.log('Action', action, id, source);
 select.onReady    = ({ controller }) => controller.focusFirst();
+select.onOpen     = ({ presentation }) => console.log('Opened as', presentation);
+select.onClose    = ({ controller }) => console.log('Closed with', controller.selectedValue);
 
 // OLD (pre-interaction-model): el.onSelect = (e) => e.detail.option  — no longer valid.
 

@@ -100,6 +100,8 @@ export type {
   ChangeEventDetail,
   AddEventDetail,
   ReadyEventDetail,
+  OpenEventDetail,
+  CloseEventDetail,
 } from './types';
 
 // Export logging utilities for runtime control

@@ -3937,6 +3937,8 @@ export class MultiSelectEngine<T = any> {
         // We're now open — dismiss every other participating overlay (other multiselects,
         // datepickers, external popovers). Our own onDismiss is skipped (we're the source).
         this.overlayCoord?.activate();
+
+        this.options.onOpen?.(this.ctx({}));
     }
 
     /** Close the dropdown (no-op if already closed). */
@@ -3993,6 +3995,7 @@ export class MultiSelectEngine<T = any> {
         this.overlayCoord?.deactivate();
 
         uiLogger.debug(`[${this.instanceId}] Dropdown closed`);
+        this.options.onClose?.(this.ctx({}));
     }
 
     /** Toggle the dropdown open/closed. */

@@ -205,7 +205,7 @@ their return value *is* consumed: `false` cancels, nothing continues.
 | Select handler (event prop) | prop | `onSelect(detail)` | — | Property twin of the `select` event (fire-and-forget) | | |
 | Deselect handler (event prop) | prop | `onDeselect(detail)` | — | Property twin of the `deselect` event | | |
 | Change handler (event prop) | prop | `onChange(detail)` | — | Property twin of the `change` event | | |
-| Add / action / ready handlers (event props) | prop | `onAdd(detail)`, `onAction(detail)`, `onReady(detail)` | — | Property twins of `add` / `action` / `ready` | | |
+| Add / action / ready handlers (event props) | prop | `onAdd(detail)`, `onAction(detail)`, `onReady(detail)`, `onOpen(detail)`, `onClose(detail)` | — | Property twins of `add` / `action` / `ready` | | |
 | Block a selection (interceptor) | callback | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` | returns `false` \| `void` (may be async) | `false` vetoes, silently — explain with `ctx.controller.showMessage(…, { type: 'warning' })`. Applies per option to bulk gestures (Select-All, group checkbox); bypassed by `setSelected`. (e2e: `before-select` unit) | | |
 | Block a deselection (interceptor) | callback | `beforeDeselectCallback(ctx)` | returns `false` \| `void` (may be async) | `false` vetoes; covers dropdown toggle + badge × + popover × + remove-hidden + Clear-All (per option). Bypassed by `setSelected` | | |
 | Intercept a key (interceptor) | callback | `beforeKeydownCallback(ctx)` | returns `false` \| `void` (sync) | `false` suppresses the built-in handling of the key | | |

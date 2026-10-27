@@ -1087,6 +1087,10 @@ export interface MultiSelectConfig<T = any> {
     onDeselect?: ((detail: DeselectEventDetail<T>) => void) | null;
     /** Twin of the `change` event (engine use; on the element, assign `el.onChange`). */
     onChange?: ((detail: ChangeEventDetail<T>) => void) | null;
+    /** The dropdown opened (`open` event). */
+    onOpen?: ((detail: OpenEventDetail<T>) => void) | null;
+    /** The dropdown closed — any reason (`close` event). */
+    onClose?: ((detail: CloseEventDetail<T>) => void) | null;
     /**
      * Formats the badges-area count/summary text: the `count` mode badge ("N selected") and the
      * partial-mode "+X more" badge (when `ctx.moreCount` is set). NOT the small `[N]` chip — that's
@@ -1200,6 +1204,12 @@ export interface AddEventDetail<T = any> extends MultiSelectContext<T> {
 
 /** Detail of the `ready` event (and `onReady`): the context only. */
 export type ReadyEventDetail<T = any> = MultiSelectContext<T>;
+
+/** `open` event detail: the context only (`controller`, `element`, presentation flags). */
+export type OpenEventDetail<T = any> = MultiSelectContext<T>;
+
+/** `close` event detail: the context only (`controller`, `element`, presentation flags). */
+export type CloseEventDetail<T = any> = MultiSelectContext<T>;
 
 /**
  * Legacy interface for backward reference
