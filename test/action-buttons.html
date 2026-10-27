@@ -13,7 +13,7 @@
     <p>Targeted by <code>e2e/action-buttons.spec.ts</code>.</p>
 
     <div class="fixture">
-        <div class="fixture-label">select-all / clear-all (built-ins)</div>
+        <div class="fixture-label">select-all / clear-selection (built-ins)</div>
         <web-multiselect id="builtins" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
@@ -67,7 +67,7 @@
 
             // Built-ins
             // String shorthand → built-ins with their default (labels.*) text.
-            document.getElementById('builtins').actionButtons = ['select-all', 'clear-all'];
+            document.getElementById('builtins').actionButtons = ['select-all', 'clear-selection'];
 
             // Custom action — increments a counter on click
             window.__customClicks = 0;
@@ -103,13 +103,13 @@
             // Sticky and wrap
             const stickyAndWrapButtons = [
                 { action: 'select-all', text: 'Select all' },
-                { action: 'clear-all',  text: 'Clear all'  }
+                { action: 'clear-selection',  text: 'Clear all'  }
             ];
             document.getElementById('sticky').actionButtons = stickyAndWrapButtons;
 
             const manyButtons = [
                 { action: 'select-all', text: 'Select all' },
-                { action: 'clear-all',  text: 'Clear all'  },
+                { action: 'clear-selection',  text: 'Clear all'  },
                 { id: 'a', text: 'Button A', onClick: () => {} },
                 { id: 'b', text: 'Button B', onClick: () => {} },
                 { id: 'c', text: 'Button C', onClick: () => {} },
@@ -126,7 +126,7 @@
             tracker.onDeselect = (d) => { window.__trackerDeselected.push(d.option.value); };
             tracker.actionButtons = [
                 { action: 'select-all', text: 'Select all' },
-                { action: 'clear-all',  text: 'Clear all'  }
+                { action: 'clear-selection',  text: 'Clear all'  }
             ];
 
             // Action context — callbacks read the ctx (state + controller + element).
@@ -184,7 +184,7 @@
                     json: JSON.parse(JSON.stringify(e.detail, (k, v) => (k === 'sourceEvent' || k === 'triggerElement' || k === 'item') ? undefined : v)),
                     hasController: typeof e.detail.controller?.selectAll === 'function',
                     elementIsHost: e.detail.element === im,
-                    selectedAtEvent: im.getValue().length,
+                    selectedAtEvent: im.selectedValue.length,
                     composed: e.composed,
                 });
             });

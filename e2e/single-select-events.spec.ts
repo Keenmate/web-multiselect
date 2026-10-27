@@ -120,7 +120,7 @@ test.describe('single-select event semantics', () => {
 
         // Selection is untouched — apple stays selected.
         const sel = await page.evaluate(() =>
-            (document.getElementById('single') as any).getSelected().map((o: any) => o.value));
+            (document.getElementById('single') as any).selectedOptions.map((o: any) => o.value));
         expect(sel).toEqual(['apple']);
     });
 });

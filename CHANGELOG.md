@@ -47,6 +47,22 @@ One vocabulary across the KeenMate components (rulebook D-NC-13..27). No aliases
 | `isActionsSticky` / `sticky-actions` | `isActionsSticky` / `actions-sticky` |
 | `tab-behavior="select-highlighted"` | `tab-behavior="select-focused"` (focus = the keyboard cursor) |
 
+**Selection and state.** `clearSelection()` everywhere; real state is a same-named
+property on the element AND the controller (no `get*()` duplicates).
+
+| Old | New |
+|---|---|
+| `controller.clearAll()`, engine `clearAll()` | `controller.clearSelection()`, engine `clearSelection()` |
+| action id `'clear-all'` (`actionButtons`, `action` event `detail.action`) | `'clear-selection'` |
+| `SelectionSource` `'clear-all'` (before-callback `ctx.source`) | `'clear-selection'` |
+| `labels.clearAll` (action button text) | `labels.clearSelection` (default still `Clear all`) |
+| `labels.clearSelection` (inline ✕ aria-label) | `labels.clearAllSelections` (one key for both ✕ clear buttons) |
+| `el.getSelected()`, `controller.getSelected()` | `el.selectedOptions`, `controller.selectedOptions` |
+| `el.getValue()`, `controller.getValue()` | `el.selectedValue`, `controller.selectedValue` |
+| `el.selectedItem` | `el.selectedOption`, `controller.selectedOption` |
+| `controller.getOptions()` | `controller.options` |
+| `el.searchText` | `el.searchTerm`, `controller.searchTerm` |
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model

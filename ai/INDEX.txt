@@ -119,10 +119,10 @@ getGroupCallback → data-handling.txt, events-callbacks.txt
 getIconCallback → data-handling.txt, events-callbacks.txt
 getIsDisabledCallback → data-handling.txt, events-callbacks.txt
 getSearchValueCallback → data-handling.txt, search-features.txt
-getSelected() → selection-modes.txt, typescript-types.txt
+selectedOptions → selection-modes.txt, typescript-types.txt
 getSelectedItemClassCallback → custom-rendering.txt, styling-theming.txt
 getSubtitleCallback → data-handling.txt, events-callbacks.txt
-getValue() → form-integration.txt, selection-modes.txt
+selectedValue → form-integration.txt, selection-modes.txt
 getValueCallback → data-handling.txt, events-callbacks.txt
 getValueFormatCallback → form-integration.txt, events-callbacks.txt
 Global API → import-patterns.txt

@@ -27,7 +27,7 @@
         <div class="card">
             <h2>AB01 · Built-in &amp; Static Properties</h2>
             <p>
-                The two built-in actions — <code>select-all</code> and <code>clear-all</code> — plus the static
+                The two built-in actions — <code>select-all</code> and <code>clear-selection</code> — plus the static
                 per-button properties: <code>tooltip</code>, <code>cssClass</code>, <code>isVisible</code>, and
                 <code>isDisabled</code>. Toggle the switches to rebuild the <code>actionButtons</code> array live.
             </p>
@@ -41,7 +41,7 @@
 
             <div class="controls">
                 <label title="Include the built-in select-all button. It selects every option and auto-disables once all are selected."><input type="checkbox" id="st-selall" checked> include <code>select-all</code></label>
-                <label title="Include the built-in clear-all button. It clears the selection and auto-disables while nothing is selected."><input type="checkbox" id="st-clrall" checked> include <code>clear-all</code></label>
+                <label title="Include the built-in clear-selection button. It clears the selection and auto-disables while nothing is selected."><input type="checkbox" id="st-clrall" checked> include <code>clear-selection</code></label>
                 <label title="Add a static tooltip string to each button (shown on hover)."><input type="checkbox" id="st-tooltips"> static <code>tooltip</code>s</label>
                 <label title="Apply cssClass:'custom-select-btn' to Select All. The class is injected into the Shadow DOM via getCustomStylesCallback (page CSS can't reach inside)."><input type="checkbox" id="st-style"> <code>cssClass</code> on Select All</label>
             </div>
@@ -65,13 +65,13 @@
   { action: 'select-all', text: 'Select All',
     tooltip: 'Select all available colors',   // static tooltip
     cssClass: 'custom-select-btn' },          // needs getCustomStylesCallback (Shadow DOM)
-  { action: 'clear-all', text: 'Clear All' },
+  { action: 'clear-selection', text: 'Clear All' },
   { id: 'hidden',   text: 'Hidden Button',   isVisible: false,  onClick: () =&gt; {} },
   { id: 'disabled', text: 'Disabled Button', isDisabled: true,  onClick: () =&gt; {} },
 ];
 
-// Built-ins only? The string shorthand takes the default text from labels.selectAll / labels.clearAll:
-multiselect.actionButtons = ['select-all', 'clear-all'];</code></pre>
+// Built-ins only? The string shorthand takes the default text from labels.selectAll / labels.clearSelection:
+multiselect.actionButtons = ['select-all', 'clear-selection'];</code></pre>
             </details>
         </div>
 
@@ -131,7 +131,7 @@ multiselect.actionButtons = ['select-all', 'clear-all'];</code></pre>
                 built-ins) and an <code>onClick(detail)</code> handler. <code>detail</code> is the
                 <code>action</code> event detail: the selection snapshot (<code>selectedValues</code>,
                 <code>options</code>, …) plus <code>id</code>, <code>source</code> and <code>controller</code>,
-                which drives the component (<code>setSelected</code>, <code>selectAll</code>, <code>getValue</code>, …).
+                which drives the component (<code>setSelected</code>, <code>selectAll</code>, <code>selectedValue</code>, …).
                 Here: pick popular languages, invert the selection, or pick two at random — plus the built-in Clear All.
                 Every activation also fires the <code>action</code> event (<code>el.onAction</code>), and
                 <code>beforeActionCallback(detail)</code> can cancel it by returning <code>false</code>.
@@ -161,7 +161,7 @@ multiselect.actionButtons = ['select-all', 'clear-all'];</code></pre>
       const shuffled = [...options].sort(() =&gt; Math.random() - 0.5);
       controller.setSelected(shuffled.slice(0, 2).map(o =&gt; o[0]));
     } },
-  { action: 'clear-all', text: 'Clear All' },
+  { action: 'clear-selection', text: 'Clear All' },
 ];
 
 // Every activation (built-in or custom) also fires the `action` event:
@@ -304,9 +304,9 @@ observeViewport((env) =&gt; {
             <h2>AB07 · Summary</h2>
 
             <h3>Static Properties</h3>
-            <div class="code-block"><pre>action?: 'select-all' | 'clear-all'             // Built-ins only (or the string shorthand 'select-all')
+            <div class="code-block"><pre>action?: 'select-all' | 'clear-selection'             // Built-ins only (or the string shorthand 'select-all')
 id?: string                                     // Identifies a custom item (reported in the action event)
-text?: string                                   // Plain text (default for built-ins: labels.selectAll / clearAll)
+text?: string                                   // Plain text (default for built-ins: labels.selectAll / clearSelection)
 icon?: string                                   // Plain-text glyph, rendered before the text
 row?: number                                    // Optional (default: 1) — which button row
 tooltip?: string                                // Optional
@@ -385,7 +385,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
         `;
 
         const wireOutput = (el, pre) => {
-            const render = () => { pre.textContent = JSON.stringify(el.getValue(), null, 2); };
+            const render = () => { pre.textContent = JSON.stringify(el.selectedValue, null, 2); };
             el.addEventListener('change', render);
             render();
         };
@@ -411,7 +411,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                     ...(st.style.checked ? { cssClass: 'custom-select-btn' } : {})
                 });
                 if (st.clrall.checked) btns.push({
-                    action: 'clear-all', text: 'Clear All',
+                    action: 'clear-selection', text: 'Clear All',
                     ...(st.tooltips.checked ? { tooltip: 'Remove all selections' } : {})
                 });
                 if (st.hidden.checked) btns.push({ id: 'hidden', text: 'Hidden Button', isVisible: false, onClick: () => {} });
@@ -436,18 +436,18 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             const dynSets = {
                 none: () => [
                     { action: 'select-all', text: 'Select All', tooltip: 'Select all items' },
-                    { action: 'clear-all', text: 'Clear All', tooltip: 'Clear selection' }
+                    { action: 'clear-selection', text: 'Clear All', tooltip: 'Clear selection' }
                 ],
                 visibility: () => [
                     { action: 'select-all', text: 'Select All', tooltip: 'Select all items',
                       getIsVisibleCallback: ({ selectedCount, optionCount }) => selectedCount < optionCount },
-                    { action: 'clear-all', text: 'Clear All', tooltip: 'Clear selection',
+                    { action: 'clear-selection', text: 'Clear All', tooltip: 'Clear selection',
                       getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0 }
                 ],
                 disabled: () => [
                     { action: 'select-all', text: 'Select All',
                       getIsDisabledCallback: ({ selectedCount, optionCount }) => selectedCount >= optionCount },
-                    { action: 'clear-all', text: 'Clear All',
+                    { action: 'clear-selection', text: 'Clear All',
                       getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0 },
                     { id: 'first-3', text: 'Select First 3',
                       getIsDisabledCallback: ({ optionCount }) => optionCount < 3,
@@ -456,7 +456,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                 text: () => [
                     { action: 'select-all', text: 'Select All',
                       getTextCallback: ({ optionCount }) => `Select All (${optionCount})` },
-                    { action: 'clear-all', text: 'Clear All',
+                    { action: 'clear-selection', text: 'Clear All',
                       getTextCallback: ({ selectedCount: c }) => c > 0 ? `Clear ${c} Selected` : 'Clear All' },
                     { id: 'toggle', text: 'Toggle',
                       getTextCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount ? 'Deselect All' : 'Select All',
@@ -465,13 +465,13 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                 class: () => [
                     { action: 'select-all', text: 'Select All', cssClass: 'default-class',
                       getClassCallback: ({ selectedCount }) => selectedCount === 0 ? 'success-btn' : 'warning-btn' },
-                    { action: 'clear-all', text: 'Clear All',
+                    { action: 'clear-selection', text: 'Clear All',
                       getClassCallback: ({ selectedCount }) => selectedCount > 0 ? ['danger-btn', 'active-state'] : 'inactive-state' }
                 ],
                 tooltip: () => [
                     { action: 'select-all', text: 'Select All', tooltip: 'Default tooltip',
                       getTooltipCallback: ({ selectedCount: s, optionCount: t }) => `Select all ${t} items (${t - s} remaining)` },
-                    { action: 'clear-all', text: 'Clear All',
+                    { action: 'clear-selection', text: 'Clear All',
                       getTooltipCallback: ({ selectedCount: c }) => c > 0 ? `Remove ${c} selected item${c !== 1 ? 's' : ''}` : 'Nothing to clear' },
                     { id: 'random', text: 'Random Select',
                       getTooltipCallback: ({ optionCount }) => `Randomly select 3 items from ${optionCount} available`,
@@ -485,7 +485,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                       getClassCallback: ({ selectedCount }) => selectedCount >= 5 ? 'danger-btn' : 'success-btn',
                       getIsVisibleCallback: ({ selectedCount, optionCount }) => selectedCount < optionCount,
                       getIsDisabledCallback: ({ selectedCount }) => selectedCount >= 5 },
-                    { action: 'clear-all', text: 'Clear',
+                    { action: 'clear-selection', text: 'Clear',
                       getTextCallback: ({ selectedCount }) => `Clear (${selectedCount})`,
                       getClassCallback: ({ selectedCount }) => selectedCount > 0 ? ['danger-btn', 'active-state'] : 'inactive-state',
                       getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0,
@@ -507,7 +507,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                   onClick: invert },
                 { id: 'random', text: 'Select Random', tooltip: 'Select 2 random languages',
                   onClick: ({ controller, options }) => pickRandom(controller, options, 2) },
-                { action: 'clear-all', text: 'Clear All' }
+                { action: 'clear-selection', text: 'Clear All' }
             ];
             wireOutput(abCustom, document.getElementById('out-custom'));
 
@@ -518,7 +518,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             // `icon` / `text` are plain text, so each icon is a single character.
             const iconButtons = (ic) => [
                 { action: 'select-all', icon: ic.check, text: 'Select All', tooltip: 'Select all available technologies' },
-                { action: 'clear-all', icon: ic.x, text: 'Clear', tooltip: 'Clear all selections' },
+                { action: 'clear-selection', icon: ic.x, text: 'Clear', tooltip: 'Clear all selections' },
                 { id: 'random', icon: ic.shuffle, text: 'Random', tooltip: 'Select 3 random technologies',
                   onClick: ({ controller }) => pickRandom(controller, techOptions, 3) },
                 { id: 'invert', icon: ic.refresh, tooltip: 'Invert Selection', onClick: invert },
@@ -554,11 +554,11 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             abLayout.options = itemOptions;
             const twoRowButtons = [
                 { action: 'select-all', text: 'Select All', row: 1 },
-                { action: 'clear-all', text: 'Clear All', row: 1 },
+                { action: 'clear-selection', text: 'Clear All', row: 1 },
                 { id: 'first-3', text: 'First 3', row: 2, onClick: ({ controller }) => controller.setSelected(values(itemOptions.slice(0, 3))) },
                 { id: 'invert', text: 'Invert', row: 2, onClick: invert }
             ];
-            const oneRowButtons = ['select-all', 'clear-all'];   // string shorthand (text from labels)
+            const oneRowButtons = ['select-all', 'clear-selection'];   // string shorthand (text from labels)
             const layRows = document.getElementById('lay-rows');
             const applyLayout = () => {
                 abLayout.actionButtons = layRows.checked ? twoRowButtons : oneRowButtons;
@@ -574,7 +574,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             const pick = (opts) => ({ controller }) => controller.setSelected(values(opts));
             const manyButtons = [
                 { action: 'select-all', text: 'Select All Items' },
-                { action: 'clear-all', text: 'Clear Selection' },
+                { action: 'clear-selection', text: 'Clear Selection' },
                 { id: 'first-3', text: 'First 3 Items', onClick: pick(itemOptions.slice(0, 3)) },
                 { id: 'last-3', text: 'Last 3 Items', onClick: pick(itemOptions.slice(-3)) },
                 { id: 'even', text: 'Even Positions', onClick: pick(itemOptions.filter((o, i) => i % 2 === 0)) },
@@ -589,7 +589,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             const desktopActions = manyButtons;
             const mobileActions = [
                 { action: 'select-all', text: 'All' },
-                { action: 'clear-all', text: 'Clear' },
+                { action: 'clear-selection', text: 'Clear' },
                 { id: 'invert', text: 'Invert', onClick: invert }
             ];
             const abAdaptive = document.getElementById('ab-adaptive');

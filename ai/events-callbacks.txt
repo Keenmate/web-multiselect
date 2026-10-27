@@ -151,7 +151,7 @@ SELECTION VETOES
 beforeSelectCallback / beforeDeselectCallback run BEFORE a user gesture changes the
 selection — once per option, also for bulk gestures (Select-All, Clear-All, group checkbox,
 tree cascade, inline ✕, count ×, "+N more" ×). ctx.source tells which gesture:
-'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear'.
+'option' | 'badge' | 'group' | 'select-all' | 'clear-selection' | 'clear'.
 Vetoed options are skipped; the rest apply in ONE change. May be async.
 setSelected() and form reset are veto-free.
 
@@ -442,7 +442,7 @@ PROGRAMMATIC SELECTION — WHICH METHODS FIRE EVENTS
 ---------------------------------------------------
 el.setSelected(values):                  SILENT, veto-free (no select/deselect/change)
 el.setSelected(values, { notify: true }): one aggregate 'change', veto-free
-el.controller.clearAll():                FIRES ('deselect' per removed + one 'change'); vetoes apply
+el.controller.clearSelection():                FIRES ('deselect' per removed + one 'change'); vetoes apply
 el.controller.selectAll():               FIRES ('select' per added + one 'change'); vetoes apply
 el.controller.toggleValue / selectValue / deselectValue: FIRES; vetoes apply
 "Select All" / "Clear All" buttons:      FIRES (plus the `action` event)
@@ -453,7 +453,7 @@ without re-triggering my own listeners":
   - action-menu reset after handling a pick
   - parent-driven state sync from a store
 
-controller.clearAll is the right tool for "clear AND notify":
+controller.clearSelection is the right tool for "clear AND notify":
   - reset buttons users see
 
 ASYNC HANDLERS
@@ -494,7 +494,7 @@ CALLBACK CONTEXT
 Every ctx / detail carries the controller and the host element:
 
 select.onChange = ({ selectedOptions, controller, element }) => {
-  const allOptions = controller.getOptions();
+  const allOptions = controller.options;
   const isOpen = controller.isOpen;
 
   console.log('Selected:', selectedOptions.length);
@@ -503,8 +503,8 @@ select.onChange = ({ selectedOptions, controller, element }) => {
   console.log('Host id:', element.id);
 };
 
-controller (also el.controller): getSelected(), getValue(), getOptions(), isOpen,
-setSelected(values, { notify }), selectAll(), clearAll(), toggleValue(v), selectValue(v),
+controller (also el.controller): selectedOptions, selectedValue, getOptions(), isOpen,
+setSelected(values, { notify }), selectAll(), clearSelection(), toggleValue(v), selectValue(v),
 deselectValue(v), toggleFocused(), open(), close(), toggle(), search(term), clearSearch(),
 scrollToValue/Group/Index(), refresh(), focusNext/Previous/First/Last/PageUp/PageDown(),
 focusNextMatch/PreviousMatch(), focusIndex(i), showMessage(content, { type, autoHideMs,

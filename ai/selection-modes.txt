@@ -57,8 +57,8 @@ GETTING SELECTED VALUES
 ------------------------
 Multiple ways to retrieve selection:
 
-Method 1: getValue() - Returns value(s)
-const value = select.getValue();
+Method 1: selectedValue - Returns value(s)
+const value = select.selectedValue;
 
 Multi-select returns array:
 // [1, 2, 3]
@@ -66,8 +66,8 @@ Multi-select returns array:
 Single-select returns single value:
 // 1
 
-Method 2: getSelected() - Returns full option objects
-const selected = select.getSelected();
+Method 2: selectedOptions - Returns full option objects
+const selected = select.selectedOptions;
 
 Multi-select returns array of objects:
 // [
@@ -78,7 +78,7 @@ Multi-select returns array of objects:
 Single-select returns array with one object:
 // [{ value: 1, label: 'Option 1' }]
 
-IMPORTANT: getSelected() always returns array, even in single-select mode
+IMPORTANT: selectedOptions always returns array, even in single-select mode
 
 Method 3: Event detail
 select.addEventListener('change', (e) => {
@@ -137,11 +137,11 @@ Or notify with ONE aggregate 'change' (still veto-free):
 select.setSelected([], { notify: true });
 
 If listeners must react like a user gesture, use the controller:
-select.controller.clearAll();  // Fires 'deselect' per removed item + one 'change'
-                               // beforeDeselectCallback applies per option (source 'clear-all')
+select.controller.clearSelection();  // Fires 'deselect' per removed item + one 'change'
+                               // beforeDeselectCallback applies per option (source 'clear-selection')
 
-Or add the clear-all action button (none render unless you opt in):
-select.actionButtons = ['clear-all'];
+Or add the clear-selection action button (none render unless you opt in):
+select.actionButtons = ['clear-selection'];
 
 Listen to change event:
 select.addEventListener('change', (e) => {
@@ -164,7 +164,7 @@ CHECKING IF SELECTED
 --------------------
 Check if specific value is selected:
 
-const selected = select.getValue();
+const selected = select.selectedValue;
 
 // Multi-select
 if (Array.isArray(selected) && selected.includes(1)) {
@@ -228,7 +228,7 @@ Multi-select TOGGLE (any direction):
 Multi-select SELECT ALL action button / controller.selectAll():
 - 'select' per newly-added item + one 'change' (vetoes apply per option)
 
-controller.clearAll() — programmatic or "Clear All" action:
+controller.clearSelection() — programmatic or "Clear All" action:
 - 'deselect' per removed item + one 'change' (vetoes apply per option)
 
 setSelected(values) — programmatic:
@@ -312,7 +312,7 @@ select.beforeSelectCallback = ({ option, selectedOptions, controller }) => {
 DESELECTION HANDLING
 --------------------
 "Confirm before removal" — beforeDeselectCallback runs BEFORE the option is removed
-(ctx.source: 'option' | 'badge' | 'clear-all' | 'clear' | 'group'). May be async:
+(ctx.source: 'option' | 'badge' | 'clear-selection' | 'clear' | 'group'). May be async:
 
 select.beforeDeselectCallback = async ({ option }) => {
   if (option.important && !(await confirmDialog(`Remove ${option.label}?`))) {
@@ -327,16 +327,16 @@ PROGRAMMATIC SELECTION
 Select/deselect in code:
 
 Select additional:
-const current = select.getValue();
+const current = select.selectedValue;
 select.setSelected([...current, newValue]);
 
 Deselect specific:
-const current = select.getValue();
+const current = select.selectedValue;
 const filtered = current.filter(v => v !== valueToRemove);
 select.setSelected(filtered);
 
 Toggle selection:
-const current = select.getValue();
+const current = select.selectedValue;
 const newValues = current.includes(value)
   ? current.filter(v => v !== value)
   : [...current, value];
@@ -436,7 +436,7 @@ Disabled but selected options:
 - Remain selected
 - Cannot be deselected via UI
 - Can be deselected programmatically
-- Still included in getValue()
+- Still included in selectedValue
 
 COMPARING MODES
 ---------------
@@ -461,8 +461,8 @@ BEST PRACTICES
 ✅ Set close-on-select for mobile-friendly multi-select
 ✅ Validate selections in callbacks
 ✅ Always handle both select and deselect events
-✅ Use getValue() for form submission
-✅ Use getSelected() for full object access
+✅ Use selectedValue for form submission
+✅ Use selectedOptions for full object access
 
 ❌ Don't mix selection modes during runtime
 ❌ Don't forget single-select returns single value
@@ -505,6 +505,6 @@ import { enableLogging, setCategoryLevel } from '@keenmate/web-multiselect';
 setCategoryLevel('MULTISELECT:INTERACTION', 'debug');
 
 Check current selection:
-console.log('Values:', select.getValue());
-console.log('Options:', select.getSelected());
-console.log('Count:', select.getSelected().length);
+console.log('Values:', select.selectedValue);
+console.log('Options:', select.selectedOptions);
+console.log('Count:', select.selectedOptions.length);

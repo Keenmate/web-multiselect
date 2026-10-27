@@ -20,7 +20,7 @@ test.describe('built-in actions', () => {
         const p = picker(page, 'builtins');
         await openDropdown(p);
         await expect(p.locator('.ms__action-btn[data-action="select-all"]')).toHaveText('Select all');
-        await expect(p.locator('.ms__action-btn[data-action="clear-all"]')).toHaveText('Clear all');
+        await expect(p.locator('.ms__action-btn[data-action="clear-selection"]')).toHaveText('Clear all');
     });
 
     test('select-all selects every option', async ({ page }) => {
@@ -29,18 +29,18 @@ test.describe('built-in actions', () => {
 
         await p.locator('.ms__action-btn[data-action="select-all"]').click();
 
-        const values = await p.evaluate((el: any) => el.getValue());
+        const values = await p.evaluate((el: any) => el.selectedValue);
         expect(values).toEqual(['item-0', 'item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6', 'item-7']);
     });
 
-    test('clear-all empties selection', async ({ page }) => {
+    test('clear-selection empties selection', async ({ page }) => {
         const p = picker(page, 'builtins');
         await openDropdown(p);
 
         await p.locator('.ms__action-btn[data-action="select-all"]').click();
-        await p.locator('.ms__action-btn[data-action="clear-all"]').click();
+        await p.locator('.ms__action-btn[data-action="clear-selection"]').click();
 
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
     });
 });
 
@@ -115,7 +115,7 @@ test.describe('action context', () => {
         expect(typeof seen.presentation).toBe('string');
 
         // The controller mutation applied (notify:true → aggregate change).
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['item-0', 'item-1']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['item-0', 'item-1']);
 
         // ...and the dynamic label re-computed from the new selection count.
         await expect(p.locator('.ms__action-btn[data-action="select-all"]')).toHaveText('Selected 2/8');
@@ -137,14 +137,14 @@ test.describe('per-item callbacks fire on bulk operations', () => {
         );
     });
 
-    test('clear-all fires onDeselect once per removed item', async ({ page }) => {
+    test('clear-selection fires onDeselect once per removed item', async ({ page }) => {
         const p = picker(page, 'tracker');
         await openDropdown(p);
 
         await p.locator('.ms__action-btn[data-action="select-all"]').click();
-        // Reset counter so we only measure clear-all's contribution.
+        // Reset counter so we only measure clear-selection's contribution.
         await page.evaluate(() => { (window as any).__trackerDeselected = []; });
-        await p.locator('.ms__action-btn[data-action="clear-all"]').click();
+        await p.locator('.ms__action-btn[data-action="clear-selection"]').click();
 
         const deselected = await page.evaluate(() => (window as any).__trackerDeselected);
         expect([...deselected].sort()).toEqual(
@@ -217,7 +217,7 @@ test.describe('interaction model (core action items)', () => {
         await p.locator('.ms__action-btn[data-action="select-all"]').click();
         await page.waitForTimeout(50);
         expect(await page.evaluate(() => (window as any).__im.log)).toEqual(['before:select-all']);
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
     });
 
     test('a data-action trigger in option content fires action (source option, the option, dataset) and does not toggle the row', async ({ page }) => {
@@ -227,16 +227,16 @@ test.describe('interaction model (core action items)', () => {
         await expect.poll(() => page.evaluate(() => (window as any).__im.details.length)).toBe(1);
         const [seen] = await page.evaluate(() => (window as any).__im.details);
         expect(seen.json).toMatchObject({ action: 'custom', id: 'edit', source: 'option', dataset: { kind: 'row' }, option: { value: 'item-2' } });
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
     });
 
     test('el.controller drives the picker and is the controller on every detail', async ({ page }) => {
         const p = picker(page, 'interaction');
         const result = await p.evaluate((el: any) => {
             el.controller.selectAll();
-            const afterAll = el.getValue().length;
-            el.controller.clearAll();
-            return { afterAll, afterClear: el.getValue().length, same: el.controller === el.controller };
+            const afterAll = el.selectedValue.length;
+            el.controller.clearSelection();
+            return { afterAll, afterClear: el.selectedValue.length, same: el.controller === el.controller };
         });
         expect(result).toEqual({ afterAll: 8, afterClear: 0, same: true });
     });

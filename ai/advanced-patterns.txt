@@ -507,11 +507,11 @@ Efficient bulk updates:
 
 // Instead of multiple updates
 ❌ values.forEach(v => {
-  select.setSelected([...select.getValue(), v]);
+  select.setSelected([...select.selectedValue, v]);
 });
 
 // Do single update
-✅ select.setSelected([...select.getValue(), ...values]);
+✅ select.setSelected([...select.selectedValue, ...values]);
 
 LAZY LOADING OPTIONS
 --------------------

@@ -178,9 +178,9 @@ interface SearchTermContext { term: string; target: 'internal' | 'callback'; beh
 type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
 interface SearchEntry<T> { item: T; searchValue: unknown; }
 interface SearchCallbackContext<T> { term: string; signal: AbortSignal; searchTerm: string | RegExp | Record<string, unknown>; readonly entries: ReadonlyArray<SearchEntry<T>>; }
-type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear';
+type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-selection' | 'clear';
 type MessageType = 'info' | 'warning' | 'error' | 'success';
-type MultiSelectAction = 'select-all' | 'clear-all';
+type MultiSelectAction = 'select-all' | 'clear-selection';
 type BadgesPosition = 'top' | 'bottom' | 'left' | 'right';
 type BadgesThresholdMode = 'count' | 'partial';
 type SearchInputMode = 'normal' | 'readonly' | 'hidden';
@@ -196,7 +196,7 @@ MULTISELECTACTIONITEM INTERFACE
 Action button type (core action item):
 
 interface MultiSelectActionItem<T = any> {
-  action?: 'select-all' | 'clear-all';   // built-in; omit for a custom item
+  action?: 'select-all' | 'clear-selection';   // built-in; omit for a custom item
   id?: string;                           // identifies a custom item
   text?: string;                         // plain text
   icon?: string;                         // glyph / emoji (text)
@@ -229,7 +229,7 @@ interface ActionContext<T = any> extends MultiSelectContext<T> {
 }
 
 Usage:
-const actions: Array<MultiSelectActionItem | 'select-all' | 'clear-all'> = [
+const actions: Array<MultiSelectActionItem | 'select-all' | 'clear-selection'> = [
   'select-all',
   {
     id: 'export',
@@ -310,14 +310,14 @@ MultiSelectElement<T> exposes:
   // on* twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady (receive the detail)
   // controller: MultiSelectController<T>
   // Methods
-  getSelected(): T[];
-  getValue(): string | number | (string | number)[] | null;
+  selectedOptions: T[];
+  selectedValue: string | number | (string | number)[] | null;
   setSelected(values: (string | number)[], opts?: { notify?: boolean }): void;
   showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
   open(); close(); toggle(); search(term); clearSearch(); refresh(); destroy(); release();
 
 MultiSelectController<T> (el.controller, ctx.controller):
-  getSelected(), getValue(), getOptions(), isOpen, setSelected(), selectAll(), clearAll(),
+  selectedOptions, selectedValue, getOptions(), isOpen, setSelected(), selectAll(), clearSelection(),
   toggleValue(), selectValue(), deselectValue(), toggleFocused(), open(), close(), toggle(),
   search(), clearSearch(), scrollToValue/Group/Index() → boolean, refresh(),
   focusNext/Previous/First/Last/PageUp/PageDown(), focusNextMatch/PreviousMatch(),
@@ -477,7 +477,7 @@ Handle nullable types:
 function getSelectValue(select: MultiSelectElement | null): (string | number)[] {
   if (!select) return [];
 
-  const value = select.getValue();
+  const value = select.selectedValue;
 
   if (Array.isArray(value)) {
     return value;

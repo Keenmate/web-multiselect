@@ -225,7 +225,7 @@ select.beforeKeydownCallback = ({ event, key, controller }) => {
   // Ctrl+D: Deselect all
   if (event.ctrlKey && key === 'd') {
     event.preventDefault();
-    controller.clearAll();
+    controller.clearSelection();
     return false;
   }
 

@@ -24,7 +24,7 @@ async function openDropdown(p: Locator): Promise<void> {
 const optionByValue = (p: Locator, value: string): Locator =>
     p.locator(`.ms__option[data-value="${value}"]`);
 
-const getValue = (p: Locator): Promise<unknown> => p.evaluate((el: any) => el.getValue());
+const getValue = (p: Locator): Promise<unknown> => p.evaluate((el: any) => el.selectedValue);
 
 test.beforeEach(async ({ page }) => {
     await page.goto(PAGE);

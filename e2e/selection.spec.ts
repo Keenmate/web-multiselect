@@ -23,7 +23,7 @@ function optionByValue(p: Locator, value: string): Locator {
 }
 
 async function getValue(p: Locator): Promise<string | string[] | null> {
-    return p.evaluate((el: any) => el.getValue());
+    return p.evaluate((el: any) => el.selectedValue);
 }
 
 test.beforeEach(async ({ page }) => {

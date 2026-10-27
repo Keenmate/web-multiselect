@@ -131,11 +131,11 @@ GETTING SELECTED VALUES
 Multiple ways to access selections:
 
 // Get selected option objects
-const selected = select.getSelected();
+const selected = select.selectedOptions;
 console.log(selected); // [{ value: 1, label: 'Option 1' }, ...]
 
 // Get values only
-const values = select.getValue();
+const values = select.selectedValue;
 console.log(values); // [1, 2, 3] or single value if multiple="false"
 
 // Listen to change event

@@ -89,7 +89,7 @@ Migration steps:
 API mapping:
 Choices → Web Multiselect
 setChoices() → options property
-getValue() → getValue()
+getValue() → selectedValue
 setValue() → setSelected()
 clearStore() → setSelected([])
 destroy() → destroy()
@@ -232,7 +232,7 @@ choices.getValue();
 tomSelect.getValue();
 
 New:
-select.getValue();
+select.selectedValue;
 
 Clearing selection:
 
@@ -434,9 +434,9 @@ CHANGELOG.md, section [Unreleased]. The essentials:
   addEventListener('select', e => e.detail…) is unchanged. Events are composed: false.
 - Action buttons: { action: 'custom', … } → { id: 'export', … }; onClick(ms, ctx) →
   onClick(detail); get*Callback(ms, ctx) → get*Callback(ctx); text/icon are plain text;
-  string shorthand ['select-all', 'clear-all']; new `action` event / onAction /
+  string shorthand ['select-all', 'clear-selection']; new `action` event / onAction /
   beforeActionCallback.
-- el.controller is the public facade (selectAll, clearAll, toggleValue, focusNext, showMessage…);
+- el.controller is the public facade (selectAll, clearSelection, toggleValue, focusNext, showMessage…);
   showMessage(content, { variant, duration }) → { type, autoHideMs, placement }.
 - WebMultiSelect → MultiSelectEngine; MultiSelectKeyboardController → MultiSelectController;
   MultiSelectKeydownContext → KeydownContext; ActionButton → MultiSelectActionItem;
@@ -471,7 +471,7 @@ Fix: Use standard DOM methods
 ❌ Expecting immediate DOM availability
 Fix: Use customElements.whenDefined()
 
-❌ Using .val() instead of .getValue()
+❌ Using .val() instead of .selectedValue
 Fix: Use Web Component API
 
 ❌ Setting options via attribute

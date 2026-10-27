@@ -20,7 +20,7 @@ test('Enter on a no-match search term invokes beforeAddCallback and selects the 
     expect(added).toEqual(['Mango']);
 
     // The new value should now be selected.
-    const value = await p.evaluate((el: any) => el.getValue());
+    const value = await p.evaluate((el: any) => el.selectedValue);
     expect(value).toEqual(['mango']);
 });
 

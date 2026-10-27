@@ -69,12 +69,12 @@ describe('tree selectability — via member', () => {
 
     it('ignores clicks on a non-selectable node', () => {
         (rowByPath('1').querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toEqual([]);
+        expect(el.selectedValue).toEqual([]);
     });
 
     it('still selects a selectable node on click', () => {
         (rowByPath('1.1').querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toContain('apple');
+        expect(el.selectedValue).toContain('apple');
     });
 
     it('skips non-selectable nodes with keyboard focus', () => {
@@ -111,8 +111,8 @@ describe('tree selectability — via callback (leaves only)', () => {
 
     it('cannot toggle a branch but can toggle a leaf', () => {
         (rowByPath('1.1').querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toEqual([]);
+        expect(el.selectedValue).toEqual([]);
         (rowByPath('1.1.1').querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toContain('gala');
+        expect(el.selectedValue).toContain('gala');
     });
 });

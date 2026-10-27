@@ -195,12 +195,12 @@ select.options = [
 // Searches "JavaScript"
 
 Member property:
-select.searchValueMember = 'searchText';
+select.searchValueMember = 'searchTerm';
 select.options = [
   {
     value: 1,
     label: 'JavaScript',
-    searchText: 'javascript js ecmascript'
+    searchTerm: 'javascript js ecmascript'
   }
 ];
 // Searches "javascript js ecmascript"
@@ -330,7 +330,7 @@ Custom matching (via searchCallback):
 select.searchCallback = async ({ term: raw, controller }) => {
   const term = raw.toLowerCase();
 
-  return controller.getOptions().filter(option => {
+  return controller.options.filter(option => {
     const searchValue = option.label.toLowerCase();
 
     // Fuzzy match
@@ -341,7 +341,7 @@ select.searchCallback = async ({ term: raw, controller }) => {
 
 Or exact match:
 select.searchCallback = ({ term, controller }) => {
-  return controller.getOptions().filter(option =>
+  return controller.options.filter(option =>
     option.label.toLowerCase() === term.toLowerCase()
   );
 };

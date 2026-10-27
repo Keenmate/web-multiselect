@@ -56,7 +56,7 @@ describe('defer render gate', () => {
         el.release();
         await el.whenSettled();
         expect(built(el)).toBe(true);
-        expect(el.getSelected()).toEqual([]); // picker is live and queryable
+        expect(el.selectedOptions).toEqual([]); // picker is live and queryable
     });
 
     it('builds and fires `ready` immediately for a normal (non-deferred) element', async () => {

@@ -20,7 +20,7 @@ async function events(page: Page, id: string): Promise<{ select: string[][]; cha
 }
 
 async function selectedValues(p: Locator): Promise<string[]> {
-    return p.evaluate((el: any) => el.getSelected().map((o: any) => String(o.value)));
+    return p.evaluate((el: any) => el.selectedOptions.map((o: any) => String(o.value)));
 }
 
 /** Focus the picker the way a keyboard user arrives: Tab from the preceding field. */
@@ -33,7 +33,7 @@ async function tabInto(page: Page, fromId: string, p: Locator): Promise<void> {
 test.beforeEach(async ({ page }) => {
     await page.goto(PAGE);
     await page.waitForFunction(() => (document.getElementById('tb-single') as any)?.options?.length === 5
-        && (document.getElementById('tb-long-virtual') as any)?.getSelected?.().length === 1);
+        && (document.getElementById('tb-long-virtual') as any)?.selectedOptions?.length === 1);
 });
 
 test.describe('single-select default: select-focused', () => {

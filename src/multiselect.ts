@@ -20,7 +20,6 @@ import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputM
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     close: 'Close',
-    clearSelection: 'Clear selection',
     clearAllSelections: 'Clear all selections',
     clearSearch: 'Clear search',
     showFullLabel: 'Show full label',
@@ -31,7 +30,7 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     prevMatch: 'Previous match',
     nextMatch: 'Next match',
     selectAll: 'Select all',
-    clearAll: 'Clear all',
+    clearSelection: 'Clear all',
 };
 
 /** Where a badge is rendered — the render-only half of {@link BadgeContentRenderContext}. */
@@ -80,7 +79,7 @@ export class MultiSelectEngine<T = any> {
     // recursing. See the imperative API at the bottom of the class.
     #isOpen = false;
     private selectedValues = new Set<string>();
-    private selectedOptions = new Map<string, T>();
+    private selectedByValue = new Map<string, T>();
     private allOptions: T[] = [];
     private filteredOptions: T[] = [];
     // Tree mode: the hierarchy built from option paths, and the flat list of
@@ -110,7 +109,7 @@ export class MultiSelectEngine<T = any> {
     // a trigger stays one item (busy guard) across clicks.
     private syntheticActionItems = new WeakMap<HTMLElement, MultiSelectActionItem<T>>();
     private matchingIndices: Set<number> = new Set();
-    private searchTerm = '';
+    private typedTerm = '';
     /*
      * Search-value pipeline, cached per option (keyed by item identity) so a keystroke costs
      * one lookup per item — no member/callback call, no re-normalization:
@@ -472,9 +471,9 @@ export class MultiSelectEngine<T = any> {
      * re-derives it here, so the tree rebuild and highlighting never read a stale term.
      */
     private currentSearchTerm(): ActiveSearchTerm {
-        if (this.activeTermFor !== this.searchTerm) {
-            this.activeTerm = this.prepareSearchTerm(this.searchTerm, !this.options.searchCallback);
-            this.activeTermFor = this.searchTerm;
+        if (this.activeTermFor !== this.typedTerm) {
+            this.activeTerm = this.prepareSearchTerm(this.typedTerm, !this.options.searchCallback);
+            this.activeTermFor = this.typedTerm;
         }
         return this.activeTerm;
     }
@@ -497,11 +496,11 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Selected options in the order they should be DISPLAYED (badges / partial "+N more" / popover).
-     * Never mutates state — always returns a fresh array. Display concern only: getValue()/form
-     * output/getSelected() keep as-selected (insertion) order. See `selectedOrder`.
+     * Never mutates state — always returns a fresh array. Display concern only: selectedValue/form
+     * output/selectedOptions keep as-selected (insertion) order. See `selectedOrder`.
      */
     private getOrderedSelectedOptions(): T[] {
-        const items = Array.from(this.selectedOptions.values());
+        const items = Array.from(this.selectedByValue.values());
         const mode = this.options.selectedOrder ?? 'as-selected';
         if (mode === 'as-selected' || items.length < 2) return items;
 
@@ -782,20 +781,20 @@ export class MultiSelectEngine<T = any> {
         const newSet = new Set(emitted);
         const added: T[] = [];
         const removed: T[] = [];
-        for (const [val, opt] of this.selectedOptions) {
+        for (const [val, opt] of this.selectedByValue) {
             if (!newSet.has(val)) removed.push(opt);
         }
         const newOptions = new Map<string, T>();
         for (const val of emitted) {
             const resolved = index.nodeByValue.get(val)?.data as T | undefined;
-            const opt = resolved ?? this.selectedOptions.get(val);
+            const opt = resolved ?? this.selectedByValue.get(val);
             if (opt === undefined) continue;
             newOptions.set(val, opt);
             if (!this.selectedValues.has(val)) added.push(opt);
         }
 
         this.selectedValues = newSet;
-        this.selectedOptions = newOptions;
+        this.selectedByValue = newOptions;
         this.cascadeCheckedAtoms = checkedAtoms;
         this.commit({ added, removed });
     }
@@ -819,12 +818,12 @@ export class MultiSelectEngine<T = any> {
             const out: T[] = [];
             for (const val of emitted) {
                 const node = this.cascadeIndex.nodeByValue.get(val);
-                const opt = (node?.data as T | undefined) ?? this.selectedOptions.get(val);
+                const opt = (node?.data as T | undefined) ?? this.selectedByValue.get(val);
                 if (opt !== undefined) out.push(opt);
             }
             return out;
         }
-        return Array.from(this.selectedOptions.values());
+        return Array.from(this.selectedByValue.values());
     }
 
     /** Native `title` for the counter chip: the picked items, capped so it can't grow unbounded. */
@@ -1093,7 +1092,7 @@ export class MultiSelectEngine<T = any> {
         this.clearButton.type = 'button';
         this.clearButton.className = 'ms__input-clear';
         this.clearButton.tabIndex = -1;
-        this.clearButton.setAttribute('aria-label', this.resolveLabel('clearSelection'));
+        this.clearButton.setAttribute('aria-label', this.resolveLabel('clearAllSelections'));
         this.clearButton.style.display = 'none';
         this.clearButton.addEventListener('mousedown', (e) => e.preventDefault());
         this.clearButton.addEventListener('click', (e) => {
@@ -1593,7 +1592,7 @@ export class MultiSelectEngine<T = any> {
             // Navigate mode: setItems() above resets scroll to 0 on a new items array, which
             // undoes the synchronous scrollToFocused() handleSearch ran before this frame —
             // re-apply it so a match far below the fold is scrolled into view.
-            if (this.options.searchMode === 'navigate' && this.searchTerm.trim() && this.focusedIndex >= 0) {
+            if (this.options.searchMode === 'navigate' && this.typedTerm.trim() && this.focusedIndex >= 0) {
                 this.scrollToFocused();
             }
 
@@ -1603,12 +1602,12 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Built-in state of `select-all` / `clear-all` — the `defaults` layer under the consumer's
+     * Built-in state of `select-all` / `clear-selection` — the `defaults` layer under the consumer's
      * static fields and `get*Callback`s (core `resolveActionItem`):
      * - `select-all` is disabled when it would add nothing (every selectable, non-disabled filtered
      *   option is already selected — this also covers an empty list).
-     * - `clear-all` is disabled when nothing is selected.
-     * Text defaults come from `labels.selectAll` / `labels.clearAll`.
+     * - `clear-selection` is disabled when nothing is selected.
+     * Text defaults come from `labels.selectAll` / `labels.clearSelection`.
      */
     private getBuiltInActionDefaults(action: MultiSelectAction | 'custom'): { text?: string; isDisabled?: boolean } {
         if (action === 'select-all') {
@@ -1618,8 +1617,8 @@ export class MultiSelectEngine<T = any> {
                     !this.getItemDisabled(option) && !this.selectedValues.has(String(this.getItemValue(option)))),
             };
         }
-        if (action === 'clear-all') {
-            return { text: this.resolveLabel('clearAll'), isDisabled: this.selectedValues.size === 0 };
+        if (action === 'clear-selection') {
+            return { text: this.resolveLabel('clearSelection'), isDisabled: this.selectedValues.size === 0 };
         }
         return {};
     }
@@ -1882,7 +1881,7 @@ export class MultiSelectEngine<T = any> {
      */
     private renderEmptyStateHTML(): string {
         if (this.isAddNewPromptShown()) {
-            const value = (this.searchTerm || '').trim();
+            const value = (this.typedTerm || '').trim();
             // Pending: an async beforeAddCallback is running — spinner + "Adding …", not clickable.
             if (this.addNewPending) {
                 return `<div class="ms__add-new ms__add-new--loading" aria-busy="true">`
@@ -1903,7 +1902,7 @@ export class MultiSelectEngine<T = any> {
     private isAddNewPromptShown(): boolean {
         return !!this.options.isAddNewAllowed
             && this.filteredOptions.length === 0
-            && !!(this.searchTerm || '').trim();
+            && !!(this.typedTerm || '').trim();
     }
 
     /**
@@ -2292,7 +2291,7 @@ export class MultiSelectEngine<T = any> {
     }
 
     private async handleSearch(value: string): Promise<void> {
-        this.searchTerm = value;
+        this.typedTerm = value;
         // A fresh keystroke drops the "add new" prompt highlight — arrows re-focus it.
         this.addNewFocused = false;
         // ...and any highlight from now on is search's auto-highlight, not the user's.
@@ -2312,7 +2311,7 @@ export class MultiSelectEngine<T = any> {
                 this.ctx({ term: value }), 'beforeSearchCallback');
             if (gate instanceof Promise) {
                 gate = await gate;
-                if (this.searchTerm !== value) return;
+                if (this.typedTerm !== value) return;
             }
             if (gate.isRejected) {
                 // beforeSearchCallback returned false - don't search, show all options
@@ -2322,7 +2321,7 @@ export class MultiSelectEngine<T = any> {
                 this.abortInFlightSearch();
                 this.matchingIndices.clear();
                 if (this.isTreeMode()) {
-                    this.searchTerm = '';
+                    this.typedTerm = '';
                     this.rebuildTreeVisible();
                 } else {
                     this.filteredOptions = [...this.allOptions];
@@ -2381,7 +2380,7 @@ export class MultiSelectEngine<T = any> {
                 this.searchDebounceTimer = setTimeout(() => {
                     this.searchDebounceTimer = undefined;
                     // Drop this run if a newer keystroke superseded the value while we waited.
-                    if (this.searchTerm === value) {
+                    if (this.typedTerm === value) {
                         void this.performAsyncSearch(value, processedValue, callbackTerm as MultiSelectSearchContext<T>['searchTerm']);
                     }
                 }, debounceMs);
@@ -2510,7 +2509,7 @@ export class MultiSelectEngine<T = any> {
             const results = await this.options.searchCallback!(context);
 
             // Ignore results from a request that was aborted or superseded by a newer term.
-            if (controller.signal.aborted || this.searchTerm !== value) return;
+            if (controller.signal.aborted || this.typedTerm !== value) return;
 
             const searchResults = results || [];
 
@@ -2570,11 +2569,11 @@ export class MultiSelectEngine<T = any> {
                 event: e,
                 key: e.key,
                 isOpen: this.#isOpen,
-                searchTerm: this.searchTerm,
+                searchTerm: this.typedTerm,
                 focusedIndex: this.focusedIndex,
                 focusedOption: (this.focusedIndex >= 0 ? this.filteredOptions[this.focusedIndex] : null) ?? null,
                 filteredOptions: this.filteredOptions,
-                selectedValues: this.getSelected().map(o => this.getItemValue(o)),
+                selectedValues: this.selectedOptions.map(o => this.getItemValue(o)),
             }), 'beforeKeydownCallback');
             if (gate.isRejected) return;
         }
@@ -2631,12 +2630,12 @@ export class MultiSelectEngine<T = any> {
                 } else if (
                     this.options.isAddNewAllowed
                     && this.filteredOptions.length === 0
-                    && (this.searchTerm || '').trim()
+                    && (this.typedTerm || '').trim()
                 ) {
                     // No matches + typed text: commit the "add new" prompt (mirrors clicking it).
                     // Works with or without beforeAddCallback — the `add` event fires either way, so a
                     // consumer can handle creation themselves.
-                    this.handleAddNew((this.searchTerm || '').trim());
+                    this.handleAddNew((this.typedTerm || '').trim());
                 }
                 // On the fullscreen sheet the on-screen Enter/Search key doubles as
                 // "done typing" — drop focus off the header search so the soft keyboard
@@ -2719,7 +2718,7 @@ export class MultiSelectEngine<T = any> {
         if (internal) {
             e.preventDefault();
             if (internal.dataset.msAction === 'add-new') {
-                const value = (this.searchTerm || '').trim();
+                const value = (this.typedTerm || '').trim();
                 if (value) this.handleAddNew(value);
             }
             return;
@@ -2800,7 +2799,7 @@ export class MultiSelectEngine<T = any> {
             e.preventDefault();
             e.stopPropagation();
             interactionLogger.debug(`[${this.instanceId}] Clear count button clicked`);
-            void this.userClearAll('clear');
+            void this.userClearSelection('clear');
             return;
         }
 
@@ -2833,7 +2832,7 @@ export class MultiSelectEngine<T = any> {
             const value = removeBtn.dataset.value
                 ?? (removeBtn.closest('[data-value]') as HTMLElement | null)?.dataset.value
                 ?? '';
-            const option = this.selectedOptions.get(value);
+            const option = this.selectedByValue.get(value);
             if (option) {
                 this.interactiveDeselect(option, 'badge');
             }
@@ -2967,7 +2966,7 @@ export class MultiSelectEngine<T = any> {
      * and an active search keep their own rules (nothing / the first match).
      */
     private getOpenFocusIndex(): number {
-        if (this.options.isMultiple || this.searchTerm || this.selectedValues.size === 0) return -1;
+        if (this.options.isMultiple || this.typedTerm || this.selectedValues.size === 0) return -1;
         return this.filteredOptions.findIndex(o => this.selectedValues.has(String(this.getItemValue(o))));
     }
 
@@ -3058,13 +3057,15 @@ export class MultiSelectEngine<T = any> {
         const byValue = (value: string | number): T | undefined =>
             this.allOptions.find(o => String(this.getItemValue(o)) === String(value));
         this.controller = {
-            getSelected: () => this.getSelected(),
-            getValue: () => this.getValue(),
-            getOptions: () => this.allOptions,
+            get selectedOptions() { return self.selectedOptions; },
+            get selectedOption() { return self.selectedOption; },
+            get selectedValue() { return self.selectedValue; },
+            get options() { return self.allOptions; },
+            get searchTerm() { return self.searchTerm; },
             get isOpen() { return self.isOpen; },
             setSelected: (values, opts) => this.setSelected(values, opts),
             selectAll: () => { void this.userSelectAll(); },
-            clearAll: () => { void this.userClearAll('clear-all'); },
+            clearSelection: () => { void this.userClearSelection('clear-selection'); },
             toggleValue: (value) => {
                 const opt = byValue(value);
                 if (opt) this.toggleOption(opt);
@@ -3076,7 +3077,7 @@ export class MultiSelectEngine<T = any> {
             },
             deselectValue: (value) => {
                 if (!this.selectedValues.has(String(value))) return; // not selected — no-op
-                const opt = this.selectedOptions.get(String(value)) ?? byValue(value);
+                const opt = this.selectedByValue.get(String(value)) ?? byValue(value);
                 if (opt) this.toggleOption(opt);
             },
             toggleFocused: () => {
@@ -3157,9 +3158,9 @@ export class MultiSelectEngine<T = any> {
         return ctx;
     }
 
-    /** The selection as values — scalar-or-array `getValue()` flattened to an array. */
+    /** The selection as values — scalar-or-array `selectedValue` flattened to an array. */
     private selectedValueList(): (string | number)[] {
-        const value = this.getValue();
+        const value = this.selectedValue;
         if (value == null) return [];
         return Array.isArray(value) ? value : [value];
     }
@@ -3177,7 +3178,7 @@ export class MultiSelectEngine<T = any> {
 
     /** The selection snapshot part of an action context (re-read before the `action` event). */
     private selectionSnapshot() {
-        const selectedOptions = this.getSelected();
+        const selectedOptions = this.selectedOptions;
         return {
             selectedValues: this.selectedValueList(),
             selectedOptions,
@@ -3185,7 +3186,7 @@ export class MultiSelectEngine<T = any> {
             selectedCount: selectedOptions.length,
             optionCount: this.allOptions.length,
             isOpen: this.#isOpen,
-            searchTerm: this.searchTerm,
+            searchTerm: this.typedTerm,
         };
     }
 
@@ -3211,7 +3212,7 @@ export class MultiSelectEngine<T = any> {
             } else if (badge) {
                 source = 'badge';
                 const value = badge.dataset.value ?? badge.querySelector<HTMLElement>('.ms__badge-remove')?.dataset.value;
-                option = value !== undefined ? this.selectedOptions.get(value) : undefined;
+                option = value !== undefined ? this.selectedByValue.get(value) : undefined;
             } else if (this.messageEl?.contains(trigger)) {
                 source = 'message';
             }
@@ -3247,10 +3248,10 @@ export class MultiSelectEngine<T = any> {
         });
     }
 
-    /** The built-in behaviour of `select-all` / `clear-all` (vetoes apply per option). */
+    /** The built-in behaviour of `select-all` / `clear-selection` (vetoes apply per option). */
     private runBuiltInAction(action: string): void | Promise<void> {
         if (action === 'select-all') return this.userSelectAll();
-        if (action === 'clear-all') return this.userClearAll('clear-all');
+        if (action === 'clear-selection') return this.userClearSelection('clear-selection');
     }
 
     /** Clear the search box (both the main input and the fullscreen search) and reset the visible
@@ -3259,12 +3260,12 @@ export class MultiSelectEngine<T = any> {
      * Clear the search box and restore the full option list (resets the visible/matched sets and
      * drops keyboard focus). Public building block: pair it with `scrollToValue()` to reveal then
      * scroll to an option the current search had filtered out — `el.clearSearch(); el.scrollToValue(v)`.
-     * Does not touch the selection (use `clearAll()` for that).
+     * Does not touch the selection (use `clearSelection()` for that).
      */
     public clearSearch(): void {
         this.input.value = '';
         if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
-        this.searchTerm = '';
+        this.typedTerm = '';
         this.resetVisibleToAll();
         this.matchingIndices.clear();
         this.focusedIndex = -1;
@@ -3493,7 +3494,7 @@ export class MultiSelectEngine<T = any> {
     private vetoOne(kind: 'select' | 'deselect', option: T, source: SelectionSource): boolean | Promise<boolean> {
         const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
         if (!hook) return true;
-        const selectedOptions = this.getSelected();
+        const selectedOptions = this.selectedOptions;
         const gate = runBeforeCallbackEager(hook as (ctx: object) => unknown,
             this.ctx({ option, selectedOptions, selectedValues: this.selectedValueList(), source }),
             kind === 'select' ? 'beforeSelectCallback' : 'beforeDeselectCallback');
@@ -3531,7 +3532,7 @@ export class MultiSelectEngine<T = any> {
             // semantics: a replace fires select + change, but no deselect.
             if (!this.options.isMultiple) {
                 this.selectedValues.clear();
-                this.selectedOptions.clear();
+                this.selectedByValue.clear();
             }
             this.selectOption(option);
             return true;
@@ -3598,7 +3599,7 @@ export class MultiSelectEngine<T = any> {
                 // Reset the search box + visible list to ALL options so the picker leaves the
                 // "one filtered result" state and shows the full (now longer) list — otherwise it
                 // stays stuck showing only the just-added row until the user searches again.
-                this.searchTerm = '';
+                this.typedTerm = '';
                 this.input.value = '';
                 if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
                 this.matchingIndices.clear();
@@ -3618,7 +3619,7 @@ export class MultiSelectEngine<T = any> {
             this.options.onAdd?.(this.ctx({
                 value,
                 ...(newOption !== undefined ? { option: newOption } : {}),
-                selectedOptions: this.getSelected(),
+                selectedOptions: this.selectedOptions,
                 selectedValues: this.selectedValueList(),
             }));
 
@@ -3636,7 +3637,7 @@ export class MultiSelectEngine<T = any> {
         const value = this.getItemValue(option);
         const valueKey = String(value);
         this.selectedValues.add(valueKey);
-        this.selectedOptions.set(valueKey, option);
+        this.selectedByValue.set(valueKey, option);
         this.commit({ added: [option] });
     }
 
@@ -3662,7 +3663,7 @@ export class MultiSelectEngine<T = any> {
         }
 
         this.selectedValues.delete(valueKey);
-        this.selectedOptions.delete(valueKey);
+        this.selectedByValue.delete(valueKey);
         this.commit({ removed: [option] });
     }
 
@@ -3693,9 +3694,9 @@ export class MultiSelectEngine<T = any> {
         return then(this.vetoMany('select', candidates, 'select-all'), (allowed) => this.addOptions(allowed));
     }
 
-    /** The clear gestures (`clear-all` action, inline ✕, count-badge ×): each option through `beforeDeselectCallback`. */
-    private userClearAll(source: 'clear-all' | 'clear'): void | Promise<void> {
-        return this.bulkDeselect(Array.from(this.selectedOptions.values()), source);
+    /** The clear gestures (`clear-selection` action, inline ✕, count-badge ×): each option through `beforeDeselectCallback`. */
+    private userClearSelection(source: 'clear-selection' | 'clear'): void | Promise<void> {
+        return this.bulkDeselect(Array.from(this.selectedByValue.values()), source);
     }
 
     /** Deselect `options` in one change (one render, one `change`), each through `beforeDeselectCallback`. */
@@ -3710,7 +3711,7 @@ export class MultiSelectEngine<T = any> {
             const valueKey = String(this.getItemValue(option));
             if (this.selectedValues.has(valueKey)) continue;
             this.selectedValues.add(valueKey);
-            this.selectedOptions.set(valueKey, option);
+            this.selectedByValue.set(valueKey, option);
             added.push(option);
         }
         this.commit({ added });
@@ -3736,7 +3737,7 @@ export class MultiSelectEngine<T = any> {
         for (const option of options) {
             const valueKey = String(this.getItemValue(option));
             if (this.selectedValues.delete(valueKey)) {
-                this.selectedOptions.delete(valueKey);
+                this.selectedByValue.delete(valueKey);
                 removed.push(option);
             }
         }
@@ -3747,10 +3748,10 @@ export class MultiSelectEngine<T = any> {
      * Clear the whole selection programmatically (form reset, standalone engine API) — no veto.
      * Fires `deselect` per option + one `change`.
      */
-    public clearAll(): void {
-        const removed = Array.from(this.selectedOptions.values());
+    public clearSelection(): void {
+        const removed = Array.from(this.selectedByValue.values());
         this.selectedValues.clear();
-        this.selectedOptions.clear();
+        this.selectedByValue.clear();
         this.commit({ removed });
     }
 
@@ -3779,12 +3780,12 @@ export class MultiSelectEngine<T = any> {
      */
     private clearClick(): void {
         interactionLogger.debug(`[${this.instanceId}] input clear (✕) clicked`);
-        void then(this.userClearAll('clear'), () => {
+        void then(this.userClearSelection('clear'), () => {
             // Nothing is selected anymore — close the selected-items popover if it was open
             // (it would otherwise linger showing "Selected Items (0)").
             if (this.showSelectedPopover && this.selectedValues.size === 0) this.hideSelectedPopover();
         });
-        if (this.searchTerm || this.input.value) this.clearSearch();
+        if (this.typedTerm || this.input.value) this.clearSearch();
         // Refocus for keyboard use, but guard the focus handler so clearing doesn't pop the
         // dropdown open (it opens on focus otherwise). Same one-tick guard the click-close uses.
         this.justClosedViaClick = true;
@@ -3821,7 +3822,7 @@ export class MultiSelectEngine<T = any> {
         if (added.length === 0 && removed.length === 0) return;
 
         // One selection snapshot for every detail of this change (each detail gets the context).
-        const selectedOptions = this.getSelected();
+        const selectedOptions = this.selectedOptions;
         const selectedValues = this.selectedValueList();
         if (this.options.onSelect) {
             for (const option of added) this.options.onSelect(this.ctx({ option, selectedOptions, selectedValues }));
@@ -3891,11 +3892,11 @@ export class MultiSelectEngine<T = any> {
         // searchTerm here keeps the box and the filtered list in sync (no stale
         // "java" filter lingering under an empty box).
         if (!this.options.isMultiple && this.options.isSearchEnabled) {
-            this.input.value = this.searchTerm;
+            this.input.value = this.typedTerm;
         }
 
         // If using searchCallback with keepOptionsOnSearch, ensure initial options are shown
-        if (this.options.searchCallback && this.options.shouldKeepOptionsOnSearch && !this.searchTerm) {
+        if (this.options.searchCallback && this.options.shouldKeepOptionsOnSearch && !this.typedTerm) {
             this.filteredOptions = [...this.allOptions];
             uiLogger.debug(`[${this.instanceId}] Showing ${this.allOptions.length} initial options on open`);
         }
@@ -3949,7 +3950,7 @@ export class MultiSelectEngine<T = any> {
 
         // Clear the search unless it is kept (default: kept in multi-select, cleared in single-select)
         if (!this.shouldKeepSearchOnClose()) {
-            this.searchTerm = '';
+            this.typedTerm = '';
             // Only clear input in multi-select mode or when search is enabled
             if (this.options.isMultiple || this.options.isSearchEnabled) {
                 this.input.value = '';
@@ -4403,7 +4404,7 @@ export class MultiSelectEngine<T = any> {
         // keyboard) is OPT-IN via shouldFullscreenAutofocus — default is to open with the list
         // visible and the keyboard closed, so long lists browse cleanly and the bottom
         // action row stays on screen. When enabled, focus to type-to-filter immediately.
-        if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = this.searchTerm;
+        if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = this.typedTerm;
         this.updateFullscreenSearchClear();
         if (this.options.shouldFullscreenAutofocus) {
             this.fullscreenSearchInput?.focus();
@@ -4646,7 +4647,7 @@ export class MultiSelectEngine<T = any> {
         this.refreshSearchPlaceholder();
         // Re-run the current search so the list re-projects under the new mode. handleSearch
         // reads the (now-updated) searchMode and refreshes the navigator via updateFullscreenNav.
-        void this.handleSearch(this.searchTerm);
+        void this.handleSearch(this.typedTerm);
         this.fullscreenSearchInput?.focus();
     }
 
@@ -4675,7 +4676,7 @@ export class MultiSelectEngine<T = any> {
         if (!this.fullscreenNav) return;
 
         const total = this.matchingIndices.size;
-        const hasTerm = !!this.searchTerm;
+        const hasTerm = !!this.typedTerm;
         this.fullscreenNav.style.display = hasTerm ? '' : 'none';
 
         if (this.fullscreenNavCount) {
@@ -4777,14 +4778,14 @@ export class MultiSelectEngine<T = any> {
      * Idempotent; safe to call after init *and* after `options` is replaced
      * (e.g., async fetch, `searchCallback` result, or late `element.options =`
      * assignment). Without this, `initial-values` declared before options
-     * arrive ends up with phantom values that `getValue()` can never report.
+     * arrive ends up with phantom values that `selectedValue` can never report.
      */
     private reconcileSelectedOptions(): void {
         if (this.selectedValues.size === 0 || this.allOptions.length === 0) return;
         this.selectedValues.forEach(valueKey => {
-            if (this.selectedOptions.has(valueKey)) return;
+            if (this.selectedByValue.has(valueKey)) return;
             const option = this.allOptions.find(opt => String(this.getItemValue(opt)) === valueKey);
-            if (option) this.selectedOptions.set(valueKey, option);
+            if (option) this.selectedByValue.set(valueKey, option);
         });
     }
 
@@ -4805,7 +4806,7 @@ export class MultiSelectEngine<T = any> {
         });
         toDrop.forEach(valueKey => {
             this.selectedValues.delete(valueKey);
-            this.selectedOptions.delete(valueKey);
+            this.selectedByValue.delete(valueKey);
         });
     }
 
@@ -5116,7 +5117,7 @@ export class MultiSelectEngine<T = any> {
         if (removeBtn) {
             e.preventDefault();
             const value = removeBtn.dataset.value!;
-            const option = this.selectedOptions.get(value);
+            const option = this.selectedByValue.get(value);
             if (option) {
                 void then(this.interactiveDeselect(option, 'badge'), (removed) => {
                     if (!removed) return;
@@ -5161,7 +5162,7 @@ export class MultiSelectEngine<T = any> {
         this.hiddenInputs = [];
 
         const format = this.options.valueFormat || 'json';
-        const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
+        const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
 
         // Use hostElement if provided (for shadow DOM), otherwise use element
         const targetElement = this.options.hostElement || this.element;
@@ -5189,11 +5190,11 @@ export class MultiSelectEngine<T = any> {
     }
 
     private getFormValue(): string {
-        const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
+        const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
 
         // Custom callback takes precedence
         if (this.options.getValueFormatCallback) {
-            return this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.getSelected() }));
+            return this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions }));
         }
 
         const format = this.options.valueFormat || 'json';
@@ -5210,8 +5211,9 @@ export class MultiSelectEngine<T = any> {
     // PUBLIC API
     // ========================================================================
 
-    public getSelected(): T[] {
-        return Array.from(this.selectedOptions.values());
+    /** The selected option objects, in selection order. */
+    public get selectedOptions(): T[] {
+        return Array.from(this.selectedByValue.values());
     }
 
     /**
@@ -5225,12 +5227,12 @@ export class MultiSelectEngine<T = any> {
      */
     public setSelected(values: (string | number)[], opts: { notify?: boolean } = {}): void {
         this.selectedValues = new Set(values.map(v => String(v)));
-        this.selectedOptions.clear();
+        this.selectedByValue.clear();
         values.forEach(value => {
             const valueKey = String(value);
             const option = this.allOptions.find(opt => String(this.getItemValue(opt)) === valueKey);
             if (option) {
-                this.selectedOptions.set(valueKey, option);
+                this.selectedByValue.set(valueKey, option);
             }
         });
         this.renderDropdown();
@@ -5238,7 +5240,7 @@ export class MultiSelectEngine<T = any> {
         this.updateHiddenInput();
 
         if (opts.notify && this.options.onChange) {
-            this.options.onChange(this.ctx({ selectedOptions: this.getSelected(), selectedValues: this.selectedValueList() }));
+            this.options.onChange(this.ctx({ selectedOptions: this.selectedOptions, selectedValues: this.selectedValueList() }));
         }
     }
 
@@ -5296,13 +5298,13 @@ export class MultiSelectEngine<T = any> {
                 // buildTree derives filteredOptions from the tree, honouring the current search term.
                 this.buildTree();
             } else {
-                this.filteredOptions = this.searchTerm ? this.filteredOptions : [...this.allOptions];
+                this.filteredOptions = this.typedTerm ? this.filteredOptions : [...this.allOptions];
             }
             optionsChanged = true;
         } else if (treeConfigChanged) {
             // Tree config toggled/changed without new options — rebuild from the existing list.
             if (this.isTreeMode()) this.buildTree();
-            else this.filteredOptions = this.searchTerm ? this.filteredOptions : [...this.allOptions];
+            else this.filteredOptions = this.typedTerm ? this.filteredOptions : [...this.allOptions];
         }
 
         // Cascade config (checkbox-mode / cascade-select-policy) changed live. buildTree
@@ -5326,11 +5328,11 @@ export class MultiSelectEngine<T = any> {
                 const newOptions = new Map<string, T>();
                 for (const v of emitted) {
                     const opt = (this.cascadeIndex.nodeByValue.get(v)?.data as T | undefined)
-                        ?? this.selectedOptions.get(v);
+                        ?? this.selectedByValue.get(v);
                     if (opt !== undefined) newOptions.set(v, opt);
                 }
                 this.selectedValues = new Set(emitted);
-                this.selectedOptions = newOptions;
+                this.selectedByValue = newOptions;
             }
         }
 
@@ -5382,8 +5384,8 @@ export class MultiSelectEngine<T = any> {
         this.renderBadges();
         this.updateHiddenInput();
         // Internal search only — re-running would re-fire a consumer's searchCallback.
-        if (searchRulesChanged && this.searchTerm && !this.options.searchCallback) {
-            void this.handleSearch(this.searchTerm);
+        if (searchRulesChanged && this.typedTerm && !this.options.searchCallback) {
+            void this.handleSearch(this.typedTerm);
         }
         return true;
     }
@@ -5406,7 +5408,7 @@ export class MultiSelectEngine<T = any> {
         if (this.options.shouldPruneMissingSelection) this.pruneMissingSelection();
         if (this.isTreeMode()) {
             this.buildTree();
-        } else if (!this.searchTerm) {
+        } else if (!this.typedTerm) {
             this.filteredOptions = [...this.allOptions];
         }
         // Flat list under an active search term: keep filteredOptions as-is — it already holds
@@ -5421,38 +5423,24 @@ export class MultiSelectEngine<T = any> {
         this.updateHiddenInput();
     }
 
-    public get selectedItem(): T | null {
-        if (this.selectedOptions.size === 0) return null;
-        return Array.from(this.selectedOptions.values())[0];
+    /** The first selected option (the only one in single-select), or null. */
+    public get selectedOption(): T | null {
+        if (this.selectedByValue.size === 0) return null;
+        return Array.from(this.selectedByValue.values())[0];
     }
 
-    /** The current search box text (empty string when nothing is typed). Read-only; clear it with `clearSearch()`. */
-    public get searchText(): string {
-        return this.searchTerm;
+    /** The current search box text (empty string when nothing is typed). Read-only; set it with `search(term)`, clear it with `clearSearch()`. */
+    public get searchTerm(): string {
+        return this.typedTerm;
     }
 
+    /** The selection as returned to forms/consumers — a scalar (or null) in single-select, an array in multi-select. */
     public get selectedValue(): string | number | (string | number)[] | null {
-        // Return null if no value configuration
-        if (!this.options.valueMember && !this.options.getValueCallback) {
-            return null;
-        }
-
-        if (this.selectedOptions.size === 0) {
+        if (this.selectedByValue.size === 0) {
             return this.options.isMultiple ? [] : null;
         }
 
-        const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
-
-        // Mode-dependent return
-        return this.options.isMultiple ? values : (values[0] ?? null);
-    }
-
-    public getValue(): string | number | (string | number)[] | null {
-        if (this.selectedOptions.size === 0) {
-            return this.options.isMultiple ? [] : null;
-        }
-
-        const values = Array.from(this.selectedOptions.values()).map(opt => this.getItemValue(opt));
+        const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
 
         // Single value in single-select, array in multi-select
         return this.options.isMultiple ? values : (values[0] ?? null);
@@ -5545,7 +5533,7 @@ export class MultiSelectEngine<T = any> {
             const removeBtn = badge.querySelector('.ms__badge-remove') as HTMLElement;
             if (!removeBtn) return;
             const value = removeBtn.dataset.value!;
-            const option = this.selectedOptions.get(value);
+            const option = this.selectedByValue.get(value);
             if (!option) return;
 
             const textId = `${idPrefix}${value}`;
@@ -5576,7 +5564,7 @@ export class MultiSelectEngine<T = any> {
             const removeBtn = moreBadge?.querySelector('.ms__badge-remove') as HTMLElement | null;
             if (removeBtn && removeBtn.dataset.msAction === 'remove-hidden') {
                 const maxVisible = this.options.maxVisibleBadgeCount || 3;
-                const hiddenCount = this.selectedOptions.size - maxVisible;
+                const hiddenCount = this.selectedByValue.size - maxVisible;
                 this.spawnTooltip({
                     id: 'more-badge-remove',
                     trigger: removeBtn,

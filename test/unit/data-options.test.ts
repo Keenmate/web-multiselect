@@ -40,8 +40,8 @@ describe('data-options — json (default format)', () => {
         await el.whenSettled();
         expect(placeholder()).toBe('Search...'); // options present
         el.setSelected(['js']);
-        expect(el.getValue()).toEqual(['js']);
-        expect(el.getSelected()[0].label).toBe('JavaScript');
+        expect(el.selectedValue).toEqual(['js']);
+        expect(el.selectedOptions[0].label).toBe('JavaScript');
     });
 
     it('falls back to an empty list (no throw) on invalid JSON', async () => {
@@ -57,7 +57,7 @@ describe('data-options — csv (first row header)', () => {
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['ts']);
-        expect(el.getSelected()[0].label).toBe('TypeScript');
+        expect(el.selectedOptions[0].label).toBe('TypeScript');
     });
 });
 
@@ -72,7 +72,7 @@ describe('data-options — custom delimiters', () => {
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['ts']);
-        expect(el.getSelected()[0].label).toBe('TypeScript');
+        expect(el.selectedOptions[0].label).toBe('TypeScript');
     });
 
     it('plain honours a pipe data-options-splitter', async () => {
@@ -80,7 +80,7 @@ describe('data-options — custom delimiters', () => {
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['banana']);
-        expect(el.getValue()).toEqual(['banana']);
+        expect(el.selectedValue).toEqual(['banana']);
     });
 });
 
@@ -90,7 +90,7 @@ describe('data-options — plain', () => {
         await el.whenSettled();
         expect(placeholder()).toBe('Search...');
         el.setSelected(['banana']);
-        expect(el.getValue()).toEqual(['banana']);
+        expect(el.selectedValue).toEqual(['banana']);
     });
 });
 
@@ -130,6 +130,6 @@ describe('data-options — reactivity', () => {
         await el.whenSettled();
         expect(el.options).toHaveLength(1);
         el.setSelected(['x']);
-        expect(el.getValue()).toEqual(['x']);
+        expect(el.selectedValue).toEqual(['x']);
     });
 });

@@ -279,8 +279,8 @@ Check component state:
 const select = document.querySelector('web-multiselect');
 
 console.log('Options:', select.options);
-console.log('Selected:', select.getSelected());
-console.log('Values:', select.getValue());
+console.log('Selected:', select.selectedOptions);
+console.log('Values:', select.selectedValue);
 console.log('Search term:', select.searchTerm);
 console.log('Multiple:', select.multiple);
 console.log('Dropdown open:', select.dropdownOpen);

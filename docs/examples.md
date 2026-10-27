@@ -1195,19 +1195,19 @@ select.getValueFormatCallback = ({ selectedValues }) => {
 // product_ids = "ID:123|ID:456|ID:789"
 ```
 
-### Using getValue() for JavaScript submissions
+### Using selectedValue for JavaScript submissions
 
-For JavaScript-based form submissions (AJAX, fetch), use `getValue()`:
+For JavaScript-based form submissions (AJAX, fetch), use `selectedValue`:
 
 ```javascript
 // Single-select mode
 const select = document.querySelector('web-multiselect[multiple="false"]');
-const selectedId = select.getValue();
+const selectedId = select.selectedValue;
 // Returns: "js" or null
 
 // Multi-select mode
 const multiSelect = document.querySelector('web-multiselect[multiple="true"]');
-const selectedIds = multiSelect.getValue();
+const selectedIds = multiSelect.selectedValue;
 // Returns: ["js", "ts", "py"] or []
 
 // Submit with fetch
@@ -1215,7 +1215,7 @@ const response = await fetch('/api/update', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    skills: multiSelect.getValue()
+    skills: multiSelect.selectedValue
   })
 });
 ```
@@ -1231,8 +1231,8 @@ select.options = [
   { value: 3, label: 'Option 3' }
 ];
 
-// getValue() preserves types
-const values = select.getValue();
+// selectedValue preserves types
+const values = select.selectedValue;
 // Returns: [1, 2, 3] (numbers, not strings)
 
 // FormData serialization

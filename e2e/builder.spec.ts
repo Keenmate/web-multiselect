@@ -60,7 +60,7 @@ test('builder add-new actually creates the option (callback is wired)', async ({
     await expect(demo.locator('.ms__add-new')).toContainText('hroch');
     await demo.locator('.ms__add-new').click();
 
-    expect(await demo.evaluate((el: any) => el.getValue())).toContain('hroch');
+    expect(await demo.evaluate((el: any) => el.selectedValue)).toContain('hroch');
     await expect(page.locator('#markup')).toContainText('beforeAddCallback');
 });
 

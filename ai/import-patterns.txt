@@ -324,7 +324,7 @@ declare global {
   interface HTMLElementTagNameMap {
     'web-multiselect': HTMLElement & {
       options: MultiSelectOption[];
-      getSelected(): MultiSelectOption[];
+      selectedOptions: MultiSelectOption[];
       // ... other properties
     };
   }
@@ -451,8 +451,8 @@ declare global {
     'web-multiselect': HTMLElement & {
       options: any[];
       multiple: boolean;
-      getSelected(): any[];
-      getValue(): any;
+      selectedOptions: any[];
+      selectedValue: any;
       setSelected(values: any[]): void;
       destroy(): void;
     };

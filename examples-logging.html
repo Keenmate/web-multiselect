@@ -171,7 +171,7 @@ ms.logging.setCategoryLevel('DATA', 'debug');
 ms.logging.disableLogging();        // silence everything (production default)
 
 // Fan out across instances
-for (const el of ms.getInstances()) console.log(el.id, el.getSelected());
+for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
 
 // Advanced: BlissElement also supports a per-instance override —
 // el.enableLogging('debug') makes ONE element verbose for a devtools overlay
@@ -299,7 +299,7 @@ for (const el of ms.getInstances()) console.log(el.id, el.getSelected());
             refreshRegistry();
         };
         window.logAllSelections = () => {
-            const rows = reg().getInstances().map((el) => ({ id: el.id, selected: el.getSelected().map((o) => o.name ?? o.value ?? o) }));
+            const rows = reg().getInstances().map((el) => ({ id: el.id, selected: el.selectedOptions.map((o) => o.name ?? o.value ?? o) }));
             console.log('%c🗂 selections across all live instances', 'color:#3b82f6;font-weight:bold;');
             console.table(rows);
         };

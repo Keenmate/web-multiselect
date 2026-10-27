@@ -49,7 +49,7 @@ test('object options work with no member configuration', async ({ page }) => {
 
     await p.locator('.ms__option[data-value="1"]').click();
     expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([1]);
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual([1]);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([1]);
 });
 
 test('single mode: selectedValue returns the default value member', async ({ page }) => {
@@ -92,7 +92,7 @@ test('primitive string options are their own value and label', async ({ page }) 
     await open(p);
     await expect(p.locator('.ms__option')).toHaveText(['Prague', 'Brno']);
     await p.locator('.ms__option[data-value="Brno"]').click();
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual(['Brno']);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['Brno']);
 });
 
 test('primitive number options are their own value and label', async ({ page }) => {
@@ -100,5 +100,5 @@ test('primitive number options are their own value and label', async ({ page }) 
     await open(p);
     await expect(p.locator('.ms__option')).toHaveText(['10', '20']);
     await p.locator('.ms__option[data-value="20"]').click();
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual([20]);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([20]);
 });

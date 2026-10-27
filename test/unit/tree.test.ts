@@ -114,7 +114,7 @@ describe('tree mode — selection', () => {
     it('cascade (default): clicking the only leaf rolls its subtree up to the parent', () => {
         const gala = rows().find(r => r.dataset.path === '1.1.1')!;
         (gala.querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toContain('apple');
+        expect(el.selectedValue).toContain('apple');
     });
 
     it('checkbox-mode="independent" selects the literal clicked node only', async () => {
@@ -122,8 +122,8 @@ describe('tree mode — selection', () => {
         await el.whenSettled();
         const gala = rows().find(r => r.dataset.path === '1.1.1')!;
         (gala.querySelector('.ms__option-content') as HTMLElement).click();
-        expect(el.getValue()).toContain('gala');
-        expect(el.getValue()).not.toContain('apple');
+        expect(el.selectedValue).toContain('gala');
+        expect(el.selectedValue).not.toContain('apple');
     });
 });
 
@@ -136,9 +136,9 @@ describe('tree cascade — the select / deselect veto runs on the toggled node',
         };
         await el.whenSettled();
         el.controller.toggleValue('fruit');
-        expect(el.getValue()).toEqual([]);
+        expect(el.selectedValue).toEqual([]);
         el.controller.toggleValue('veg');
-        expect(el.getValue()).toEqual(['veg']);
+        expect(el.selectedValue).toEqual(['veg']);
         expect(seen).toEqual(['fruit:option', 'veg:option']);
     });
 
@@ -147,9 +147,9 @@ describe('tree cascade — the select / deselect veto runs on the toggled node',
         el.beforeDeselectCallback = ({ option }: any) => { seen.push(option.value); return false; };
         await el.whenSettled();
         el.controller.toggleValue('apple');   // checks apple + gala
-        expect(el.getValue()).toEqual(['apple']);
+        expect(el.selectedValue).toEqual(['apple']);
         el.controller.toggleValue('apple');   // uncheck → vetoed
         expect(seen).toEqual(['apple']);
-        expect(el.getValue()).toEqual(['apple']);
+        expect(el.selectedValue).toEqual(['apple']);
     });
 });

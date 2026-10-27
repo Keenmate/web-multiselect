@@ -53,10 +53,10 @@ for (const id of ['tree-sel-member', 'tree-sel-cb']) {
             await openDropdown(p);
 
             await p.locator('.ms__option[data-path="1"]').click({ force: true });
-            expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+            expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
 
             await p.locator('.ms__option[data-path="1.1.1"]').click({ force: true });
-            expect(await p.evaluate((el: any) => el.getValue())).toContain('gala');
+            expect(await p.evaluate((el: any) => el.selectedValue)).toContain('gala');
         });
 
         test('keyboard focus skips non-selectable branches', async ({ page }) => {

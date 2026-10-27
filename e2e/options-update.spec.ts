@@ -49,14 +49,14 @@ test.describe('in-place options update keeps the dropdown open', () => {
         await optionByValue(p, 'fruit-1').click();
         await expect(p.locator('.ms__dropdown')).toBeVisible();
 
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['fruit-0', 'fruit-1']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['fruit-0', 'fruit-1']);
     });
 
     test('replacing options while open preserves the live selection and the open state', async ({ page }) => {
         const p = picker(page, 'dm');
         await openDropdown(p);
         await optionByValue(p, 'apple').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['apple']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
 
         // Hand a brand-new array (new identity, equivalent content) — the in-place path.
         await p.evaluate((el: any) => {
@@ -71,7 +71,7 @@ test.describe('in-place options update keeps the dropdown open', () => {
 
         await expect(p.locator('.ms__dropdown')).toBeVisible();
         await expect(optionByValue(p, 'elderberry')).toBeVisible();      // new item rendered
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['apple']); // selection survived
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']); // selection survived
         await expect(optionByValue(p, 'apple')).toHaveClass(/ms__option--selected/);
     });
 });
@@ -137,7 +137,7 @@ test.describe('stale-selection policy when the option set is replaced', () => {
         const p = picker(page, 'churn'); // no prune-missing-selection attribute
         await openDropdown(p);
         await optionByValue(p, 'fruit-2').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['fruit-2']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['fruit-2']);
 
         // Replace with a list that no longer contains fruit-2.
         await p.evaluate((el: any) => {
@@ -145,7 +145,7 @@ test.describe('stale-selection policy when the option set is replaced', () => {
         });
 
         // Kept: still reported by getValue even though it's no longer an option.
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['fruit-2']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['fruit-2']);
         await expect(p.locator('.ms__badge-text')).toContainText('FRUIT 002');
     });
 
@@ -153,7 +153,7 @@ test.describe('stale-selection policy when the option set is replaced', () => {
         const p = picker(page, 'prune');
         await openDropdown(p);
         await optionByValue(p, 'fruit-2').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['fruit-2']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['fruit-2']);
 
         const events = await p.evaluate(async (el: any) => {
             const seen: string[] = [];
@@ -162,7 +162,7 @@ test.describe('stale-selection policy when the option set is replaced', () => {
             }
             el.options = (window as any).makeItems(8, 'fruit').filter((o: any) => o.value !== 'fruit-2');
             await new Promise((r) => requestAnimationFrame(r));
-            return { seen, value: el.getValue() };
+            return { seen, value: el.selectedValue };
         });
 
         // Dropped from the selection, and no event fired (data-driven correction).
@@ -177,7 +177,7 @@ test.describe('stale-selection policy when the option set is replaced', () => {
         await p.evaluate((el: any) => {
             el.options = (window as any).makeItems(8, 'fruit').filter((o: any) => o.value !== 'fruit-2');
         });
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['fruit-3']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['fruit-3']);
     });
 });
 
@@ -209,7 +209,7 @@ test.describe('5000-option performance / in-place proof', () => {
 
         // Select one item so we can prove the selection survives the churn.
         await optionByValue(p, 'big-0').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['big-0']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['big-0']);
 
         // Churn: hand a fresh 5000-item array 20× (what a re-rendering parent does). Pre-fix
         // each assignment was a full teardown+rebuild; now it's an in-place update.
@@ -218,7 +218,7 @@ test.describe('5000-option performance / in-place proof', () => {
             const t0 = performance.now();
             for (let i = 0; i < 20; i++) {
                 el.options = make(5000, 'big');
-                el.getSelected(); // force the coalesced update to flush synchronously
+                el.selectedOptions; // force the coalesced update to flush synchronously
             }
             return performance.now() - t0;
         });
@@ -227,7 +227,7 @@ test.describe('5000-option performance / in-place proof', () => {
         // selection is intact. (A reinit would have closed it and reset scroll.)
         await expect(p.locator('.ms__dropdown')).toBeVisible();
         await expect(p.locator('.ms__dropdown--virtual')).toHaveCount(1);
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['big-0']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['big-0']);
 
         // Generous ceiling — 20 in-place updates of 5000 items should be well under this;
         // a per-update full rebuild (Floating-UI re-anchor + fresh VirtualScroll) would blow it.

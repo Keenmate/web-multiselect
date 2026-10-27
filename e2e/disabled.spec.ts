@@ -28,7 +28,7 @@ test('clicking a disabled option does not select it', async ({ page }) => {
     await openDropdown(p);
 
     await p.locator('.ms__option[data-value="banana"]').click({ force: true });
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
 });
 
 test('Enter on disabled focused option does not select', async ({ page }) => {
@@ -41,7 +41,7 @@ test('Enter on disabled focused option does not select', async ({ page }) => {
     await page.keyboard.press('Enter');
 
     // Banana is disabled — nothing selected.
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual([]);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
 });
 
 test('a disabled CHECKED option keeps the accent fill (the tick stays visible)', async ({ page }) => {

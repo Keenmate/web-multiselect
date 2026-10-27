@@ -101,9 +101,7 @@ export interface MessageOptions {
 export interface MultiSelectLabels {
     /** Popover / fullscreen close button. Default: `Close`. */
     close?: string;
-    /** Inline ✕ clear-all button (`show-clear`). Default: `Clear selection`. */
-    clearSelection?: string;
-    /** Count-mode clear (×) button. Default: `Clear all selections`. */
+    /** Inline ✕ clear button (`show-clear`) and the count-mode clear (×) button. Default: `Clear all selections`. */
     clearAllSelections?: string;
     /** Fullscreen search clear (✕). Default: `Clear search`. */
     clearSearch?: string;
@@ -123,8 +121,8 @@ export interface MultiSelectLabels {
     nextMatch?: string;
     /** Text of the built-in `select-all` action button. Default: `Select all`. */
     selectAll?: string;
-    /** Text of the built-in `clear-all` action button. Default: `Clear all`. */
-    clearAll?: string;
+    /** Text of the built-in `clear-selection` action button. Default: `Clear all`. */
+    clearSelection?: string;
 }
 
 /**
@@ -283,10 +281,10 @@ export interface MultiSelectSearchContext<T = any> extends SearchCallbackContext
  * Which gesture is about to change the selection — `source` on {@link BeforeSelectContext}.
  * `option` = a dropdown row (click, Enter, Tab, `controller.toggleValue` …); `badge` = a badge /
  * popover remove (×) or the "+N more" remove; `group` = a group-header checkbox; `select-all` /
- * `clear-all` = those built-in actions (and `controller.selectAll()` / `clearAll()`); `clear` =
+ * `clear-selection` = those built-in actions (and `controller.selectAll()` / `clearSelection()`); `clear` =
  * the inline ✕ or the count badge's ×.
  */
-export type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-all' | 'clear';
+export type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-selection' | 'clear';
 
 /**
  * `ctx` of `beforeSelectCallback` / `beforeDeselectCallback`. Called once per option, also
@@ -312,12 +310,16 @@ export type BeforeDeselectContext<T = any> = BeforeSelectContext<T>;
  */
 export interface MultiSelectController<T = any> {
     // ── read current state ───────────────────────────────────────────────
-    /** The selected option objects, in selection order (mirrors `el.getSelected()`). */
-    getSelected(): T[];
-    /** The selection as returned to forms/consumers — scalar or array per `multiple` (mirrors `el.getValue()`). */
-    getValue(): string | number | (string | number)[] | null;
+    /** The selected option objects, in selection order (same as `el.selectedOptions`). */
+    readonly selectedOptions: T[];
+    /** The first selected option (the only one in single-select), or null (same as `el.selectedOption`). */
+    readonly selectedOption: T | null;
+    /** The selection as returned to forms/consumers — scalar or array per `multiple` (same as `el.selectedValue`). */
+    readonly selectedValue: string | number | (string | number)[] | null;
     /** All available options (post assignment, pre-filter). */
-    getOptions(): ReadonlyArray<T>;
+    readonly options: ReadonlyArray<T>;
+    /** The current search box text (same as `el.searchTerm`). */
+    readonly searchTerm: string;
     /** Whether the dropdown is open. */
     readonly isOpen: boolean;
 
@@ -326,8 +328,8 @@ export interface MultiSelectController<T = any> {
     setSelected(values: (string | number)[], opts?: { notify?: boolean }): void;
     /** Select every selectable visible option (like the `select-all` action; vetoes apply per option). */
     selectAll(): void;
-    /** Clear the whole selection (like the `clear-all` action; vetoes apply per option). */
-    clearAll(): void;
+    /** Clear the whole selection (like the `clear-selection` action; vetoes apply per option). */
+    clearSelection(): void;
     /** Toggle a single option by its value (select ⇄ deselect). */
     toggleValue(value: string | number): void;
     /** Select a specific option by its value (no-op if already selected). */
@@ -427,7 +429,7 @@ export interface ActionContext<T = any> extends MultiSelectContext<T> {
 }
 
 /** The built-in action names. */
-export type MultiSelectAction = 'select-all' | 'clear-all';
+export type MultiSelectAction = 'select-all' | 'clear-selection';
 
 /**
  * One action button (core `ActionItem`): a built-in (`{ action: 'select-all' }`, or the string
@@ -488,7 +490,7 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Order of the CURRENTLY-SELECTED items *where they are displayed* — badges, partial mode
      * (i.e. which items sit behind the "+N more" badge), and the selected-items popover. This is a
-     * display concern only: `getValue()`, the form output, and `getSelected()` always keep
+     * display concern only: `selectedValue`, the form output, and `selectedOptions` always keep
      * as-selected (insertion) order regardless of this setting, and the options dropdown is never
      * reordered.
      * - `as-selected` (default) — the order items were picked.
@@ -634,7 +636,7 @@ export interface MultiSelectConfig<T = any> {
      * - `none` (default) — group headers are inert labels.
      * - `cascade` — each header shows a **tristate** checkbox that checks/unchecks
      *   all of that group's currently-visible members. The group itself is never a
-     *   selected value (`getValue()`/badges/form carry member values only); a
+     *   selected value (`selectedValue`/badges/form carry member values only); a
      *   partially-selected group reads indeterminate. Flat + multiple only — no
      *   effect in tree mode (use `checkboxMode`) or single-select.
      */
@@ -716,7 +718,7 @@ export interface MultiSelectConfig<T = any> {
     isGroupsAllowed?: boolean;
     /**
      * Action buttons (core `ActionItem`s): built-ins as strings or items
-     * (`['select-all', 'clear-all']`, `{ action: 'select-all', text: 'All' }`) and custom items
+     * (`['select-all', 'clear-selection']`, `{ action: 'select-all', text: 'All' }`) and custom items
      * (`{ id: 'export', text: 'Export', onClick: (d) => … }`). None when unset.
      */
     actionButtons?: (MultiSelectAction | MultiSelectActionItem<T>)[];
@@ -740,7 +742,7 @@ export interface MultiSelectConfig<T = any> {
      * their option leaves the list, which is the safe default for search/paged lists where an
      * item can drop out of the current page yet remain a valid pick. Turn on when the list
      * replacement means the domain itself changed (e.g. an item was deleted server-side) and a
-     * value with no matching option should stop being reported by `getValue()` (internal:
+     * value with no matching option should stop being reported by `selectedValue` (internal:
      * shouldPruneMissingSelection).
      */
     shouldPruneMissingSelection?: boolean;

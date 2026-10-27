@@ -15,15 +15,15 @@ in `init()` (line 241), runs synchronously at construction, and only populates
 moment. `selectedValues` does get populated (orphaned from the matching
 option object).
 
-**Severity:** Higher than initially noted. `getValue()` (`multiselect.ts:2014`)
+**Severity:** Higher than initially noted. `selectedValue` (`multiselect.ts:2014`)
 reads from `selectedOptions`, not `selectedValues`. So when options arrive
-late, `getValue()` returns `[]` even though `selectedValues` contains the
+late, `selectedValue` returns `[]` even though `selectedValues` contains the
 initial-values entries. The public API reports no selection — the feature is
 broken end-to-end, not just the popover body.
 
 **Symptom I hit:**
 - `<web-multiselect initial-values='["banana"]'>` + JS-assigned options
-  later → `el.getValue()` returns `[]`
+  later → `el.selectedValue` returns `[]`
 - Count badge reads `selectedValues.size` so it shows phantom "1 selected"
 - Selected-items popover header reads `selectedValues.size` ("Selected Items (1)")
   but body is empty (reads from `selectedOptions`)

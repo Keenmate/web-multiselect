@@ -134,7 +134,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'badgesPosition',          attribute: 'badges-position',             converter: toEnum(['top', 'bottom', 'left', 'right'] as const, { default: 'bottom' }), on: 'update', description: 'Where the badges/selection appear relative to the input.' },
   { configKey: 'badgesThresholdMode',     attribute: 'badges-threshold-mode',       converter: toEnum(['count', 'partial'] as const, { default: 'count' }), on: 'update', description: 'How `badgesThreshold` is interpreted: collapse to a count badge, or keep partial badges + a "more" badge.' },
   { configKey: 'selectedOrder',           attribute: 'selected-order',              converter: toEnum(['as-selected', 'label-asc', 'label-desc', 'member', 'custom'] as const, { default: 'as-selected' }), shouldReflect: true, on: 'update',
-    description: `Order of the CURRENTLY-SELECTED items where they are displayed — badges, partial mode (which items sit behind the "+N more" badge), and the selected-items popover. Display only: \`getValue()\`, the form output, and \`getSelected()\` keep as-selected (insertion) order, and the options dropdown is never reordered.
+    description: `Order of the CURRENTLY-SELECTED items where they are displayed — badges, partial mode (which items sit behind the "+N more" badge), and the selected-items popover. Display only: \`selectedValue\`, the form output, and \`selectedOptions\` keep as-selected (insertion) order, and the options dropdown is never reordered.
 - \`as-selected\` (default) — the order items were picked.
 - \`label-asc\` / \`label-desc\` — by the badge label, A→Z / Z→A (locale-aware).
 - \`member\` — by the \`selected-order-member\` property (or \`getSelectedOrderCallback\`); numeric keys sort numerically, everything else with a locale string compare.
@@ -202,13 +202,13 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
 
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
-  { configKey: 'shouldPruneMissingSelection', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `getValue()`. The prune is silent (no select/deselect/change).' },
+  { configKey: 'shouldPruneMissingSelection', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `selectedValue`. The prune is silent (no select/deselect/change).' },
   { configKey: 'optionsSource', attribute: 'data-options',                            converter: toText({ isNullable: true }), on: 'reinit', type: 'string', description: 'HTML-authoring source for the option list, parsed per `data-options-format`. Reactive: changing either attribute re-renders. Prefer the `options` property in JS; a set `options` property and declarative <option> children both win over this.' },
   { configKey: 'optionsFormat', attribute: 'data-options-format',                     converter: toEnum(OPTIONS_FORMATS, { default: 'json' }), on: 'reinit', type: "'json' | 'csv' | 'plain'", description: 'How to parse the `data-options` attribute: `json` (a JSON array of objects or [value, label] tuples), `csv` (rows split on `data-options-row-splitter`, cells on `data-options-splitter`; the first row is a header — map columns via *-member), or `plain` (bare values split on both splitters -> [value, label] tuples, value === label). Default `json`.' },
   { configKey: 'optionsSplitter', attribute: 'data-options-splitter',                 converter: toText({ default: ',' }), on: 'reinit', type: 'string', description: 'Field/cell delimiter for the `csv` and `plain` `data-options` formats. Default `,`. Escapes `\\t` `\\n` `\\r` are honoured (e.g. `data-options-splitter="\\t"` for TSV). Ignored for `json`.' },
   { configKey: 'optionsRowSplitter', attribute: 'data-options-row-splitter',          converter: toText({ default: '\n' }), on: 'reinit', type: 'string', description: 'Row/record delimiter for the `csv` and `plain` `data-options` formats. Default newline. Escapes honoured (e.g. `data-options-row-splitter=";"` for single-line data). Ignored for `json`.' },
-  { configKey: 'actionButtons',                                                      converter: toValue({ validate: (v): v is unknown[] => Array.isArray(v) }), on: 'reinit', type: "Array<'select-all' | 'clear-all' | MultiSelectActionItem>", description: 'Action buttons (core action items) in the dropdown header/footer: built-ins as strings or items (`[\'select-all\', \'clear-all\']`) and custom items (`{ id, text, icon, onClick }`). Each activation fires the `action` event. Property-only; none when unset.' },
-  { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearSelection`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`, `selectAll`, `clearAll`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
+  { configKey: 'actionButtons',                                                      converter: toValue({ validate: (v): v is unknown[] => Array.isArray(v) }), on: 'reinit', type: "Array<'select-all' | 'clear-selection' | MultiSelectActionItem>", description: 'Action buttons (core action items) in the dropdown header/footer: built-ins as strings or items (`[\'select-all\', \'clear-all\']`) and custom items (`{ id, text, icon, onClick }`). Each activation fires the `action` event. Property-only; none when unset.' },
+  { configKey: 'labels',                                                             converter: toValue({ validate: (v): v is Record<string, string> => typeof v === 'object' && v !== null && !Array.isArray(v) }), on: 'update', type: 'MultiSelectLabels', description: 'i18n map of ARIA labels / short UI strings (`close`, `clearAllSelections`, `clearSearch`, `showFullLabel`, `removeItem`, `removeHiddenItems`, `groupSelectedLabel`, `andMore`, `prevMatch`, `nextMatch`, `selectAll`, `clearSelection`). Property-only; partial — any unset key falls back to its English default. `{item}` and `{count}` placeholders are interpolated. These are mostly screen-reader strings; visible text (placeholder, empty/loading message, counter, popover title) has its own options.' },
 
   // ── Callbacks: data shape (structural → reinit). Every callback takes ONE ctx ─
   { configKey: 'getValueCallback',        converter: cb(), on: 'reinit', type: '(ctx: ItemContext) => string | number', description: 'Extract an option value from `ctx.item` (overrides valueMember).' },
@@ -270,7 +270,7 @@ const EVENTS = [
   { name: 'deselect', description: 'An option was removed from the selection. `detail.option` is that option. Twin: `onDeselect(detail)`.' },
   { name: 'change', description: 'The selection changed. `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onChange(detail)`.' },
   { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `beforeAddCallback` returned one. Twin: `onAdd(detail)`.' },
-  { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-all` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick` and the built-in behaviour (the selection snapshot is the state after it). Twin: `onAction(detail)`.' },
+  { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-selection` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick` and the built-in behaviour (the selection snapshot is the state after it). Twin: `onAction(detail)`.' },
   { name: 'ready', description: 'The picker was built for the first time (once per element lifetime; core `BlissElement`). Fires right after the first build — during upgrade for a normal element, or when the `defer` gate is released (`el.release()` / removing `defer`). The host then also has the `ready` attribute and matches `:state(ready)`; `el.whenReady()` resolves. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
 ] as const;
 
@@ -638,7 +638,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   }
 
   #collectSelectedValues(): (string | number)[] {
-    const val = this.#picker?.getValue();
+    const val = this.#picker?.selectedValue;
     if (val == null) return [];
     return Array.isArray(val) ? val : [val];
   }
@@ -770,19 +770,22 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   // ── non-input public API ──────────────────────────────────────────────────
 
+  /** The selection — a scalar (or null) in single-select, an array in multi-select. Same as `controller.selectedValue`. */
   get selectedValue(): string | number | (string | number)[] | null {
     this.flush(); // apply a pending `options = …` before reading live picker state
     return this.#picker?.selectedValue ?? null;
   }
 
-  get selectedItem(): T | null {
+  /** The first selected option (the only one in single-select), or null. Same as `controller.selectedOption`. */
+  get selectedOption(): T | null {
     this.flush();
-    return this.#picker?.selectedItem ?? null;
+    return this.#picker?.selectedOption ?? null;
   }
 
-  getSelected(): T[] {
+  /** The selected option objects, in selection order. Same as `controller.selectedOptions`. */
+  get selectedOptions(): T[] {
     this.flush();
-    return this.#picker ? this.#picker.getSelected() : [];
+    return this.#picker ? this.#picker.selectedOptions : [];
   }
 
   setSelected(values: (string | number)[], opts: { notify?: boolean } = {}): void {
@@ -791,11 +794,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // or the picker would still hold the pre-write options (count/options mismatch).
     this.flush();
     this.#picker?.setSelected(values, opts);
-  }
-
-  getValue(): string | number | (string | number)[] | null {
-    this.flush();
-    return this.#picker ? this.#picker.getValue() : null;
   }
 
   /**
@@ -832,7 +830,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   /**
    * Clear the search box and restore the full option list (does not touch the selection — use
-   * {@link clearAll} for that). Pair with {@link scrollToValue} to reveal then scroll to an option
+   * `controller.clearSelection()` for that). Pair with {@link scrollToValue} to reveal then scroll to an option
    * a search had filtered out: `el.clearSearch(); el.scrollToValue(v)`.
    */
   clearSearch(): void {
@@ -840,10 +838,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker?.clearSearch();
   }
 
-  /** The current search box text (empty string when nothing is typed). Read via this getter, write with {@link search}. */
-  get searchText(): string {
+  /** The current search box text (empty string when nothing is typed). Read via this getter, write with {@link search}. Same as `controller.searchTerm`. */
+  get searchTerm(): string {
     this.flush();
-    return this.#picker?.searchText ?? '';
+    return this.#picker?.searchTerm ?? '';
   }
 
   /**
@@ -935,13 +933,15 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     const call = <K extends keyof MultiSelectController<T>>(name: K) =>
       ((...args: unknown[]) => (engine()?.[name] as ((...a: unknown[]) => unknown) | undefined)?.(...args)) as MultiSelectController<T>[K];
     return {
-      getSelected: () => engine()?.getSelected() ?? [],
-      getValue: () => engine()?.getValue() ?? null,
-      getOptions: () => engine()?.getOptions() ?? [],
+      get selectedOptions() { return engine()?.selectedOptions ?? []; },
+      get selectedOption() { return engine()?.selectedOption ?? null; },
+      get selectedValue() { return engine()?.selectedValue ?? null; },
+      get options() { return engine()?.options ?? []; },
+      get searchTerm() { return engine()?.searchTerm ?? ''; },
       get isOpen() { return engine()?.isOpen ?? false; },
       setSelected: call('setSelected'),
       selectAll: call('selectAll'),
-      clearAll: call('clearAll'),
+      clearSelection: call('clearSelection'),
       toggleValue: call('toggleValue'),
       selectValue: call('selectValue'),
       deselectValue: call('deselectValue'),

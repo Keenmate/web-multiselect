@@ -56,16 +56,16 @@ describe('flat-group cascade — group-select-mode="cascade"', () => {
 
     it('clicking the header selects all members; the group name is not emitted', () => {
         groupLabel('Fruits')!.click();
-        expect((el.getValue() as string[]).sort()).toEqual(['a1', 'a2', 'a3']);
+        expect((el.selectedValue as string[]).sort()).toEqual(['a1', 'a2', 'a3']);
         // Vegetables untouched.
         expect(groupBox('Vegetables')!.checked).toBe(false);
     });
 
     it('clicking a fully-checked header clears the group', () => {
         groupLabel('Fruits')!.click();
-        expect((el.getValue() as string[]).length).toBe(3);
+        expect((el.selectedValue as string[]).length).toBe(3);
         groupLabel('Fruits')!.click();
-        expect(el.getValue()).toEqual([]);
+        expect(el.selectedValue).toEqual([]);
     });
 });
 

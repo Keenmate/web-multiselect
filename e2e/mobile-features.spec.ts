@@ -17,7 +17,7 @@ const PHONE_PORTRAIT = { width: 412, height: 915 };
 
 const picker = (page: Page, id: string) => page.locator(`#${id}`);
 const fullscreen = (p: Locator) => p.locator('.ms__dropdown--fullscreen');
-const val = (p: Locator) => p.evaluate((el: any) => el.getValue());
+const val = (p: Locator) => p.evaluate((el: any) => el.selectedValue);
 
 // Force the fullscreen overlay and open it. groups.html carries no `width=device-width`
 // viewport meta, so `auto` detection can't rely on the phone viewport here — `fullscreen`

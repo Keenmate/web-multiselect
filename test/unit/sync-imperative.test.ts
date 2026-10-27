@@ -39,7 +39,7 @@ describe('synchronous imperative API after a property write', () => {
         mount();
         el.options = ITEMS;
         el.setSelected(['js', 'ts', 'py']); // no await — must not throw
-        expect(el.getSelected().map((o: any) => o.value)).toEqual(['js', 'ts', 'py']);
+        expect(el.selectedOptions.map((o: any) => o.value)).toEqual(['js', 'ts', 'py']);
     });
 
     it('compact mode renders the picked option, not undefined (the original crash)', () => {
@@ -69,6 +69,6 @@ describe('synchronous imperative API after a property write', () => {
         mount();
         el.options = ITEMS;
         el.setSelected(['py']);
-        expect(el.getValue()).toEqual(['py']);
+        expect(el.selectedValue).toEqual(['py']);
     });
 });

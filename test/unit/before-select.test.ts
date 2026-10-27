@@ -39,7 +39,7 @@ function toggle(item: Item): void {
 }
 
 function selectedValues(): string[] {
-    return instance!.getSelected().map(o => o.value);
+    return instance!.selectedOptions.map(o => o.value);
 }
 
 beforeEach(() => {
@@ -214,17 +214,17 @@ describe('bulk gestures go through the per-option veto', () => {
         expect(changes.length).toBe(1);
     });
 
-    it('clear-all keeps vetoed options', () => {
-        make({ beforeDeselectCallback: ({ option, source }) => (option.value === 'item1' && source === 'clear-all' ? false : undefined) });
+    it('clear-selection keeps vetoed options', () => {
+        make({ beforeDeselectCallback: ({ option, source }) => (option.value === 'item1' && source === 'clear-selection' ? false : undefined) });
         instance!.setSelected(['item1', 'item2', 'item3']);
-        instance!.getController().clearAll();
+        instance!.getController().clearSelection();
         expect(selectedValues()).toEqual(['item1']);
     });
 
-    it('the programmatic clearAll() (form reset) bypasses the veto', () => {
+    it('the programmatic clearSelection() (form reset) bypasses the veto', () => {
         make({ beforeDeselectCallback: () => false });
         instance!.setSelected(['item1']);
-        instance!.clearAll();
+        instance!.clearSelection();
         expect(selectedValues()).toEqual([]);
     });
 });

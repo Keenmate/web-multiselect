@@ -166,7 +166,7 @@ test.describe('badge interaction', () => {
 
         const remaining = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
         await expect(remaining).toHaveCount(1);
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['cherry']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['cherry']);
     });
 
     test('clicking the count badge opens the selected-items popover', async ({ page }) => {
@@ -230,7 +230,7 @@ test.describe('selected-order', () => {
         await selectAllPriced(p);
         await closeDropdown(page, p);
         // Badges are Apricot, Mango, Plum — but getValue stays insertion order.
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['m', 'a', 'p']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['m', 'a', 'p']);
     });
 
     test('partial "+N more" hides the items sorted AFTER the visible slice, and its X removes exactly those', async ({ page }) => {
@@ -245,6 +245,6 @@ test.describe('selected-order', () => {
 
         // The X on the more-badge removes the two hidden (higher-priced) items only.
         await moreBadge.locator('.ms__badge-remove').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['a']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['a']);
     });
 });

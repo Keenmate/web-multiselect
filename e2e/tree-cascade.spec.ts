@@ -20,7 +20,7 @@ async function openDropdown(p: Locator): Promise<void> {
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__dropdown')).toBeVisible();
 }
-const val = (p: Locator) => p.evaluate((el: any) => el.getValue());
+const val = (p: Locator) => p.evaluate((el: any) => el.selectedValue);
 const optAt = (p: Locator, path: string) => p.locator(`.ms__option[data-path="${path}"]`);
 
 test.beforeEach(async ({ page }) => {

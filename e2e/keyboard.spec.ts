@@ -112,7 +112,7 @@ test.describe('Enter / Escape', () => {
         await page.keyboard.press('ArrowDown');
         await page.keyboard.press('Enter');
 
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['item-0']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['item-0']);
     });
 
     test('Escape with non-empty search clears search', async ({ page }) => {
@@ -241,12 +241,12 @@ test.describe('beforeKeydownCallback — consumer keyboard hook', () => {
         // Pre-select one so a toggle would DEselect it — selectValue must not.
         await page.keyboard.press('ArrowDown');
         await page.keyboard.press('Enter');
-        expect(await p.evaluate((el: any) => el.getValue().length)).toBe(1);
+        expect(await p.evaluate((el: any) => el.selectedValue.length)).toBe(1);
 
         await page.keyboard.press('Control+a');
-        expect(await p.evaluate((el: any) => el.getValue().length)).toBe(total);
+        expect(await p.evaluate((el: any) => el.selectedValue.length)).toBe(total);
         // Pressing it again keeps them all selected (idempotent), not inverted.
         await page.keyboard.press('Control+a');
-        expect(await p.evaluate((el: any) => el.getValue().length)).toBe(total);
+        expect(await p.evaluate((el: any) => el.selectedValue.length)).toBe(total);
     });
 });

@@ -35,10 +35,10 @@ test('options take their value and label from the <option> children', async ({ p
 
 test('`selected` pre-picks; optgroup, data-icon, data-subtitle and disabled are read', async ({ page }) => {
     const single = picker(page, 'single');
-    expect(await single.evaluate((el: any) => el.getValue())).toBe('maybe');
+    expect(await single.evaluate((el: any) => el.selectedValue)).toBe('maybe');
 
     const p = picker(page, 'grouped');
-    expect(await p.evaluate((el: any) => el.getValue())).toEqual(['apple']);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
     await expect(p.locator('.ms__badge-text')).toHaveText(['Apple']);
     await openDropdown(p);
     await expect(p.locator('.ms__option-title')).toHaveText(['Apple', 'Banana', 'Carrot']);

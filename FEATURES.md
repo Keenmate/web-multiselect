@@ -94,10 +94,10 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Max visible badges (partial) | attr/prop | `max-visible-badge-count` / `maxVisibleBadgeCount` | — | Limit before "+X more" badge | | |
 | In-input counter badge | attr/prop | `show-counter` / `isCounterShown` | `bool(false)` | `[3]` next to toggle | | |
 | Counter text callback (i18n) | callback | `getCounterCallback({ count, moreCount })` | — | Pluralization / "+X more" text | | |
-| Read selected options | method | `getSelected()` | — | Returns option objects | | |
-| Read selected value(s) | method | `getValue()` | — | Single value or array | | |
+| Read selected options | method | `selectedOptions` | — | Returns option objects | | |
+| Read selected value(s) | method | `selectedValue` | — | Single value or array | | |
 | Read selectedValue (single) | prop (get) | `selectedValue` | — | string \| number \| array \| null | | |
-| Read selectedItem (single) | prop (get) | `selectedItem` | — | First selected object | | |
+| Read selectedOption (single) | prop (get) | `selectedOption` | — | First selected object | | |
 | Set selection programmatically | method | `setSelected(values[])` | — | By value/ID | | |
 | Selected-items popover | behavior | "show selected" overflow popover | — | Opens a floating list of all selected when badges overflow / in `count`/`compact` modes | | |
 
@@ -134,7 +134,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Action buttons config | prop | `actionButtons: (MultiSelectActionItem \| 'select-all' \| 'clear-all')[]` | — (none render when unset) | Built-ins `{ action: 'select-all' \| 'clear-all' }` or the string shorthand; custom items `{ id, text, onClick }` | | |
+| Action buttons config | prop | `actionButtons: (MultiSelectActionItem \| 'select-all' \| 'clear-selection')[]` | — (none render when unset) | Built-ins `{ action: 'select-all' \| 'clear-selection' }` or the string shorthand; custom items `{ id, text, onClick }` | | |
 | Action item fields | prop | `text`, `icon`, `tooltip`, `cssClass`, `row`, `isVisible`, `isDisabled`, `isDanger`, `isToggled` | — | Text and icon are inserted as text (not HTML); `isToggled` → `aria-pressed` | | |
 | Action onClick | callback | `MultiSelectActionItem.onClick(detail)` | — | The `action` detail (`controller`, `action`, `id`, `selectedCount`, …); runs for built-ins too, before the built-in | | |
 | Dynamic visibility | callback | `MultiSelectActionItem.getIsVisibleCallback(ctx)` | — | Overrides static `isVisible` | | |
@@ -215,10 +215,10 @@ their return value *is* consumed: `false` cancels, nothing continues.
 | Feature | Surface | Identifier | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|
 | Batch attribute update | method | `setAttributes(attrs)` | One in-place render for many attrs; `null`/`false` removes, `true` → `""` | | |
-| Get selected options | method | `getSelected()` | | | |
+| Get selected options | method | `selectedOptions` | | | |
 | Set selected | method | `setSelected(values[])` | | | |
-| Get value | method | `getValue()` | | | |
-| Public controller | prop | `el.controller` (also `ctx.controller` / `detail.controller`) | `MultiSelectController`: `selectAll`, `clearAll`, `toggleValue`, `selectValue`, `deselectValue`, `open`/`close`, `search`, `focusNext`…, `scrollTo*`, `refresh`, `showMessage(content, { type, autoHideMs, placement })` | | |
+| Get value | method | `selectedValue` | | | |
+| Public controller | prop | `el.controller` (also `ctx.controller` / `detail.controller`) | `MultiSelectController`: `selectAll`, `clearSelection`, `toggleValue`, `selectValue`, `deselectValue`, `open`/`close`, `search`, `focusNext`…, `scrollTo*`, `refresh`, `showMessage(content, { type, autoHideMs, placement })` | | |
 | Destroy | method | `destroy()` | Cleanup / teardown | | |
 | Defer first render | attr | `defer` | Present = build nothing on upgrade (reserve space only); wire options/callbacks/listeners first, then release. Closes the upgrade-then-restyle flash | | ✓ `defer-gate` |
 | Release the render gate | method | `release()` | Build once with everything in place; latched (never re-closes). Removing the `defer` attribute releases it too (server-driven) | | ✓ `defer-gate` |

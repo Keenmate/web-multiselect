@@ -127,7 +127,7 @@ multiselect.addEventListener('change', (e) => {
 });
 
 // Public API
-const selected = multiselect.getSelected();
+const selected = multiselect.selectedOptions;
 multiselect.setSelected(['js', 'ts']);
 ```
 
@@ -158,7 +158,7 @@ multiselect.setSelected(['js', 'ts']);
 | `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
 | `badge-height` | `number` | `36` | Fixed badge height in px used for layout/virtualization |
 | `show-badge-full-title` | `boolean` | `false` | Show the full title (`full-title-member` / `getFullTitleCallback`) on badges instead of the short label |
-| `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `getValue()`, `getSelected()` and form output keep pick order; the dropdown is never reordered |
+| `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `selectedValue`, `selectedOptions` and form output keep pick order; the dropdown is never reordered |
 | `selected-order-member` | `string` | - | Property used as the sort key when `selected-order="member"`. Numeric keys sort numerically. Overridden by `getSelectedOrderCallback` |
 | `enable-selected-popover` | `boolean` | `true` | Allow the selected-items popover to open (from the count/compact/"+N more" badge or the in-input counter). Turn off when you render your own selection UI |
 | `selected-popover-title` | `string` | `'Selected Items ({count})'` | Header text of the selected-items popover. `{count}` is replaced with the selection count |
@@ -337,7 +337,7 @@ search-engine index on it. Internal search needs a string: an object search valu
 // Return false to block; return nothing to allow. May be async. No event fires on a veto.
 // To explain a veto, show a message yourself via ctx.controller.showMessage() — a
 // returned string no longer vetoes. `ctx.source` is the gesture ('option', 'badge',
-// 'group', 'select-all', 'clear-all', 'clear'): bulk gestures (Select-All, Clear-All, a
+// 'group', 'select-all', 'clear-selection', 'clear'): bulk gestures (Select-All, Clear-All, a
 // group checkbox, …) run the veto per option and skip the vetoed ones.
 // Programmatic setSelected() and form reset bypass these.
 multiselect.beforeSelectCallback = ({ option, selectedOptions }) => {
@@ -403,7 +403,7 @@ multiselect.onAction = (detail) => {
 
 // Veto an action item (its onClick, the `action` event and the built-in behaviour)
 multiselect.beforeActionCallback = (detail) => {
-  if (detail.action === 'clear-all' && !confirm('Clear everything?')) return false;
+  if (detail.action === 'clear-selection' && !confirm('Clear everything?')) return false;
 };
 
 // Badge display customization (show different text in badges vs dropdown)
@@ -423,7 +423,7 @@ multiselect.getOptionTooltipCallback = ({ item }) => {
 };
 
 // Action buttons (core action items). None render unless you set actionButtons.
-// Built-ins: 'select-all', 'clear-all' (string shorthand or { action, … });
+// Built-ins: 'select-all', 'clear-selection' (string shorthand or { action, … });
 // custom items are identified by `id`. Every get*Callback receives ONE ctx — the
 // selection snapshot: selectedValues, selectedOptions, options, selectedCount,
 // optionCount, isOpen, searchTerm, presentation, controller and element (the host).
@@ -431,7 +431,7 @@ multiselect.getOptionTooltipCallback = ({ item }) => {
 // source, sourceEvent, triggerElement, dataset) and runs for built-ins too
 // (before the built-in; the `action` event fires after it). Text and icon are plain text (not HTML).
 // Optional `row` (1-based) stacks buttons into multiple rows.
-multiselect.actionButtons = ['select-all', 'clear-all']; // shorthand (text from labels.selectAll / labels.clearAll)
+multiselect.actionButtons = ['select-all', 'clear-selection']; // shorthand (text from labels.selectAll / labels.clearSelection)
 
 multiselect.actionButtons = [
   {
@@ -442,7 +442,7 @@ multiselect.actionButtons = [
     getIsVisibleCallback: (ctx) => ctx.selectedCount < 5  // Hide if 5+ selected
   },
   {
-    action: 'clear-all',
+    action: 'clear-selection',
     text: 'Clear All',
     icon: '✕',
     isDanger: true,   // destructive styling
@@ -565,7 +565,7 @@ multiselect.getValueFormatCallback = ({ selectedValues }) => selectedValues.join
 
 // Read-only properties
 const selectedValue = multiselect.selectedValue; // string | number | array | null
-const selectedItem = multiselect.selectedItem;   // First selected item object
+const selectedOption = multiselect.selectedOption;   // First selected item object
 
 // Add-new hook (requires allow-add-new). May be async. Return the new option
 // (appended + selected, `add` event carries it), `false` to cancel (no add, no
@@ -613,15 +613,15 @@ await el.whenSettled();      // wait for the pending re-render
 console.log(el.shadowRoot.querySelectorAll('.ms__option').length);
 ```
 
-You do **not** need to await between a property write and an imperative method — `getSelected()` / `setSelected()` / `getValue()` / `selectedValue` / `selectedItem` flush any pending write internally, so `el.options = data; el.setSelected(sel)` works with no `await` in between. `setAttributes()` and `batch()` also flush synchronously.
+You do **not** need to await between a property write and an imperative method — `selectedOptions` / `setSelected()` / `selectedValue` / `selectedValue` / `selectedOption` flush any pending write internally, so `el.options = data; el.setSelected(sel)` works with no `await` in between. `setAttributes()` and `batch()` also flush synchronously.
 
 ## Methods
 
 | Method | Description |
 |--------|-------------|
-| `getSelected()` | Get currently selected options as array of option objects |
+| `selectedOptions` | Get currently selected options as array of option objects |
 | `setSelected(values: (string \| number)[], opts?: { notify?: boolean })` | Set selected values by ID/value. Silent by default; pass `{ notify: true }` to emit one aggregate `change` |
-| `getValue()` | Get selected value(s) — returns single value in single-select mode, array in multi-select mode |
+| `selectedValue` | Get selected value(s) — returns single value in single-select mode, array in multi-select mode |
 | `open()` | Open the dropdown |
 | `close()` | Close the dropdown |
 | `toggle()` | Toggle the dropdown open/closed |
@@ -629,7 +629,7 @@ You do **not** need to await between a property write and an imperative method �
 | `refresh()` | Re-render from the current option set without re-ingesting it — use after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads. Silent (no events). Assign `options` instead when the set itself changed |
 | `search(term: string)` | Set the search text and filter as if typed (runs `beforeSearchCallback` / `min-search-length` / `searchCallback`). Does not open the dropdown. `''` clears |
 | `clearSearch()` | Clear the search text and restore the full list (selection untouched) |
-| `searchText` | Property (read-only): the current search text (`''` when empty) |
+| `searchTerm` | Property (read-only): the current search text (`''` when empty) |
 | `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `boolean` (`false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
 | `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Returns `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) — call `clearSearch()` first |
 | `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Returns `false` in tree mode or if the group is empty |
@@ -649,8 +649,8 @@ You do **not** need to await between a property write and an imperative method �
 
 | Group | Members |
 |-------|---------|
-| Read state | `getSelected()`, `getValue()`, `getOptions()`, `isOpen` |
-| Selection | `setSelected(values, { notify })`, `selectAll()`, `clearAll()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
+| Read state | `selectedOptions`, `selectedValue`, `options`, `isOpen` |
+| Selection | `setSelected(values, { notify })`, `selectAll()`, `clearSelection()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
 | Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `boolean`), `refresh()` |
 | Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |
 | Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()` |

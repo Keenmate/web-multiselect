@@ -177,7 +177,7 @@
             // The custom action uses setSelected(..., { notify: true }) so it fires one change.
             cascade.actionButtons = [
                 { action: 'select-all', text: 'Select All' },
-                { action: 'clear-all', text: 'Clear All' },
+                { action: 'clear-selection', text: 'Clear All' },
                 { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) => controller.setSelected(['fruit'], { notify: true }) }
             ];
             document.getElementById('tree-cascade-leaves').options = items;

@@ -107,7 +107,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Feature                                                       | Status | Spec | Fixture |
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | Built-in `select-all` selects all visible options             | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
-| Built-in `clear-all` clears all selections                    | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
+| Built-in `clear-selection` clears all selections                    | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | Custom action button fires `onClick`                          | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | `getIsVisibleCallback` hides button dynamically                  | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |
 | `getIsDisabledCallback` disables button dynamically              | ✓      | `action-buttons.spec.ts`     | `action-buttons.html`     |

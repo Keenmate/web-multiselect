@@ -19,7 +19,7 @@ async function openDropdown(p: Locator): Promise<void> {
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__dropdown')).toBeVisible();
 }
-const val = (p: Locator) => p.evaluate((el: any) => el.getValue());
+const val = (p: Locator) => p.evaluate((el: any) => el.selectedValue);
 const groupLabel = (p: Locator, name: string) => p.locator(`.ms__group-label[data-group="${name}"]`);
 const groupBox = (p: Locator, name: string) => groupLabel(p, name).locator('.ms__checkbox');
 const optByValue = (p: Locator, value: string) => p.locator(`.ms__option[data-value="${value}"]`);

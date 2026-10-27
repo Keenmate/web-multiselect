@@ -2,7 +2,7 @@ ACTION BUTTONS
 ==============
 
 CRITICAL: Buttons in the dropdown header/footer for bulk actions (core action items)
-- Built-in: 'select-all', 'clear-all' (string shorthand or { action: 'select-all' })
+- Built-in: 'select-all', 'clear-selection' (string shorthand or { action: 'select-all' })
 - Custom: { id: 'export', text, icon, onClick } — identified by `id` (NOT action: 'custom')
 - Static or dynamic properties (static value + get*Callback(ctx) that wins when set)
 - Every activation fires the `action` event (+ el.onAction); beforeActionCallback can cancel
@@ -14,17 +14,17 @@ BUILT-IN ACTIONS
 ----------------
 Select All and Clear All buttons — string shorthand:
 
-select.actionButtons = ['select-all', 'clear-all'];
-// Default text comes from labels.selectAll / labels.clearAll
+select.actionButtons = ['select-all', 'clear-selection'];
+// Default text comes from labels.selectAll / labels.clearSelection
 
 Object form (custom text / tooltip / row …):
 select.actionButtons = [
   { action: 'select-all', text: 'Select All' },
-  { action: 'clear-all', text: 'Clear All', isDanger: true }
+  { action: 'clear-selection', text: 'Clear All', isDanger: true }
 ];
 
 Built-ins go through the selection vetoes per option (beforeSelectCallback /
-beforeDeselectCallback, ctx.source 'select-all' / 'clear-all'); vetoed options are skipped,
+beforeDeselectCallback, ctx.source 'select-all' / 'clear-selection'); vetoed options are skipped,
 the rest apply in ONE change event.
 
 An onClick on a built-in runs BEFORE the built-in behaviour (it no longer replaces it).
@@ -48,7 +48,7 @@ ACTION PROPERTIES
 Static properties (MultiSelectActionItem):
 
 {
-  action?: 'select-all' | 'clear-all', // Built-in; omit for a custom item
+  action?: 'select-all' | 'clear-selection', // Built-in; omit for a custom item
   id?: string,                // Identifies a custom item; reported in the `action` event
   text?: string,              // Button text — PLAIN TEXT (not HTML)
   icon?: string,              // Glyph / emoji / text — inserted as text
@@ -72,7 +72,7 @@ ctx (ActionContext) = selection snapshot:
   plus controller + element (non-enumerable) and presentation / isFullscreen / isModal.
 
 onClick(detail) receives the `action` event detail = ctx + action ('select-all' |
-'clear-all' | 'custom'), id, item (the clicked action item), source ('action-buttons'),
+'clear-selection' | 'custom'), id, item (the clicked action item), source ('action-buttons'),
 sourceEvent, triggerElement, dataset.
 
 Example with all properties:
@@ -102,7 +102,7 @@ select.actionButtons = [
     getIsDisabledCallback: ({ optionCount }) => optionCount === 0,
     onClick: ({ controller, selectedCount, optionCount }) => {
       if (selectedCount === optionCount) {
-        controller.clearAll();
+        controller.clearSelection();
       } else {
         controller.selectAll();
       }
@@ -331,7 +331,7 @@ Common action combinations:
 Select All + Clear All:
 select.actionButtons = [
   'select-all',
-  { action: 'clear-all', getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0 }
+  { action: 'clear-selection', getIsVisibleCallback: ({ selectedCount }) => selectedCount > 0 }
 ];
 
 CRUD operations:
@@ -388,7 +388,7 @@ beforeActionCallback(detail) → return false to cancel (onClick, the `action` e
 built-in all skipped). May be async.
 
 select.beforeActionCallback = (detail) => {
-  if (detail.action === 'clear-all') {
+  if (detail.action === 'clear-selection') {
     return confirm('Clear all selections?') ? undefined : false;
   }
 };
@@ -401,7 +401,7 @@ Or inside a custom item:
   onClick: ({ selectedOptions, controller }) => {
     if (confirm(`Delete ${selectedOptions.length} item(s)?`)) {
       deleteItems(selectedOptions);
-      controller.clearAll();
+      controller.clearSelection();
     }
   }
 }
@@ -422,7 +422,7 @@ Everything is on the detail — no need to reach back to the element:
   }
 }
 
-detail.controller is the public facade (also el.controller): selectAll(), clearAll(),
+detail.controller is the public facade (also el.controller): selectAll(), clearSelection(),
 toggleValue(v), selectValue(v), deselectValue(v), setSelected(values), open(), close(),
 search(term), clearSearch(), refresh(), showMessage(content, { type, autoHideMs, placement }),
 hideMessage(), focus methods …
@@ -508,7 +508,7 @@ Select/Deselect All:
   getTextCallback: ({ selectedCount, optionCount }) =>
     selectedCount === optionCount ? 'Deselect All' : 'Select All',
   onClick: ({ controller, selectedCount, optionCount }) =>
-    selectedCount === optionCount ? controller.clearAll() : controller.selectAll()
+    selectedCount === optionCount ? controller.clearSelection() : controller.selectAll()
 }
 
 Export selected:

@@ -78,7 +78,7 @@ test.describe('synchronous el.options = data; el.setSelected(sel)', () => {
             const badges = el.shadowRoot?.querySelector('.ms__badges')?.textContent ?? '';
             return {
                 threw,
-                selected: el.getSelected().map((o: any) => o.value),
+                selected: el.selectedOptions.map((o: any) => o.value),
                 badges
             };
         });

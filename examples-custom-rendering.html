@@ -348,7 +348,7 @@ el.addEventListener('change', (e) =&gt; render(e.detail.selectedOptions));
 panel.addEventListener('click', (e) =&gt; {
   const x = e.target.closest('[data-remove]');
   if (x) {
-    const remaining = el.getSelected().map(i =&gt; i.id)
+    const remaining = el.selectedOptions.map(i =&gt; i.id)
       .filter(id =&gt; String(id) !== x.dataset.remove);
     el.setSelected(remaining, { notify: true });   // re-fires change → render()
   } else if (e.target.closest('[data-clear]')) {
@@ -1068,7 +1068,7 @@ panel.addEventListener('click', (e) =&gt; {
         playlistPanel.addEventListener('click', (e) => {
             const removeBtn = e.target.closest('[data-remove]');
             if (removeBtn) {
-                const remaining = playlist.getSelected()
+                const remaining = playlist.selectedOptions
                     .map((it) => it.id)
                     .filter((id) => String(id) !== removeBtn.dataset.remove);
                 playlist.setSelected(remaining, { notify: true });
@@ -1079,7 +1079,7 @@ panel.addEventListener('click', (e) =&gt; {
 
         // Seed a starting playlist. setSelected() is silent by default, so paint once directly.
         playlist.setSelected([1, 3, 5]);
-        renderPlaylist(playlist.getSelected());
+        renderPlaylist(playlist.selectedOptions);
 
         // 8. Person Selector (Single-Select)
         const person = document.getElementById('person');

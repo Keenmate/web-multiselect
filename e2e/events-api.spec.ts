@@ -92,10 +92,10 @@ test.describe('attribute changes preserve selection', () => {
         const p = picker(page, 'attr-change');
         await openDropdown(p);
         await p.locator('.ms__option[data-value="apple"]').click();
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['apple']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
 
         // Change a benign attribute — selection should survive.
         await p.evaluate(el => el.setAttribute('search-placeholder', 'New ph'));
-        expect(await p.evaluate((el: any) => el.getValue())).toEqual(['apple']);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
     });
 });
