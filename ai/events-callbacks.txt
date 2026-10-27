@@ -69,8 +69,8 @@ triggerElement, dataset, plus the selection snapshot (selectedValues, selectedOp
 options, selectedCount, optionCount, isOpen, searchTerm).
 
 ready event:
-Fired once, right after the FIRST build — synchronously during upgrade for a
-normal element, or when a `defer` render gate is released (via release() / removing
+Fired once, on the microtask after the FIRST build (a listener added right after
+createElement / the import still catches it) — for a normal element at upgrade, or when a `defer` render gate is released (via release() / removing
 the attribute) for a deferred one. detail: { controller, element, presentation… }.
 Bubbles (not composed).
 

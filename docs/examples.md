@@ -1286,8 +1286,9 @@ el.release();          // builds once — the styled badges appear in one shot, 
 el.isReady;          // → true
 ```
 
-`ready` fires once, right after the first build (synchronously during upgrade for a
-normal, non-deferred element; on release for a deferred one):
+`ready` fires once, on the microtask after the first build (at upgrade for a normal,
+non-deferred element; on release for a deferred one) — a listener added right after
+`createElement` / the import still catches it:
 
 ```javascript
 el.addEventListener('ready', () => {

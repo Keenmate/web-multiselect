@@ -416,7 +416,7 @@
                 <tr>
                     <td><code>ready</code></td>
                     <td class="type">ReadyEventDetail</td>
-                    <td>Fired once, right after the first build — synchronously during upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. Detail: <code>controller</code>, <code>element</code>, presentation flags.</td>
+                    <td>Fired once, on the microtask after the first build (a listener added right after <code>createElement</code> still catches it) — at upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. Detail: <code>controller</code>, <code>element</code>, presentation flags.</td>
                 </tr>
                 <tr>
                     <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
