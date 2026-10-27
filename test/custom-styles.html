@@ -14,15 +14,15 @@
        declarative twin of `getCustomStylesCallback` — raw CSS injected into the shadow root's style slot.</p>
 
     <div class="fixture">
-        <div class="fixture-label">custom-styles attribute sets --ms-border-color (red)</div>
+        <div class="fixture-label">custom-styles attribute sets --ms-input-border-color (red)</div>
         <web-multiselect id="cs-attr" value-member="value" display-value-member="label"
-            custom-styles=":host { --ms-border-color: rgb(255, 0, 0); }"></web-multiselect>
+            custom-styles=":host { --ms-input-border-color: rgb(255, 0, 0); }"></web-multiselect>
     </div>
 
     <div class="fixture">
         <div class="fixture-label">callback wins over the attribute (green beats red)</div>
         <web-multiselect id="cs-precedence" value-member="value" display-value-member="label"
-            custom-styles=":host { --ms-border-color: rgb(255, 0, 0); }"></web-multiselect>
+            custom-styles=":host { --ms-input-border-color: rgb(255, 0, 0); }"></web-multiselect>
     </div>
 
     <div class="fixture">
@@ -44,7 +44,7 @@
             }
             // The callback must win when both are set (attribute is the static fallback).
             document.getElementById('cs-precedence').getCustomStylesCallback =
-                () => ':host { --ms-border-color: rgb(0, 128, 0); }';
+                () => ':host { --ms-input-border-color: rgb(0, 128, 0); }';
         });
     </script>
 </body>

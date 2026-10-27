@@ -64,44 +64,52 @@
      Color variables follow this priority chain:
        1. External override: --ms-accent-color: #custom
        2. Base theme value: var(--base-primary-color)
-       3. Hardcoded default fallback */
+       3. Standalone fallback (no contract loaded). Inputs (accent, main bg, text color,
+          shadow color) fall back to the contract's default values; everything derived from
+          them falls back to the contract's FORMULA on the --ms-* input, so overriding
+          --ms-accent-color standalone brings its hover, tint and text along
+          (checked by `npm run check:contract`). */
 
   /* Accent Colors */
-  --ms-accent-color: var(--base-primary-color, #0ea5e9);
-  --ms-accent-color-hover: var(--base-primary-color-hover, #2563eb);
+  --ms-accent-color: var(--base-primary-color, #3b82f6);
+  --ms-accent-color-hover: var(--base-primary-color-hover, light-dark(color-mix(in srgb, black 15%, var(--ms-accent-color)), color-mix(in srgb, white 15%, var(--ms-accent-color))));
 
-  /* Accent Color Light Variants (for backgrounds)
-     Dark variants are muted dark-blue tints that read like "accent-tinted dark surface" rather than
-     "near-white", keeping badge / +X more / popover-header backgrounds visible on a dark page. */
-  --ms-accent-color-light: var(--base-primary-bg-subtle, light-dark(#eff6ff, #1e3a5f));
+  /* Surface + shadow inputs (contract defaults) — the derived colors below mix from them. */
+  --ms-main-bg: var(--base-main-bg, light-dark(#ffffff, #1e293b));
+  --ms-shadow-color: var(--base-shadow-color, light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4)));
 
-  /* Text Color Levels (FluentUI-style hierarchy)
-     Light mode = the original dark-on-light palette (#111827 → #a0a3a9).
-     Dark mode  = the same hierarchy inverted (#f5f5f5 → #737373) so heading/body/secondary/disabled
-     keep the same relative contrast steps. text-color-on-accent is the text drawn ON the accent
-     fill: with the contract loaded it is --base-on-primary-text-color, picked black or white for
-     --base-primary-color; standalone it is white. It follows the BASE primary, not
-     --ms-accent-color — set both together when overriding the accent (e.g. #000 on a light fill). */
-  --ms-text-color-1: var(--base-text-color-1, light-dark(#111827, #f5f5f5));
-  --ms-text-color-3: var(--base-text-color-3, light-dark(#6b7280, #a3a3a3));
-  --ms-text-color-4: var(--base-text-color-4, light-dark(#a0a3a9, #737373));
-  --ms-text-color-on-accent: var(--base-on-primary-text-color, #ffffff);
+  /* Accent tint (badge / +X more / popover-header backgrounds): the accent at 10% (light) /
+     20% (dark), as the contract's --base-primary-bg-subtle. */
+  --ms-accent-color-light: var(--base-primary-bg-subtle, light-dark(color-mix(in srgb, var(--ms-accent-color) 10%, transparent), color-mix(in srgb, var(--ms-accent-color) 20%, transparent)));
+  /* The accent as TEXT on a surface or its own tint (badge text, add-new row, info icon):
+     the accent 45% toward black (light) / 25% toward white (dark). The raw accent is too
+     light for text (sky on its tint is about 2.5:1). */
+  --ms-accent-text-color: var(--base-primary-text-color, light-dark(color-mix(in srgb, black 45%, var(--ms-accent-color)), color-mix(in srgb, white 25%, var(--ms-accent-color))));
+
+  /* Text Color Levels: text-color-1 mixed into the main bg (55% / 40%), as the contract.
+     text-color-on-accent is the text drawn ON the accent fill, black or white by APCA contrast
+     (the contract's formula). With the contract loaded it follows --base-primary-color; set it
+     together with --ms-accent-color when you override the accent on top of the contract. */
+  --ms-text-color-1: var(--base-text-color-1, light-dark(#334155, #f1f5f9));
+  --ms-text-color-3: var(--base-text-color-3, color-mix(in srgb, var(--ms-text-color-1) 55%, var(--ms-main-bg)));
+  --ms-text-color-4: var(--base-text-color-4, color-mix(in srgb, var(--ms-text-color-1) 40%, var(--ms-main-bg)));
+  --ms-text-color-on-accent: var(--base-on-primary-text-color, color(from color(from var(--ms-accent-color) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
 
   /* Alias read by the input clear fallback */
   --ms-text-secondary: var(--ms-text-color-3);
 
   /* Background Colors
      --ms-primary-bg paints hover states (option hover, action-button hover, counter
-     hover, etc.). The color-mix fallback keeps the hover visible on dark themes — a flat var(--base-main-bg)
-     substrate used to make hover collapse onto the panel background. */
-  --ms-primary-bg: var(--base-hover-bg, color-mix(in srgb, var(--ms-text-color-1) 8%, var(--base-main-bg, light-dark(#ffffff, #1a1a1a))));
+     hover, etc.): the contract's translucent overlay of the main bg's hue, so it shows on
+     any surface in both modes. */
+  --ms-primary-bg: var(--base-hover-bg, light-dark(color-mix(in oklch, oklch(from var(--ms-main-bg) calc(l - 0.45) c h) 14%, transparent), color-mix(in oklch, oklch(from var(--ms-main-bg) calc(l + 0.45) c h) 28%, transparent)));
+  --ms-elevated-bg: var(--base-elevated-bg, light-dark(oklch(from var(--ms-main-bg) calc(l - 0.03) c h), oklch(from var(--ms-main-bg) calc(l + 0.06) c h)));
+  --ms-disabled-bg: var(--base-disabled-bg, light-dark(oklch(from var(--ms-main-bg) calc(l - 0.024) c h), oklch(from var(--ms-main-bg) calc(l + 0.048) c h)));
 
   /* Border Base Variables */
-  /* Default border colour. The previous fallbacks (#e5e7eb light / #3a3a3a dark) were very
-     low contrast against white / near-black surfaces — the 1px input/panel edge nearly
-     vanished, especially on phones. Bumped to a clearly-visible gray on each side (still
-     soft, not harsh). Consumers with `--base-border-color` set are unaffected. */
-  --ms-border-color: var(--base-border-color, light-dark(#cbd5e1, #52525b));
+  /* Divider / panel edge: the main bg's hue shifted in lightness (contract formula). The
+     control outline (--ms-input-border-color) is stronger. */
+  --ms-border-color: var(--base-border-color, light-dark(oklch(from var(--ms-main-bg) calc(l - 0.096) c h), oklch(from var(--ms-main-bg) calc(l + 0.192) c h)));
   --ms-border-width: var(--base-border-width, 1px);
 
   /* ==========================================================================
@@ -111,17 +119,17 @@
      Example: --ms-input-bg, --ms-option-text-color-hover */
 
   /* Input Component Semantic Variables */
-  --ms-input-bg: var(--base-input-bg, light-dark(#ffffff, #1a1a1a));
+  --ms-input-bg: var(--base-input-bg, var(--ms-main-bg));
   --ms-input-color: var(--base-input-text-color, var(--ms-text-color-1));
   /* The control outline: stronger than the --ms-border-color divider (base-css-variables 2.0). */
-  --ms-input-border-color: var(--base-input-border-color, var(--ms-border-color));
+  --ms-input-border-color: var(--base-input-border-color, light-dark(color-mix(in srgb, var(--ms-text-color-1) 45%, var(--ms-main-bg)), color-mix(in srgb, var(--ms-text-color-1) 35%, var(--ms-main-bg))));
   --ms-input-border: var(--base-input-border, var(--ms-border-width) solid var(--ms-input-border-color));
   --ms-input-border-hover: var(--base-input-border-hover, var(--ms-border-width) solid var(--ms-accent-color));
   --ms-input-border-focus: var(--base-input-border-focus, var(--ms-border-width) solid var(--ms-accent-color));
   /* Soft halo around the focused field — the same one pure-admin's inputs show. */
   --ms-input-box-shadow-focus: var(--base-input-box-shadow-focus, 0 0 0 3px var(--base-input-shadow-color-focus, color-mix(in srgb, var(--ms-accent-color) 5%, transparent)));
   --ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-3));
-  --ms-input-bg-disabled: var(--base-input-bg-disabled, rgba(107, 114, 128, 0.05));
+  --ms-input-bg-disabled: var(--base-input-bg-disabled, var(--ms-disabled-bg));
 
   /* Toggle Icon Semantic Variables */
   /* Icons inside the input (chevron, ✕, search) share --base-input-icon-color. */
@@ -146,7 +154,7 @@
   --ms-hint-border-color: var(--ms-border-color);
 
   /* Dropdown Semantic Variables */
-  --ms-dropdown-bg: var(--base-dropdown-bg, light-dark(#ffffff, #1a1a1a));
+  --ms-dropdown-bg: var(--base-dropdown-bg, var(--ms-main-bg));
   --ms-dropdown-text-color: var(--ms-text-color-1);
   --ms-dropdown-border-color: var(--ms-border-color);
 
@@ -187,7 +195,7 @@
   --ms-option-bg-focused: var(--ms-option-bg-hover);
   --ms-option-color-focused: var(--base-focused-text-color, currentColor);
   --ms-option-outline-color-focused: var(--ms-accent-color);
-  --ms-option-bg-selected: var(--base-selected-bg, color-mix(in srgb, var(--ms-accent-color) 10%, transparent));
+  --ms-option-bg-selected: var(--base-selected-bg, var(--ms-accent-color-light));
   --ms-option-bg-selected-hover: var(--base-selected-bg-hover, var(--ms-option-bg-selected));
   --ms-option-color-selected: var(--base-selected-text-color, currentColor);
   --ms-option-bg-matched: color-mix(in srgb, var(--ms-accent-color) 8%, transparent);
@@ -211,7 +219,7 @@
 
   /* Badge Text Semantic Variables */
   --ms-badge-text-bg: var(--ms-accent-color-light);
-  --ms-badge-text-color: var(--base-primary-text-color, var(--ms-accent-color));
+  --ms-badge-text-color: var(--ms-accent-text-color);
   /* Hover deepens the badge's OWN bg toward its OWN text colour (12%), so it stays readable
      with whatever bg/text pair a theme sets — not --base-hover-bg (a surface token). */
   --ms-badge-text-bg-hover: color-mix(in srgb, var(--ms-badge-text-bg) 88%, var(--ms-badge-text-color) 12%);
@@ -255,8 +263,8 @@
   /* Tooltip Semantic Variables
      Tooltips invert relative to the page: dark tooltip on light page, light tooltip on dark page.
      This keeps the tooltip distinct from its surrounding surface in both modes. */
-  --ms-tooltip-bg: var(--base-tooltip-bg, light-dark(#333333, #f5f5f5));
-  --ms-tooltip-text-color: var(--base-tooltip-text-color, light-dark(#ffffff, #1a1a1a));
+  --ms-tooltip-bg: var(--base-tooltip-bg, light-dark(color-mix(in srgb, var(--ms-text-color-1) 85%, var(--ms-main-bg)), oklch(from var(--ms-main-bg) calc(l + 0.15) c h)));
+  --ms-tooltip-text-color: var(--base-tooltip-text-color, light-dark(var(--ms-main-bg), var(--ms-text-color-1)));
 
   /* Selected Popover Semantic Variables */
   --ms-selected-popover-bg: var(--ms-dropdown-bg);
@@ -321,7 +329,7 @@
   --ms-input-clear-size: calc(2.4 * var(--ms-rem));
   --ms-input-clear-icon-size: calc(1.4 * var(--ms-rem));
   --ms-input-clear-color: var(--base-input-icon-color, var(--ms-text-secondary));
-  --ms-input-clear-bg-hover: var(--base-input-icon-bg-hover, var(--ms-option-bg-matched, transparent));
+  --ms-input-clear-bg-hover: var(--base-input-icon-bg-hover, var(--ms-primary-bg));
   --ms-input-clear-border-radius: var(--ms-border-radius); /* matches the input; square when radius is 0 */
 
   /* ==========================================================================
@@ -339,7 +347,7 @@
   --ms-hint-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-hint-border: var(--ms-border-width) solid var(--ms-hint-border-color);
   --ms-hint-border-radius: var(--ms-border-radius-lg);
-  --ms-hint-box-shadow: 0 4px 6px -1px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 2px 4px -2px var(--base-shadow-color, rgba(0, 0, 0, 0.1));
+  --ms-hint-box-shadow: 0 4px 6px -1px var(--ms-shadow-color), 0 2px 4px -2px var(--ms-shadow-color);
   --ms-hint-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
 
   /* ==========================================================================
@@ -355,9 +363,8 @@
      alone, override this to match (panel radius − border width). Clamped at 0 so a
      squared panel stays square. */
   --ms-dropdown-inner-border-radius: max(0px, calc(var(--ms-dropdown-border-radius) - var(--ms-border-width)));
-  /* Prefers the shared --base token (light-dark aware — deepens on dark themes); the
-     flat two-layer shadow is the standalone fallback. */
-  --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 20px 25px -5px var(--base-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--base-shadow-color, rgba(0, 0, 0, 0.1)));
+  /* The shared dropdown shadow (contract formula on --ms-shadow-color, which deepens in dark mode). */
+  --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 8px 16px var(--ms-shadow-color));
   /* Live input width, published by JS each positioning frame. It's the only panel
      dimension CSS can't measure itself, so panels that "match the input" read it. */
   --ms-input-current-width: auto;
@@ -368,8 +375,8 @@
   --ms-options-max-height: calc(32 * var(--ms-rem));
   /* Stacking follows the shared --base-z-* scale (pure-admin: dropdown 7500, popover 7600,
      tooltip 9000), so toasts and tooltips stack the same way around every component. The
-     numbers after the comma are the standalone values (no base layer). */
-  --ms-z-index-dropdown: var(--base-z-dropdown, 9999);
+     numbers after the comma are the contract's values, used standalone. */
+  --ms-z-index-dropdown: var(--base-z-dropdown, 7500);
   --ms-z-index-sticky: 1;
 
   /* ==========================================================================
@@ -381,7 +388,7 @@
      environmentChanged hook on phones. Everything defaults to the dropdown's own
      theming so a fullscreen panel looks like the same component.
      ========================================================================== */
-  --ms-z-index-fullscreen: calc(var(--base-z-tooltip, 10000) + 1); /* the phone sheet covers everything */
+  --ms-z-index-fullscreen: calc(var(--base-z-tooltip, 9000) + 1); /* the phone sheet covers everything */
   /* The truncated-label reveal is triggered from INSIDE the fullscreen overlay, so it
      must sit above it (the plain option tooltip at 10000 renders behind the 10001 panel). */
   --ms-z-index-fullscreen-tooltip: calc(var(--ms-z-index-fullscreen) + 1);
@@ -460,7 +467,7 @@
      on touch (where hover tooltips never fire). Sized in --ms-fullscreen-rem. */
   --ms-fullscreen-info-size: calc(2.8 * var(--ms-fullscreen-rem));
   --ms-fullscreen-info-icon-size: calc(1.8 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-info-color: var(--base-primary-text-color, var(--ms-accent-color));
+  --ms-fullscreen-info-color: var(--ms-accent-text-color);
   --ms-fullscreen-info-bg-hover: var(--ms-option-bg-matched, transparent);
   /* Navigate-mode match navigator under the fullscreen search box: a muted result
      count plus round prev/next buttons that step through matches (the touch stand-in
@@ -496,7 +503,7 @@
   --ms-icon-chevron: var(--base-icon-chevron, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6'/></svg>"));
   /* SVG "i-in-a-circle" glyph — rendered via mask so it inherits the info color via
      currentColor. Override with any mask-friendly url() SVG. */
-  --ms-icon-info: var(--base-icon-info, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='none' stroke='black' stroke-width='2'/><circle cx='12' cy='7.5' r='1.3' fill='black'/><path d='M12 11v6' stroke='black' stroke-width='2' stroke-linecap='round' fill='none'/></svg>"));
+  --ms-icon-info: var(--base-icon-info, url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2210%22/%3E%3Cpath d=%22M12 16v-4%22/%3E%3Cpath d=%22M12 8h.01%22/%3E%3C/svg%3E"));
   /* Tighter tree indent for the phone overlay so deep nodes leave room for the label.
      Sized in --ms-fullscreen-rem (like the rest of the overlay) so it scales with the
      phone view: 0.7 / 1.2 × the phone rem, vs the floating 0.75 / 1.25 × --ms-rem
@@ -565,10 +572,10 @@
   /* Selected + focused = the selected tint + the focus ring (focus must not wipe the tint). */
   --ms-option-bg-selected-focused: var(--ms-option-bg-selected);
   --ms-option-bg-selected-matched: color-mix(in srgb, var(--ms-accent-color) 15%, transparent);
-  --ms-option-disabled-bg: var(--base-disabled-bg, transparent);
+  --ms-option-disabled-bg: var(--ms-disabled-bg);
   --ms-option-bg-disabled-selected: var(--ms-accent-color-light);
 
-  --ms-disabled-opacity: var(--base-disabled-opacity, 0.5);
+  --ms-disabled-opacity: var(--base-disabled-opacity, 0.65);
 
   /* ==========================================================================
      OPTION CONTENT
@@ -624,7 +631,7 @@
   /* Unchecked border — deliberately stronger than the faint generic --ms-border so
      the box reads as a real, clickable control. Tune weight/colour with these two. */
   --ms-checkbox-border-width: var(--ms-border-width);
-  --ms-checkbox-border-color: var(--base-checkbox-border-color, #8f8f8f);
+  --ms-checkbox-border-color: var(--base-checkbox-border-color, var(--ms-input-border-color));
   /* Scaled width/radius — proportional to --ms-checkbox-scale so the border and
      corners grow with the box (calc, no transform). Reused by every state
      shorthand below so checked/disabled don't reset to an unscaled 1px. */
@@ -659,7 +666,7 @@
   --ms-add-new-padding: var(--ms-option-padding);
   --ms-add-new-gap: var(--ms-option-gap);
   --ms-add-new-font-size: var(--ms-empty-font-size);
-  --ms-add-new-color: var(--base-primary-text-color, var(--ms-accent-color));
+  --ms-add-new-color: var(--ms-accent-text-color);
   --ms-add-new-color-hover: var(--ms-accent-color);
   --ms-add-new-bg-hover: var(--ms-option-bg-hover);
   --ms-add-new-icon-size: calc(1.6 * var(--ms-rem));
@@ -786,8 +793,8 @@
   --ms-tooltip-border-radius: var(--ms-border-radius-lg);
   --ms-tooltip-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-tooltip-max-width: calc(32 * var(--ms-rem));
-  --ms-tooltip-shadow: var(--base-shadow-md, 0 2px 8px var(--base-shadow-color, rgba(0, 0, 0, 0.15)));
-  --ms-tooltip-z-index: var(--base-z-tooltip, 10000);
+  --ms-tooltip-shadow: var(--base-shadow-md, 0 2px 8px var(--ms-shadow-color));
+  --ms-tooltip-z-index: var(--base-z-tooltip, 9000);
 
   /* Option (dropdown row) tooltip — per-feature hooks default to the shared tooltip surface,
      so option tooltips look identical until you override one of these independently. */
@@ -815,7 +822,7 @@
   --ms-message-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
   --ms-message-font-weight: var(--base-font-weight-medium, 500);
   --ms-message-max-width: calc(40 * var(--ms-rem));
-  --ms-message-shadow: 0 4px 16px var(--base-shadow-color, rgba(0, 0, 0, 0.18));
+  --ms-message-shadow: 0 4px 16px var(--ms-shadow-color);
   /* Gap from the bottom edge of the viewport in the fullscreen overlay. */
   --ms-message-fullscreen-offset: calc(2.4 * var(--ms-fullscreen-rem));
   --ms-message-z-index: var(--ms-z-index-fullscreen-tooltip);
@@ -823,16 +830,16 @@
   --ms-message-info-bg: var(--ms-tooltip-bg);
   --ms-message-info-color: var(--ms-tooltip-text-color);
   --ms-message-warning-bg: var(--base-warning-color, #f59e0b);
-  --ms-message-warning-color: var(--base-on-warning-text-color, #1a1a1a);
+  --ms-message-warning-color: var(--base-on-warning-text-color, color(from color(from var(--ms-message-warning-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
   --ms-message-error-bg: var(--base-danger-color, #dc2626);
-  --ms-message-error-color: var(--base-on-danger-text-color, #ffffff);
+  --ms-message-error-color: var(--base-on-danger-text-color, color(from color(from var(--ms-message-error-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
   --ms-message-success-bg: var(--base-success-color, #10b981);
-  --ms-message-success-color: var(--base-on-success-text-color, #000000);
+  --ms-message-success-color: var(--base-on-success-text-color, color(from color(from var(--ms-message-success-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
 
   /* ==========================================================================
      SELECTED POPOVER
      ========================================================================== */
-  --ms-z-index-popover: var(--base-z-popover, 10000);
+  --ms-z-index-popover: var(--base-z-popover, 7600);
   /* Selected-items ("badges") popover width — tracks the live field width by default (same
      as the dropdown, so the two panels line up under the control). Override at app/theme
      level or per-instance via the selected-popover-width attribute — e.g. a fixed
@@ -895,7 +902,7 @@
   /* 1: --ms-input-placeholder-color is already a muted text level (--base-text-color-3);
      a further fade made the placeholder lighter than pure-admin's. */
   --ms-placeholder-opacity: 1;
-  --ms-disabled-input-opacity: var(--base-disabled-opacity, 0.6);
+  --ms-disabled-input-opacity: var(--base-disabled-opacity, 0.65);
 
   /* ==========================================================================
      SCROLLBAR
@@ -909,7 +916,7 @@
   /* ==========================================================================
      DEBUG PANEL (dev-only)
      ========================================================================== */
-  --ms-debug-bg: var(--base-elevated-bg, light-dark(#f9fafb, #2b2b2b));
+  --ms-debug-bg: var(--ms-elevated-bg);
   --ms-debug-border-color: var(--ms-border-color);
   --ms-debug-text-color: var(--ms-text-color-1);
   --ms-debug-border-radius: var(--ms-border-radius-md);
@@ -917,7 +924,7 @@
   --ms-debug-summary-bg-hover: var(--ms-primary-bg);
   --ms-debug-summary-outline-color: var(--ms-accent-color);
   --ms-debug-summary-border-radius: var(--ms-border-radius-sm);
-  --ms-debug-stats-bg: var(--base-main-bg, light-dark(#ffffff, #1a1a1a));
+  --ms-debug-stats-bg: var(--ms-main-bg);
   --ms-debug-stats-border-radius: var(--ms-border-radius-sm);
   --ms-debug-bullet-color: var(--ms-accent-color);
 }

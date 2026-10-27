@@ -46,7 +46,7 @@
   display: flex;
   justify-content: space-between;
   padding: 2px 4px;
-  font-family: var(--base-font-family-mono, monospace);
+  font-family: var(--base-font-family-mono, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
   font-size: calc(1 * var(--ms-rem));
 }
 

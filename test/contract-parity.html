@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — contract parity</title>
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>contract parity</h1>
+    <p>Targeted by <code>e2e/contract-parity.spec.ts</code>: one plain instance, no theme of its own.
+       The spec renders it with and without <code>@keenmate/base-css-variables</code>.</p>
+
+    <web-multiselect id="parity" value-member="value" display-value-member="label"></web-multiselect>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            const el = document.getElementById('parity');
+            el.options = [
+                { value: 'ts', label: 'TypeScript' },
+                { value: 'py', label: 'Python' },
+                { value: 'rs', label: 'Rust' }
+            ];
+            el.value = ['ts', 'py'];
+        });
+    </script>
+</body>
+</html>

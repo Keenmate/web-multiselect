@@ -2,9 +2,10 @@ import { test, expect, Page, Locator } from './fixtures';
 
 /**
  * The option checkbox is a custom-drawn box (native appearance removed). It reads
- * as a real control via a dedicated mid-grey border colour (--ms-checkbox-border-color,
- * default #8f8f8f) rather than the generic --ms-border, plus a bold checkmark when
- * checked. Width/colour are themeable via --ms-checkbox-border-width/-color.
+ * as a real control via the control-outline colour (--ms-checkbox-border-color, default
+ * = --ms-input-border-color, as the contract's --base-checkbox-border-color) rather than the
+ * generic --ms-border divider, plus a bold checkmark when checked. Width/colour are themeable
+ * via --ms-checkbox-border-width/-color.
  */
 
 const PAGE = '/test/tree.html';
@@ -23,12 +24,20 @@ async function openLeafCheckbox(page: Page, id: string): Promise<Locator> {
     return p.locator(LEAF_CB);
 }
 
-test('unchecked checkbox uses the dedicated mid-grey border colour', async ({ page }) => {
+test('unchecked checkbox border is the control outline (--ms-input-border-color)', async ({ page }) => {
     await page.goto(PAGE);
     const cb = await openLeafCheckbox(page, 'tree-sel-member');
     await expect(cb).toHaveCSS('border-top-width', '1px');
-    // #8f8f8f → rgb(143, 143, 143)
-    await expect(cb).toHaveCSS('border-top-color', 'rgb(143, 143, 143)');
+    // The open field itself shows the focus border, so resolve the outline token next to the box.
+    const outline = await cb.evaluate((el) => {
+        const probe = document.createElement('span');
+        probe.style.borderTop = '1px solid var(--ms-input-border-color)';
+        el.parentElement!.appendChild(probe);
+        const c = getComputedStyle(probe).borderTopColor;
+        probe.remove();
+        return c;
+    });
+    await expect(cb).toHaveCSS('border-top-color', outline);
 });
 
 /**

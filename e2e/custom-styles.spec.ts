@@ -12,7 +12,7 @@ function slotText(p: Locator): Promise<string> {
 }
 
 // The field border lives on the wrapper shell (the <input> itself is borderless);
-// --ms-border-color drives its color, mirroring theming.spec.ts.
+// --ms-input-border-color drives its color, mirroring theming.spec.ts.
 function borderColor(p: Locator): Promise<string> {
     return p.locator('.ms__input-wrapper').evaluate(el => getComputedStyle(el).borderTopColor);
 }
@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 // Border color transitions over 0.15s, so poll rather than reading a single frame.
 test('custom-styles attribute injects the CSS verbatim and it applies', async ({ page }) => {
     const p = picker(page, 'cs-attr');
-    expect(await slotText(p)).toBe(':host { --ms-border-color: rgb(255, 0, 0); }');
+    expect(await slotText(p)).toBe(':host { --ms-input-border-color: rgb(255, 0, 0); }');
     await expect.poll(() => borderColor(p)).toBe('rgb(255, 0, 0)');
 });
 
@@ -40,7 +40,7 @@ test('setting custom-styles at runtime applies reactively; removing it clears', 
     const initial = await borderColor(p);
     expect(initial).not.toBe('rgb(255, 0, 0)');
 
-    await p.evaluate(el => el.setAttribute('custom-styles', ':host { --ms-border-color: rgb(255, 0, 0); }'));
+    await p.evaluate(el => el.setAttribute('custom-styles', ':host { --ms-input-border-color: rgb(255, 0, 0); }'));
     await expect.poll(() => borderColor(p)).toBe('rgb(255, 0, 0)');
 
     await p.evaluate(el => el.removeAttribute('custom-styles'));
@@ -51,7 +51,7 @@ test('setting custom-styles at runtime applies reactively; removing it clears', 
 
 test('the customStyles property reflects and drives the slot', async ({ page }) => {
     const p = picker(page, 'cs-reactive');
-    await p.evaluate(el => { (el as any).customStyles = ':host { --ms-border-color: rgb(0, 0, 255); }'; });
+    await p.evaluate(el => { (el as any).customStyles = ':host { --ms-input-border-color: rgb(0, 0, 255); }'; });
     await expect.poll(() => borderColor(p)).toBe('rgb(0, 0, 255)');
-    expect(await p.evaluate(el => (el as any).customStyles)).toBe(':host { --ms-border-color: rgb(0, 0, 255); }');
+    expect(await p.evaluate(el => (el as any).customStyles)).toBe(':host { --ms-input-border-color: rgb(0, 0, 255); }');
 });

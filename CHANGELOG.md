@@ -121,8 +121,45 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   styles". Usage docs now explain this and suggest `modulepreload`. The example pages now link
   the stylesheet, so they no longer jump on load.
 
+### Changed — standalone colors follow the contract (no visible change with base-css-variables loaded)
+
+Without `@keenmate/base-css-variables` on the page the component used hand-picked fallbacks
+that had drifted from the contract: a sky accent with the old `#2563eb` (violet-blue) hover,
+badge text in the raw accent (sky on its own tint ≈ 2.5:1), a blue-50 tint that ignored the
+accent. Now inputs fall back to the contract's defaults and everything derived from them to the
+contract's **formula on the `--ms-*` token**, so a standalone `--ms-accent-color` override
+brings its hover, tint and text along.
+
+- **Accent:** `--ms-accent-color` is blue `#3b82f6` again (2.6.0-rc03 had sky `#0ea5e9`; the
+  contract's default since base-css-variables 2.0.0-rc05).
+  `--ms-accent-color-hover` = accent 15% toward black (light) / white (dark);
+  `--ms-accent-color-light` = accent 10% / 20%; `--ms-text-color-on-accent` = black or white
+  by APCA (was always white). New `--ms-accent-text-color` (the accent as text: 45% toward
+  black / 25% toward white) for badge text, the add-new row and the fullscreen info icon.
+- **Surfaces / text:** new `--ms-main-bg` (`#ffffff` / dark `#1e293b`, was `#1a1a1a`),
+  `--ms-elevated-bg`, `--ms-disabled-bg`, `--ms-shadow-color`; `--ms-text-color-1` is the
+  contract's slate (`#334155` / `#f1f5f9`, was `#111827` / `#f5f5f5`); text levels 3 / 4,
+  `--ms-border-color`, `--ms-primary-bg` (hover), tooltip and on-status-fill text are the
+  contract formulas.
+- **The field outline is its own token:** standalone `--ms-input-border-color` is the
+  contract's control outline (text mixed 45% / 35% into the bg), no longer `--ms-border-color`
+  (the divider) — as it already was with the contract loaded. **To recolor the field border,
+  set `--ms-input-border-color`**; `--ms-border-color` recolors dividers and panel edges. The
+  checkbox border follows the field outline (was a fixed `#8f8f8f`).
+- **Scales:** standalone z-index = the contract's (dropdown 7500, popover 7600, tooltip 9000,
+  were 9999 / 10000 / 10000); disabled opacity 0.65 everywhere (was 0.4 / 0.5 / 0.6); shadows
+  use one shadow color (15% light / 40% dark; dropdown `0 8px 16px`); the info icon is the
+  contract's glyph; the debug panel's mono font is the contract's stack.
+
 ### Internal
 
+- **`npm run check:contract`** (in `build`): `@keenmate/base-css-variables` ^2.0.0-rc05 as a
+  devDependency; `base-contract-check src` fails the build on unknown `--base-*` reads, input
+  fallbacks that differ from the contract, and literal fallbacks for derived tokens. Deliberate
+  differences (10px rem base, inherited font, option-title state colors) are in
+  `contract-check.json`. e2e: the dark-mode contrast helper converts any computed color
+  (`oklch(…)`, `color(srgb …)`) via canvas; border / custom-styles tests use
+  `--ms-input-border-color`.
 - **Built on `@keenmate/web-components-core` 1.0.0-rc15** — its naming-review renames:
   `shouldReflect` in the input table, `sizeChanged()` for the container-responsive badge
   collapse, `createPresentationContext()`, `OverlayHandle.destroy()`, and the positioning options

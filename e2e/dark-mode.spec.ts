@@ -82,6 +82,24 @@ function contrastRatio(a: [number, number, number], b: [number, number, number])
 }
 
 /**
+ * Computed colors as `rgba(…)`. The contract's formulas (`color-mix(in oklch, …)`, relative
+ * colors) serialize as `oklch(…)` / `color(srgb …)`; painting one pixel on a canvas converts any
+ * CSS color to 8-bit sRGB.
+ */
+function toRgba(scope: Locator, colors: string[]): Promise<string[]> {
+    return scope.evaluate((_el, list) => {
+        const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+        return list.map((c) => {
+            ctx.clearRect(0, 0, 1, 1);
+            ctx.fillStyle = c;
+            ctx.fillRect(0, 0, 1, 1);
+            const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+            return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+        });
+    }, colors);
+}
+
+/**
  * Read the effective text-over-rendered-background contrast of a hovered/focused option.
  * Composites the option's (possibly semi-transparent) background over the dropdown's
  * background so we measure what the eye actually sees, not just the inline color values.
@@ -94,9 +112,10 @@ async function measureOptionContrast(option: Locator, dropdown: Locator): Promis
         }),
         dropdown.evaluate(el => getComputedStyle(el).backgroundColor)
     ]);
-    const text = parseColor(optionStyles.color);
-    const optionBg = parseColor(optionStyles.bg);
-    const baseBg = parseColor(dropdownBg);
+    const [color, bg, ddBg] = await toRgba(option, [optionStyles.color, optionStyles.bg, dropdownBg]);
+    const text = parseColor(color);
+    const optionBg = parseColor(bg);
+    const baseBg = parseColor(ddBg);
     // Composite option bg over dropdown bg (handles semi-transparent option highlights),
     // then composite text over the result (handles semi-transparent text, rare but possible).
     const effectiveBg = compositeOver(optionBg, baseBg);
@@ -205,7 +224,8 @@ const SIGNALS_PAGE = '/test/dark-mode-signals.html';
 /** Returns the relative luminance (0-1) of the rendered input background. */
 async function inputBgLuminance(p: Locator): Promise<number> {
     // The field background lives on the wrapper shell (the <input> itself is transparent).
-    const bgString = await p.locator('.ms__input-wrapper').evaluate(el => getComputedStyle(el).backgroundColor);
+    const wrapper = p.locator('.ms__input-wrapper');
+    const [bgString] = await toRgba(wrapper, [await wrapper.evaluate(el => getComputedStyle(el).backgroundColor)]);
     const [r, g, b] = parseColor(bgString);
     return relativeLuminance([r, g, b]);
 }

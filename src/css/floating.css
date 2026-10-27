@@ -277,7 +277,7 @@
 }
 
 .ms__fullscreen-nav-btn:disabled {
-  opacity: var(--base-disabled-opacity, 0.4);
+  opacity: var(--base-disabled-opacity, 0.65);
   cursor: default;
 }
 

@@ -431,6 +431,31 @@
       "usage": "Light accent background"
     },
     {
+      "name": "ms-accent-text-color",
+      "category": "accent",
+      "usage": "Accent as text on a surface or its tint (badge text, add-new row, fullscreen info icon)"
+    },
+    {
+      "name": "ms-main-bg",
+      "category": "background",
+      "usage": "Main surface; standalone input for the derived surfaces, borders and text levels"
+    },
+    {
+      "name": "ms-elevated-bg",
+      "category": "background",
+      "usage": "Raised surface (debug panel)"
+    },
+    {
+      "name": "ms-disabled-bg",
+      "category": "background",
+      "usage": "Disabled surface (disabled input and options)"
+    },
+    {
+      "name": "ms-shadow-color",
+      "category": "shadow",
+      "usage": "Shadow tint for hint, dropdown, tooltip and message shadows"
+    },
+    {
       "name": "ms-text-color-1",
       "category": "text",
       "usage": "Primary text color"
