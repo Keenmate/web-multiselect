@@ -2314,7 +2314,7 @@ export class MultiSelectEngine<T = any> {
                 gate = await gate;
                 if (this.searchTerm !== value) return;
             }
-            if (gate.isCancelled) {
+            if (gate.isRejected) {
                 // beforeSearchCallback returned false - don't search, show all options
                 dataLogger.debug(`[${this.instanceId}] beforeSearchCallback blocked search for term:`, value);
                 this.activeTerm = NO_SEARCH_TERM;
@@ -2576,7 +2576,7 @@ export class MultiSelectEngine<T = any> {
                 filteredOptions: this.filteredOptions,
                 selectedValues: this.getSelected().map(o => this.getItemValue(o)),
             }), 'beforeKeydownCallback');
-            if (gate.isCancelled) return;
+            if (gate.isRejected) return;
         }
 
         if (!this.#isOpen) {
@@ -3498,8 +3498,8 @@ export class MultiSelectEngine<T = any> {
             this.ctx({ option, selectedOptions, selectedValues: this.selectedValueList(), source }),
             kind === 'select' ? 'beforeSelectCallback' : 'beforeDeselectCallback');
         return then(gate, (g: BeforeCallbackResult) => {
-            if (g.isCancelled) interactionLogger.debug(`[${this.instanceId}] ${kind} blocked by before${kind === 'select' ? 'Select' : 'Deselect'}Callback (${source})`);
-            return !g.isCancelled;
+            if (g.isRejected) interactionLogger.debug(`[${this.instanceId}] ${kind} blocked by before${kind === 'select' ? 'Select' : 'Deselect'}Callback (${source})`);
+            return !g.isRejected;
         });
     }
 
@@ -3580,7 +3580,7 @@ export class MultiSelectEngine<T = any> {
                 }
 
                 // Cancel: no push, no select, no `add` event; the search stays so the user can adjust.
-                if (gate.isCancelled) {
+                if (gate.isRejected) {
                     dataLogger.debug(`[${this.instanceId}] beforeAddCallback canceled creation for:`, value);
                     this.renderDropdown(); // clear the spinner, restore the clickable prompt
                     return;
