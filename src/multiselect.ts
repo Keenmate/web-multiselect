@@ -4,7 +4,7 @@
  */
 
 // Positioning runs entirely on the core /positioning module. The dropdown/popover
-// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `onDrift` options — core owns
+// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `driftCallback` options — core owns
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
@@ -4044,18 +4044,18 @@ export class MultiSelectEngine<T = any> {
             // panel is appended to `container` (default document.body), so its containing block
             // can differ from the input's; measuring from the panel is what the browser does.
             // For other CB-establishing properties (contain, container-type) the browser keeps
-            // fixed elements viewport-anchored, so `onDrift` catches the inverse edge case and
+            // fixed elements viewport-anchored, so `driftCallback` catches the inverse edge case and
             // warns, pointing at the likely culprit.
             shouldUseFixedContainingBlock: true,
             // Viewport-safety cap (core rc03): core's size() middleware sets the panel's
             // inline max-width to the space available on the resolved side (so long content
             // wraps instead of overflowing the viewport edge). We COMPOSE it with the
-            // author-chosen fixed `dropdownMaxWidth` in onPlaced (not onBeforeCompute): this
+            // author-chosen fixed `dropdownMaxWidth` in placedCallback (not beforeComputeCallback): this
             // middleware runs during positioning and would otherwise clobber a fixed cap set
-            // earlier. onPlaced runs after it, so it gets the final say.
+            // earlier. placedCallback runs after it, so it gets the final say.
             maxWidth: { padding: 8 },
-            onDrift: (report) => this.warnDrift(report),
-            onBeforeCompute: () => {
+            driftCallback: (report) => this.warnDrift(report),
+            beforeComputeCallback: () => {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
                 // defaults to the field width, which CSS can't measure — so we publish the live field
@@ -4068,7 +4068,7 @@ export class MultiSelectEngine<T = any> {
                 (this.options.hostElement ?? this.element).style.setProperty('--ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
-            onPlaced: (resolved) => {
+            placedCallback: (resolved) => {
                 // Record the placement once (the hint mirrors it); after freeze it never changes.
                 if (!opts.getPlacement()) opts.setPlacement(resolved);
                 // Compose the author cap with core's viewport cap. Core's size() apply just set
@@ -4090,7 +4090,7 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Surface a multiselect-branded, once-per-instance warning when core's drift check
-     * (`anchor`'s `onDrift`) reports the panel didn't land where it was positioned. The
+     * (`anchor`'s `driftCallback`) reports the panel didn't land where it was positioned. The
      * consumer has an ancestor that establishes a fixed containing block but isn't on the
      * reliable-anchors list (likely `contain: paint|layout|strict` or `container-type`).
      * We can't fix it from inside the library, but we point at the likely culprit. Core
@@ -5470,7 +5470,7 @@ export class MultiSelectEngine<T = any> {
         id: string;
         trigger: HTMLElement;
         content: string | HTMLElement;
-        onBeforeShow?: () => void;
+        beforeShowCallback?: () => void;
         /** Override placement (default: `badgeTooltipPlacement`). */
         placement?: Placement;
         /** Override offset (default: `badgeTooltipOffset`). */
@@ -5503,7 +5503,7 @@ export class MultiSelectEngine<T = any> {
             cssClass: spec.cssClass ?? 'ms__badge-tooltip',
             visibleClass: spec.visibleClass ?? 'ms__badge-tooltip--visible',
             shouldFollowCursor: spec.shouldFollowCursor,
-            onBeforeShow: spec.onBeforeShow
+            beforeShowCallback: spec.beforeShowCallback
         });
         this.tooltips.set(spec.id, tooltip);
     }
@@ -5566,7 +5566,7 @@ export class MultiSelectEngine<T = any> {
                 trigger: removeBtn,
                 content: this.buildRemoveButtonTooltipText(displayValue, option, badgeCtx),
                 // Keep parent badge tooltip from overlapping the remove-button tooltip.
-                onBeforeShow: () => this.tooltips.get(textId)?.hide()
+                beforeShowCallback: () => this.tooltips.get(textId)?.hide()
             });
         });
 
