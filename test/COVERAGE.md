@@ -230,3 +230,4 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `setLogLevel` propagates to child loggers (no reload needed)  | ✓      | `logging.spec.ts`            | `logging.html`            |
 | `setCategoryLevel('UI', ...)` normalizes bare names           | ✓      | `logging.spec.ts`            | `logging.html`            |
 | Default level is silent; persisted level survives reload      | △      | `logging.spec.ts`            | `logging.html`            |
+| `show-debug-info` removed (not observed, no debug panel)      | ✓      | `logging.spec.ts`            | `logging.html`            |

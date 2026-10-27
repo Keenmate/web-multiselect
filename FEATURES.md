@@ -245,7 +245,6 @@ their return value *is* consumed: `false` cancels, nothing continues.
 
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
-| Debug info panel | attr | `show-debug-info` | `false` (off) | Renders `.ms__debug-info` stats panel; toggles live without rebuild | | |
 | Enable all logging | method (module) | `enableLogging()` | silent | Sets all loggers to `debug` | | |
 | Disable all logging | method (module) | `disableLogging()` | — | Sets all loggers to `silent` | | |
 | Set global log level | method (module) | `setLogLevel(level)` | `'silent'` | `trace`\|`debug`\|`info`\|`warn`\|`error`\|`silent` | | |

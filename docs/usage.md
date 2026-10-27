@@ -229,7 +229,6 @@ multiselect.setSelected(['js', 'ts']);
 | `option-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
 | `virtual-scroll-buffer` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
 | `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set |
-| `show-debug-info` | `boolean` | `false` | **Deprecated** — use per-instance logging (`el.enableLogging()`) instead. Renders an in-component debug panel |
 
 ## Properties
 

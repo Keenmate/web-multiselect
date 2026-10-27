@@ -51,7 +51,7 @@
     {
       "name": "base-main-bg",
       "required": true,
-      "usage": "Primary background (fallbacks), debug stats"
+      "usage": "Primary background (fallbacks)"
     },
     {
       "name": "base-hover-bg",
@@ -202,11 +202,6 @@
       "name": "base-font-family",
       "required": false,
       "usage": "All text in component"
-    },
-    {
-      "name": "base-font-family-mono",
-      "required": false,
-      "usage": "Monospace font (debug panel)"
     },
     {
       "name": "base-font-size-xs",
@@ -443,7 +438,7 @@
     {
       "name": "ms-elevated-bg",
       "category": "background",
-      "usage": "Raised surface (debug panel)"
+      "usage": "Raised surface"
     },
     {
       "name": "ms-disabled-bg",
@@ -1719,61 +1714,6 @@
       "name": "ms-scrollbar-thumb-border-radius",
       "category": "scrollbar",
       "usage": "Scrollbar thumb border radius"
-    },
-    {
-      "name": "ms-debug-bg",
-      "category": "debug",
-      "usage": "Debug panel background"
-    },
-    {
-      "name": "ms-debug-border-color",
-      "category": "debug",
-      "usage": "Debug panel border"
-    },
-    {
-      "name": "ms-debug-text-color",
-      "category": "debug",
-      "usage": "Debug panel text"
-    },
-    {
-      "name": "ms-debug-border-radius",
-      "category": "debug",
-      "usage": "Debug panel corner radius"
-    },
-    {
-      "name": "ms-debug-summary-color",
-      "category": "debug",
-      "usage": "Debug section heading color"
-    },
-    {
-      "name": "ms-debug-summary-bg-hover",
-      "category": "debug",
-      "usage": "Debug section heading hover background"
-    },
-    {
-      "name": "ms-debug-summary-outline-color",
-      "category": "debug",
-      "usage": "Debug section heading focus outline"
-    },
-    {
-      "name": "ms-debug-summary-border-radius",
-      "category": "debug",
-      "usage": "Debug section heading corner radius"
-    },
-    {
-      "name": "ms-debug-stats-bg",
-      "category": "debug",
-      "usage": "Debug stats nested panel background"
-    },
-    {
-      "name": "ms-debug-stats-border-radius",
-      "category": "debug",
-      "usage": "Debug stats nested panel corner radius"
-    },
-    {
-      "name": "ms-debug-bullet-color",
-      "category": "debug",
-      "usage": "Debug stat bullet marker color"
     },
     {
       "name": "ms-transform-scale-hover",

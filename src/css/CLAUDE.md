@@ -20,7 +20,6 @@ Tier 2 (canonical concerns, always created, may be empty):
 Tier 3 (component-specific features):
 - `badges.css` - `.ms__badges`, `.ms__badge`, `.ms__badge--counter`, `.ms__badge--more`
 - `count-display.css` - `.ms__count-display`, `.ms__counter-wrapper`, `.ms__count-text`, `.ms__count-clear`
-- `debug.css` - `.ms__debug-info`, `.ms__debug-stats` (dev-only)
 - `options.css` - Options list, groups, checkbox, content, per-state styling
 - `rtl.css` - RTL language support (see "Writing directional CSS" below)
 

@@ -11,7 +11,7 @@
  * properties. This file keeps only what is genuinely multiselect-specific: the
  * bridge from the merged `config` to the real dropdown engine (`MultiSelectEngine`
  * in `multiselect.ts`), the public `el.controller` facade, declarative `<option>`
- * parsing, form association, the CSS-var sugar, and the debug panel.
+ * parsing, form association, and the CSS-var sugar.
  *
  * Reactivity is declared per input via `on:`:
  *   - `reinit`  — data shape / layout mode → rebuild the picker.
@@ -56,9 +56,6 @@ import { toInitialValues } from './converters';
 import { parseOptionsData, OPTIONS_FORMATS, type OptionsFormat } from './option-formats';
 import styles from './css/main.css?inline';
 import { dataLogger } from './logger';
-
-// Type declarations for build-time constants
-declare const __VERSION__: string;
 
 /** Floating-UI placement values, shared by the two tooltip-placement enums. */
 const PLACEMENTS = [
@@ -202,7 +199,6 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
 
   // ── Special attributes ───────────────────────────────────────────────────
   { configKey: 'initialValues',           attribute: 'initial-values',              converter: toInitialValues(), default: [], on: 'reinit', type: 'Array<string | number>', description: 'Values selected on first render. Accepts a JSON array (`["a","b"]`) or a bare CSV (`a,b,c`).' },
-  { configKey: 'showDebugInfo',           attribute: 'show-debug-info',             converter: toBool('default-false'), on: 'update', description: 'Render an in-component debug panel.', deprecated: 'Use per-instance logging (el.enableLogging()) instead.' },
 
   // ── Render gate (element-only; NON_PICKER) ───────────────────────────────
   { configKey: 'deferRender',             attribute: 'defer',                       converter: toBool('presence'), on: 'reinit',
@@ -284,10 +280,10 @@ const EVENTS = [
 
 /**
  * configKeys that are NOT part of the picker's `MultiSelectConfig` — handled by
- * this element directly (CSS-var sugar, debug panel, initial values). Stripped
+ * this element directly (CSS-var sugar, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'showDebugInfo', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -395,11 +391,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if (this.isConnected && !this.#renderHeld()) this.#rebuildPicker();
   }
 
-  /** Cosmetic change: mirror CSS vars / custom styles / debug, patch the picker in place. */
+  /** Cosmetic change: mirror CSS vars / custom styles, patch the picker in place. */
   protected override update(partial: Record<string, unknown>): void {
     this.#mirrorCssVars(partial);
     if ('getCustomStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
-    if ('showDebugInfo' in partial) this.#syncDebugPanel();
 
     // Everything else goes to the live picker as an in-place patch. Forward `null`
     // verbatim — it's the clear signal under core's null-clear contract, and the
@@ -564,7 +559,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
     this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
     this.#applyCustomStyles();
-    this.#syncDebugPanel();
     // A fresh picker starts 'floating'; re-assert the resolved presentation so a
     // rebuild (reinit) doesn't drop a fullscreen setting until the next env change.
     this.#applyPresentation(getEnvironment());
@@ -790,52 +784,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       if (child.tagName === 'OPTION' || child.tagName === 'OPTGROUP') child.remove();
     }
     return options;
-  }
-
-  // ── debug panel (deprecated; kept for back-compat) ────────────────────────
-
-  #syncDebugPanel(): void {
-    const existing = this.#shadow.querySelector('.ms__debug-info');
-    if (existing) existing.remove();
-    if (!this.config.showDebugInfo) return;
-
-    const debugContainer = document.createElement('div');
-    debugContainer.className = 'ms__debug-info';
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    summary.textContent = 'Debug Info';
-    const statsDiv = document.createElement('div');
-    statsDiv.className = 'ms__debug-stats';
-    details.appendChild(summary);
-    details.appendChild(statsDiv);
-    debugContainer.appendChild(details);
-    this.#shadow.appendChild(debugContainer);
-    this.#updateDebugInfo();
-  }
-
-  #updateDebugInfo(): void {
-    const statsDiv = this.#shadow.querySelector('.ms__debug-stats');
-    if (!statsDiv || !this.#picker) return;
-
-    const version = typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'unknown';
-    const totalInstances = (typeof window !== 'undefined' && window.components?.['web-multiselect']?.getInstances().length) || 0;
-    const selectedCount = this.#picker.getSelected().length;
-    const totalOptions = (this.config.options as unknown[] | undefined)?.length || 0;
-    const pickerAny = this.#picker as any;
-
-    statsDiv.innerHTML = `
-      <span>Version: ${version}</span>
-      <span>Total Instances: ${totalInstances}</span>
-      <span>Options: ${totalOptions}</span>
-      <span>Filtered: ${pickerAny.filteredOptions?.length || 0}</span>
-      <span>Selected: ${selectedCount}</span>
-      <span>Dropdown: ${pickerAny.isOpen ? 'Open' : 'Closed'}</span>
-      <span>Search: ${pickerAny.searchTerm || 'none'}</span>
-      <span>Loading: ${pickerAny.isLoading ? 'Yes' : 'No'}</span>
-    `;
-    setTimeout(() => {
-      if (this.config.showDebugInfo) this.#updateDebugInfo();
-    }, 500);
   }
 
   // ── non-input public API ──────────────────────────────────────────────────

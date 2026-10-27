@@ -913,18 +913,4 @@
   --ms-scrollbar-thumb-bg-hover: var(--ms-text-color-3);
   --ms-scrollbar-thumb-border-radius: 4px;
 
-  /* ==========================================================================
-     DEBUG PANEL (dev-only)
-     ========================================================================== */
-  --ms-debug-bg: var(--ms-elevated-bg);
-  --ms-debug-border-color: var(--ms-border-color);
-  --ms-debug-text-color: var(--ms-text-color-1);
-  --ms-debug-border-radius: var(--ms-border-radius-md);
-  --ms-debug-summary-color: var(--ms-accent-color);
-  --ms-debug-summary-bg-hover: var(--ms-primary-bg);
-  --ms-debug-summary-outline-color: var(--ms-accent-color);
-  --ms-debug-summary-border-radius: var(--ms-border-radius-sm);
-  --ms-debug-stats-bg: var(--ms-main-bg);
-  --ms-debug-stats-border-radius: var(--ms-border-radius-sm);
-  --ms-debug-bullet-color: var(--ms-accent-color);
 }

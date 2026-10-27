@@ -55,3 +55,19 @@ test('setCategoryLevel accepts bare names ("INTERACTION")', async ({ page }) => 
     const interactionLogs = consoleMessages.filter(m => m.includes('MULTISELECT:INTERACTION'));
     expect(interactionLogs.length).toBeGreaterThan(0);
 });
+
+test('show-debug-info is removed — no input, no debug panel (use logging instead)', async ({ page }) => {
+    await page.goto(PAGE);
+    const p = picker(page, 'log-picker');
+    const state = await p.evaluate(async (el: any) => {
+        el.setAttribute('show-debug-info', '');
+        el.showDebugInfo = true;
+        await el.whenSettled();
+        const ctor = el.constructor as any;
+        return {
+            observed: ctor.observedAttributes.includes('show-debug-info'),
+            panel: el.shadowRoot.querySelectorAll('.ms__debug-info').length,
+        };
+    });
+    expect(state).toEqual({ observed: false, panel: 0 });
+});

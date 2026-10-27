@@ -108,6 +108,13 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 - Primitive option arrays (`['Prague', 'Brno']`, `[10, 20]`) work: each option is its own value
   and label (they rendered `[N/A]` before).
 
+### Removed — BREAKING
+
+- **`show-debug-info` / `showDebugInfo`** (deprecated) and the in-component "Debug Info" panel
+  are gone, with `.ms__debug-info` / `.ms__debug-stats`, `src/css/debug.css` and the
+  `--ms-debug-*` variables. Use per-instance logging instead: `el.enableLogging()`, or the
+  page-wide `window.components['web-multiselect'].logging`.
+
 ### Added
 
 - `--ms-action-button-danger-color`, `--ms-action-button-toggled-color`,
