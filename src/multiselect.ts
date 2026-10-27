@@ -663,6 +663,7 @@ export class MultiSelectEngine<T = any> {
         this.buildHTML();
         this.attachEvents();
         this.parseInitialSelection();
+        this.applyInteractionState();
 
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
             placeholder: this.options.searchPlaceholder,
@@ -3495,6 +3496,7 @@ export class MultiSelectEngine<T = any> {
      * `false` vetoes). Answers synchronously for a sync hook; a Promise only for an async one.
      */
     private vetoOne(kind: 'select' | 'deselect', option: T, source: SelectionSource): boolean | Promise<boolean> {
+        if (this.isInteractionBlocked()) return false;
         const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
         if (!hook) return true;
         const selectedOptions = this.selectedOptions;
@@ -3509,6 +3511,7 @@ export class MultiSelectEngine<T = any> {
 
     /** {@link vetoOne} over a bulk gesture → the allowed options (sync when every hook is). */
     private vetoMany(kind: 'select' | 'deselect', options: T[], source: SelectionSource): T[] | Promise<T[]> {
+        if (this.isInteractionBlocked()) return [];
         const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
         if (!hook || options.length === 0) return options;
         const results = options.map(option => this.vetoOne(kind, option, source));
@@ -3563,6 +3566,7 @@ export class MultiSelectEngine<T = any> {
      * `option` only when one was created here.
      */
     private async handleAddNew(value: string): Promise<void> {
+        if (this.isInteractionBlocked()) return;
         try {
             let newOption: T | undefined;
 
@@ -3803,8 +3807,7 @@ export class MultiSelectEngine<T = any> {
      */
     private updateClearButton(): void {
         if (!this.clearButton) return;
-        const enabled = !this.element.classList.contains('ms--disabled');
-        const show = !!this.options.isClearShown && this.selectedValues.size > 0 && enabled;
+        const show = !!this.options.isClearShown && this.selectedValues.size > 0 && !this.isInteractionBlocked();
         this.clearButton.style.display = show ? '' : 'none';
     }
 
@@ -3874,6 +3877,10 @@ export class MultiSelectEngine<T = any> {
         // panel that's already showing.
         this.armClickGuard();
         if (this.#isOpen) return;
+        if (this.isInteractionBlocked()) {
+            uiLogger.debug(`[${this.instanceId}] open() ignored — ${this.options.isDisabled ? 'disabled' : 'readonly'}`);
+            return;
+        }
 
         // A message reflects the state at the moment it was shown. Opening changes that
         // state (and, on a phone, moves from a control-anchored toast to a fullscreen
@@ -4834,6 +4841,10 @@ export class MultiSelectEngine<T = any> {
             uiLogger.debug(`[${this.instanceId}] showPopover() suppressed (isSelectedPopoverEnabled=false)`);
             return;
         }
+        if (this.options.isDisabled) {
+            uiLogger.debug(`[${this.instanceId}] showPopover() suppressed (disabled)`);
+            return;
+        }
 
         if (this.#isOpen) {
             this.close();
@@ -5180,6 +5191,7 @@ export class MultiSelectEngine<T = any> {
                 input.type = 'hidden';
                 input.name = `${this.options.name}[]`;
                 input.value = String(value);
+                input.disabled = !!this.options.isDisabled;
                 targetElement.appendChild(input);
                 this.hiddenInputs.push(input);
             });
@@ -5190,6 +5202,7 @@ export class MultiSelectEngine<T = any> {
             input.name = this.options.name;
             input.id = this.options.name;
             input.value = this.getFormValue();
+            input.disabled = !!this.options.isDisabled;
             targetElement.appendChild(input);
             this.hiddenInputs.push(input);
         }
@@ -5261,6 +5274,43 @@ export class MultiSelectEngine<T = any> {
      * element, since it's only created in `buildHTML` if a hint string was provided). The caller
      * should fall back to destroy + re-init in that case.
      */
+    /** Effective disabled state (the element merges its `isDisabled` input with a disabled `<fieldset>`). */
+    public setDisabled(isDisabled: boolean): void {
+        if (!!this.options.isDisabled === isDisabled) return;
+        this.options.isDisabled = isDisabled;
+        this.applyInteractionState();
+    }
+
+    /** Disabled or readonly: the user can't change the selection or open the dropdown. */
+    private isInteractionBlocked(): boolean {
+        return !!this.options.isDisabled || !!this.options.isReadonly;
+    }
+
+    /**
+     * Mirror `isDisabled` / `isReadonly` onto the DOM. Disabled: `.ms--disabled`, the input is
+     * disabled (not focusable), the hidden form inputs are disabled (not submitted). Readonly:
+     * `.ms--readonly`, the input stays focusable but read-only, the value is still submitted.
+     * Either closes an open dropdown and hides the inline clear (✕).
+     */
+    private applyInteractionState(): void {
+        const isDisabled = !!this.options.isDisabled;
+        const isReadonly = !!this.options.isReadonly;
+        this.element.classList.toggle('ms--disabled', isDisabled);
+        this.element.classList.toggle('ms--readonly', isReadonly && !isDisabled);
+        if (this.input) {
+            this.input.disabled = isDisabled;
+            this.input.readOnly = isReadonly || this.options.searchInputMode === 'readonly';
+            if (isDisabled || isReadonly) this.input.setAttribute('aria-readonly', String(isReadonly && !isDisabled));
+            else this.input.removeAttribute('aria-readonly');
+        }
+        for (const input of this.hiddenInputs) input.disabled = isDisabled;
+        if (isDisabled || isReadonly) {
+            if (this.#isOpen) this.close();
+            if (isDisabled && this.showSelectedPopover) this.hideSelectedPopover();
+        }
+        this.updateClearButton();
+    }
+
     public updateOptions(partial: Partial<MultiSelectConfig<T>>): boolean {
         // Adding/removing the hint element after init isn't supported in place — buildHTML decides
         // whether to create it. Force a rebuild.
@@ -5269,6 +5319,8 @@ export class MultiSelectEngine<T = any> {
         if (hintExists !== hintWanted) return false;
 
         Object.assign(this.options, partial);
+
+        if ('isReadonly' in partial || 'isDisabled' in partial) this.applyInteractionState();
 
         // Inputs to the search-value pipeline — cached values are stale if any changed.
         if ('options' in partial || 'searchValueMember' in partial || 'getSearchValueCallback' in partial

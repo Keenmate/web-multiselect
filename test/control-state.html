@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — disabled / readonly control</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>disabled / readonly control</h1>
+    <p>Targeted by <code>e2e/control-state.spec.ts</code>. Control-level <code>disabled</code> /
+        <code>readonly</code> (option-level disabled lives in <code>disabled.html</code>).</p>
+
+    <form id="form">
+        <div class="fixture">
+            <div class="fixture-label">disabled + show-clear, initial-values apple</div>
+            <web-multiselect id="ms-disabled" name="f-disabled" disabled show-clear initial-values='["apple"]'
+                value-member="value" display-value-member="label"></web-multiselect>
+        </div>
+
+        <div class="fixture">
+            <div class="fixture-label">readonly + show-clear, initial-values apple</div>
+            <web-multiselect id="ms-readonly" name="f-readonly" readonly show-clear initial-values='["apple"]'
+                value-member="value" display-value-member="label"></web-multiselect>
+        </div>
+
+        <fieldset id="fs">
+            <legend>fieldset</legend>
+            <div class="fixture">
+                <div class="fixture-label">inside a fieldset (toggled by the test)</div>
+                <web-multiselect id="ms-fieldset" name="f-fieldset" initial-values='["banana"]'
+                    value-member="value" display-value-member="label"></web-multiselect>
+            </div>
+        </fieldset>
+    </form>
+
+    <script type="module">
+        import '/src/index.ts';
+        const items = [
+            { value: 'apple', label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' },
+        ];
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['ms-disabled', 'ms-readonly', 'ms-fieldset']) {
+                document.getElementById(id).options = items;
+            }
+        });
+    </script>
+</body>
+</html>

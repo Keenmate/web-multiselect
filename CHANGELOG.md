@@ -77,6 +77,9 @@ one ctx.
 
 ### Added (naming unification)
 
+- `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,
+  not focusable, not submitted (an ancestor `<fieldset disabled>` disables it too, via core);
+  readonly = no selection change and no dropdown, but focusable and submitted.
 - `open` / `close` events (+ `onOpen` / `onClose` twins): the dropdown opened / closed, any
   reason. `detail` is the context (`controller`, `element`, presentation flags).
 

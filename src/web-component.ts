@@ -175,6 +175,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'optionTooltipOffset',     attribute: 'option-tooltip-offset',       converter: toInt(),               on: 'update', description: 'Gap in px between an option and its tooltip.' },
 
   // ── Booleans (default true) ──────────────────────────────────────────────
+  { configKey: 'isDisabled',              attribute: 'disabled',                    converter: toBool('presence'), shouldReflect: true, on: 'update', description: 'Disable the control: no interaction, not focusable, the value is not submitted with the form (like a native `disabled` control). A disabled ancestor `<fieldset>` disables it too (core `isEffectivelyDisabled`).' },
+  { configKey: 'isReadonly',              attribute: 'readonly',                    converter: toBool('presence'), shouldReflect: true, on: 'update', description: 'Read-only control: the user can\'t change the selection and the dropdown doesn\'t open, but the control stays focusable and its value IS submitted. Programmatic `setSelected()` still works.' },
   { configKey: 'isMultiple',       attribute: 'multiple',                    converter: toBool('default-true'), on: 'reinit', description: 'Allow selecting multiple options. When off, selecting one replaces the previous.' },
   { configKey: 'isGroupsAllowed',         attribute: 'allow-groups',                converter: toBool('default-true'), on: 'reinit', description: 'Allow grouping options under group headers.' },
   { configKey: 'isCheckboxesShown',       attribute: 'show-checkboxes',             converter: toBool('default-true'), on: 'reinit', description: 'Show a checkbox on each option.' },
@@ -285,7 +287,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -425,6 +427,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // box when the threshold is set/changed/cleared (the `sizeChanged` hook only fires
     // on a box change, not an attribute change).
     if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.getBoundingClientRect().width);
+  }
+
+  /** `disabled` input or ancestor `<fieldset disabled>` flipped (core): apply it in place. */
+  protected override disabledChanged(isDisabled: boolean): void {
+    this.#picker?.setDisabled(isDisabled);
   }
 
   /** Activate: ensure the picker exists (a DOM move destroyed it in disconnect()). */
@@ -633,6 +640,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.
+    // Effective disabled state: the `disabled` input OR a disabled ancestor <fieldset> (core).
+    cfg.isDisabled = this.isEffectivelyDisabled;
     cfg.container = this.#shadow as unknown as HTMLElement;
     cfg.hostElement = this;
     cfg.controller = this.controller;

@@ -516,3 +516,14 @@ See examples-new-api.html for:
 - Value formats
 - FormData usage
 - Validation patterns
+
+DISABLED / READONLY CONTROL
+---------------------------
+<web-multiselect name="tags" disabled></web-multiselect>   <!-- el.isDisabled -->
+<web-multiselect name="tags" readonly></web-multiselect>   <!-- el.isReadonly -->
+
+- disabled: no interaction, not focusable, the value is NOT submitted. A disabled
+  ancestor <fieldset> disables it too (el.isDisabled keeps the author's value).
+- readonly: the user can't change the selection and the dropdown doesn't open, but the
+  control stays focusable and the value IS submitted.
+- Both reflect to the attribute; programmatic setSelected() still works.

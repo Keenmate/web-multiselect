@@ -136,6 +136,8 @@ multiselect.setSelected(['js', 'ts']);
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
+| `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted. An ancestor `<fieldset disabled>` disables it too. Reflects |
+| `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): no selection change, the dropdown doesn't open, still focusable and submitted. Reflects |
 | `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `release()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `ready` attribute after building |
 | `search-placeholder` | `string` | `'Search...'` | Placeholder text shown while search is usable. When unset and `show-search-mode-toggle` is on, the default becomes mode-aware (`Search…` in navigate, `Filter…` in filter) and switches with the toggle; an explicit value always wins and stays fixed |
 | `select-placeholder` | `string` | `'Pick an option...'` | Placeholder shown when search is disabled (`enable-search="false"`, or `search-input-mode` `readonly`/`hidden`) — the input acts as a picker, not a search box |

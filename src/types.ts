@@ -726,6 +726,17 @@ export interface MultiSelectConfig<T = any> {
 
     /** Allow multiple selections (internal: isMultiple) */
     isMultiple?: boolean;
+    /**
+     * Disabled control (`disabled` attribute): no interaction, not focusable, not submitted with
+     * the form. A disabled ancestor `<fieldset>` disables it too. Default `false`.
+     */
+    isDisabled?: boolean;
+    /**
+     * Read-only control (`readonly` attribute): the selection can't be changed by the user and the
+     * dropdown doesn't open, but the control stays focusable and its value IS submitted.
+     * Programmatic `setSelected()` still works. Default `false`.
+     */
+    isReadonly?: boolean;
     /** Enable search/filtering (internal: isSearchEnabled) */
     isSearchEnabled?: boolean;
     /** Allow grouping of options (internal: isGroupsAllowed) */

@@ -87,6 +87,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Multiple vs single select | attr/prop | `multiple` / `isMultiple` | `bool(true)` | `="false"` for single-select | | |
+| Disabled control | attr/prop | `disabled` / `isDisabled` | `bool(false)` | No interaction, not focusable, not submitted; `<fieldset disabled>` too | | ✓ `control-state` |
+| Read-only control | attr/prop | `readonly` / `isReadonly` | `bool(false)` | No selection change / no dropdown; focusable, submitted | | ✓ `control-state` |
 | Badges display mode | attr/prop | `badges-display-mode` / `badgesDisplayMode` | `'badges'` | `badges`\|`count`\|`compact`\|`partial`\|`none` | | |
 | Badges position | attr/prop | `badges-position` / `badgesPosition` | `'bottom'` | `top`\|`bottom`\|`left`\|`right` | | |
 | Badges threshold | attr/prop | `badges-threshold` / `badgesThreshold` | — | Auto-switch display when exceeded | | |
