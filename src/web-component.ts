@@ -596,7 +596,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#shadow.appendChild(container);
     // Per-instance slot for getCustomStylesCallback CSS, kept at the top of the
     // root so consumer @import/@font-face rules work; re-setting replaces it.
-    this.#customStyles = createStyleSlot(this.#shadow, { position: 'first', className: 'ms-custom-styles' });
+    this.#customStyles = createStyleSlot(this.#shadow, { position: 'first', cssClass: 'ms-custom-styles' });
     this.#container = container;
   }
 
