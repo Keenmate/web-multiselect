@@ -1,9 +1,9 @@
 import { test, expect, Page, Locator } from './fixtures';
 
 /**
- * `defer` / `ready()` render gate. While `defer` is present the element builds NO
+ * `defer` / `release()` render gate (core BlissElement). While `defer` is present the element builds NO
  * shadow content on upgrade — options, callbacks and listeners are wired first,
- * then the gate is released (imperatively via `ready()`, or by removing the
+ * then the gate is released (imperatively via `release()`, or by removing the
  * attribute) and the picker is built ONCE with everything already applied.
  *
  * The load-bearing case is flash-freedom: a `getCustomStylesCallback` set WHILE
@@ -25,23 +25,23 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('holds the build while deferred — nothing rendered, not ready', async ({ page }) => {
-    // The control chrome is not built and `is-ready` is not reflected.
+    // The control chrome is not built and core's `ready` attribute is not set.
     await expect(control(page, 'ms-ready')).toHaveCount(0);
     expect(await isReady(page, 'ms-ready')).toBe(false);
-    expect(await page.locator('#ms-ready').getAttribute('is-ready')).toBeNull();
+    expect(await page.locator('#ms-ready').getAttribute('ready')).toBeNull();
     // No `ready` event has fired yet.
     await expect(page.locator('#ready-count')).toHaveText('0');
 });
 
-test('ready() builds once, reflects is-ready, and fires ready exactly once', async ({ page }) => {
+test('release() builds once, sets the ready attribute, and fires ready exactly once', async ({ page }) => {
     await page.locator('#btn-ready').click();
 
     await expect(control(page, 'ms-ready')).toBeVisible();
     expect(await isReady(page, 'ms-ready')).toBe(true);
-    await expect(page.locator('#ms-ready')).toHaveAttribute('is-ready', '');
+    await expect(page.locator('#ms-ready')).toHaveAttribute('ready', '');
     await expect(page.locator('#ready-count')).toHaveText('1');
 
-    // Idempotent: a second ready() neither rebuilds nor re-announces.
+    // Idempotent: a second release() neither rebuilds nor re-announces.
     await page.locator('#btn-ready').click();
     await page.waitForTimeout(50);
     await expect(page.locator('#ready-count')).toHaveText('1');
@@ -66,5 +66,5 @@ test('removing the `defer` attribute releases the gate (server-driven path)', as
 
     await expect(control(page, 'ms-attr')).toBeVisible();
     expect(await isReady(page, 'ms-attr')).toBe(true);
-    await expect(page.locator('#ms-attr')).toHaveAttribute('is-ready', '');
+    await expect(page.locator('#ms-attr')).toHaveAttribute('ready', '');
 });

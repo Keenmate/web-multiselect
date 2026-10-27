@@ -221,8 +221,8 @@ their return value *is* consumed: `false` cancels, nothing continues.
 | Public controller | prop | `el.controller` (also `ctx.controller` / `detail.controller`) | `MultiSelectController`: `selectAll`, `clearAll`, `toggleValue`, `selectValue`, `deselectValue`, `open`/`close`, `search`, `focusNext`…, `scrollTo*`, `refresh`, `showMessage(content, { type, autoHideMs, placement })` | | |
 | Destroy | method | `destroy()` | Cleanup / teardown | | |
 | Defer first render | attr | `defer` | Present = build nothing on upgrade (reserve space only); wire options/callbacks/listeners first, then release. Closes the upgrade-then-restyle flash | | ✓ `defer-gate` |
-| Release the render gate | method | `ready()` | Build once with everything in place; latched (never re-closes). Removing the `defer` attribute releases it too (server-driven) | | ✓ `defer-gate` |
-| Readiness state | prop/attr | `isReady` / reflected `is-ready` | `true` once built; CSS hook `:host([defer]:not([is-ready]))` reserves space while held | | ✓ `defer-gate` |
+| Release the render gate | method | `release()` | Build once with everything in place; latched (never re-closes). Removing the `defer` attribute releases it too (server-driven) | | ✓ `defer-gate` |
+| Readiness state | prop/attr | `isReady` / reflected `ready` | `true` once built; CSS hook `:host([defer]:not([ready]))` reserves space while held | | ✓ `defer-gate` |
 | Live attribute reactivity | behavior | `attributeChangedCallback` | Most attrs update in place (no teardown); good for i18n / cascades | | |
 
 ## 14. Theming, styling & i18n

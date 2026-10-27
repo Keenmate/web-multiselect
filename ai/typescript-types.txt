@@ -314,7 +314,7 @@ MultiSelectElement<T> exposes:
   getValue(): string | number | (string | number)[] | null;
   setSelected(values: (string | number)[], opts?: { notify?: boolean }): void;
   showMessage(content: string | HTMLElement, opts?: MessageOptions): void;
-  open(); close(); toggle(); search(term); clearSearch(); refresh(); destroy(); ready();
+  open(); close(); toggle(); search(term); clearSearch(); refresh(); destroy(); release();
 
 MultiSelectController<T> (el.controller, ctx.controller):
   getSelected(), getValue(), getOptions(), isOpen, setSelected(), selectAll(), clearAll(),

@@ -200,10 +200,6 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   // ── Special attributes ───────────────────────────────────────────────────
   { configKey: 'initialValues',           attribute: 'initial-values',              converter: toInitialValues(), default: [], on: 'reinit', type: 'Array<string | number>', description: 'Values selected on first render. Accepts a JSON array (`["a","b"]`) or a bare CSV (`a,b,c`).' },
 
-  // ── Render gate (element-only; NON_PICKER) ───────────────────────────────
-  { configKey: 'deferRender',             attribute: 'defer',                       converter: toBool('presence'), on: 'reinit',
-    description: 'Hold the initial render. When the `defer` attribute is present on upgrade the component builds nothing (it only reserves space) — so options, callbacks (e.g. `getCustomStylesCallback`) and event listeners can all be wired first, then released with `el.ready()` (or by removing the `defer` attribute, for server-driven frameworks). The release builds the picker ONCE with everything already in place, avoiding the upgrade-then-restyle flash. Absent (default): builds immediately on connect. Latched — once released the gate never re-closes.' },
-
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
   { configKey: 'isPruneMissingSelectionEnabled', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `getValue()`. The prune is silent (no select/deselect/change).' },
@@ -275,7 +271,7 @@ const EVENTS = [
   { name: 'change', description: 'The selection changed. `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onChange(detail)`.' },
   { name: 'add', description: 'The user chose to create a new option from the typed text (via the "add new" prompt or Enter) — requires `allow-add-new`. `detail.value` is the typed text; `detail.option` is the created item when `beforeAddCallback` returned one. Twin: `onAdd(detail)`.' },
   { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-all` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick` and the built-in behaviour (the selection snapshot is the state after it). Twin: `onAction(detail)`.' },
-  { name: 'ready', description: 'The picker was built and painted for the first time (once per element lifetime). Fires right after the first build — synchronously during upgrade for a normal element, or when the render gate is released (`el.ready()` / removing `defer`) for a deferred one. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
+  { name: 'ready', description: 'The picker was built for the first time (once per element lifetime; core `BlissElement`). Fires right after the first build — during upgrade for a normal element, or when the `defer` gate is released (`el.release()` / removing `defer`). The host then also has the `ready` attribute and matches `:state(ready)`; `el.whenReady()` resolves. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
 ] as const;
 
 /**
@@ -283,7 +279,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'deferRender', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -324,9 +320,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   // tell an explicit `initial-values` change (honour the new values) apart from a
   // cosmetic/structural reinit (preserve the user's runtime selection). See #buildPicker.
   #lastInitialValuesJSON?: string;
-  // Render gate (`defer`): true once released via ready() / attribute removal /
-  // the first build. Latched — the gate never re-closes. See #renderHeld().
-  #released = false;
   #customStyles: StyleSlot | null = null;
   // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
   #warnedCssVars = new Set<string>();
@@ -352,7 +345,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
     // Reveal the input placeholder one frame after upgrade: `data-placeholder-ready`
     // gates ONLY the placeholder opacity fade-in (controls.css). Distinct from
-    // `is-ready` (the defer build gate) — this flag is cosmetic and safe to pre-seed
+    // core's `ready` attribute (the first build) — this flag is cosmetic and safe to pre-seed
     // in SSR (the LiveView wrapper does, so LV's data-* stripping on phx-update="ignore"
     // elements can't tear it off). Renamed from the ambiguous `data-ready`.
     if (typeof requestAnimationFrame === 'function') {
@@ -392,10 +385,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#mirrorAllCssVars();
     // reinit() runs on first connect (isConnected true) and on later on:'reinit'
     // changes. Build/rebuild here; connect() covers the plain-reconnect case.
-    // While the render gate is held (`defer` set, not yet released) skip the
-    // build — config keeps accumulating and lands whole on release. Removing the
-    // `defer` attribute flips deferRender false, so this same reinit then builds.
-    if (this.isConnected && !this.#renderHeld()) this.#rebuildPicker();
+    // Core's `defer` gate holds reinit() itself until release().
+    if (this.isConnected) this.#rebuildPicker();
   }
 
   /** Cosmetic change: mirror CSS vars / custom styles, patch the picker in place. */
@@ -430,12 +421,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   /** Activate: ensure the picker exists (a DOM move destroyed it in disconnect()). */
   protected override connect(): void {
-    if (!this.#picker && !this.#renderHeld()) this.#buildPicker();
-  }
-
-  /** Whether the initial render is being held by the `defer` gate (not yet released). */
-  #renderHeld(): boolean {
-    return this.config.deferRender === true && !this.#released;
+    if (!this.#picker) this.#buildPicker();
   }
 
   /** Deactivate: tear the picker down (rebuilt on the next connect). */
@@ -575,17 +561,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // next box change). getBoundingClientRect is the synchronous read core suggests.
     this.#badgesCollapsed = false;
     this.#applyBadgeCollapse(this.getBoundingClientRect().width);
-
-    // First build of this element's lifetime: latch the gate open (a later
-    // re-added `defer` must not re-hold), reflect `is-ready` for CSS hooks
-    // (`:host([defer]:not([is-ready]))` stops reserving space), and announce
-    // `ready` once. `is-ready`'s presence is the once-guard: a rebuild (reinit)
-    // or a disconnect/reconnect re-enters #buildPicker but never re-fires.
-    if (!this.hasAttribute('is-ready')) {
-      this.#released = true;
-      this.setAttribute('is-ready', '');
-      this.emit('ready');
-    }
   }
 
   #ensureContainer(): void {
@@ -951,29 +926,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if (this.#picker) this.#picker.isOpen = value;
   }
 
-  destroy(): void {
+  /** Final teardown (core `destroy()`): release the picker for good — never rebuilt. */
+  protected override destroyCallback(): void {
     this.#picker?.destroy();
-  }
-
-  // ── render gate (`defer`) ───────────────────────────────────────────────────
-
-  /**
-   * Release the `defer` render gate: build the picker now (once), with every
-   * option, callback and listener wired while deferred already in place. No-op
-   * when the element wasn't deferred or is already built. `flush()` first so a
-   * synchronous `el.options = …; el.getCustomStylesCallback = …; el.ready()` lands
-   * those pending writes in the single build rather than after it. Latched — the
-   * gate never re-closes. Fires the `ready` event on the first build.
-   */
-  ready(): void {
-    this.#released = true;
-    this.flush(); // apply pending input writes (may itself build via reinit())
-    if (this.isConnected && !this.#picker) this.#buildPicker();
-  }
-
-  /** Whether the picker has been built (the `ready` event has fired). False while a `defer` gate is still held. */
-  get isReady(): boolean {
-    return this.hasAttribute('is-ready');
+    this.#picker = undefined;
   }
 
   /**

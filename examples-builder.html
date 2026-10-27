@@ -502,7 +502,7 @@
 
         // ── Generated markup ─────────────────────────────────────────────────
         const markupEl = document.getElementById('markup');
-        const RUNTIME_ATTRS = new Set(['id', 'is-ready', 'data-ready', 'class', 'style']);
+        const RUNTIME_ATTRS = new Set(['id', 'ready', 'data-placeholder-ready', 'class', 'style']);
         function renderMarkup() {
             const attrs = el.getAttributeNames()
                 .filter(n => !RUNTIME_ATTRS.has(n))

@@ -392,9 +392,9 @@ wiring (options, listeners) you'd rather have in place before the first paint.
 The `defer` attribute holds the first render until you release it:
 
   - Add `defer` and the component builds NOTHING on upgrade (reserves space only,
-    via :host([defer]:not([is-ready])), mirroring the :not(:defined) window).
+    via :host([defer]:not([ready])), mirroring the :not(:defined) window).
   - Wire everything from JS — options, getCustomStylesCallback, listeners.
-  - Call el.ready() (or REMOVE the `defer` attribute) to build ONCE with it all
+  - Call el.release() (or REMOVE the `defer` attribute) to build ONCE with it all
     applied. The gate is latched — once released it never re-closes.
 
 <web-multiselect id="skills" defer value-member="value" display-value-member="label"></web-multiselect>
@@ -403,7 +403,7 @@ const el = document.getElementById('skills');
 el.options = await loadSkills();
 el.getCustomStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
-el.ready();          // builds once — styled badges appear in one shot, no flash
+el.release();          // builds once — styled badges appear in one shot, no flash
 el.isReady;          // → true
 
 The `ready` event fires once, right after the first build (synchronously during
@@ -424,16 +424,16 @@ Hooks.MultiSelect = {
     el.getCustomStylesCallback = () => `.ms__badge { background: var(--brand); color: #fff; }`;
     // detail.controller / detail.element are non-enumerable → pushEvent sends only the data
     el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
-    el.ready();                // build once, flash-free
+    el.release();                // build once, flash-free
   },
 };
 
 Notes:
-  - Removing the `defer` attribute has the same effect as ready(), so a purely
+  - Removing the `defer` attribute has the same effect as release(), so a purely
     server-driven integration can release the gate by patching the attribute off
     — no client hook required.
-  - `isReady` (getter) is reflected as the `is-ready` attribute; don't set it
-    yourself. CSS hook: :host([defer]:not([is-ready])).
+  - `isReady` (getter) is reflected as the `ready` attribute; don't set it
+    yourself. CSS hook: :host([defer]:not([ready])).
   - See also: styling-theming.txt (getCustomStylesCallback), basic-setup.txt.
 
 PERFORMANCE MONITORING

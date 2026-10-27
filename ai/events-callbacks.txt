@@ -70,7 +70,7 @@ options, selectedCount, optionCount, isOpen, searchTerm).
 
 ready event:
 Fired once, right after the FIRST build — synchronously during upgrade for a
-normal element, or when a `defer` render gate is released (via ready() / removing
+normal element, or when a `defer` render gate is released (via release() / removing
 the attribute) for a deferred one. detail: { controller, element, presentation… }.
 Bubbles (not composed).
 
@@ -79,7 +79,7 @@ select.addEventListener('ready', (e) => {
   e.detail.controller.open();
 });
 
-// See advanced-patterns.txt (DEFERRED INITIALIZATION) for defer / ready() / isReady.
+// See advanced-patterns.txt (DEFERRED INITIALIZATION) for defer / release() / isReady.
 
 ON* PROPERTY TWINS
 ------------------

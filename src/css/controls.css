@@ -65,9 +65,9 @@
 }
 
 /* Fade the placeholder in once the component has upgraded (one frame after
-   connect). Named `data-placeholder-ready` — distinct from `is-ready` (the defer
-   build gate) — because this flag governs ONLY placeholder opacity and is safe to
-   pre-seed in SSR, whereas is-ready must never be faked. */
+   connect). Named `data-placeholder-ready` — distinct from core's `ready` attribute
+   (the first build) — because this flag governs ONLY placeholder opacity and is safe to
+   pre-seed in SSR, whereas `ready` must never be faked. */
 :host([data-placeholder-ready]) .ms__input::placeholder {
   opacity: var(--ms-placeholder-opacity);
 }

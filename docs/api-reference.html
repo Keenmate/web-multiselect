@@ -133,7 +133,7 @@
                     <td><code>defer</code></td>
                     <td class="type">boolean</td>
                     <td class="default">false</td>
-                    <td>Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire <code>options</code>, callbacks (e.g. <code>getCustomStylesCallback</code>) and listeners first, then release with <code>ready()</code> (or by removing the attribute) so it builds once, flash-free. Latched; reflects an <code>is-ready</code> attribute after building.</td>
+                    <td>Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire <code>options</code>, callbacks (e.g. <code>getCustomStylesCallback</code>) and listeners first, then release with <code>release()</code> (or by removing the attribute) so it builds once, flash-free. Latched; reflects an <code>ready</code> attribute after building.</td>
                 </tr>
                 <tr>
                     <td><code>enable-search</code></td>
@@ -484,7 +484,7 @@
                 <tr>
                     <td><code>isReady</code></td>
                     <td class="type">boolean (get)</td>
-                    <td>Read-only property: <code>true</code> once the picker has been built (the <code>ready</code> event has fired); <code>false</code> while a <code>defer</code> gate is held. Reflected as the <code>is-ready</code> attribute.</td>
+                    <td>Read-only property: <code>true</code> once the picker has been built (the <code>ready</code> event has fired); <code>false</code> while a <code>defer</code> gate is held. Reflected as the <code>ready</code> attribute.</td>
                 </tr>
                 <tr>
                     <td><code>destroy</code></td>

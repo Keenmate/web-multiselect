@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Test — defer / ready() render gate</title>
+    <title>Test — defer / release() render gate</title>
     <link rel="stylesheet" href="test-fixtures.css">
     <style>
         web-multiselect { display: block; max-width: 320px; }
     </style>
 </head>
 <body>
-    <h1>defer / ready() render gate</h1>
+    <h1>defer / release() render gate</h1>
     <p>Targeted by <code>e2e/defer-gate.spec.ts</code>. Each element carries the <code>defer</code>
     attribute, so it builds nothing on upgrade — options and a badge-coloring
     <code>getCustomStylesCallback</code> are wired while held, then released. The load-bearing case:
     the styled, pre-selected badges must appear in <em>one shot</em> on release (no default-style flash).</p>
 
-    <!-- Released imperatively via ready(). -->
+    <!-- Released imperatively via release(). -->
     <div class="fixture">
-        <div class="fixture-label">release via ready()</div>
+        <div class="fixture-label">release via release()</div>
         <div class="fixture-controls">
-            <button id="btn-ready" onclick="document.getElementById('ms-ready').ready()">ready()</button>
+            <button id="btn-ready" onclick="document.getElementById('ms-ready').release()">release()</button>
             <span>ready events: <strong id="ready-count">0</strong></span>
         </div>
         <web-multiselect id="ms-ready" defer value-member="value" display-value-member="label"

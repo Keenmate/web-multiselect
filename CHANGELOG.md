@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — BREAKING (suite-wide naming unification, 2026-10-27)
+
+One vocabulary across the KeenMate components (rulebook D-NC-13..27). No aliases — rename on upgrade.
+
+**Ready / defer / destroy now come from core `BlissElement`.**
+
+| Old | New |
+|---|---|
+| `defer` attribute, `deferRender` property | `defer` attribute, `shouldDefer` property (core) |
+| `el.ready()` | `el.release()` (removing `defer` still releases too) |
+| `is-ready` host attribute, CSS `:host([defer]:not([is-ready]))` | `ready` host attribute + `:state(ready)` (core) |
+| — | `el.whenReady(): Promise<void>` |
+| `el.destroy()` (own) | core `el.destroy()`: the element stays inert afterwards (re-inserting it does not rebuild) |
+
 ### Changed — BREAKING (interaction model, web-components-core rc15)
 
 Callbacks, events and action buttons follow the shared KeenMate interaction model

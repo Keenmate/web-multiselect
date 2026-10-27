@@ -145,7 +145,7 @@ input-size → styling-theming.txt
 inputSize → styling-theming.txt
 Installation → basic-setup.txt
 Internationalization → display-modes.txt, events-callbacks.txt
-is-ready → advanced-patterns.txt
+ready → advanced-patterns.txt
 isReady → advanced-patterns.txt
 
 J
@@ -204,7 +204,7 @@ Props → basic-setup.txt, typescript-types.txt
 
 R
 -
-ready() → advanced-patterns.txt
+release() → advanced-patterns.txt
 ready event → events-callbacks.txt, advanced-patterns.txt
 Render gate (defer) → advanced-patterns.txt
 renderBadgeContentCallback → custom-rendering.txt

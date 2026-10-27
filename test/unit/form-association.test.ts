@@ -42,7 +42,7 @@ describe('<web-multiselect> form association', () => {
         expect(evt.target.form).toBe(form);
     });
 
-    it('does not attach internals itself (core owns the single, lazy attachInternals)', () => {
+    it('does not attach internals itself (core owns the single attachInternals)', () => {
         el = document.createElement('web-multiselect');
         let calls = 0;
         const form = document.createElement('form');
@@ -50,10 +50,10 @@ describe('<web-multiselect> form association', () => {
             calls += 1;
             return { form };
         };
-        document.body.appendChild(el); // construct + connect
-        expect(calls).toBe(0); // nothing reads .form yet
-        void el.form; // first read triggers core's lazy attach
+        document.body.appendChild(el); // construct + connect (core attaches for :state(ready))
         void el.form;
-        expect(calls).toBe(1); // memoized — attached at most once
+        void el.form;
+        expect(el.form).toBe(form);
+        expect(calls).toBe(1); // memoized — attached exactly once, by core
     });
 });

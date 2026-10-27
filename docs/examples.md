@@ -1256,7 +1256,7 @@ select.options = [
 ];
 ```
 
-## Deferred initialization (`defer` / `ready()`)
+## Deferred initialization (`defer` / `release()`)
 
 A custom element upgrades the moment its script loads: the browser builds its shadow DOM
 and paints it with the component's **default** styles. If you then assign a
@@ -1268,9 +1268,9 @@ restyle — the classic custom-element flash. The same race bites any post-upgra
 The `defer` attribute holds the first render until you say go:
 
 - Add `defer` and the component builds **nothing** on upgrade — it only reserves space
-  (via `:host([defer]:not([is-ready]))`, mirroring the pre-upgrade `:not(:defined)` window).
+  (via `:host([defer]:not([ready]))`, mirroring the pre-upgrade `:not(:defined)` window).
 - Wire everything from JS — `options`, `getCustomStylesCallback`, listeners.
-- Call `el.ready()` (or remove the `defer` attribute) to build **once**, with all of it
+- Call `el.release()` (or remove the `defer` attribute) to build **once**, with all of it
   already applied. The gate is *latched* — once released it never re-closes.
 
 ```html
@@ -1284,7 +1284,7 @@ el.options = await loadSkills();
 el.getCustomStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) => console.log(e.detail.selectedValues));
 
-el.ready();          // builds once — the styled badges appear in one shot, no flash
+el.release();          // builds once — the styled badges appear in one shot, no flash
 el.isReady;          // → true
 ```
 
@@ -1316,11 +1316,11 @@ Hooks.MultiSelect = {
     el.options = JSON.parse(el.dataset.options);
     el.getCustomStylesCallback = () => `.ms__badge-text { background: var(--brand); color: #fff; }`;
     el.addEventListener('change', (e) => this.pushEvent('changed', e.detail));
-    el.ready();                // build once, flash-free
+    el.release();                // build once, flash-free
   },
 };
 ```
 
-> Removing the `defer` attribute has the same effect as `ready()`, so a purely
+> Removing the `defer` attribute has the same effect as `release()`, so a purely
 > server-driven integration can release the gate by patching the attribute off — no
-> client hook required. `is-ready` is reflected for CSS/debugging; don't set it yourself.
+> client hook required. `ready` is reflected for CSS/debugging; don't set it yourself.

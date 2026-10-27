@@ -19,11 +19,11 @@ web-multiselect:not(:defined) {
 }
 
 /* Deferred render gate: the author set `defer` and hasn't released it yet
-   (`el.ready()` / removing the attribute). While held the element builds no
+   (`el.release()` / removing the attribute). While held the element builds no
    shadow content, so there is nothing to hide — just reserve space so releasing
    the gate doesn't shift layout, matching the :not(:defined) window above. The
-   element drops `is-ready` in on its first build, which lifts this rule. */
-:host([defer]:not([is-ready])) {
+   element gets core's `ready` attribute on its first build, which lifts this rule. */
+:host([defer]:not([ready])) {
   display: block;
   min-height: var(--ms-input-height);
 }

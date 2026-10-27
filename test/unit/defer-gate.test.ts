@@ -3,13 +3,15 @@ import '../../src/web-component'; // registers <web-multiselect>
 
 /**
  * Render gate (`defer`): with the attribute present the element builds NO shadow
- * content on connect — it waits until `el.ready()` (or the attribute is removed),
+ * content on connect — it waits until `el.release()` (or the attribute is removed),
  * then builds once with everything wired. This closes the upgrade-then-restyle
  * flash for consumers who assign options / callbacks after upgrade (§FOUC).
  *
  * "Built" is observed via the `[data-multiselect]` container #ensureContainer()
- * appends, the reflected `is-ready` attribute, and the once-only `ready` event.
+ * appends, core's `ready` attribute, and the once-only `ready` event (core BlissElement).
  */
+/** Let microtasks / timers run (core's whenSettled() waits for the release while held). */
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 const built = (el: any): boolean => !!el.shadowRoot?.querySelector('[data-multiselect]');
 
 describe('defer render gate', () => {
@@ -19,27 +21,27 @@ describe('defer render gate', () => {
         vi.restoreAllMocks();
     });
 
-    it('holds the build while `defer` is set, then builds once on ready()', async () => {
+    it('holds the build while `defer` is set, then builds once on release()', async () => {
         const onReady = vi.fn();
         el = document.createElement('web-multiselect');
         el.setAttribute('defer', '');
         el.addEventListener('ready', onReady);
         document.body.appendChild(el);
-        await el.whenSettled();
+        await tick(); // held: whenSettled() would wait for the release
 
         // Held: nothing built, not ready, no event.
         expect(built(el)).toBe(false);
         expect(el.isReady).toBe(false);
-        expect(el.hasAttribute('is-ready')).toBe(false);
+        expect(el.hasAttribute('ready')).toBe(false);
         expect(onReady).not.toHaveBeenCalled();
 
-        el.ready();
+        el.release();
         await el.whenSettled();
 
         // Released: built once, reflected, announced.
         expect(built(el)).toBe(true);
         expect(el.isReady).toBe(true);
-        expect(el.hasAttribute('is-ready')).toBe(true);
+        expect(el.hasAttribute('ready')).toBe(true);
         expect(onReady).toHaveBeenCalledTimes(1);
     });
 
@@ -48,10 +50,10 @@ describe('defer render gate', () => {
         el.setAttribute('defer', '');
         document.body.appendChild(el);
         el.options = [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }];
-        await el.whenSettled();
+        await tick(); // held: whenSettled() would wait for the release
         expect(built(el)).toBe(false); // still held despite the pending write
 
-        el.ready();
+        el.release();
         await el.whenSettled();
         expect(built(el)).toBe(true);
         expect(el.getSelected()).toEqual([]); // picker is live and queryable
@@ -73,7 +75,7 @@ describe('defer render gate', () => {
         el = document.createElement('web-multiselect');
         el.setAttribute('defer', '');
         document.body.appendChild(el);
-        await el.whenSettled();
+        await tick(); // held: whenSettled() would wait for the release
         expect(built(el)).toBe(false);
 
         el.removeAttribute('defer');
@@ -88,9 +90,9 @@ describe('defer render gate', () => {
         el.setAttribute('defer', '');
         el.addEventListener('ready', onReady);
         document.body.appendChild(el);
-        await el.whenSettled();
+        await tick(); // held: whenSettled() would wait for the release
 
-        el.ready();
+        el.release();
         await el.whenSettled();
         expect(onReady).toHaveBeenCalledTimes(1);
 

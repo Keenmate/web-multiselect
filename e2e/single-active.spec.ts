@@ -40,7 +40,7 @@ test('programmatic open() also dismisses the other', async ({ page }) => {
     await expect(dropdown(a)).toBeHidden();
 });
 
-test('an external km-overlay-activated event (no core import) closes an open multiselect', async ({ page }) => {
+test('an external km-overlay-activate event (no core import) closes an open multiselect', async ({ page }) => {
     // Proves the framework-agnostic path end-to-end in a real browser: a Svelte / plain-DOM
     // popover that never imported core just dispatches the document event, and the KM
     // multiselect dismisses.
@@ -50,7 +50,7 @@ test('an external km-overlay-activated event (no core import) closes an open mul
 
     await page.evaluate(() =>
         document.dispatchEvent(
-            new CustomEvent('km-overlay-activated', { detail: { source: 'external-popover' } }),
+            new CustomEvent('km-overlay-activate', { detail: { source: 'external-popover' } }),
         ),
     );
     await expect(dropdown(a)).toBeHidden();
