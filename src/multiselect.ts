@@ -133,7 +133,7 @@ export class MultiSelectEngine<T = any> {
      * one lookup per item — no member/callback call, no re-normalization:
      *   rawSearchValues      searchValueMember / getSearchValueCallback → display value (any type)
      *   preparedSearchValues raw string → normalizeSearchText per searchBehavior (internal search)
-     *   searchEntries        { item, searchValue } list handed to searchCallback (built on demand)
+     *   searchEntries        { data, searchValue } list handed to searchCallback (built on demand)
      * Filled lazily; dropped by invalidateSearchValues() when the options or a pipeline input change.
      */
     private rawSearchValues = new Map<T, unknown>();
@@ -441,12 +441,12 @@ export class MultiSelectEngine<T = any> {
         this.searchEntries = null;
     }
 
-    /** `{ item, searchValue }` for every option — searchCallback's `context.entries`. */
+    /** `{ data, searchValue }` for every option — searchCallback's `context.entries`. */
     private getSearchEntries(): ReadonlyArray<SearchEntry<T>> {
         if (!this.searchEntries) {
-            this.searchEntries = Object.freeze(this.allOptions.map(item => Object.freeze({
-                item,
-                searchValue: this.getRawSearchValue(item)
+            this.searchEntries = Object.freeze(this.allOptions.map(data => Object.freeze({
+                data,
+                searchValue: this.getRawSearchValue(data)
             })));
         }
         return this.searchEntries;

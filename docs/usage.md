@@ -315,7 +315,7 @@ multiselect.getSearchTermCallback = ({ term, target }) =>
 multiselect.searchCallback = ({ term, entries }) =>
   entries
     .filter(e => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-    .map(e => e.item);
+    .map(e => e.data);
 ```
 
 `entries` is built on first access (a server-backed callback that ignores it pays nothing),

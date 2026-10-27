@@ -119,11 +119,11 @@ getSearchTermCallback({ term, target, behavior, match }):
 
 searchCallback({ term, signal, entries }) — sync or async (signal is aborted
 when a newer search supersedes this one):
-- entries: [{ item, searchValue }] with the RAW getSearchValueCallback output (may be an
+- entries: [{ data, searchValue }] with the RAW getSearchValueCallback output (may be an
   object). Built on first access, each value computed once, SAME array until options change.
     select.getSearchValueCallback = ({ option }) => ({ title: normalizeSearchText(option.name), zip: option.zip });
     select.searchCallback = ({ term, entries }) =>
-      entries.filter(e => e.searchValue.zip.startsWith(term.zip)).map(e => e.item);
+      entries.filter(e => e.searchValue.zip.startsWith(term.zip)).map(e => e.data);
 - An object search value WITHOUT searchCallback: internal search uses the display value (warns).
 
 normalizeSearchText(text, behavior = 'normalized') is exported for custom search:

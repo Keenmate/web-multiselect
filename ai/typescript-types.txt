@@ -176,7 +176,7 @@ type SearchBehavior = 'normalized' | 'case-insensitive' | 'exact';
 type SearchMatch = 'contains' | 'equals' | 'starts-with' | 'word-starts-with' | 'ends-with' | 'word-ends-with' | 'regex';
 interface SearchTermContext { term: string; target: 'internal' | 'callback'; behavior: SearchBehavior; match: SearchMatch; }
 type PreparedSearchTerm = string | RegExp | Record<string, unknown> | null | undefined;
-interface SearchEntry<T> { item: T; searchValue: unknown; }
+interface SearchEntry<T> { data: T; searchValue: unknown; }
 interface MultiSelectSearchContext<T, TTerm = string> { term: TTerm; signal: AbortSignal; readonly entries: ReadonlyArray<SearchEntry<T>>; }
 type SelectionSource = 'option' | 'badge' | 'group' | 'select-all' | 'clear-selection' | 'clear';
 type MessageType = 'info' | 'warning' | 'error' | 'success';

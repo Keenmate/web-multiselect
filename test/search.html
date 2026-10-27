@@ -177,7 +177,7 @@
                 window.__callbackTerms.push(term);
                 return entries
                     .filter(e => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-                    .map(e => e.item);
+                    .map(e => e.data);
             };
             cb.options = cities;
 

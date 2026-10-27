@@ -314,12 +314,9 @@ export interface SearchTermCallbackContext<T = any> extends SearchTermContext, M
  * `ctx` of `searchCallback` (`signal`, `entries` from core `/search`). `term` is the term to
  * search for: the typed text (after `beforeSearchCallback`), or — when `getSearchTermCallback`
  * is set — whatever it returned for `target: 'callback'` (a string, RegExp or object; type it via
- * `TTerm`). There is no separate `searchTerm` field.
+ * `TTerm`). `entries[i].data` is the option.
  */
-export interface MultiSelectSearchContext<T = any, TTerm = string> extends Omit<SearchCallbackContext<T>, 'term' | 'searchTerm'>, MultiSelectContext<T> {
-    /** The term to search for (see above). */
-    term: TTerm;
-}
+export interface MultiSelectSearchContext<T = any, TTerm = string> extends SearchCallbackContext<T, TTerm>, MultiSelectContext<T> {}
 
 /** `ctx` of `selectedOrderCompareCallback` — compare two selected options (`Array.prototype.sort` contract). */
 export interface SelectedOrderCompareContext<T = any> extends MultiSelectContext<T> {

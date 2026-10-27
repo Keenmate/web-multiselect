@@ -72,6 +72,7 @@ one ctx.
 | per-option ctx `{ item }` (`getValueCallback`, `getDisplayValueCallback`, `getIconCallback`, `getIsDisabledCallback`, `getIsSelectableCallback({ item, node })`, all badge / render / tooltip callbacks, `renderSelectedContentCallback`, …) | `{ option }` (`ItemContext.option`) |
 | `renderOptionContentCallback` / `getOptionTooltipCallback` ctx `index` | `optionIndex` |
 | `searchCallback({ term, signal, searchTerm, entries })` | `searchCallback({ term, signal, entries })` — `term` is the `getSearchTermCallback` result for `target: 'callback'` when set, else the typed text (`MultiSelectSearchContext<T, TTerm>`) |
+| `searchCallback` `entries[i].item` | `entries[i].data` (core `SearchEntry`; `item` is reserved for action items) |
 | `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
 | `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element + controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
 

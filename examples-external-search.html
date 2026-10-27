@@ -127,7 +127,7 @@ el.getSearchTermCallback = ({ term, target }) =&gt;
 el.searchCallback = ({ term, entries }) =&gt;
     entries
         .filter((e) =&gt; e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-        .map((e) =&gt; e.item);</pre></div>
+        .map((e) =&gt; e.data);</pre></div>
             <div class="demo-area">
                 <label class="demo-label">Search by city name or postal code:</label>
                 <web-multiselect id="zip-search" multiple="true" enable-search="true" labels='{"searchPlaceholder": "Try 381, 370 0, cesk, kralove…"}'></web-multiselect>
@@ -314,7 +314,7 @@ el.searchCallback = ({ term, entries }) =&gt;
                     calls++;
                     const results = entries
                         .filter((e) => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-                        .map((e) => e.item);
+                        .map((e) => e.data);
                     out.textContent =
                         `term:       ${JSON.stringify(term)}\n` +
                         `results:    ${results.length} of ${entries.length}\n` +
