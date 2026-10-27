@@ -458,7 +458,7 @@ export class MultiSelectEngine<T = any> {
             match: this.options.searchMatch || 'contains',
             regex: this.searchRegex,
             getSearchTermCallback: callback ? (t) => callback(this.ctx(this.searchTermContext(t, 'internal'))) : undefined,
-            onObjectTerm: () => {
+            objectTermCallback: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
                 console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
