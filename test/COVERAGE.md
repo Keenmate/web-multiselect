@@ -26,6 +26,8 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `data-options` attribute (HTML-only setup, no JS)             | ✓      | `selection.spec.ts`          | `selection.html`          |
 | Initial values via programmatic `selectedValues` setter       | ✗      |      |         |
 | Selected option styling (`.ms__option--selected`)             | ✓      | `selection.spec.ts`          | `selection.html`          |
+| Member defaults (`value`/`label`/`group`/`icon`/`subtitle`/`disabled`) with no config; callback overrides member; `null` clears | ✓ | `member-defaults.spec.ts` | `placeholder.html` (inline pickers) |
+| Primitive option arrays (strings / numbers) | ✓ | `member-defaults.spec.ts` | `placeholder.html` (inline pickers) |
 
 ## 2. Badges display
 

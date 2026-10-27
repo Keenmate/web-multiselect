@@ -127,6 +127,13 @@ select.options = [
   { value: 1, label: 'Option 1' }  // Works without config
 ];
 
+Example (primitive arrays - each item is its own value and label):
+select.options = ['Prague', 'Brno'];   // getValue() → ['Brno']
+select.options = [10, 20];
+
+Opting out of a default member (e.g. your data has an unrelated `group` field):
+select.groupMember = null;   // property null clears; removing the attribute restores the default
+
 TUPLE ARRAYS
 ------------
 Auto-detected [key, value] format:

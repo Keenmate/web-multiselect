@@ -1,11 +1,10 @@
 import { test, expect, Page, Locator } from './fixtures';
 
 /**
- * Declarative <option>/<optgroup> children (no script). The element parses them once and
- * defaults value-member / display-value-member / group / icon / subtitle / disabled to the
- * parsed fields — unless the consumer configured them. Unset inputs reach the config as
- * `null` (core's null-clear contract), so the defaults must apply to null too, or every
- * option renders "[N/A]" (regressed in 2.5.0).
+ * Declarative <option>/<optgroup> children (no script). The element parses them once into
+ * { value, label, group, icon, subtitle, disabled } objects, which the built-in member
+ * defaults (value / label / group / icon / subtitle / disabled — the defaults for ALL data
+ * since 2.x) read with no configuration. A configured member or get*Callback still wins.
  *
  * Fixture: test/declarative.html.
  */

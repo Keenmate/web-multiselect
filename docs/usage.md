@@ -42,7 +42,6 @@ in the `data-options` attribute and pick a format with `data-options-format`:
 ```html
 <!-- json (default): array of objects or [value, label] tuples -->
 <web-multiselect
-  value-member="value" display-value-member="label"
   data-options='[{"value":"js","label":"JavaScript"},{"value":"ts","label":"TypeScript"}]'>
 </web-multiselect>
 
@@ -201,13 +200,13 @@ multiselect.setSelected(['js', 'ts']);
 | `allow-add-new` | `boolean` | `false` | Allow adding new options not in the list (fires the `add` event) |
 | `add-new-text` | `string` | `'Add "{value}"'` | Template for the "add new" prompt shown in place of the empty message when a search has no matches. `{value}` is the typed text. `getAddNewTextCallback` wins |
 | `add-new-pending-text` | `string` | `'Adding "{value}"…'` | Template for the pending prompt (spinner + text) shown while an async `beforeAddCallback` runs. `{value}` is the typed text |
-| `value-member` | `string` | - | Property name for value/ID extraction from custom objects |
-| `display-value-member` | `string` | - | Property name for display text extraction from custom objects |
+| `value-member` | `string` | `'value'` | Property name for value/ID extraction. `getValueCallback` overrides it. Primitive options (strings/numbers) are their own value |
+| `display-value-member` | `string` | `'label'` | Property name for display text extraction. `getDisplayValueCallback` overrides it. Primitive options display themselves |
 | `search-value-member` | `string` | - | Property name for search text extraction from custom objects |
-| `icon-member` | `string` | - | Property name for icon extraction from custom objects |
-| `subtitle-member` | `string` | - | Property name for subtitle extraction from custom objects |
-| `group-member` | `string` | - | Property name for group extraction from custom objects |
-| `disabled-member` | `string` | - | Property name for disabled state extraction from custom objects |
+| `icon-member` | `string` | `'icon'` | Property name for icon extraction. `getIconCallback` overrides it |
+| `subtitle-member` | `string` | `'subtitle'` | Property name for subtitle extraction. `getSubtitleCallback` overrides it |
+| `group-member` | `string` | `'group'` | Property name for group extraction. `getGroupCallback` overrides it. Set the property to `null` to ignore a `group` field |
+| `disabled-member` | `string` | `'disabled'` | Property name for disabled state extraction. `getIsDisabledCallback` overrides it |
 | `full-title-member` | `string` | - | Property name for a full/long title (shown on badges with `show-badge-full-title`) |
 | `path-member` | `string` | - | Tree mode: property holding a node's materialized path (e.g. `1.1.2`). Setting a path source enables tree mode |
 | `parent-path-member` | `string` | - | Tree mode: property holding a node's parent path |

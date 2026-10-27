@@ -97,14 +97,14 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'selectedPopoverWidth',    attribute: 'selected-popover-width',      converter: toText({ isNullable: true }),            on: 'update', description: 'Selected-items popover width; mirrored to `--ms-selected-popover-width`.' },
 
   // ── Member properties (structural → reinit; optional → nullable) ─────────
-  { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name on an option object that holds its value.' },
-  { configKey: 'displayValueMember',      attribute: 'display-value-member',        converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option display label.' },
+  { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true, default: 'value' }), shouldReflect: true, on: 'reinit', description: 'Property name on an option object that holds its value. Default: `value`.' },
+  { configKey: 'displayValueMember',      attribute: 'display-value-member',        converter: toText({ isNullable: true, default: 'label' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option display label. Default: `label`.' },
   { configKey: 'searchValueMember',       attribute: 'search-value-member',         converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name searched against (falls back to the display value).' },
-  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option icon.' },
-  { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option subtitle.' },
+  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true, default: 'icon' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option icon. Default: `icon`.' },
+  { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true, default: 'subtitle' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option subtitle. Default: `subtitle`.' },
   { configKey: 'fullTitleMember',         attribute: 'full-title-member',           converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option full/long title.' },
-  { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name used to group options under headers.' },
-  { configKey: 'disabledMember',          attribute: 'disabled-member',             converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that marks an option disabled.' },
+  { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true, default: 'group' }), shouldReflect: true, on: 'reinit', description: 'Property name used to group options under headers. Default: `group`.' },
+  { configKey: 'disabledMember',          attribute: 'disabled-member',             converter: toText({ isNullable: true, default: 'disabled' }), shouldReflect: true, on: 'reinit', description: 'Property name that marks an option disabled. Default: `disabled`.' },
 
   // ── Tree of options (structural → reinit; optional → nullable) ───────────
   { configKey: 'pathMember',              attribute: 'path-member',                 converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name holding a node materialized tree path.' },
@@ -303,20 +303,6 @@ let consumedMsVarsCache: Set<string> | null = null;
 function consumedMsVars(): Set<string> {
   return (consumedMsVarsCache ??= extractConsumedCssVars(styles, '--ms-'));
 }
-
-/**
- * Member defaults written into each parsed option when declarative
- * <option>/<optgroup> children were used, and only for members the consumer
- * hasn't otherwise configured (attribute, property, or get*Callback).
- */
-const DECLARATIVE_MEMBER_DEFAULTS: ReadonlyArray<{ key: keyof MultiSelectConfig; member: string; callbackKey: string }> = [
-  { key: 'valueMember',        member: 'value',    callbackKey: 'getValueCallback' },
-  { key: 'displayValueMember', member: 'label',    callbackKey: 'getDisplayValueCallback' },
-  { key: 'groupMember',        member: 'group',    callbackKey: 'getGroupCallback' },
-  { key: 'iconMember',         member: 'icon',     callbackKey: 'getIconCallback' },
-  { key: 'subtitleMember',     member: 'subtitle', callbackKey: 'getSubtitleCallback' },
-  { key: 'disabledMember',     member: 'disabled', callbackKey: 'getIsDisabledCallback' },
-];
 
 export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents, MultiSelectController<T>> {
   // Opt into the form-associated custom element lifecycle so form.reset() and
@@ -616,7 +602,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   /**
    * Build the picker config from the merged `this.config`, minus the keys the
    * picker doesn't own, plus the runtime wiring (event bridges, container, host,
-   * declarative option data + member defaults, counter default).
+   * declarative option data, counter default).
    */
   #assembleConfig(): Record<string, unknown> {
     // Canonical engine-config assembly (core §6 null-clear contract): a shallow copy
@@ -650,14 +636,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       }
     }
     cfg.options = optionData;
-
-    // Declarative member defaults: only when <option> children were parsed and
-    // the member isn't otherwise configured (member key or its get*Callback).
-    if (this.#hasDeclarativeOptions) {
-      for (const { key, member, callbackKey } of DECLARATIVE_MEMBER_DEFAULTS) {
-        if (cfg[key] == null && !cfg[callbackKey]) cfg[key] = member;
-      }
-    }
 
     // Event bridges: the engine builds each detail (with the context) and reports it
     // through its on* options; the element dispatches it (core calls the on<Name> twin).

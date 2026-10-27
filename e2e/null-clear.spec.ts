@@ -75,15 +75,16 @@ test('update path: clearing search-hint removes the hint element', async ({ page
 
 // ── reinit path (on: 'reinit') — cleared null kept by engineConfig() ────────────
 
-test('reinit path: clearing icon-member drops the option icons', async ({ page }) => {
-    const p = await makePicker(page, { 'icon-member': 'icon' }, FRUIT);
+test('reinit path: removing icon-member resets it to the default member (icon)', async ({ page }) => {
+    const p = await makePicker(page, { 'icon-member': 'emoji' }, FRUIT);
     await p.locator('.ms__input').click();
-    await expect(p.locator('.ms__option[data-value="apple"] .ms__option-icon')).toHaveCount(1);
+    // FRUIT has no `emoji` field → no icon resolved → no slot (reserve-icon-slot is off).
+    await expect(p.locator('.ms__option[data-value="apple"] .ms__option-icon')).toHaveCount(0);
 
     await p.evaluate((el) => el.removeAttribute('icon-member'));
     await p.locator('.ms__input').click();
-    // No icon member → no icon resolved → no slot (reserve-icon-slot is off).
-    await expect(p.locator('.ms__option[data-value="apple"] .ms__option-icon')).toHaveCount(0);
+    // Absent == default: iconMember falls back to `icon`, which FRUIT has.
+    await expect(p.locator('.ms__option[data-value="apple"] .ms__option-icon')).toHaveCount(1);
 });
 
 test('reinit path: clearing via the JS property (= null) resets too', async ({ page }) => {

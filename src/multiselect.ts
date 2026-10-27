@@ -272,7 +272,13 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Generic field extractor with the precedence:
-     *   tuple short-circuit -> member property -> callback -> fallback
+     *   tuple short-circuit -> callback -> primitive self -> member property -> fallback
+     *
+     * The callback wins over the member: every member has a built-in default (`value`, `label`,
+     * `group`, …) so the member is always "set" — a `get*Callback` is the explicit override.
+     *
+     * Primitive items (string / number / boolean): the value and display fields (`tupleIndex` set)
+     * are the item itself; every other field falls back.
      *
      * Tuple handling:
      *   - `tupleIndex` (0 | 1): for `[key, value]` items, return that slot.
@@ -305,13 +311,20 @@ export class MultiSelectEngine<T = any> {
             }
         }
 
+        if (opts.callback) {
+            return opts.callback(this.itemCtx(item));
+        }
+
+        if (item === null || (typeof item !== 'object' && typeof item !== 'function')) {
+            if (opts.tupleIndex !== undefined && item != null) {
+                return opts.transform ? opts.transform(item) : (item as unknown as R);
+            }
+            return typeof opts.fallback === 'function' ? (opts.fallback as () => R)() : opts.fallback;
+        }
+
         if (opts.member && (item as any)[opts.member] !== undefined) {
             const raw = (item as any)[opts.member];
             return opts.transform ? opts.transform(raw) : raw;
-        }
-
-        if (opts.callback) {
-            return opts.callback(this.itemCtx(item));
         }
 
         return typeof opts.fallback === 'function' ? (opts.fallback as () => R)() : opts.fallback;
@@ -629,6 +642,13 @@ export class MultiSelectEngine<T = any> {
 
             // Data and callbacks
             options: [],
+            // Member defaults (a get*Callback overrides its member; see extractField)
+            valueMember: 'value',
+            displayValueMember: 'label',
+            groupMember: 'group',
+            iconMember: 'icon',
+            subtitleMember: 'subtitle',
+            disabledMember: 'disabled',
             container: undefined,
 
             // Override with provided options

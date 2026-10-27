@@ -93,6 +93,21 @@ items): the add-new prompt, `show-selected`, `clear-count`, `remove-hidden`. A
 `renderBadgeCallback` remove control is now `data-ms-action="remove"` (or `.ms__badge-remove`).
 CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action="show-selected"]`.
 
+### Changed — BREAKING (member defaults for all data)
+
+- **`value` / `label` / `group` / `icon` / `subtitle` / `disabled` are now the real member
+  defaults** (`valueMember`, `displayValueMember`, `groupMember`, `iconMember`,
+  `subtitleMember`, `disabledMember`), for every data source — not only declarative `<option>`
+  children. `ms.options = [{ value: 1, label: 'Prague' }]` now works with no configuration
+  (before, it rendered `[N/A]` and `selectedValue` returned `null`). Consequences: data that
+  happens to carry a `group` / `icon` / `subtitle` / `disabled` field is now grouped / iconed /
+  disabled by it — set the member to `null` (property) to opt out; removing a `*-member`
+  attribute resets it to the default instead of clearing it.
+- **A `get*Callback` now always overrides its member.** Previously the member won when the
+  option had that property and the callback was only a fallback.
+- Primitive option arrays (`['Prague', 'Brno']`, `[10, 20]`) work: each option is its own value
+  and label (they rendered `[N/A]` before).
+
 ### Added
 
 - `--ms-action-button-danger-color`, `--ms-action-button-toggled-color`,

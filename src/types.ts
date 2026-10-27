@@ -468,12 +468,12 @@ export interface MultiSelectConfig<T = any> {
     // MEMBER/CALLBACK PROPERTIES (following svelte-treeview pattern)
     // ========================================================================
 
-    /** Member property name for value/ID extraction */
+    /** Member property name for value/ID extraction. Default `'value'`; `getValueCallback` overrides it. Primitive options (strings/numbers) are their own value. */
     valueMember?: string;
     /** Callback to extract value/ID from an option (`ctx.item`) */
     getValueCallback?: (ctx: ItemContext<T>) => string | number;
 
-    /** Member property name for display value extraction */
+    /** Member property name for display value extraction. Default `'label'`; `getDisplayValueCallback` overrides it. Primitive options display themselves. */
     displayValueMember?: string;
     /** Callback to extract the display value from an option (`ctx.item`) */
     getDisplayValueCallback?: (ctx: ItemContext<T>) => string;
@@ -544,7 +544,7 @@ export interface MultiSelectConfig<T = any> {
      */
     getSearchValueCallback?: (ctx: ItemContext<T>) => string | object;
 
-    /** Member property name for icon extraction */
+    /** Member property name for icon extraction. Default `'icon'`; `getIconCallback` overrides it. */
     iconMember?: string;
     /** Callback to extract the icon from an option (`ctx.item`) */
     getIconCallback?: (ctx: ItemContext<T>) => string;
@@ -557,7 +557,7 @@ export interface MultiSelectConfig<T = any> {
      */
     isIconSlotReserved?: boolean;
 
-    /** Member property name for subtitle extraction */
+    /** Member property name for subtitle extraction. Default `'subtitle'`; `getSubtitleCallback` overrides it. */
     subtitleMember?: string;
     /** Callback to extract the subtitle from an option (`ctx.item`) */
     getSubtitleCallback?: (ctx: ItemContext<T>) => string;
@@ -619,7 +619,7 @@ export interface MultiSelectConfig<T = any> {
      */
     cascadeSelectPolicy?: 'rolled-up' | 'leaves' | 'all';
 
-    /** Member property name for group extraction */
+    /** Member property name for group extraction. Default `'group'`; `getGroupCallback` overrides it. */
     groupMember?: string;
     /** Callback to extract the group from an option (`ctx.item`) */
     getGroupCallback?: (ctx: ItemContext<T>) => string;
@@ -640,7 +640,7 @@ export interface MultiSelectConfig<T = any> {
      */
     groupSelectMode?: 'none' | 'cascade';
 
-    /** Member property name for disabled state extraction */
+    /** Member property name for disabled state extraction. Default `'disabled'`; `getIsDisabledCallback` overrides it. */
     disabledMember?: string;
     /** Callback deciding whether an option (`ctx.item`) is disabled (overrides `disabledMember`) */
     getIsDisabledCallback?: (ctx: ItemContext<T>) => boolean;
