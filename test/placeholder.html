@@ -10,7 +10,7 @@
 </head>
 <body>
     <h1>placeholders</h1>
-    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels.selectPlaceholder</code>), the empty-list <code>labels.noData</code>, and live updates via <code>setAttributes()</code>.</p>
+    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels.selectPlaceholder</code>), the empty-list <code>labels.noDataPlaceholder</code>, and live updates via <code>setAttributes()</code>.</p>
 
     <div class="fixture">
         <div class="fixture-label">default (search enabled)</div>
@@ -33,13 +33,13 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label"> labels.noData + empty list (cascade child)</div>
-        <web-multiselect id="ph-nodata" value-member="value" display-value-member="label" labels='{"noData": "No data — pick a category first"}'></web-multiselect>
+        <div class="fixture-label"> labels.noDataPlaceholder + empty list (cascade child)</div>
+        <web-multiselect id="ph-nodata" value-member="value" display-value-member="label" labels='{"noDataPlaceholder": "No data — pick a category first"}'></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label"> labels.noData but list has options</div>
-        <web-multiselect id="ph-nodata-filled" value-member="value" display-value-member="label" labels='{"noData": "No data"}'></web-multiselect>
+        <div class="fixture-label"> labels.noDataPlaceholder but list has options</div>
+        <web-multiselect id="ph-nodata-filled" value-member="value" display-value-member="label" labels='{"noDataPlaceholder": "No data"}'></web-multiselect>
     </div>
 
     <script type="module">

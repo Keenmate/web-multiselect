@@ -278,7 +278,7 @@ Combine RTL with i18n:
 
 <web-multiselect
   dir="rtl"
-  lang="ar" labels='{"searchPlaceholder": "بحث...", "empty": "لا توجد نتائج", "loading": "جاري التحميل..."}'>
+  lang="ar" labels='{"searchPlaceholder": "بحث...", "noResults": "لا توجد نتائج", "searching": "جاري البحث…"}'>
 </web-multiselect>
 
 Custom counter for RTL languages:

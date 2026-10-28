@@ -118,7 +118,7 @@ select.options = [
 <web-multiselect
   id="async-select"
   min-search-length="2"
-  search-debounce="300" labels='{"loading": "Searching...", "empty": "No products found"}'>
+  search-debounce="300" labels='{"searching": "Searching…", "noResults": "No products found"}'>
 </web-multiselect>
 
 <script type="module">

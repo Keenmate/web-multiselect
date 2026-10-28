@@ -146,6 +146,21 @@ generated from the component's source on every build, so it never drifts.
   `css.customData` powers completion for the `--ms-*` theming variables. Reload
   the window after adding them.
 
+## HTML Injection (XSS) Notice
+
+These inputs are inserted as **raw HTML** — intentionally not XSS-safe, so you control the
+markup. Sanitize any untrusted text before passing it in:
+
+| Input | Output used in |
+|---|---|
+| `labels.noData`, `labels.noResults`, `labels.searching` | Dropdown empty / searching text (innerHTML) |
+| `labels.addNew`, `labels.addNewPending` | "Add new" prompt (innerHTML; the `{value}` typed text is escaped) |
+| `labels.selectedCount`, `labels.moreCount` | Counter badge text (innerHTML) |
+| `renderOptionContentCallback`, `renderGroupLabelContentCallback`, `renderBadgeContentCallback`, `renderBadgeCallback`, `renderSelectedItemContentCallback` (string return) | Option rows, group headers, badges, selected panels (innerHTML) |
+
+All other labels (ARIA labels, tooltips, placeholders, popover title, action-button texts) are
+plain text, as are `showMessage()` strings and `renderSelectedContentCallback` (the closed input's value); option data (values, display values) is escaped.
+
 ## Browser support
 
 Modern evergreen browsers — anything with native `customElements`, Shadow DOM, and CSS `@layer` support:

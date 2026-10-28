@@ -19,13 +19,15 @@ import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputM
 /** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
-    selectPlaceholder: 'Pick an option...',
-    searchPlaceholder: 'Search...',
+    selectPlaceholder: 'Pick an option…',
+    searchPlaceholder: 'Search…',
     filterPlaceholder: 'Filter…',
     navigatePlaceholder: 'Search…',
-    noData: '',
-    empty: 'No results found',
-    loading: 'Loading...',
+    noDataPlaceholder: '',
+    noData: 'No data',
+    noResults: 'No results found',
+    searching: 'Searching…',
+    noDisplayValue: '[N/A]',
     searchHint: '',
     addNew: 'Add "{value}"',
     addNewPending: 'Adding "{value}"…',
@@ -362,7 +364,7 @@ export class MultiSelectEngine<T = any> {
             member: this.options.displayValueMember,
             callback: this.options.getDisplayValueCallback,
             transform: String,
-            fallback: '[N/A]'
+            fallback: () => this.resolveLabel('noDisplayValue')
         });
     }
 
@@ -1336,7 +1338,7 @@ export class MultiSelectEngine<T = any> {
         if (this.isLoading) {
             html += '<div class="ms__loader">';
             html += '<div class="pa-loader pa-loader--sm"></div>';
-            html += `<div class="ms__loading-text">${this.resolveLabel('loading')}</div>`;
+            html += `<div class="ms__loading-text">${this.resolveLabel('searching')}</div>`;
             html += '</div>';
             this.dropdownInner.innerHTML = html;
             return;
@@ -1908,7 +1910,15 @@ export class MultiSelectEngine<T = any> {
                 + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
                 + `</div>`;
         }
-        return `<div class="ms__empty">${this.resolveLabel('empty')}</div>`;
+        return `<div class="ms__empty">${this.resolveLabel(this.isNoData() ? 'noData' : 'noResults')}</div>`;
+    }
+
+    /** Empty-state kind: true = nothing exists at all (`labels.noData`), false = data exists but
+     *  the search matched nothing (`labels.noResults`). With a `searchCallback` the data set is
+     *  remote, so a typed term that came back empty is a miss, not "no data". */
+    private isNoData(): boolean {
+        if (this.options.searchCallback && (this.typedTerm || '').trim()) return false;
+        return this.allOptions.length === 0;
     }
 
     /** True when the empty dropdown is currently showing the clickable "add new" prompt. */
@@ -1990,12 +2000,13 @@ export class MultiSelectEngine<T = any> {
      * search is unusable → the search placeholder.
      */
     private getPlaceholderText(): string {
-        const noData = this.resolveLabel('noData');
-        if (noData && this.allOptions.length === 0) {
-            return noData;
+        const noDataPlaceholder = this.resolveLabel('noDataPlaceholder');
+        if (noDataPlaceholder && this.allOptions.length === 0) {
+            return noDataPlaceholder;
         }
         if (!this.isSearchUsable) {
-            return this.resolveLabel('selectPlaceholder') || this.getSearchPlaceholder();
+            // `''` = deliberately empty (L4) — no fallback to the search placeholder.
+            return this.resolveLabel('selectPlaceholder');
         }
         return this.getSearchPlaceholder();
     }
@@ -4703,7 +4714,7 @@ export class MultiSelectEngine<T = any> {
 
         if (this.fullscreenNavCount) {
             if (total === 0) {
-                this.fullscreenNavCount.textContent = this.resolveLabel('empty');
+                this.fullscreenNavCount.textContent = this.resolveLabel('noResults');
             } else {
                 const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
                 const pos = matched.indexOf(this.focusedIndex);

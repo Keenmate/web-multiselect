@@ -65,8 +65,10 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Prepare search term | callback | `getSearchTermCallback({ term, target, behavior, match })` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `ctx.searchTerm`) | | |
 | Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
 | Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `shouldKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
-| Loading message | labels | `labels.loading` | `'Loading...'` | Shown during async fetch | | |
-| Empty / no-results message | labels | `labels.empty` | `'No results found'` | Shown when filtered list empty | | |
+| Searching message | labels | `labels.searching` | `'Searching…'` | Shown while an async search is in flight | | |
+| No-data message | labels | `labels.noData` | `'No data'` | Dropdown text when there are no options at all | | |
+| No-results message | labels | `labels.noResults` | `'No results found'` | Options exist but the search matched nothing | | |
+| Missing display value | labels | `labels.noDisplayValue` | `'[N/A]'` | Shown for an option without a display value | | |
 
 ## 3. Search input & behavior
 
@@ -77,9 +79,9 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Search mode | attr/prop | `search-mode` / `searchMode` | `'filter'` | `filter` (hide non-matches) \| `navigate` (jump) | | |
 | Search behavior | attr/prop | `search-behavior` / `searchBehavior` | `'normalized'` | `normalized` (ignore case + diacritics) \| `case-insensitive` \| `exact`; internal search only | | |
 | Search match | attr/prop | `search-match` / `searchMatch` | `'contains'` | `contains` \| `equals` \| `starts-with` \| `word-starts-with` \| `ends-with` \| `word-ends-with` \| `regex` (raw value, no normalization) | | |
-| Search placeholder | labels | `labels.searchPlaceholder` | `'Search...'` | Shown while search is usable | | |
-| Select placeholder | labels | `labels.selectPlaceholder` | `'Pick an option...'` | Shown when search disabled (picker mode) | | |
-| No-data placeholder | labels | `labels.noData` | — | Opt-in; shown when option list empty (cascades) | | |
+| Search placeholder | labels | `labels.searchPlaceholder` | `'Search…'` | Shown while search is usable | | |
+| Select placeholder | labels | `labels.selectPlaceholder` | `'Pick an option…'` | Shown when search disabled (picker mode) | | |
+| No-data placeholder | labels | `labels.noDataPlaceholder` | — | Opt-in; shown when option list empty (cascades) | | |
 | Search hint | labels | `labels.searchHint` | — | Hint text above input while open | | |
 
 ## 4. Selection / display modes

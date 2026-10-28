@@ -269,7 +269,7 @@
             'selected-order': "Order selected items are displayed in (badges / popover). Display-only. 'member' needs selected-order-member; 'custom' needs a JS comparator (wired here for the demo).",
             'selected-order-member': "Property used as the sort key when selected-order=\"member\" (e.g. label).",
             '--ms-rem': "Global scale unit (default 10px) — everything sizes off it. Try 8px or 12px.",
-            'labels': "Every UI string as JSON (partial; unset keys stay English): searchPlaceholder, selectPlaceholder, noData, empty, loading, searchHint, addNew ({value}), selectedPopoverTitle ({count}), selectedCount, moreCount, removeItem ({item}), …",
+            'labels': "Every UI string as JSON (partial; unset keys stay English): searchPlaceholder, selectPlaceholder, noDataPlaceholder, noData, noResults, searching, noDisplayValue, searchHint, addNew ({value}), selectedPopoverTitle ({count}), selectedCount, moreCount, removeItem ({item}), …",
             'max-height': "Max dropdown list height before it scrolls (any CSS length).",
             'dropdown-min-width': "Minimum dropdown panel width (any CSS length).",
             'dropdown-max-width': "Maximum dropdown panel width (any CSS length).",
@@ -345,7 +345,7 @@
                 { attr: 'selected-order-member', type: 'text', def: '', ph: 'e.g. label (for order="member")' },
             ]},
             { name: 'Text / placeholders', props: [
-                { attr: 'labels', type: 'text', def: '', ph: '{"empty":"Nothing here","searchPlaceholder":"Find…"}' },
+                { attr: 'labels', type: 'text', def: '', ph: '{"noResults":"Nothing here","searchPlaceholder":"Find…"}' },
             ]},
             { name: 'Sizing', props: [
                 { attr: '--ms-rem', type: 'cssvar', def: '', ph: 'e.g. 8px / 12px' },

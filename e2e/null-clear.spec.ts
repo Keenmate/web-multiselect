@@ -51,16 +51,16 @@ test('clearing the labels attribute reverts the search placeholder to the defaul
 
     await p.evaluate((el) => el.removeAttribute('labels'));
     // Default search placeholder returns (not stuck on the stale custom value, not blank).
-    await expect.poll(() => placeholder(p)).toBe('Search...');
+    await expect.poll(() => placeholder(p)).toBe('Search…');
 });
 
 test('clearing the labels attribute drops the no-data placeholder', async ({ page }) => {
-    const p = await makePicker(page, { 'labels': '{"noData":"Pick a category first"}' }, []);
+    const p = await makePicker(page, { 'labels': '{"noDataPlaceholder":"Pick a category first"}' }, []);
     await expect.poll(() => placeholder(p)).toBe('Pick a category first');
 
     await p.evaluate((el) => el.removeAttribute('labels'));
     // Empty list with no custom no-data text falls back to the search placeholder.
-    await expect.poll(() => placeholder(p)).toBe('Search...');
+    await expect.poll(() => placeholder(p)).toBe('Search…');
 });
 
 test('clearing labels.searchHint removes the hint element', async ({ page }) => {

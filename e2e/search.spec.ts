@@ -501,13 +501,58 @@ test.describe('enable-search="false"', () => {
     });
 });
 
-test.describe('labels.empty', () => {
+test.describe('labels.noResults', () => {
     test('custom empty message shown when no results', async ({ page }) => {
         const p = picker(page, 'empty-msg');
         await openDropdown(p);
 
         await input(p).fill('zzzzz');
         await expect(p.locator('.ms__empty')).toContainText('nothing here');
+    });
+});
+
+/** Append a fresh picker (value/label members) with the given attributes + options. */
+async function makePicker(page: Page, attrs: Record<string, string>, options: unknown[]): Promise<Locator> {
+    const id = 'lbl-' + Math.random().toString(36).slice(2, 8);
+    await page.evaluate(({ id, attrs, options }) => {
+        const el = document.createElement('web-multiselect') as any;
+        el.id = id;
+        el.setAttribute('value-member', 'value');
+        el.setAttribute('display-value-member', 'label');
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        document.body.appendChild(el);
+        el.options = options;
+    }, { id, attrs, options });
+    return page.locator('#' + id);
+}
+
+test.describe('empty states: labels.noData vs labels.noResults', () => {
+    test('no options at all shows noData (default "No data")', async ({ page }) => {
+        const p = await makePicker(page, {}, []);
+        await openDropdown(p);
+        await expect(p.locator('.ms__empty')).toHaveText('No data');
+    });
+
+    test('options exist but the search misses shows noResults (default "No results found")', async ({ page }) => {
+        const p = await makePicker(page, {}, [{ value: 'a', label: 'Apple' }]);
+        await openDropdown(p);
+        await input(p).fill('zzz');
+        await expect(p.locator('.ms__empty')).toHaveText('No results found');
+    });
+
+    test("an empty-string label renders nothing (L4: '' = deliberately empty)", async ({ page }) => {
+        const p = await makePicker(page, { labels: '{"noData":""}' }, []);
+        await openDropdown(p);
+        await expect(p.locator('.ms__empty')).toHaveText('');
+    });
+
+    test('labels.noDisplayValue replaces the missing-display fallback (default "[N/A]")', async ({ page }) => {
+        const p = await makePicker(page, {}, [{ value: 'a' }]);
+        await openDropdown(p);
+        await expect(visibleOptions(p).first()).toContainText('[N/A]');
+        const q = await makePicker(page, { labels: '{"noDisplayValue":"(unnamed)"}' }, [{ value: 'a' }]);
+        await openDropdown(q);
+        await expect(visibleOptions(q).first()).toContainText('(unnamed)');
     });
 });
 

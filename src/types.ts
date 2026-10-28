@@ -95,24 +95,28 @@ export interface MessageOptions {
  * Every user-facing string of the component (rulebook D-NC-24), for internationalization: the
  * visible texts (placeholders, empty / loading messages, counters, popover title, "add new"
  * prompt) and the ARIA labels. Set a partial map via the `labels` property or the `labels`
- * JSON attribute (`labels='{"empty":"Nic"}'`); any unset key falls back to its English default.
+ * JSON attribute (`labels='{"noResults":"Nic"}'`); any unset (`undefined`) key falls back to its English default, while `''` means deliberately empty (renders nothing).
  * Named placeholders are interpolated where noted (`{count}`, `{item}`, `{value}`, …).
  */
 export interface MultiSelectLabels {
-    /** Closed-input placeholder when search is not usable (picker mode). Default: `Pick an option...`. */
+    /** Closed-input placeholder when search is not usable (picker mode). Default: `Pick an option…`. */
     selectPlaceholder?: string;
-    /** Search input placeholder. Default: `Search...`. Set it to pin one text in every search mode. */
+    /** Search input placeholder. Default: `Search…`. Set it to pin one text in every search mode. */
     searchPlaceholder?: string;
     /** Search placeholder in `filter` mode while the fullscreen mode toggle is shown (`show-search-mode-toggle`) and `searchPlaceholder` is not set. Default: `Filter…`. */
     filterPlaceholder?: string;
     /** Search placeholder in `navigate` mode while the fullscreen mode toggle is shown and `searchPlaceholder` is not set. Default: `Search…`. */
     navigatePlaceholder?: string;
     /** Closed-input placeholder when there are no options at all (e.g. an unresolved cascade parent). Default: empty = off (the normal placeholder shows). */
+    noDataPlaceholder?: string;
+    /** Dropdown text when there are no options at all (nothing to search). HTML allowed. Default: `No data`. */
     noData?: string;
-    /** Dropdown text when nothing matches (also the fullscreen match counter's "none"). Default: `No results found`. */
-    empty?: string;
-    /** Dropdown text while async options load. Default: `Loading...`. */
-    loading?: string;
+    /** Dropdown text when options exist but the search matched nothing (also the fullscreen match counter's "none"). HTML allowed. Default: `No results found`. */
+    noResults?: string;
+    /** Dropdown text while an async `searchCallback` search is in flight. HTML allowed. Default: `Searching…`. */
+    searching?: string;
+    /** Text shown for an option that has no display value (no display member / tuple slot / callback result). Default: `[N/A]`. */
+    noDisplayValue?: string;
     /** Small hint under the search input while the dropdown is open. Default: empty = no hint. */
     searchHint?: string;
     /** "Add new" prompt (`allow-add-new`). `{value}` → the typed text (escaped). Trusted HTML otherwise. `getAddNewTextCallback` wins. Default: `Add "{value}"`. */

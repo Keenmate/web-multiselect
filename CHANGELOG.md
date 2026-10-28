@@ -98,6 +98,21 @@ The per-string inputs are removed:
 
 `labels` is now also an attribute (JSON). A `labels` change rebuilds the picker (the selection is kept).
 
+### Changed — BREAKING (leftover decisions, 2026-10-28)
+
+**Labels: empty states, searching, display fallback.**
+
+| Old | New |
+|---|---|
+| `labels.empty` (one text for every empty dropdown) | `labels.noData` (`No data` — there are no options at all) and `labels.noResults` (`No results found` — options exist, the search matched nothing; also the fullscreen "no matches" counter) |
+| `labels.noData` (closed-input placeholder for an empty list, default off) | `labels.noDataPlaceholder` |
+| `labels.loading` (`Loading...`) | `labels.searching` (`Searching…`) — an async `searchCallback` search in flight |
+| hard-coded `[N/A]` for an option without a display value | `labels.noDisplayValue` (default `[N/A]`); the value fallback stays `[N/A]` |
+| defaults `Pick an option...` / `Search...` | `Pick an option…` / `Search…` (single `…` character) |
+
+A label set to `''` is now deliberately empty (renders nothing) — `labels.selectPlaceholder: ''` no
+longer falls back to the search placeholder. Unset keys still use the English default.
+
 ### Added (naming unification)
 
 - `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,

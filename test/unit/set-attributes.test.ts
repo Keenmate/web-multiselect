@@ -87,7 +87,7 @@ describe('batch — attribute-string coalescing', () => {
         el.setAttribute('labels', '{"searchPlaceholder":"Search…"}');
         el.batch(() => el.removeAttribute('labels'));
         // Absent attribute == the converter default.
-        expect(input().placeholder).toBe('Search...');
+        expect(input().placeholder).toBe('Search…');
     });
 
     it('coalesces an emptied search + select placeholder together', () => {

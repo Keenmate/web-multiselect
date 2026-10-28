@@ -254,7 +254,7 @@ EMPTY STATES
 ------------
 Customize messages:
 
-<web-multiselect labels='{"empty": "No results found", "loading": "Loading options..."}'>
+<web-multiselect labels='{"noData": "No options", "noResults": "No results found", "searching": "Searching…"}'>
 </web-multiselect>
 
 FRAMEWORK INTEGRATION

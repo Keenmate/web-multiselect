@@ -277,14 +277,14 @@ select.beforeSearchCallback = ({ term }) => {
   return term.toLowerCase().trim();
 };
 
-LOADING STATE
--------------
-Show loading indicator during async search:
+SEARCHING STATE
+---------------
+Show a "searching" indicator during async search (labels.searching, default 'Searching…'):
 
-select.labels = { loading: 'Searching...' };
+select.labels = { searching: 'Looking up…' };
 
 Or customize in HTML:
-<web-multiselect labels='{"loading": "Loading results..."}'>
+<web-multiselect labels='{"searching": "Loading results…"}'>
 </web-multiselect>
 
 Component automatically shows loading state when:
@@ -293,13 +293,14 @@ Component automatically shows loading state when:
 
 EMPTY SEARCH RESULTS
 --------------------
-Customize no results message:
+Customize the no-results message (options exist, search matched nothing):
 
-<web-multiselect labels='{"empty": "No results found"}'>
+<web-multiselect labels='{"noResults": "No results found"}'>
 </web-multiselect>
 
 Programmatic:
-select.labels = { empty: 'No matching items' };
+select.labels = { noResults: 'No matching items', noData: 'Nothing to pick' };
+// noData = there are no options at all (default 'No data')
 
 SEARCH PERFORMANCE
 ------------------

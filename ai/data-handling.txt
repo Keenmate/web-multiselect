@@ -432,7 +432,7 @@ EMPTY OPTIONS
 Handle empty state:
 
 select.options = [];
-select.labels = { empty: 'No options available' };
+select.labels = { noData: 'No options available' };  // no options at all (noResults = search miss)
 
 Check if empty:
 if (select.options.length === 0) {

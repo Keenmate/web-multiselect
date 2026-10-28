@@ -580,19 +580,24 @@ multiselect.labels = { removeItem: 'Odebrat {item}', close: 'Zavřít' };
 ### Labels (i18n)
 
 `labels` is a partial `MultiSelectLabels` map holding **every** user-facing string — set it as a
-property (object) or as a JSON attribute (`labels='{"empty":"Nic","searchPlaceholder":"Hledat…"}'`).
-Any key you leave unset falls back to its English default. Named placeholders (`{count}`,
+property (object) or as a JSON attribute (`labels='{"noResults":"Nic","searchPlaceholder":"Hledat…"}'`).
+Any key you leave unset falls back to its English default; a key set to `''` is deliberately empty
+(renders nothing). Labels shown inside the dropdown / badges (`noData`, `noResults`, `searching`,
+`addNew`, `addNewPending`, `selectedCount`, `moreCount`) may contain HTML (inserted as-is — sanitize
+untrusted text); ARIA labels and placeholders are plain text. `{value}` (the typed text) is escaped. Named placeholders (`{count}`,
 `{item}`, `{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the
 picker (the selection is kept).
 
 | Key | Default | Used for |
 |-----|---------|----------|
-| `selectPlaceholder` | `Pick an option...` | Closed-input placeholder when search is not usable (picker mode) |
-| `searchPlaceholder` | `Search...` | Search input placeholder (pins one text in every mode) |
+| `selectPlaceholder` | `Pick an option…` | Closed-input placeholder when search is not usable (picker mode) |
+| `searchPlaceholder` | `Search…` | Search input placeholder (pins one text in every mode) |
 | `filterPlaceholder` / `navigatePlaceholder` | `Filter…` / `Search…` | Mode-aware placeholder with `show-search-mode-toggle` when `searchPlaceholder` is unset |
-| `noData` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
-| `empty` | `No results found` | Dropdown text when nothing matches (also the fullscreen "no matches" counter) |
-| `loading` | `Loading...` | Dropdown text while async options load |
+| `noDataPlaceholder` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
+| `noData` | `No data` | Dropdown text when there are no options at all |
+| `noResults` | `No results found` | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
+| `searching` | `Searching…` | Dropdown text while an async `searchCallback` search is in flight |
+| `noDisplayValue` | `[N/A]` | Shown for an option with no display value |
 | `searchHint` | (empty = no hint) | Hint under the search input while open |
 | `addNew` | `Add "{value}"` | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
 | `addNewPending` | `Adding "{value}"…` | Pending prompt while an async `beforeAddCallback` runs |
