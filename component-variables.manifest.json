@@ -44,6 +44,11 @@
       "usage": "Fade for disabled options, input and fullscreen pager buttons"
     },
     {
+      "name": "base-duration-normal",
+      "required": false,
+      "usage": "Duration of every transition (--ms-transition-normal)"
+    },
+    {
       "name": "base-on-primary-text-color",
       "required": false,
       "usage": "Text on accent backgrounds (badges, checkboxes)"
@@ -1666,14 +1671,9 @@
       "usage": "Default border radius"
     },
     {
-      "name": "ms-transition-fast",
-      "category": "transition",
-      "usage": "Fast transition duration"
-    },
-    {
       "name": "ms-transition-normal",
       "category": "transition",
-      "usage": "Normal transition duration"
+      "usage": "Duration of every transition (reads --base-duration-normal, 0.15s); 0s turns motion off, reduced motion sets 0s"
     },
     {
       "name": "ms-easing-snappy",
@@ -1688,7 +1688,7 @@
     {
       "name": "ms-disabled-input-opacity",
       "category": "opacity",
-      "usage": "Disabled input opacity"
+      "usage": "Disabled input opacity (follows --ms-disabled-opacity)"
     },
     {
       "name": "ms-scrollbar-width",

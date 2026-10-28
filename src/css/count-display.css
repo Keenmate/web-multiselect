@@ -54,7 +54,7 @@
   border: var(--ms-counter-wrapper-border);
   border-radius: var(--ms-counter-wrapper-border-radius);
   padding: var(--ms-counter-wrapper-padding);
-  transition: all var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: all var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__counter-wrapper:hover {
@@ -71,7 +71,7 @@
   font-size: var(--ms-count-text-font-size);
   color: var(--ms-count-text-color);
   cursor: pointer;
-  transition: color var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: color var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__count-clear {
@@ -89,7 +89,7 @@
   line-height: var(--ms-line-height-none);
   cursor: pointer;
   border-radius: var(--ms-count-clear-border-radius);
-  transition: all var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: all var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__count-clear:hover {

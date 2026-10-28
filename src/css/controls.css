@@ -30,8 +30,8 @@
   border: var(--ms-input-border);
   border-radius: var(--ms-input-border-radius);
   cursor: pointer;
-  transition: border var(--ms-transition-fast) var(--ms-easing-snappy),
-              box-shadow var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: border var(--ms-transition-normal) var(--ms-easing-snappy),
+              box-shadow var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__input-wrapper:hover:not(:focus-within) {
@@ -61,7 +61,7 @@
 .ms__input::placeholder {
   color: var(--ms-input-placeholder-color);
   opacity: 0; /* Hidden until [data-placeholder-ready] is set (see web-component.ts) */
-  transition: opacity var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 /* Fade the placeholder in once the component has upgraded (one frame after
@@ -143,7 +143,7 @@
   -webkit-mask: var(--ms-icon-chevron) center / contain no-repeat;
           mask: var(--ms-icon-chevron) center / contain no-repeat;
   transform: rotate(var(--ms-toggle-rotate-closed, 90deg));
-  transition: transform var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: transform var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms--open .ms__toggle {
@@ -167,7 +167,7 @@
   font-weight: var(--ms-counter-font-weight);
   border-radius: var(--ms-counter-border-radius);
   cursor: pointer;
-  transition: all var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: all var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__counter:hover {
@@ -194,7 +194,7 @@
   border: none;
   border-radius: var(--ms-input-clear-border-radius);
   cursor: pointer;
-  transition: background var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: background var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 .ms__input-clear:hover {
@@ -290,7 +290,7 @@
   background: var(--ms-action-button-bg);
   color: var(--ms-action-button-color);
   cursor: pointer;
-  transition: all var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: all var(--ms-transition-normal) var(--ms-easing-snappy);
   /* Tap-highlight flash is suppressed once for the whole component on :host (base.css). */
 }
 

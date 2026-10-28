@@ -889,10 +889,9 @@
   /* ==========================================================================
      TRANSITIONS & EFFECTS
      ========================================================================== */
-  /* Durations stay local: the --ms scale (150/200ms) doesn't line up with --base-duration-*
-     (fast 100ms / normal 150ms / medium 250ms), so wiring would silently change timings. */
-  --ms-transition-fast: 150ms;
-  --ms-transition-normal: 200ms;
+  /* One duration, from the contract's speeds (only those four exist). Motion off: set it to 0s
+     here, or --base-duration-*: 0s page-wide; reduced motion does that (block at the end). */
+  --ms-transition-normal: var(--base-duration-normal, 0.15s);
   /* Easing is an exact match for --base-ease-standard, so it flows from the shared token. */
   --ms-easing-snappy: var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 
@@ -902,7 +901,7 @@
   /* 1: --ms-input-placeholder-color is already a muted text level (--base-text-color-3);
      a further fade made the placeholder lighter than pure-admin's. */
   --ms-placeholder-opacity: 1;
-  --ms-disabled-input-opacity: var(--base-disabled-opacity, 0.65);
+  --ms-disabled-input-opacity: var(--ms-disabled-opacity);
 
   /* ==========================================================================
      SCROLLBAR
@@ -913,4 +912,11 @@
   --ms-scrollbar-thumb-bg-hover: var(--ms-text-color-3);
   --ms-scrollbar-thumb-border-radius: 4px;
 
+}
+
+/* Reduced motion: no transitions (the add-new spinner keeps turning, slower — it shows a state). */
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    --ms-transition-normal: 0s;
+  }
 }

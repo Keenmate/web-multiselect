@@ -306,7 +306,7 @@
   background: var(--ms-checkbox-bg);
   border: var(--ms-checkbox-border);
   border-radius: var(--ms-checkbox-border-radius);
-  transition: background-color var(--ms-transition-fast) var(--ms-easing-snappy), border-color var(--ms-transition-fast) var(--ms-easing-snappy);
+  transition: background-color var(--ms-transition-normal) var(--ms-easing-snappy), border-color var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
 /* Checkmark using ::after pseudo-element */

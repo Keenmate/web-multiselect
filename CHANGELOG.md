@@ -10,6 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — BREAKING (motion and disabled dimming from the contract, 2026-10-29)
+
+- **BREAKING — one duration from the contract:** `--ms-transition-normal` is
+  `var(--base-duration-normal, 0.15s)` and times every transition. `--ms-transition-fast` is
+  removed (it was `150ms` — the same speed — and its uses read `--ms-transition-normal` now).
+  Snapped: the dropdown / popover fades were `200ms`, now `0.15s` (the contract has no 0.2s
+  speed; snappy wins).
+- **Motion off is CSS only:** `--ms-transition-normal: 0s`, or `--base-duration-*: 0s` page-wide.
+  `prefers-reduced-motion: reduce` sets `--ms-transition-normal: 0s` (before: only the add-new
+  spinner slowed down; it still does — it shows a state).
+- **Disabled dimming:** `--ms-disabled-input-opacity` follows `--ms-disabled-opacity` (both
+  read `--base-disabled-opacity`, 0.65 — no visual change); the fullscreen nav button reads
+  `--ms-disabled-opacity` instead of the base token directly.
+- **Tests:** `e2e/motion.spec.ts` — default 0.15s; 0s under reduced motion, with
+  `--base-duration-normal: 0s` and with `--ms-transition-normal: 0s`.
+
 ### Changed — BREAKING (suite-wide naming unification, 2026-10-27)
 
 One vocabulary across the KeenMate components (rulebook D-NC-13..27). No aliases — rename on upgrade.

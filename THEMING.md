@@ -336,9 +336,8 @@ web-multiselect {
 
 | Variable | Description |
 |----------|-------------|
-| `--ms-transition-fast` | 150ms |
-| `--ms-transition-normal` | 200ms |
-| `--ms-easing-snappy` | cubic-bezier(0.4, 0, 0.2, 1) |
+| `--ms-transition-normal` | `var(--base-duration-normal, 0.15s)` — every transition; `0s` turns motion off (reduced motion does) |
+| `--ms-easing-snappy` | `var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))` |
 
 ### Base Unit
 

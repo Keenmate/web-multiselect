@@ -378,10 +378,14 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `--ms-transition-fast` | `150ms` | Fast transition duration |
-| `--ms-transition-normal` | `200ms` | Normal transition duration |
-| `--ms-easing-snappy` | (cubic-bezier) | Snappy easing function |
+| `--ms-transition-normal` | `var(--base-duration-normal, 0.15s)` | Duration of every transition |
+| `--ms-easing-snappy` | `var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))` | Easing of every transition |
 | `--ms-disabled-opacity` | `var(--base-disabled-opacity, 0.65)` | Opacity for disabled state |
+| `--ms-disabled-input-opacity` | `var(--ms-disabled-opacity)` | Opacity of a disabled input / checkbox |
+
+**Motion off** is CSS only: `--ms-transition-normal: 0s` on the element (or a parent), or
+`--base-duration-*: 0s` page-wide. Under `prefers-reduced-motion: reduce` the component sets
+`--ms-transition-normal: 0s` itself; the add-new spinner keeps turning, slower (it shows a state).
 
 ## Cascade layers / override contract
 
