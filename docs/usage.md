@@ -555,7 +555,7 @@ multiselect.getCustomStylesCallback = (ctx) => `.ms__badge { border-radius: 0; }
 multiselect.name = 'selected_items';
 multiselect.valueFormat = 'json'; // 'json' | 'text' | 'array'
 multiselect.valueSeparator = '|'; // joins the values in the 'text' format (default ',')
-multiselect.getValueFormatCallback = ({ selectedValues }) => selectedValues.join('|'); // Custom format
+multiselect.getValueFormatCallback = ({ selectedValues }) => selectedValues.join('|'); // Custom format (a throw → `value-format-error`, host invalid)
 
 // The submitted value: exactly what the form sends under `name` (string; string[] for 'array').
 // Assigning takes the same form, selects silently and leaves the `value` attribute (defaultValue) alone.
@@ -627,6 +627,7 @@ picker (the selection is kept).
 | `prevMatch` / `nextMatch` | `Previous match` / `Next match` | Fullscreen navigate-mode buttons |
 | `switchToFilterMode` / `switchToNavigateMode` | `Switch to filter mode` / `Switch to navigate mode` | Fullscreen search-mode toggle |
 | `selectAll` / `clearSelection` | `Select all` / `Clear all` | Built-in `select-all` / `clear-selection` action buttons |
+| `valueFormatError` | `The value could not be formatted.` | Validation message when `getValueFormatCallback` throws |
 
 ### Reading back state after a write (v2)
 
@@ -698,8 +699,9 @@ document.querySelector('web-multiselect').controller.selectAll();
 | `ready` | `{ controller, element, presentation, … }` | Fired once, on the microtask after the first build (a listener added right after `createElement` still catches it) — at upgrade for a normal element, or when the `defer` gate is released for a deferred one. Twin: `onReady(detail)` |
 | `open` | `{ controller, element, presentation, … }` | The dropdown opened (user or `open()`). Twin: `onOpen(detail)` |
 | `close` | `{ controller, element, presentation, … }` | The dropdown closed — any reason (Escape, outside click, `close-on-select`, Tab, another overlay, `close()`). Twin: `onClose(detail)` |
+| `value-format-error` | `{ error, value }` | `getValueFormatCallback` threw: the error is logged, `''` is written into the hidden input, and the host is marked invalid (`customError`, `validationMessage` = `labels.valueFormatError`) so the form won't submit (`<form novalidate>` submits `''`). `error` = what was thrown, `value` = the selected values the callback got. The next successful format clears it. Twin: `onValueFormatError(detail)` |
 
-All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`.
+All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`, `ValueFormatErrorEventDetail`.
 
 ## Option structure
 

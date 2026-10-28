@@ -98,6 +98,7 @@ export type {
   SelectEventDetail,
   DeselectEventDetail,
   ChangeEventDetail,
+  ValueFormatErrorEventDetail,
   AddEventDetail,
   ReadyEventDetail,
   OpenEventDetail,

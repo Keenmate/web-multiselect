@@ -155,6 +155,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `el.options` live after build (core `getLiveValue`)           | ✓      | `default-value.test.ts`      | —                         |
 | `value-format="array"` (multiple hidden inputs)               | ✓      | `form.spec.ts`               | `form.html`               |
 | `getValueFormatCallback` overrides serialization              | ✓      | `form.spec.ts`               | `form.html`               |
+| Throwing `getValueFormatCallback`: `''` submitted, host invalid (submit blocked / `invalid`), `novalidate` submits `''`, `value-format-error` + twin, recovery, `labels.valueFormatError` | ✓ | `form.spec.ts`, `default-value.test.ts` | — |
 | Form `reset` restores `value` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
 
 ## 12. Tooltips

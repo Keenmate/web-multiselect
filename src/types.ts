@@ -163,6 +163,8 @@ export interface MultiSelectLabels {
     selectAll?: string;
     /** Text of the built-in `clear-selection` action button. Default: `Clear all`. */
     clearSelection?: string;
+    /** Validation message when `getValueFormatCallback` throws (the host turns invalid, the form won't submit). Default: `The value could not be formatted.`. */
+    valueFormatError?: string;
 }
 
 /**
@@ -762,6 +764,14 @@ export interface MultiSelectConfig<T = any> {
     valueSeparator?: string;
     /** Custom callback to format the submitted value (`ctx.selectedValues`, `ctx.selectedOptions`) */
     getValueFormatCallback?: (ctx: ValueFormatContext<T>) => string;
+    /** Twin of the `value-format-error` event: `getValueFormatCallback` threw (engine use; on the element, assign `el.onValueFormatError`). */
+    onValueFormatError?: ((detail: ValueFormatErrorEventDetail<T>) => void) | null;
+    /**
+     * @internal Element bridge: called after every hidden-input write with the format failure
+     * (`null` = formatted fine; boxed so a thrown `null` still counts) and the `valueFormatError`
+     * label; the element maps it onto its form validity (core `setFormatError`).
+     */
+    formatValidityCallback?: ((failure: { error: unknown } | null, message?: string) => void) | null;
 
     // ========================================================================
     // BOOLEAN OPTIONS (internal names with 'is' prefix)
@@ -1207,6 +1217,14 @@ export type DeselectEventDetail<T = any> = SelectEventDetail<T>;
 export interface ChangeEventDetail<T = any> extends MultiSelectContext<T> {
     selectedOptions: T[];
     selectedValues: (string | number)[];
+}
+
+/** Detail of the `value-format-error` event (and `onValueFormatError`): `getValueFormatCallback` threw. */
+export interface ValueFormatErrorEventDetail<T = any> extends MultiSelectContext<T> {
+    /** What the callback threw. */
+    error: unknown;
+    /** The selected values the callback was given (the unformatted value). */
+    value: (string | number)[];
 }
 
 /** Detail of the `add` event (and `onAdd`). */

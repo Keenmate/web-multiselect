@@ -191,7 +191,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `text` \| `array` | | |
 | Value separator | attr/prop | `value-separator` / `valueSeparator` | `','` | Joins the values in the `text` format | | |
 | Submitted value | prop | `value` | — | Get: exactly what the form submits (`string`; `string[]` for `array`). Set: same form, silent | | |
-| Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization | | |
+| Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization; a throw submits `''`, marks the host invalid (`labels.valueFormatError`) and fires `value-format-error` | | |
 
 ## 12. Events & selection interceptors
 

@@ -3,7 +3,8 @@ EVENTS & CALLBACKS
 
 CRITICAL: Two ways to handle component interactions
 - DOM Events: select, deselect, change, add, action, ready (CustomEvent, detail in e.detail)
-- on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady, onOpen, onClose —
+- on* property twins: onSelect, onDeselect, onChange, onAdd, onAction, onReady, onOpen, onClose,
+  onValueFormatError —
   receive the DETAIL (not the CustomEvent): el.onSelect = (detail) => detail.option
 - Callback Functions: all get*/render*/before* callbacks take ONE `ctx` argument
   (per-option callbacks read ctx.option; selectedOrderCompareCallback({ a, b }))
@@ -151,7 +152,8 @@ Formatting:
 - getBadgeTooltipCallback({ option, … }): Badge tooltip
 - getOptionTooltipCallback({ option, … }): Option tooltip
 - getRemoveButtonTooltipCallback({ option, … }): Remove-button tooltip
-- getValueFormatCallback({ selectedValues, selectedOptions }): Form value format
+- getValueFormatCallback({ selectedValues, selectedOptions }): Form value format (a throw → '' submitted,
+  host invalid, `value-format-error` { error, value } / onValueFormatError)
 - getAddNewTextCallback({ value }): "Add new" prompt text
 
 SELECTION VETOES

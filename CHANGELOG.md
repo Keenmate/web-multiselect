@@ -132,6 +132,17 @@ attribute is `defaultValue`. Priority: `getValueFormatCallback` > `value-separat
 | `getValueFormatCallback` ignored by `value-format="array"` | the callback wins over every format: one field, also for `array` |
 | `el.options` returned the assigned array | after the first build `el.options` returns the LIVE option list (same as `controller.options`: whatever source fed it, plus added-new options) via core `getLiveValue`; the assigned array before the build / while a write is pending |
 
+### Added (form validity, 2026-10-28)
+
+- A throwing `getValueFormatCallback` no longer propagates: the error is logged (`MULTISELECT:DATA`,
+  error level), `''` is written into the hidden input (and returned by `el.value`), the host is
+  marked invalid through core `setFormatError()` (`validity.customError`, `validationMessage` =
+  the new `labels.valueFormatError`, default "The value could not be formatted.") so the form
+  refuses to submit (`<form novalidate>` submits `''`), and the new **`value-format-error`** event
+  fires with `{ error, value }` (+ `onValueFormatError` twin; `ValueFormatErrorEventDetail`). The
+  next successful format clears the validity. `el.validity` / `validationMessage` / `willValidate` /
+  `checkValidity()` / `reportValidity()` come from core.
+
 ### Fixed (form value model)
 
 - An initial selection (`value` attribute / `defaultValue` / `<option selected>`) is now written to the

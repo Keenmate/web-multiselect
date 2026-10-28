@@ -74,6 +74,76 @@ test('getValueFormatCallback overrides serialization', async ({ page }) => {
     expect(await hidden.inputValue()).toBe('apple|banana');
 });
 
+test('throwing getValueFormatCallback: host invalid, submit blocked; novalidate submits empty; recovery', async ({ page }) => {
+    const r = await page.evaluate(async () => {
+        const submits: (string | null)[] = [];
+        const form = document.createElement('form');
+        form.addEventListener('submit', (e) => { e.preventDefault(); submits.push(new FormData(form).get('fmt-err') as string | null); });
+        const ms = document.createElement('web-multiselect') as any;
+        ms.setAttribute('name', 'fmt-err');
+        ms.setAttribute('value-member', 'value');
+        ms.setAttribute('display-value-member', 'label');
+        ms.options = [{ value: 'apple', label: 'Apple' }, { value: 'banana', label: 'Banana' }];
+        ms.defaultValue = ['apple', 'banana'];
+        ms.getValueFormatCallback = () => { throw new Error('boom'); };
+        let invalids = 0;
+        ms.addEventListener('invalid', () => invalids++);
+        const errors: { message: string; value: unknown }[] = [];
+        ms.addEventListener('value-format-error', (e: CustomEvent) => errors.push({ message: (e.detail.error as Error).message, value: e.detail.value }));
+        const btn = document.createElement('button');
+        btn.type = 'submit';
+        form.append(ms, btn);
+        document.body.append(form);
+        await ms.whenSettled();
+
+        btn.click();
+        const blocked = {
+            submits: submits.length, invalids, errors: errors.slice(-1),
+            valid: ms.validity.valid, customError: ms.validity.customError,
+            message: ms.validationMessage, isInvalid: ms.matches(':invalid'), checkValidity: ms.checkValidity(),
+        };
+
+        form.noValidate = true;
+        btn.click();
+        const novalidate = submits.slice();
+        form.noValidate = false;
+
+        ms.getValueFormatCallback = ({ selectedValues }: any) => selectedValues.join('|');
+        await ms.whenSettled();
+        btn.click();
+        const recovered = { submits: submits.slice(novalidate.length), valid: ms.validity.valid, message: ms.validationMessage };
+        form.remove();
+        return { blocked, novalidate, recovered };
+    });
+
+    expect(r.blocked.submits).toBe(0);
+    expect(r.blocked.invalids).toBeGreaterThan(0);
+    expect(r.blocked.errors).toEqual([{ message: 'boom', value: ['apple', 'banana'] }]);
+    expect(r.blocked.valid).toBe(false);
+    expect(r.blocked.customError).toBe(true);
+    expect(r.blocked.message).toBe('The value could not be formatted.');
+    expect(r.blocked.isInvalid).toBe(true);
+    expect(r.blocked.checkValidity).toBe(false);
+    expect(r.novalidate).toEqual(['']);
+    expect(r.recovered).toEqual({ submits: ['apple|banana'], valid: true, message: '' });
+});
+
+test('labels.valueFormatError sets the validation message', async ({ page }) => {
+    const message = await page.evaluate(async () => {
+        const ms = document.createElement('web-multiselect') as any;
+        ms.setAttribute('name', 'fmt-err-label');
+        ms.labels = { valueFormatError: 'Nelze naformátovat.' };
+        ms.options = [{ value: 'a', label: 'A' }];
+        ms.getValueFormatCallback = () => { throw new Error('x'); };
+        document.body.append(ms);
+        await ms.whenSettled();
+        const msg = ms.validationMessage;
+        ms.remove();
+        return msg;
+    });
+    expect(message).toBe('Nelze naformátovat.');
+});
+
 test('form.reset() clears a multiselect that has no value', async ({ page }) => {
     const p = picker(page, 'form-in-form');
     await selectAll(p, 'apple');

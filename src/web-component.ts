@@ -49,6 +49,7 @@ import type {
   SelectEventDetail,
   DeselectEventDetail,
   ChangeEventDetail,
+  ValueFormatErrorEventDetail,
   AddEventDetail,
   ReadyEventDetail,
   OpenEventDetail,
@@ -266,6 +267,7 @@ type MultiSelectEvents = {
   ready: ReadyEventDetail;
   open: OpenEventDetail;
   close: CloseEventDetail;
+  'value-format-error': ValueFormatErrorEventDetail;
 };
 const EVENTS = [
   { name: 'select', description: 'An option was selected. `detail.option` is the selected option; `detail.selectedOptions` / `detail.selectedValues` are the full selection. Twin: `onSelect(detail)`.' },
@@ -276,6 +278,7 @@ const EVENTS = [
   { name: 'ready', description: 'The picker was built for the first time (once per element lifetime; core `BlissElement`). Fires right after the first build — during upgrade for a normal element, or when the `defer` gate is released (`el.release()` / removing `defer`). The host then also has the `ready` attribute and matches `:state(ready)`; `el.whenReady()` resolves. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
   { name: 'open', description: 'The dropdown opened (floating panel or the phone fullscreen overlay) — by the user or `open()`. `detail`: `controller` / `element` + the presentation flags. Twin: `onOpen(detail)`.' },
   { name: 'close', description: 'The dropdown closed — any reason (Escape, outside click, selection with `close-on-select`, Tab, another overlay opening, `close()`). `detail`: `controller` / `element` + the presentation flags. Twin: `onClose(detail)`.' },
+  { name: 'value-format-error', description: '`getValueFormatCallback` threw: an empty string was written into the hidden input, the host is marked invalid (`customError`, message = `labels.valueFormatError`) so the form will not submit (unless `novalidate`), and the error is logged. The next successful format clears it. `detail.error` = what was thrown, `detail.value` = the selected values the callback got. Twin: `onValueFormatError(detail)`.' },
 ] as const;
 
 /**
@@ -322,6 +325,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   declare onReady: ((detail: ReadyEventDetail<T>) => void) | null;
   declare onOpen: ((detail: OpenEventDetail<T>) => void) | null;
   declare onClose: ((detail: CloseEventDetail<T>) => void) | null;
+  declare onValueFormatError: ((detail: ValueFormatErrorEventDetail<T>) => void) | null;
 
   static {
     liveOptions = (el) => (el instanceof MultiSelectElement ? el.#picker?.getController().options : undefined);
@@ -645,6 +649,9 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     cfg.onAction = (detail: MultiSelectActionEventDetail<T>) => this.emit('action', detail);
     cfg.onOpen = (detail: OpenEventDetail<T>) => this.emit('open', detail);
     cfg.onClose = (detail: CloseEventDetail<T>) => this.emit('close', detail);
+    cfg.onValueFormatError = (detail: ValueFormatErrorEventDetail<T>) => this.emit('value-format-error', detail);
+    // A throwing getValueFormatCallback → customError validity (core SPEC §6.6); null clears it.
+    cfg.formatValidityCallback = (failure, message) => this.setFormatError(failure ? failure.error ?? message : null, message);
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.

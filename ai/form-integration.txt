@@ -61,6 +61,14 @@ Creates multiple inputs:
 
 Priority: getValueFormatCallback (always one field) > value-separator > value-format.
 
+A THROWING getValueFormatCallback: logged (error), '' is written into the hidden input
+(and el.value is ''), the host is marked invalid (validity.customError, validationMessage =
+labels.valueFormatError, default "The value could not be formatted.", :invalid matches) so
+the form refuses to submit (`invalid` fires; <form novalidate> submits ''), and the
+`value-format-error` event fires with { error, value } (value = the selected values the
+callback got; twin onValueFormatError). The next successful format clears the validity.
+el.validity / validationMessage / checkValidity() / reportValidity() come from core.
+
 EL.VALUE — THE SUBMITTED VALUE
 ------------------------------
 el.value returns exactly what the form submits (also without `name`):

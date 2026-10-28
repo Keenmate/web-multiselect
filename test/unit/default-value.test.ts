@@ -122,6 +122,36 @@ describe('el.value — the submitted value (get/set)', () => {
         expect(hidden().map((i) => `${i.name}=${i.value}`)).toEqual(['f=a+b']);
     });
 
+    it('a throwing getValueFormatCallback: empty string submitted, value-format-error + twin, recovery', async () => {
+        el = document.createElement('web-multiselect');
+        el.setAttribute('name', 'f');
+        el.options = OPTIONS;
+        el.defaultValue = ['a'];
+        const boom = new Error('boom');
+        el.getValueFormatCallback = () => { throw boom; };
+        const details: any[] = [];
+        const twins: any[] = [];
+        el.addEventListener('value-format-error', (e: CustomEvent) => details.push(e.detail));
+        el.onValueFormatError = (d: any) => twins.push(d);
+        document.body.appendChild(el);
+        await el.whenSettled();
+        expect(el.value).toBe('');
+        expect(hidden().map((i) => `${i.name}=${i.value}`)).toEqual(['f=']);
+        expect(details.length).toBeGreaterThan(0);
+        expect(details.at(-1).error).toBe(boom);
+        expect(details.at(-1).value).toEqual(['a']);
+        expect(twins.at(-1)).toBe(details.at(-1));
+
+        // A working callback recovers on the next format.
+        const count = details.length;
+        el.getValueFormatCallback = (ctx: any) => ctx.selectedValues.join('+');
+        await el.whenSettled();
+        el.value = '["a","b"]';
+        expect(el.value).toBe('a+b');
+        expect(hidden().map((i) => `${i.name}=${i.value}`)).toEqual(['f=a+b']);
+        expect(details.length).toBe(count);
+    });
+
     it('setter is silent (no change event)', async () => {
         await make({});
         let changes = 0;

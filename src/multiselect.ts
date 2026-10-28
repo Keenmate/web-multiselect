@@ -51,6 +51,7 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     nextMatch: 'Next match',
     selectAll: 'Select all',
     clearSelection: 'Clear all',
+    valueFormatError: 'The value could not be formatted.',
 };
 
 /** Where a badge is rendered — the render-only half of {@link BadgeContentRenderContext}. */
@@ -5210,13 +5211,16 @@ export class MultiSelectEngine<T = any> {
     // ========================================================================
 
     private updateHiddenInput(): void {
-        if (!this.options.name) return;
-
         // Remove existing inputs
         this.hiddenInputs.forEach(input => input.remove());
         this.hiddenInputs = [];
 
-        const formValue = this.getFormValue();
+        if (!this.options.name) {
+            this.options.formatValidityCallback?.(null);
+            return;
+        }
+
+        const { value: formValue, failure } = this.formatFormValue();
 
         // Use hostElement if provided (for shadow DOM), otherwise use element
         const targetElement = this.options.hostElement || this.element;
@@ -5243,33 +5247,52 @@ export class MultiSelectEngine<T = any> {
             targetElement.appendChild(input);
             this.hiddenInputs.push(input);
         }
+
+        if (failure) {
+            // A throwing getValueFormatCallback: '' was written, the host turns invalid (the form
+            // won't submit unless `novalidate`), and `value-format-error` reports it.
+            dataLogger.error(`[${this.instanceId}] getValueFormatCallback threw — submitting '':`, failure.error);
+            this.options.formatValidityCallback?.(failure, this.resolveLabel('valueFormatError'));
+            this.options.onValueFormatError?.(this.ctx({ error: failure.error, value: failure.values }));
+        } else {
+            this.options.formatValidityCallback?.(null);
+        }
     }
 
     /**
      * The value the form submits (also the element's `value` getter): a string for
      * `getValueFormatCallback` (wins over everything) / `text` / `json`, one string per
-     * `name[]` field for `array`.
+     * `name[]` field for `array`. A throwing `getValueFormatCallback` yields `''`.
      */
     public getFormValue(): string | string[] {
+        return this.formatFormValue().value;
+    }
+
+    /** {@link getFormValue} plus the failure of a throwing `getValueFormatCallback` (no side effects). */
+    private formatFormValue(): { value: string | string[]; failure?: { error: unknown; values: (string | number)[] } } {
         const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
 
         // Custom callback takes precedence (also over `array`: one field)
         if (this.options.getValueFormatCallback) {
-            return this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions }));
+            try {
+                return { value: this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions })) };
+            } catch (error) {
+                return { value: '', failure: { error, values } };
+            }
         }
 
         const format = this.options.valueFormat || 'json';
 
         if (format === 'array') {
-            return values.map(v => String(v));
+            return { value: values.map(v => String(v)) };
         }
 
         if (format === 'text') {
-            return values.join(this.options.valueSeparator ?? ',');
+            return { value: values.join(this.options.valueSeparator ?? ',') };
         }
 
         // json format (default)
-        return JSON.stringify(values);
+        return { value: JSON.stringify(values) };
     }
 
     // ========================================================================
