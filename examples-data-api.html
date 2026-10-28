@@ -185,7 +185,7 @@ multiselect.options = products;</pre></div>
         <section class="example-section">
             <h2>API01 · Form Integration — JSON Format</h2>
             <p class="description">
-                Seamless HTML form integration! Hidden inputs are automatically created and updated. Choose from 3 formats: <code>json</code>, <code>csv</code>, or <code>array</code>.
+                Seamless HTML form integration! Hidden inputs are automatically created and updated. Choose from 3 formats: <code>json</code>, <code>text</code> (joined by <code>value-separator</code>), or <code>array</code>.
             </p>
 
             <div class="code-block"><pre>&lt;form id="myform"&gt;
@@ -223,14 +223,14 @@ multiselect.options = products;</pre></div>
 
             <div class="code-block"><pre>&lt;multi-select
   name="categories"
-  value-format="csv"&gt;  &lt;!-- CSV format --&gt;
+  value-format="text"&gt;  &lt;!-- one field, comma-joined --&gt;
 &lt;/multi-select&gt;
 
 // Hidden input value: "tech,design,business"</pre></div>
 
             <form id="form-csv" onsubmit="handleFormSubmit(event, 'form-csv')">
                 <label class="demo-label">Select Categories:</label>
-                <web-multiselect id="form-csv-select" name="categories" value-format="csv"></web-multiselect>
+                <web-multiselect id="form-csv-select" name="categories" value-format="text"></web-multiselect>
 
                 <div class="form-actions">
                     <button type="submit">Submit Form</button>

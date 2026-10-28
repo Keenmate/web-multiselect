@@ -1158,11 +1158,14 @@ Choose how selected values are serialized in forms:
 <!-- FormData result: items = ["item1","item2","item3"] -->
 ```
 
-**CSV format:**
+**Text format** (joined by `value-separator`, default `,`):
 
 ```html
-<web-multiselect name="items" value-format="csv"></web-multiselect>
+<web-multiselect name="items" value-format="text"></web-multiselect>
 <!-- FormData result: items = "item1,item2,item3" -->
+
+<web-multiselect name="items" value-format="text" value-separator="|"></web-multiselect>
+<!-- FormData result: items = "item1|item2|item3" -->
 ```
 
 **Array format** (multiple inputs):
@@ -1175,6 +1178,10 @@ Choose how selected values are serialized in forms:
      items[] = "item3"
 -->
 ```
+
+`el.value` returns exactly what the form submits (a `string`, or `string[]` for `array`), and
+assigning it takes the same form: `ms.value = 'item1|item2'`. The `value` attribute stays the
+`defaultValue` (the `form.reset()` target).
 
 ### Custom value formatting
 

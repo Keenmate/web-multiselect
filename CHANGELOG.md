@@ -118,7 +118,25 @@ longer falls back to the search placeholder. Unset keys still use the English de
 | Old | New |
 |---|---|
 | `initial-values` attribute / `initialValues` property | `value` attribute / `defaultValue` property — the initial selection and the `form.reset()` target (the live selection stays `selectedValue`) |
-| `initial-values` always JSON-or-CSV | `value` is parsed per `value-format` — the grammar the control submits: `json` (default) / `array` → `["a","b"]` (bare `a,b` still accepted), `csv` → `a,b` |
+| `initial-values` always JSON-or-CSV | `value` is parsed per `value-format` — the grammar the control submits: `json` (default) / `array` → `["a","b"]` (bare `a,b` still accepted), `text` → `a,b` (split on `value-separator`) |
+
+### Changed — BREAKING (form value model, 2026-10-28)
+
+Rule shared by the form components: `el.value` is exactly what the form submits; the `value`
+attribute is `defaultValue`. Priority: `getValueFormatCallback` > `value-separator` > `value-format`.
+
+| Old | New |
+|---|---|
+| `value-format="csv"` | `value-format="text"` (`text \| json \| array`; default stays `json`) — the values joined by the NEW `value-separator` (default `,`) |
+| no `value` property (only `selectedValue` / `defaultValue`) | NEW live `el.value` — get: the submitted value (`string` for `json` / `text` / `getValueFormatCallback`, `string[]` — one per `name[]` field — for `array`; works without `name`); set: the same form, parsed like the `value` attribute, applied silently (no select/deselect/change), the `value` attribute is not touched |
+| `getValueFormatCallback` ignored by `value-format="array"` | the callback wins over every format: one field, also for `array` |
+| `el.options` returned the assigned array | after the first build `el.options` returns the LIVE option list (same as `controller.options`: whatever source fed it, plus added-new options) via core `getLiveValue`; the assigned array before the build / while a write is pending |
+
+### Fixed (form value model)
+
+- An initial selection (`value` attribute / `defaultValue` / `<option selected>`) is now written to the
+  hidden form input(s) on build — before, a form submitted nothing until the first interaction or
+  options update.
 
 ### Added (naming unification)
 

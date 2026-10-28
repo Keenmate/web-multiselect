@@ -146,7 +146,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'actionsPosition',         attribute: 'actions-position',            converter: toEnum(['top', 'bottom'] as const, { default: 'top' }), on: 'reinit', description: 'Whether the action bar sits above or below the list.' },
   { configKey: 'actionsAlign',            attribute: 'actions-align',               converter: toEnum(['stretch', 'left', 'right', 'center', 'space-between'] as const, { default: 'stretch' }), on: 'update', description: 'Horizontal alignment of the action buttons.' },
   { configKey: 'checkboxAlign',           attribute: 'checkbox-align',              converter: toEnum(['top', 'center', 'bottom'] as const, { default: 'center' }), on: 'update', description: 'Vertical alignment of an option checkbox.' },
-  { configKey: 'valueFormat',             attribute: 'value-format',                converter: toEnum(['json', 'csv', 'array'] as const, { default: 'json' }), on: 'reinit', description: 'Serialization format the control emits its value in.' },
+  { configKey: 'valueFormat',             attribute: 'value-format',                converter: toEnum(['text', 'json', 'array'] as const, { default: 'json' }), on: 'reinit', description: 'The SUBMITTED form value (and `el.value`): `json` (default) — one field, a JSON array (`["a","b"]`); `text` — one field, the values joined by `value-separator` (`a,b`); `array` — one `name[]` field per value. Also the grammar of the `value` attribute / property. `getValueFormatCallback` overrides it.' },
+  { configKey: 'valueSeparator',          attribute: 'value-separator',             converter: toText({ default: ',' }), on: 'reinit', description: 'Joins the values in the `text` value format (e.g. `value-separator="|"` → `a|b`) and splits a `text` `value` attribute / property. Default `,`.' },
   { configKey: 'badgeTooltipPlacement',   attribute: 'badge-tooltip-placement',     converter: toEnum(PLACEMENTS, { default: 'top' }), on: 'update', description: 'Preferred placement of a badge tooltip relative to its badge (floating-ui placement).' },
   { configKey: 'optionTooltipPlacement',  attribute: 'option-tooltip-placement',    converter: toEnum(PLACEMENTS, { default: 'top-start' }), on: 'update', description: 'Preferred placement of an option tooltip (floating-ui placement).' },
   { configKey: 'mobilePresentation',      attribute: 'mobile-presentation',         converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), shouldReflect: true, on: 'update',
@@ -197,10 +198,10 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'isSearchModeToggleShown',  attribute: 'show-search-mode-toggle',      converter: toBool('default-false'), on: 'update', description: 'Show a clickable toggle in the phone fullscreen overlay search header that flips `search-mode` between `filter` and `navigate` live. Fullscreen-only; no effect in the floating presentation or when search is disabled.' },
 
   // ── Special attributes ───────────────────────────────────────────────────
-  { configKey: 'defaultValue',            attribute: 'value',                       converter: toDefaultValue(), default: [], on: 'reinit', type: 'Array<string | number> | string', description: 'Initial selection (native `defaultValue`: also the form-reset target; the live selection is `selectedValue`). The `value` attribute is parsed per `value-format`, the same grammar the control submits: `json` (default) / `array` → a JSON array (`["a","b"]`) or a bare CSV fallback (`a,b`); `csv` → `a,b,c`. Property: an array of values.' },
+  { configKey: 'defaultValue',            attribute: 'value',                       converter: toDefaultValue(), default: [], on: 'reinit', type: 'Array<string | number> | string', description: 'Initial selection (native `defaultValue`: also the form-reset target; the live selection is `selectedValue`, the live submitted value `value`). The `value` attribute is parsed per `value-format`, the same grammar the control submits: `json` (default) / `array` → a JSON array (`["a","b"]`) or a bare fallback split on `value-separator` (`a,b`); `text` → the values joined by `value-separator` (`a,b,c`). Property: an array of values.' },
 
   // ── Complex property (data) ──────────────────────────────────────────────
-  { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
+  { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', getLiveValue: (el) => liveOptions(el), type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Reading `el.options` after the first build returns the LIVE option list (whatever source fed it — <option> children / `data-options` / this property — plus added-new options; same as `controller.options`); before the build, or while a write is pending, it returns the assigned value. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
   { configKey: 'shouldPruneMissingSelection', attribute: 'prune-missing-selection',  converter: toBool('default-false'), on: 'update', type: 'boolean', description: 'When the option set is replaced (assigning `options` / `data-options`), drop any selected value whose option is no longer present. Default off: selections are KEPT even if their option leaves the list — the safe default for search/paged lists where an item can drop out of the current page yet stay a valid pick. Turn on when a list replacement means the domain changed (e.g. an item was deleted server-side) and a value with no matching option should stop being reported by `selectedValue`. The prune is silent (no select/deselect/change).' },
   { configKey: 'optionsSource', attribute: 'data-options',                            converter: toText({ isNullable: true }), on: 'reinit', type: 'string', description: 'HTML-authoring source for the option list, parsed per `data-options-format`. Reactive: changing either attribute re-renders. Prefer the `options` property in JS; a set `options` property and declarative <option> children both win over this.' },
   { configKey: 'optionsFormat', attribute: 'data-options-format',                     converter: toEnum(OPTIONS_FORMATS, { default: 'json' }), on: 'reinit', type: "'json' | 'csv' | 'plain'", description: 'How to parse the `data-options` attribute: `json` (a JSON array of objects or [value, label] tuples), `csv` (rows split on `data-options-row-splitter`, cells on `data-options-splitter`; the first row is a header — map columns via *-member), or `plain` (bare values split on both splitters -> [value, label] tuples, value === label). Default `json`.' },
@@ -229,7 +230,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'getFullTitleCallback',           converter: cb(), on: 'update', type: '(ctx: ItemContext) => string', description: 'Full title for `ctx.option` (used by badges when show-badge-full-title is on).' },
   { configKey: 'getCounterCallback',             converter: cb(), on: 'update', type: '(ctx: CounterContext) => string', description: 'Render the badges-area count text: `ctx.count` ("N selected"), plus `ctx.moreCount` for the "+X more" badge.' },
   { configKey: 'getCountLabelCallback',          converter: cb(), on: 'update', type: '(ctx: CountLabelContext) => string', description: 'Format the small count chip shared by the in-input counter and each group header count (`ctx.selectedCount`, `ctx.totalCount`, `ctx.groupName` on a header; default `[selected]`). One callback drives both.' },
-  { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(ctx: ValueFormatContext) => string', description: 'Serialize `ctx.selectedValues` for form submission.' },
+  { configKey: 'getValueFormatCallback',         converter: cb(), on: 'update', type: '(ctx: ValueFormatContext) => string', description: 'Serialize `ctx.selectedValues` for form submission (one field; also what `el.value` returns). Overrides `value-format` / `value-separator`. Assigning `el.value` still parses per `value-format`.' },
   { configKey: 'getBadgeTooltipCallback',        converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Tooltip content for a badge.' },
   { configKey: 'getOptionTooltipCallback',       converter: cb(), on: 'update', type: '(ctx: OptionContentRenderContext) => string | HTMLElement', description: 'Tooltip content for an option row.' },
   { configKey: 'getRemoveButtonTooltipCallback', converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string', description: 'Tooltip text for a badge remove button.' },
@@ -282,6 +283,10 @@ const EVENTS = [
  * this element directly (CSS-var sugar, initial values). Stripped
  * before the merged config is handed to the picker.
  */
+// Live `options` getter (core `getLiveValue`, SPEC §4.1). Assigned in the class's static block
+// so it can read the private engine; no flush (a staged write keeps the getter on the stored value).
+let liveOptions: (el: HTMLElement) => ReadonlyArray<Record<string, unknown>> | undefined = () => undefined;
+
 const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
@@ -318,8 +323,14 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   declare onOpen: ((detail: OpenEventDetail<T>) => void) | null;
   declare onClose: ((detail: CloseEventDetail<T>) => void) | null;
 
+  static {
+    liveOptions = (el) => (el instanceof MultiSelectElement ? el.#picker?.getController().options : undefined);
+  }
+
   #shadow: ShadowRoot;
   #picker?: MultiSelectEngine<T>;
+  // A `value` property assigned before the picker was built — applied on the first build.
+  #pendingValue: string | readonly (string | number)[] | null = null;
   #container?: HTMLDivElement;
   // The `value` (defaultValue) JSON applied at the last build. Lets a rebuild (reinit)
   // tell an explicit `value` (defaultValue) change (honour the new values) apart from a
@@ -540,7 +551,9 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // consumer explicitly changed `value` (defaultValue) since the last build, in which
     // case that new value wins. First build has no runtime selection, so it uses
     // the configured/declarative initial values.
-    const configInitial = this.#resolveDefaultValue();
+    const pendingValue = this.#pendingValue;
+    this.#pendingValue = null;
+    const configInitial = pendingValue !== null ? this.#parseValue(pendingValue) : this.#resolveDefaultValue();
     const configJSON = JSON.stringify(configInitial ?? null);
     // Only preserve a NON-EMPTY runtime selection: an empty one is ambiguous (the
     // user cleared everything OR the first build ran before options were available,
@@ -647,8 +660,13 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if (this.#declarativeSelectedValues && this.#declarativeSelectedValues.length > 0) {
       return this.#declarativeSelectedValues;
     }
-    const fromConfig = parseDefaultValue(this.config.defaultValue as string | (string | number)[] | undefined, this.config.valueFormat as string | undefined);
+    const fromConfig = parseDefaultValue(this.config.defaultValue as string | (string | number)[] | undefined, this.config.valueFormat as string | undefined, this.config.valueSeparator as string | undefined);
     return fromConfig.length > 0 ? fromConfig : undefined;
+  }
+
+  /** Parse a `value` (attribute grammar) per the current `value-format` / `value-separator`. */
+  #parseValue(value: string | readonly (string | number)[]): (string | number)[] {
+    return parseDefaultValue(value, this.config.valueFormat as string | undefined, this.config.valueSeparator as string | undefined);
   }
 
   #collectSelectedValues(): (string | number)[] {
@@ -788,6 +806,32 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   get selectedValue(): string | number | (string | number)[] | null {
     this.flush(); // apply a pending `options = …` before reading live picker state
     return this.#picker?.selectedValue ?? null;
+  }
+
+  /**
+   * The current value — exactly what the form submits under `name`: a string for
+   * `value-format="json"` (default) / `"text"` / `getValueFormatCallback`, a `string[]`
+   * (one per `name[]` field) for `"array"`. Works without `name` too.
+   * Assigning accepts the same form (parsed like the `value` attribute, per `value-format`
+   * / `value-separator`; an array is taken as the values) and sets the selection silently
+   * (no select/deselect/change), without touching the `value` attribute — that stays
+   * `defaultValue`, the `form.reset()` target.
+   */
+  get value(): string | string[] {
+    this.flush();
+    if (this.#picker) return this.#picker.getFormValue();
+    // Not built yet: the pending assignment / default value, in the submitted form.
+    const isArray = this.config.valueFormat === 'array' && !this.config.getValueFormatCallback;
+    const values = this.#pendingValue !== null ? this.#parseValue(this.#pendingValue) : this.#resolveDefaultValue() ?? [];
+    if (isArray) return values.map((v) => String(v));
+    if (this.config.getValueFormatCallback) return '';
+    return this.config.valueFormat === 'text' ? values.join((this.config.valueSeparator as string | undefined) ?? ',') : JSON.stringify(values);
+  }
+  set value(val: string | readonly (string | number)[] | null) {
+    this.flush();
+    const v = val ?? '';
+    if (this.#picker) this.#picker.setSelected(this.#parseValue(v));
+    else this.#pendingValue = v;
   }
 
   /** The first selected option (the only one in single-select), or null. Same as `controller.selectedOption`. */

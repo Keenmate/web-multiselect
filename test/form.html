@@ -18,8 +18,16 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">name="fruits-csv" + value-format="csv"</div>
-        <web-multiselect id="csv-form" name="fruits-csv" value-format="csv" value-member="value" display-value-member="label"></web-multiselect>
+        <div class="fixture-label">name="fruits-text" + value-format="text"</div>
+        <web-multiselect id="text-form" name="fruits-text" value-format="text" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">&lt;form&gt; + value-format="text" + value-separator="|" + value (el.value = what is submitted)</div>
+        <form id="sep-real-form">
+            <web-multiselect id="sep-form" name="fruits-sep" value-format="text" value-separator="|" value="apple|cherry"></web-multiselect>
+            <web-multiselect id="arr-init" name="fruits-arr-init" value-format="array" value='["banana","cherry"]'></web-multiselect>
+        </form>
     </div>
 
     <div class="fixture">
@@ -58,7 +66,7 @@
         ];
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['json-form', 'csv-form', 'arr-form', 'custom-fmt', 'form-in-form', 'form-init', 'form-init-single']) {
+            for (const id of ['json-form', 'text-form', 'sep-form', 'arr-init', 'arr-form', 'custom-fmt', 'form-in-form', 'form-init', 'form-init-single']) {
                 document.getElementById(id).options = items;
             }
 

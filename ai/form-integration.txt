@@ -4,7 +4,8 @@ FORM INTEGRATION
 CRITICAL: Seamless HTML form integration
 - Creates hidden input in light DOM
 - Syncs with selection automatically
-- Value formats: json, csv, array
+- Value formats: json (default), text (+ value-separator), array
+- el.value = exactly what the form submits (get/set); value attribute = defaultValue
 - Custom formatting via callback
 - Works with FormData, form submission
 
@@ -36,21 +37,43 @@ JSON (default):
 Hidden input value:
 ["item1", "item2", "item3"]
 
-CSV:
-<web-multiselect name="items" value-format="csv">
+Text (joined by value-separator, default ","):
+<web-multiselect name="items" value-format="text">
 </web-multiselect>
 
 Hidden input value:
 item1,item2,item3
+
+<web-multiselect name="items" value-format="text" value-separator="|" value="item1|item2">
+</web-multiselect>
+
+Hidden input value:
+item1|item2
 
 Array (multiple hidden inputs):
 <web-multiselect name="items" value-format="array">
 </web-multiselect>
 
 Creates multiple inputs:
-<input type="hidden" name="items" value="item1" />
-<input type="hidden" name="items" value="item2" />
-<input type="hidden" name="items" value="item3" />
+<input type="hidden" name="items[]" value="item1" />
+<input type="hidden" name="items[]" value="item2" />
+<input type="hidden" name="items[]" value="item3" />
+
+Priority: getValueFormatCallback (always one field) > value-separator > value-format.
+
+EL.VALUE — THE SUBMITTED VALUE
+------------------------------
+el.value returns exactly what the form submits (also without `name`):
+- json / text / getValueFormatCallback -> string ('["a","b"]', 'a|b')
+- array -> string[] (one per name[] field)
+Assigning takes the same form (parsed like the value attribute, per value-format /
+value-separator; an array is taken as the values), selects silently (no select /
+deselect / change) and never touches the value attribute (= defaultValue, the
+form.reset() target). The live selection as data stays `selectedValue`.
+
+const ms = document.querySelector('web-multiselect[name="items"]');
+ms.value;               // 'item1|item2'
+ms.value = 'item3';     // selects item3
 
 FORM SUBMISSION
 ---------------
@@ -273,7 +296,7 @@ Multiple multiselects in one form:
     <option value="1">JavaScript</option>
   </web-multiselect>
 
-  <web-multiselect name="languages" value-format="csv">
+  <web-multiselect name="languages" value-format="text">
     <option value="en">English</option>
   </web-multiselect>
 

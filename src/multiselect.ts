@@ -675,6 +675,9 @@ export class MultiSelectEngine<T = any> {
         this.buildHTML();
         this.attachEvents();
         this.parseInitialSelection();
+        // Submit the initial selection (`value` attribute / defaultValue) without waiting
+        // for the first interaction.
+        this.updateHiddenInput();
         this.applyInteractionState();
 
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
@@ -5213,19 +5216,18 @@ export class MultiSelectEngine<T = any> {
         this.hiddenInputs.forEach(input => input.remove());
         this.hiddenInputs = [];
 
-        const format = this.options.valueFormat || 'json';
-        const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
+        const formValue = this.getFormValue();
 
         // Use hostElement if provided (for shadow DOM), otherwise use element
         const targetElement = this.options.hostElement || this.element;
 
-        if (format === 'array') {
+        if (Array.isArray(formValue)) {
             // Multiple <input name="field[]" value="val1">
-            values.forEach(value => {
+            formValue.forEach(value => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = `${this.options.name}[]`;
-                input.value = String(value);
+                input.value = value;
                 input.disabled = !!this.options.isDisabled;
                 targetElement.appendChild(input);
                 this.hiddenInputs.push(input);
@@ -5236,25 +5238,34 @@ export class MultiSelectEngine<T = any> {
             input.type = 'hidden';
             input.name = this.options.name;
             input.id = this.options.name;
-            input.value = this.getFormValue();
+            input.value = formValue;
             input.disabled = !!this.options.isDisabled;
             targetElement.appendChild(input);
             this.hiddenInputs.push(input);
         }
     }
 
-    private getFormValue(): string {
+    /**
+     * The value the form submits (also the element's `value` getter): a string for
+     * `getValueFormatCallback` (wins over everything) / `text` / `json`, one string per
+     * `name[]` field for `array`.
+     */
+    public getFormValue(): string | string[] {
         const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
 
-        // Custom callback takes precedence
+        // Custom callback takes precedence (also over `array`: one field)
         if (this.options.getValueFormatCallback) {
             return this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions }));
         }
 
         const format = this.options.valueFormat || 'json';
 
-        if (format === 'csv') {
-            return values.join(',');
+        if (format === 'array') {
+            return values.map(v => String(v));
+        }
+
+        if (format === 'text') {
+            return values.join(this.options.valueSeparator ?? ',');
         }
 
         // json format (default)

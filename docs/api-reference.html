@@ -253,7 +253,7 @@
                     <td><code>value</code></td>
                     <td class="type">string</td>
                     <td class="default">undefined</td>
-                    <td>Initial selection (property <code>defaultValue</code>; also the form-reset target). Parsed per <code>value-format</code>: JSON array (e.g., '["val1","val2"]', bare CSV also accepted) or CSV with <code>value-format="csv"</code>.</td>
+                    <td>Initial selection (property <code>defaultValue</code>; also the form-reset target). Parsed per <code>value-format</code>: JSON array (e.g., '["val1","val2"]', bare <code>val1,val2</code> also accepted) or, with <code>value-format="text"</code>, the values joined by <code>value-separator</code> (default <code>,</code>). The live submitted value is the <code>value</code> property.</td>
                 </tr>
             </tbody>
         </table>

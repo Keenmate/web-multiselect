@@ -188,7 +188,9 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Form field name | attr/prop | `name` / `name` | — | Creates hidden input(s) in light DOM | | |
-| Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `csv` \| `array` | | |
+| Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `text` \| `array` | | |
+| Value separator | attr/prop | `value-separator` / `valueSeparator` | `','` | Joins the values in the `text` format | | |
+| Submitted value | prop | `value` | — | Get: exactly what the form submits (`string`; `string[]` for `array`). Set: same form, silent | | |
 | Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization | | |
 
 ## 12. Events & selection interceptors

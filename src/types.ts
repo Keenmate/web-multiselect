@@ -33,7 +33,7 @@ export type SearchInputMode = 'normal' | 'readonly' | 'hidden';
 /**
  * Value format for serialization (forms and callbacks)
  */
-export type ValueFormat = 'json' | 'csv' | 'array';
+export type ValueFormat = 'text' | 'json' | 'array';
 
 /**
  * Threshold behavior mode when badges exceed threshold
@@ -753,11 +753,13 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Format for value serialization (hidden form inputs and callbacks). Default: `json`.
      *
+     * - `text` — one field, the values joined by `valueSeparator` (default `,`), e.g. `a,b`
      * - `json` — a JSON array string, e.g. `["a","b"]`
-     * - `csv` — comma-separated values, e.g. `a,b`
      * - `array` — one hidden input per value (`name[]` entries)
      */
     valueFormat?: ValueFormat;
+    /** Joins the values in the `text` value format (and splits a `text` `value`). Default `,`. */
+    valueSeparator?: string;
     /** Custom callback to format the submitted value (`ctx.selectedValues`, `ctx.selectedOptions`) */
     getValueFormatCallback?: (ctx: ValueFormatContext<T>) => string;
 

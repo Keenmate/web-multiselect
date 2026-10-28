@@ -150,7 +150,9 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | `name` attribute creates hidden form input(s)                 | ✓      | `form.spec.ts`               | `form.html`               |
 | `value-format="json"` (default) serialization                 | ✓      | `form.spec.ts`               | `form.html`               |
-| `value-format="csv"` serialization                            | ✓      | `form.spec.ts`               | `form.html`               |
+| `value-format="text"` serialization                           | ✓      | `form.spec.ts`               | `form.html`               |
+| `value-separator` + initial value submitted + `el.value` get/set | ✓    | `form.spec.ts`, `default-value.test.ts` | `form.html`   |
+| `el.options` live after build (core `getLiveValue`)           | ✓      | `default-value.test.ts`      | —                         |
 | `value-format="array"` (multiple hidden inputs)               | ✓      | `form.spec.ts`               | `form.html`               |
 | `getValueFormatCallback` overrides serialization              | ✓      | `form.spec.ts`               | `form.html`               |
 | Form `reset` restores `value` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |

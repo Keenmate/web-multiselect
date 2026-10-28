@@ -209,8 +209,9 @@ multiselect.setSelected(['js', 'ts']);
 | `checkbox-mode` | `'independent' \| 'cascade'` | `'cascade'` | Tree checkbox interaction. `cascade`: checks a node's whole subtree, tristate boxes on branches. `independent`: toggles only the clicked node. Tree + multiple only |
 | `cascade-select-policy` | `'rolled-up' \| 'leaves' \| 'all'` | `'rolled-up'` | In `cascade` mode, which values a selection emits (badges / form / `change`). `rolled-up`: a fully-selected subtree collapses to its root. `leaves`: only checked leaves. `all`: every fully-checked node |
 | `name` | `string` | - | HTML form field name for form integration (creates hidden input) |
-| `value-format` | `'json' \| 'csv' \| 'array'` | `'json'` | Format for form value serialization |
-| `value` | `string` (per `value-format`) | - | Initial selection — property `defaultValue` (like a native `defaultValue`; the live selection is `selectedValue`). Parsed per `value-format`, the grammar the control submits: `json` (default) / `array` → `["js","ts"]` (a bare `js,ts` also works), `csv` → `js,ts`. Also the default `form.reset()` restores (none → reset clears); selecting from JS never rewrites it |
+| `value-format` | `'json' \| 'text' \| 'array'` | `'json'` | The submitted form value (and `el.value`): `json` — one field, a JSON array; `text` — one field, the values joined by `value-separator`; `array` — one `name[]` field per value. `getValueFormatCallback` overrides it |
+| `value-separator` | `string` | `','` | Joins the values in the `text` format (`value-separator="\|"` → `a\|b`) and splits a `text` `value` |
+| `value` | `string` (per `value-format`) | - | Initial selection — property `defaultValue` (like a native `defaultValue`; the live selection is `selectedValue`). Parsed per `value-format`, the grammar the control submits: `json` (default) / `array` → `["js","ts"]` (a bare `js,ts` also works), `text` → `js,ts` (split on `value-separator`). Also the default `form.reset()` restores (none → reset clears); selecting from JS never rewrites it |
 | `data-options` | `string` | - | HTML-authoring source for the option list, parsed per `data-options-format`. Prefer the `options` property in JS. Reactive; declarative `<option>` children and a set `options` property both take precedence |
 | `data-options-format` | `'json' \| 'csv' \| 'plain'` | `'json'` | How to parse `data-options`: `json` (array of objects or `[value,label]` tuples), `csv` (first row = header → object per row, keyed by the header cells; map columns via `*-member`), or `plain` (bare values → `value=label` options) |
 | `data-options-splitter` | `string` | `','` | Field/cell delimiter for the `csv` and `plain` formats (e.g. `;`, `\|`). Escapes `\t` `\n` `\r` are honoured (`"\t"` → TSV). Ignored for `json` |
@@ -552,8 +553,17 @@ multiselect.getCustomStylesCallback = (ctx) => `.ms__badge { border-radius: 0; }
 
 // Form integration
 multiselect.name = 'selected_items';
-multiselect.valueFormat = 'json'; // 'json' | 'csv' | 'array'
+multiselect.valueFormat = 'json'; // 'json' | 'text' | 'array'
+multiselect.valueSeparator = '|'; // joins the values in the 'text' format (default ',')
 multiselect.getValueFormatCallback = ({ selectedValues }) => selectedValues.join('|'); // Custom format
+
+// The submitted value: exactly what the form sends under `name` (string; string[] for 'array').
+// Assigning takes the same form, selects silently and leaves the `value` attribute (defaultValue) alone.
+const submitted = multiselect.value;
+multiselect.value = '["js","ts"]';
+
+// After the first build `options` reads the LIVE option list (any source + added-new options)
+const liveOptions = multiselect.options;
 
 // Read-only properties
 const selectedValue = multiselect.selectedValue; // string | number | array | null

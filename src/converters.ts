@@ -35,23 +35,30 @@ export function toDefaultValue(): Converter<DefaultValueInput> {
 }
 
 /**
- * Parse a `defaultValue` per `value-format` — the same grammar the control submits:
- * `csv` → `a,b,c`; `json` / `array` (default) → a JSON array (`["a","b"]` / `[1,2]`) or a
- * JSON scalar, with a bare-CSV fallback for hand-written markup (`value="a,b"`, `value="a"`).
+ * Parse a `defaultValue` / `value` per `value-format` — the same grammar the control submits:
+ * `text` → the values joined by `value-separator` (default `,`): `a,b,c`; `json` (default) /
+ * `array` → a JSON array (`["a","b"]` / `[1,2]`) or a JSON scalar, with a bare-text fallback
+ * (split on the separator) for hand-written markup (`value="a,b"`, `value="a"`). An array
+ * (property path, or `array`-format `el.value`) is taken as-is.
  */
-export function parseDefaultValue(value: DefaultValueInput | null | undefined, format: string | null | undefined): Array<string | number> {
+export function parseDefaultValue(
+  value: DefaultValueInput | readonly (string | number)[] | null | undefined,
+  format: string | null | undefined,
+  separator?: string | null,
+): Array<string | number> {
   if (value == null) return [];
-  if (Array.isArray(value)) return value;
-  const raw = value.trim();
+  if (Array.isArray(value)) return [...value];
+  const raw = (value as string).trim();
   if (raw === '') return [];
-  if (format !== 'csv') {
+  if (format !== 'text') {
     try {
       const parsed: unknown = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed.filter((v): v is string | number => typeof v === 'string' || typeof v === 'number');
       if (typeof parsed === 'string' || typeof parsed === 'number') return [parsed];
     } catch {
-      /* fall through to CSV */
+      /* fall through to text */
     }
   }
-  return raw.split(',').map((s) => s.trim()).filter((s) => s !== '');
+  const sep = separator || ',';
+  return raw.split(sep).map((s) => s.trim()).filter((s) => s !== '');
 }

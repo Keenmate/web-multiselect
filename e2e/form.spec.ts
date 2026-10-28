@@ -27,12 +27,33 @@ test('default JSON format emits a single hidden input with JSON array value', as
     expect(await hidden.inputValue()).toBe(JSON.stringify(['apple', 'banana']));
 });
 
-test('value-format="csv" emits comma-separated values', async ({ page }) => {
-    const p = picker(page, 'csv-form');
+test('value-format="text" emits comma-separated values', async ({ page }) => {
+    const p = picker(page, 'text-form');
     await selectAll(p, 'apple', 'banana');
 
-    const hidden = page.locator('input[type="hidden"][name="fruits-csv"]');
+    const hidden = page.locator('input[type="hidden"][name="fruits-text"]');
     expect(await hidden.inputValue()).toBe('apple,banana');
+});
+
+test('value-separator: the initial value is submitted and el.value is exactly what the form submits', async ({ page }) => {
+    const read = () => page.evaluate(() => {
+        const el = document.getElementById('sep-form') as any;
+        const fd = new FormData(document.getElementById('sep-real-form') as HTMLFormElement);
+        return { value: el.value, submitted: fd.getAll('fruits-sep'), arr: fd.getAll('fruits-arr-init[]'), arrValue: (document.getElementById('arr-init') as any).value };
+    });
+    await expect.poll(async () => (await read()).submitted).toEqual(['apple|cherry']);
+    expect(await read()).toEqual({ value: 'apple|cherry', submitted: ['apple|cherry'], arr: ['banana', 'cherry'], arrValue: ['banana', 'cherry'] });
+
+    // The setter takes the same form; the selection follows, the `value` attribute stays the default.
+    await page.evaluate(() => { (document.getElementById('sep-form') as any).value = 'banana|apple'; });
+    const after = await read();
+    expect(after.value).toBe('banana|apple');
+    expect(after.submitted).toEqual(['banana|apple']);
+    expect(await picker(page, 'sep-form').getAttribute('value')).toBe('apple|cherry');
+
+    // Picking adds to the same submitted form.
+    await selectAll(picker(page, 'sep-form'), 'cherry');
+    expect((await read()).value).toBe('banana|apple|cherry');
 });
 
 test('value-format="array" emits multiple hidden inputs with name[]', async ({ page }) => {
