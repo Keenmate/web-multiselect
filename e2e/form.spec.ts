@@ -53,7 +53,7 @@ test('getValueFormatCallback overrides serialization', async ({ page }) => {
     expect(await hidden.inputValue()).toBe('apple|banana');
 });
 
-test('form.reset() clears a multiselect that has no initial-values', async ({ page }) => {
+test('form.reset() clears a multiselect that has no value', async ({ page }) => {
     const p = picker(page, 'form-in-form');
     await selectAll(p, 'apple');
 
@@ -70,15 +70,15 @@ test('form.reset() clears a multiselect that has no initial-values', async ({ pa
     expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
 });
 
-test('form.reset() restores the initial-values selection; JS selection never rewrites the attribute', async ({ page }) => {
+test('form.reset() restores the value selection; JS selection never rewrites the attribute', async ({ page }) => {
     const p = picker(page, 'form-init');
     const hidden = page.locator('input[type="hidden"][name="init-field"]');
     await expect.poll(() => p.evaluate((el: any) => el.selectedValue)).toEqual(['banana', 'cherry']);
 
-    // User change + JS change: neither touches the `initial-values` attribute.
+    // User change + JS change: neither touches the `value` attribute.
     await selectAll(p, 'apple');
     await p.evaluate((el: any) => el.setSelected(['apple']));
-    expect(await p.getAttribute('initial-values')).toBe('banana,cherry');
+    expect(await p.getAttribute('value')).toBe('banana,cherry');
     expect(await hidden.inputValue()).toBe(JSON.stringify(['apple']));
 
     const events = await p.evaluate((el: any) => {
@@ -104,9 +104,9 @@ test('form.reset() on a single-select restores its initial value', async ({ page
     expect(await p.evaluate((el: any) => el.selectedValue)).toBe('cherry');
 });
 
-test('form.reset() uses an initialValues set from JS as the default', async ({ page }) => {
+test('form.reset() uses an defaultValue set from JS as the default', async ({ page }) => {
     const p = picker(page, 'form-in-form');
-    await p.evaluate(async (el: any) => { el.initialValues = ['cherry']; await el.whenSettled(); });
+    await p.evaluate(async (el: any) => { el.defaultValue = ['cherry']; await el.whenSettled(); });
     await p.evaluate((el: any) => el.setSelected(['apple', 'banana']));
 
     await page.evaluate(() => (document.getElementById('real-form') as HTMLFormElement).reset());

@@ -783,7 +783,7 @@ el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously<
                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
                     <web-multiselect id="defer-demo" defer
                         value-member="value" display-value-member="label"
-                        initial-values='["js","ts"]' style="flex: 1 1 240px;"></web-multiselect>
+                        value='["js","ts"]' style="flex: 1 1 240px;"></web-multiselect>
 
                     <div class="controls" style="margin-bottom: 0;">
                         <button id="defer-ready-btn" onclick="releaseDefer()">release now (release())</button>
@@ -1120,7 +1120,7 @@ el.refresh();                     // silent repaint — never call both after an
             // NOTHING until release(). We set the badge-coloring getCustomStylesCallback up front,
             // then SIMULATE a 2 s data load: the picker stays held (reserved empty space, live
             // countdown) until the data "arrives", when we assign options and call release(). The
-            // styled, pre-selected (initial-values) badges paint in ONE shot — no default-styled
+            // styled, pre-selected (value) badges paint in ONE shot — no default-styled
             // flash. The `ready` event fires once, right after that first build.
             const deferDemo = document.querySelector('#defer-demo');
             const deferOut = document.getElementById('output-defer');

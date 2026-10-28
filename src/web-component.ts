@@ -55,7 +55,7 @@ import type {
   CloseEventDetail,
   MultiSelectActionEventDetail,
 } from './types';
-import { toInitialValues } from './converters';
+import { toDefaultValue, parseDefaultValue } from './converters';
 import { parseOptionsData, OPTIONS_FORMATS, type OptionsFormat } from './option-formats';
 import styles from './css/main.css?inline';
 import { dataLogger } from './logger';
@@ -197,7 +197,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'isSearchModeToggleShown',  attribute: 'show-search-mode-toggle',      converter: toBool('default-false'), on: 'update', description: 'Show a clickable toggle in the phone fullscreen overlay search header that flips `search-mode` between `filter` and `navigate` live. Fullscreen-only; no effect in the floating presentation or when search is disabled.' },
 
   // ── Special attributes ───────────────────────────────────────────────────
-  { configKey: 'initialValues',           attribute: 'initial-values',              converter: toInitialValues(), default: [], on: 'reinit', type: 'Array<string | number>', description: 'Values selected on first render. Accepts a JSON array (`["a","b"]`) or a bare CSV (`a,b,c`).' },
+  { configKey: 'defaultValue',            attribute: 'value',                       converter: toDefaultValue(), default: [], on: 'reinit', type: 'Array<string | number> | string', description: 'Initial selection (native `defaultValue`: also the form-reset target; the live selection is `selectedValue`). The `value` attribute is parsed per `value-format`, the same grammar the control submits: `json` (default) / `array` → a JSON array (`["a","b"]`) or a bare CSV fallback (`a,b`); `csv` → `a,b,c`. Property: an array of values.' },
 
   // ── Complex property (data) ──────────────────────────────────────────────
   { configKey: 'options',                                                            converter: toObjectArray(),        on: 'update', type: 'ReadonlyArray<Record<string, unknown>>', description: 'The array of option objects to render. The JS API — assign `el.options` directly. Applied IN PLACE (no rebuild): an open dropdown stays open and the selection/scroll survive, so assigning a fresh array on every parent re-render is cheap. To re-render after mutating option objects in place (e.g. a `disabled` flag) or changing external state a render callback reads, call `el.refresh()` instead. For HTML authoring use the `data-options` attribute (parsed per `data-options-format`) or declarative <option> children; both feed the same list and take precedence over this property in the order: <option> children > property > data-options.' },
@@ -282,7 +282,7 @@ const EVENTS = [
  * this element directly (CSS-var sugar, initial values). Stripped
  * before the merged config is handed to the picker.
  */
-const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'initialValues', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -321,10 +321,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   #shadow: ShadowRoot;
   #picker?: MultiSelectEngine<T>;
   #container?: HTMLDivElement;
-  // The `initial-values` JSON applied at the last build. Lets a rebuild (reinit)
-  // tell an explicit `initial-values` change (honour the new values) apart from a
+  // The `value` (defaultValue) JSON applied at the last build. Lets a rebuild (reinit)
+  // tell an explicit `value` (defaultValue) change (honour the new values) apart from a
   // cosmetic/structural reinit (preserve the user's runtime selection). See #buildPicker.
-  #lastInitialValuesJSON?: string;
+  #lastDefaultValueJSON?: string;
   #customStyles: StyleSlot | null = null;
   // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
   #warnedCssVars = new Set<string>();
@@ -362,15 +362,15 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   /**
    * Called by the browser when the surrounding <form> is reset. Restores the
-   * initial selection — the `initial-values` input (or declarative
+   * initial selection — the `value` (defaultValue) input (or declarative
    * `<option selected>` children), like a native `<select>` restoring its
    * `selected` options — or clears when there is none. Selecting from JS never
-   * rewrites `initial-values` (it doesn't reflect), so it stays the reset
+   * rewrites `value` (defaultValue) (it doesn't reflect), so it stays the reset
    * default. A reset is not a user action: no `select`/`deselect`/`change`.
    */
   formResetCallback(): void {
     this.flush();
-    const initial = this.#resolveInitialValues() ?? [];
+    const initial = this.#resolveDefaultValue() ?? [];
     // A single-select holds one value — same rule as the first build.
     this.#picker?.setSelected(this.config.isMultiple === false ? initial.slice(0, 1) : initial);
   }
@@ -537,27 +537,27 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
     // Seed the picker's initial selection. On a rebuild we prefer the user's live
     // selection (`runtimeSelection`) so a reinit doesn't reset it — UNLESS the
-    // consumer explicitly changed `initial-values` since the last build, in which
+    // consumer explicitly changed `value` (defaultValue) since the last build, in which
     // case that new value wins. First build has no runtime selection, so it uses
     // the configured/declarative initial values.
-    const configInitial = this.#resolveInitialValues();
+    const configInitial = this.#resolveDefaultValue();
     const configJSON = JSON.stringify(configInitial ?? null);
     // Only preserve a NON-EMPTY runtime selection: an empty one is ambiguous (the
     // user cleared everything OR the first build ran before options were available,
-    // so `initial-values` couldn't match yet) — falling back to the configured
-    // initial values keeps declarative `initial-values` working when options arrive
+    // so `value` (defaultValue) couldn't match yet) — falling back to the configured
+    // initial values keeps declarative `value` (defaultValue) working when options arrive
     // on a later reinit.
     const preserve = runtimeSelection !== undefined
       && runtimeSelection.length > 0
-      && configJSON === this.#lastInitialValuesJSON;
+      && configJSON === this.#lastDefaultValueJSON;
     const initialValues = preserve ? runtimeSelection : configInitial;
-    this.#lastInitialValuesJSON = configJSON;
+    this.#lastDefaultValueJSON = configJSON;
 
     // The picker reads initial values off the container dataset.
     if (initialValues && initialValues.length > 0) {
-      this.#container!.dataset.initialValues = JSON.stringify(initialValues);
+      this.#container!.dataset.defaultValue = JSON.stringify(initialValues);
     } else {
-      delete this.#container!.dataset.initialValues;
+      delete this.#container!.dataset.defaultValue;
     }
 
     this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
@@ -643,12 +643,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     return cfg;
   }
 
-  #resolveInitialValues(): (string | number)[] | undefined {
+  #resolveDefaultValue(): (string | number)[] | undefined {
     if (this.#declarativeSelectedValues && this.#declarativeSelectedValues.length > 0) {
       return this.#declarativeSelectedValues;
     }
-    const fromConfig = this.config.initialValues as (string | number)[] | undefined;
-    return fromConfig && fromConfig.length > 0 ? fromConfig : undefined;
+    const fromConfig = parseDefaultValue(this.config.defaultValue as string | (string | number)[] | undefined, this.config.valueFormat as string | undefined);
+    return fromConfig.length > 0 ? fromConfig : undefined;
   }
 
   #collectSelectedValues(): (string | number)[] {

@@ -50,7 +50,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Subtitle callback | callback | `getSubtitleCallback({ option })` | — | Computed subtitle per item | | |
 | Group callback | callback | `getGroupCallback({ option })` | — | Computed group per item | | |
 | Disabled callback | callback | `getIsDisabledCallback({ option })` | — | Computed disabled state per item | | |
-| Initial / pre-selected values | attr | `initial-values` (JSON array) | — | Consumed at init; or `<option selected>` | | |
+| Initial / pre-selected values | attr/prop | `value` / `defaultValue` (parsed per `value-format`) | — | Initial selection + form-reset target; or `<option selected>` | | |
 | Add-new (tag creation) | attr + callback | `allow-add-new` + `beforeAddCallback({ value })` | `bool(false)` | Create options not in the list — return the option (appended + selected), `false` cancels, nothing → only the `add` event | | |
 
 ## 2. Async / hybrid search

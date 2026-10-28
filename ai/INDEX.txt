@@ -140,7 +140,7 @@ I
 -
 Icons → data-handling.txt, styling-theming.txt
 Import → import-patterns.txt
-initial-values → form-integration.txt, selection-modes.txt
+value → form-integration.txt, selection-modes.txt
 input-size → styling-theming.txt
 inputSize → styling-theming.txt
 Installation → basic-setup.txt

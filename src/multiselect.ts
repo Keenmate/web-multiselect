@@ -4784,12 +4784,12 @@ export class MultiSelectEngine<T = any> {
     }
 
     private parseInitialSelection(): void {
-        const initialValues = this.element.dataset.initialValues;
+        const initialValues = this.element.dataset.defaultValue;
         if (initialValues) {
             try {
                 const parsed = JSON.parse(initialValues);
                 // A single-select can only hold one value. When seeding more than one
-                // (declarative `initial-values="a,b,c"`, or a reinit that preserved a
+                // (declarative `value="a,b,c"`, or a reinit that preserved a
                 // multi-selection while `multiple` flipped to false), keep only the
                 // first — otherwise the extra values stay in selectedValues and their
                 // rows render with the stale selected highlight.
@@ -4810,7 +4810,7 @@ export class MultiSelectEngine<T = any> {
      * `selectedOptions` object by looking them up in the current `allOptions`.
      * Idempotent; safe to call after init *and* after `options` is replaced
      * (e.g., async fetch, `searchCallback` result, or late `element.options =`
-     * assignment). Without this, `initial-values` declared before options
+     * assignment). Without this, a `value` attribute declared before options
      * arrive ends up with phantom values that `selectedValue` can never report.
      */
     private reconcileSelectedOptions(): void {

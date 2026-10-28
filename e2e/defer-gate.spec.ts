@@ -50,7 +50,7 @@ test('release() builds once, sets the ready attribute, and fires ready exactly o
 test('the deferred getCustomStylesCallback is in effect at first paint (no flash)', async ({ page }) => {
     await page.locator('#btn-ready').click();
 
-    // The pre-selected (initial-values) badges render immediately with the custom
+    // The pre-selected (value) badges render immediately with the custom
     // color wired while deferred — not the default badge background.
     const b = badge(page, 'ms-ready');
     await expect(b).toBeVisible();

@@ -94,13 +94,13 @@ test.describe('show-checkboxes="false"', () => {
     });
 });
 
-test.describe('initial-values attribute', () => {
-    test('populates selectedValues from initial-values attribute', async ({ page }) => {
+test.describe('value attribute', () => {
+    test('populates selectedValues from value attribute', async ({ page }) => {
         const p = picker(page, 'initial-attr');
         expect(await getValue(p)).toEqual(['banana']);
     });
 
-    test('data-options + initial-values works with no JS (HTML-only setup)', async ({ page }) => {
+    test('data-options + value works with no JS (HTML-only setup)', async ({ page }) => {
         const p = picker(page, 'html-only');
         expect(await getValue(p)).toEqual(['cherry']);
 

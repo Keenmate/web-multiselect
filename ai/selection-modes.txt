@@ -103,8 +103,8 @@ select.options = [
   { value: 3, label: 'Option 3' }
 ];
 
-Or with initial-values attribute:
-<web-multiselect initial-values='[1, 2]'>
+Or with value attribute:
+<web-multiselect value='[1, 2]'>
 
 CLOSE-ON-SELECT
 ---------------
@@ -347,7 +347,7 @@ INITIAL SELECTION
 Set selection on page load:
 
 Declarative:
-<web-multiselect initial-values='[1, 2]'>
+<web-multiselect value='[1, 2]'>
   <option value="1">Option 1</option>
   <option value="2">Option 2</option>
 </web-multiselect>

@@ -22,7 +22,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Clicking an option toggles selection                          | ✓      | `selection.spec.ts`          | `selection.html`          |
 | `close-on-select` closes after each selection                 | ✓      | `selection.spec.ts`          | `selection.html`          |
 | `show-checkboxes="false"` hides checkboxes                    | ✓      | `selection.spec.ts`          | `selection.html`          |
-| Initial values via `initial-values` attr                      | ✓      | `selection.spec.ts`          | `selection.html`          |
+| Initial values via `value` attr                      | ✓      | `selection.spec.ts`          | `selection.html`          |
 | `data-options` attribute (HTML-only setup, no JS)             | ✓      | `selection.spec.ts`          | `selection.html`          |
 | Initial values via programmatic `selectedValues` setter       | ✗      |      |         |
 | Selected option styling (`.ms__option--selected`)             | ✓      | `selection.spec.ts`          | `selection.html`          |
@@ -153,7 +153,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `value-format="csv"` serialization                            | ✓      | `form.spec.ts`               | `form.html`               |
 | `value-format="array"` (multiple hidden inputs)               | ✓      | `form.spec.ts`               | `form.html`               |
 | `getValueFormatCallback` overrides serialization              | ✓      | `form.spec.ts`               | `form.html`               |
-| Form `reset` restores `initial-values` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
+| Form `reset` restores `value` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
 
 ## 12. Tooltips
 

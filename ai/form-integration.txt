@@ -219,7 +219,7 @@ Set initial values from server:
 
 <web-multiselect
   name="languages"
-  initial-values='["js", "ts"]'>
+  value='["js", "ts"]'>
   <option value="js">JavaScript</option>
   <option value="ts">TypeScript</option>
   <option value="py">Python</option>
@@ -247,14 +247,14 @@ select.remove();
 
 FORM RESET
 ----------
-form.reset() restores the INITIAL selection — `initial-values` (attribute or
-property) or declarative <option selected> children — like a native <select>.
+form.reset() restores the INITIAL selection — the `value` attribute (property
+`defaultValue`, parsed per value-format) or declarative <option selected> children — like a native <select>.
 No initial values → the selection is cleared. Selecting from JS (setSelected,
-user picks) never rewrites `initial-values`, so it stays the reset default.
+user picks) never rewrites `value`, so it stays the reset default.
 A reset fires no select / deselect / change events.
 
 <form id="myForm">
-  <web-multiselect name="langs" initial-values="js,ts"></web-multiselect>
+  <web-multiselect name="langs" value="js,ts"></web-multiselect>
 </form>
 
 const form = document.getElementById('myForm');

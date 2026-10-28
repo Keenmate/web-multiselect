@@ -113,6 +113,13 @@ The per-string inputs are removed:
 A label set to `''` is now deliberately empty (renders nothing) — `labels.selectPlaceholder: ''` no
 longer falls back to the search placeholder. Unset keys still use the English default.
 
+**Initial selection follows the native `defaultValue` / `value` pair.**
+
+| Old | New |
+|---|---|
+| `initial-values` attribute / `initialValues` property | `value` attribute / `defaultValue` property — the initial selection and the `form.reset()` target (the live selection stays `selectedValue`) |
+| `initial-values` always JSON-or-CSV | `value` is parsed per `value-format` — the grammar the control submits: `json` (default) / `array` → `["a","b"]` (bare `a,b` still accepted), `csv` → `a,b` |
+
 ### Added (naming unification)
 
 - `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,

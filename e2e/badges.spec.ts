@@ -4,7 +4,7 @@ import { test, expect, Page, Locator } from './fixtures';
  * Section 2 — badges display modes, positions, thresholds, removal.
  *
  * Fixture: test/badges.html. Items are selected via UI clicks in each test
- * (rather than initial-values) to side-step NOTES.md #1.
+ * (rather than value) to side-step NOTES.md #1.
  */
 
 const PAGE = '/test/badges.html';

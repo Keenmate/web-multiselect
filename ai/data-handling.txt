@@ -300,8 +300,8 @@ Declarative:
 <option value="1" selected>Option 1</option>
 <option value="3" selected>Option 3</option>
 
-Or initial-values attribute:
-<web-multiselect initial-values='[1, 3]'>
+Or value attribute:
+<web-multiselect value='[1, 3]'>
 
 COMPLEX OBJECTS
 ---------------

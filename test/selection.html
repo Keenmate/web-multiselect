@@ -33,17 +33,17 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">initial-values via attribute</div>
+        <div class="fixture-label">value via attribute</div>
         <web-multiselect id="initial-attr"
             value-member="value" display-value-member="label"
-            initial-values='["banana"]'></web-multiselect>
+            value='["banana"]'></web-multiselect>
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">data-options + initial-values, no JS at all (HTML-only)</div>
+        <div class="fixture-label">data-options + value, no JS at all (HTML-only)</div>
         <web-multiselect id="html-only"
             value-member="value" display-value-member="label"
-            initial-values='["cherry"]'
+            value='["cherry"]'
             data-options='[{"value":"apple","label":"Apple"},{"value":"banana","label":"Banana"},{"value":"cherry","label":"Cherry"}]'></web-multiselect>
     </div>
 
