@@ -122,6 +122,9 @@ longer falls back to the search placeholder. Unset keys still use the English de
 
 ### Added (naming unification)
 
+- `getOptionByValue(value) → option | null` (element + controller): lookup by value (compared as
+  strings); also finds a selected option no longer in `options`.
+
 - `disabled` / `readonly` (`isDisabled` / `isReadonly`, reflected): disabled = no interaction,
   not focusable, not submitted (an ancestor `<fieldset disabled>` disables it too, via core);
   readonly = no selection change and no dropdown, but focusable and submitted.

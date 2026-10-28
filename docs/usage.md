@@ -645,6 +645,7 @@ You do **not** need to await between a property write and an imperative method â
 | `search(term: string)` | Set the search text and filter as if typed (runs `beforeSearchCallback` / `min-search-length` / `searchCallback`). Does not open the dropdown. `''` clears |
 | `clearSearch()` | Clear the search text and restore the full list (selection untouched) |
 | `searchTerm` | Property (read-only): the current search text (`''` when empty) |
+| `getOptionByValue(value: string \| number)` | The option whose value equals `value` (compared as strings), or `null`. Also finds a selected option no longer in `options` (e.g. picked from async search results) |
 | `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `Promise<boolean>` (`true` once scrolled, `false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
 | `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Resolves `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) â€” call `clearSearch()` first |
 | `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Resolves `false` in tree mode or if the group is empty |
@@ -665,7 +666,7 @@ You do **not** need to await between a property write and an imperative method â
 
 | Group | Members |
 |-------|---------|
-| Read state | `selectedOptions`, `selectedValue`, `options`, `isOpen` |
+| Read state | `selectedOptions`, `selectedValue`, `options`, `isOpen`, `getOptionByValue(v)` |
 | Selection | `setSelected(values, { notify })`, `selectAll()`, `clearSelection()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
 | Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `Promise<boolean>`), `refresh()` |
 | Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |

@@ -512,7 +512,7 @@ select.onChange = ({ selectedOptions, controller, element }) => {
 };
 
 controller (also el.controller): selectedOptions, selectedValue, getOptions(), isOpen,
-setSelected(values, { notify }), selectAll(), clearSelection(), toggleValue(v), selectValue(v),
+getOptionByValue(v), setSelected(values, { notify }), selectAll(), clearSelection(), toggleValue(v), selectValue(v),
 deselectValue(v), toggleFocused(), open(), close(), toggle(), search(term), clearSearch(),
 scrollToValue/Group/Index(), refresh(), focusNext/Previous/First/Last/PageUp/PageDown(),
 focusNextMatch/PreviousMatch(), focusIndex(i), showMessage(content, { type, autoHideMs,

@@ -316,7 +316,7 @@ MultiSelectElement<T> exposes:
   open(); close(); toggle(); search(term); clearSearch(); refresh(); destroy(); release();
 
 MultiSelectController<T> (el.controller, ctx.controller):
-  selectedOptions, selectedValue, getOptions(), isOpen, setSelected(), selectAll(), clearSelection(),
+  selectedOptions, selectedValue, options, getOptionByValue(v) → T | null, isOpen, setSelected(), selectAll(), clearSelection(),
   toggleValue(), selectValue(), deselectValue(), toggleFocused(), open(), close(), toggle(),
   search(), clearSearch(), scrollToValue/Group/Index() → Promise<boolean>, refresh(),
   focusNext/Previous/First/Last/PageUp/PageDown(), focusNextMatch/PreviousMatch(),

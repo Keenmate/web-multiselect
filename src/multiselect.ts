@@ -3110,6 +3110,7 @@ export class MultiSelectEngine<T = any> {
             search: (term) => this.search(term),
             clearSearch: () => this.clearSearch(),
             scrollToValue: (value) => this.scrollToValue(value),
+            getOptionByValue: (value) => this.getOptionByValue(value),
             scrollToGroup: (group) => this.scrollToGroup(group),
             scrollToIndex: (index) => this.scrollToIndex(index),
             refresh: () => this.refresh(),
@@ -3369,6 +3370,14 @@ export class MultiSelectEngine<T = any> {
      * out by a search, or (tree) under a collapsed ancestor. Call `clearSearch()` (or expand the
      * branch) first to reveal it, then scroll.
      */
+    /** The option whose value equals `value` (string comparison), else a selected option with that value (kept across option swaps / async results), else `null`. */
+    public getOptionByValue(value: string | number): T | null {
+        const key = String(value);
+        return this.allOptions.find(o => String(this.getItemValue(o)) === key)
+            ?? this.selectedByValue.get(key)
+            ?? null;
+    }
+
     public scrollToValue(value: string | number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
         const index = this.filteredOptions.findIndex(o => String(this.getItemValue(o)) === String(value));
         interactionLogger.debug(`[${this.instanceId}] scrollToValue(${String(value)}) → index ${index} of ${this.filteredOptions.length}`);

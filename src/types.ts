@@ -369,6 +369,8 @@ export interface MultiSelectController<T = any> {
     readonly selectedValue: string | number | (string | number)[] | null;
     /** All available options (post assignment, pre-filter). */
     readonly options: ReadonlyArray<T>;
+    /** The option whose value equals `value` (compared as strings — `1` finds `'1'`), or `null`. Also finds a selected option that is no longer in `options` (e.g. picked from async search results). */
+    getOptionByValue(value: string | number): T | null;
     /** The current search box text (same as `el.searchTerm`). */
     readonly searchTerm: string;
     /** Whether the dropdown is open. */

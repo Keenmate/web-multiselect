@@ -802,6 +802,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     return this.#picker ? this.#picker.selectedOptions : [];
   }
 
+  /** The option whose value equals `value` (compared as strings), or `null` — also finds a selected option no longer in `options`. Same as `controller.getOptionByValue()`. */
+  getOptionByValue(value: string | number): T | null {
+    this.flush();
+    return this.#picker?.getOptionByValue(value) ?? null;
+  }
+
   setSelected(values: (string | number)[], opts: { notify?: boolean } = {}): void {
     // Preserve the synchronous `el.options = data; el.setSelected(sel)` contract:
     // property writes coalesce on a microtask, so flush the pending rebuild first
@@ -972,6 +978,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       search: call('search'),
       clearSearch: call('clearSearch'),
       scrollToValue: (value) => engine()?.scrollToValue(value) ?? Promise.resolve(false),
+      getOptionByValue: (value) => engine()?.getOptionByValue(value) ?? null,
       scrollToGroup: (group) => engine()?.scrollToGroup(group) ?? Promise.resolve(false),
       scrollToIndex: (index) => engine()?.scrollToIndex(index) ?? Promise.resolve(false),
       refresh: call('refresh'),
