@@ -291,6 +291,18 @@ Component automatically shows loading state when:
 - searchCallback is async
 - Promise is pending
 
+The spinner is the shared KeenMate loader (core renderLoader): the slot gets
+role="status" + aria-label = labels.searching (plain text). Change its look:
+- CSS tokens: --ms-loader-icon (mask shape), --ms-loader-rotate (0 = self-animating
+  SVG), --ms-loader-duration, --ms-loader-size — chained to --base-loader-*, so a
+  page-wide --base-loader-icon changes every KeenMate component at once.
+- Page-wide hook (every component):
+  window.components.renderLoaderCallback = ({ component, context, containerElement }) => {
+    containerElement.innerHTML = '<span class="my-dots"></span>';
+  };
+- Instance hook (wins over the page hook), context 'search' or 'add-new':
+  select.renderLoadingCallback = ({ context, containerElement, label }) => { ... };
+
 EMPTY SEARCH RESULTS
 --------------------
 Customize the no-results message (options exist, search matched nothing):

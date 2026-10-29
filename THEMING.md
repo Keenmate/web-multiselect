@@ -164,7 +164,7 @@ The floating options container.
 | State | CSS Variables |
 |-------|---------------|
 | **Empty** | `--ms-empty-color`, `--ms-empty-font-size`, `--ms-empty-padding` |
-| **Loading** | `--ms-loading-color`, `--ms-loading-text-font-size`, `--ms-loader-padding`, `--ms-loader-gap` |
+| **Loading** | `--ms-loading-color`, `--ms-loading-text-font-size`, `--ms-loader-padding`, `--ms-loader-gap`, `--ms-loader-icon` / `-rotate` / `-duration` / `-size` (the shared loader, chained to `--base-loader-*`) |
 
 ---
 

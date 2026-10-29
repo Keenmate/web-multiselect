@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
@@ -155,6 +155,8 @@ export class MultiSelectEngine<T = any> {
     /** An async beforeAddCallback is in flight — the prompt shows a spinner + pending text. */
     private addNewPending = false;
     private isLoading = false;
+    /** remove() handles of the loaders drawn into the current dropdown render (SPEC §12.14). */
+    private loaderRemovers: Array<() => void> = [];
     private searchDebounceTimer?: ReturnType<typeof setTimeout>;
     private searchAbortController?: AbortController;
     private showSelectedPopover = false;
@@ -1310,6 +1312,8 @@ export class MultiSelectEngine<T = any> {
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
         // Clean up any existing action button tooltips before re-rendering
         this.destroyAllActionButtonTooltips();
+        // Release the previous render's loaders (runs a render hook's cleanup).
+        this.clearLoaders();
         // A re-render rebuilds the rows, detaching any info button the full-label
         // reveal is anchored to — dismiss it so it can't trail a stale anchor.
         this.hideLabelReveal();
@@ -1340,11 +1344,14 @@ export class MultiSelectEngine<T = any> {
         let html = '';
 
         if (this.isLoading) {
+            // The spinner is drawn by core renderLoader() into the slot (SPEC §12.14) — the
+            // slot carries role="status" + aria-label, so the visible text is aria-hidden.
             html += '<div class="ms__loader">';
-            html += '<div class="pa-loader pa-loader--sm"></div>';
-            html += `<div class="ms__loading-text">${this.resolveLabel('searching')}</div>`;
+            html += '<span class="ms__loader-slot" data-ms-loader="search"></span>';
+            html += `<div class="ms__loading-text" aria-hidden="true">${this.resolveLabel('searching')}</div>`;
             html += '</div>';
             this.dropdownInner.innerHTML = html;
+            this.mountLoaders(this.dropdownInner);
             return;
         }
 
@@ -1456,6 +1463,7 @@ export class MultiSelectEngine<T = any> {
         }
 
         this.dropdownInner.innerHTML = html;
+        this.mountLoaders(this.dropdownInner);
 
         if (opts?.preserveScroll) {
             this.dropdownInner.scrollTop = prevInnerScroll;
@@ -1569,6 +1577,7 @@ export class MultiSelectEngine<T = any> {
                 this.virtualScroll = null;
             }
             this.optionsContainer.innerHTML = this.renderEmptyStateHTML();
+            this.mountLoaders(this.optionsContainer);
             return;
         }
 
@@ -1904,7 +1913,7 @@ export class MultiSelectEngine<T = any> {
             // Pending: an async beforeAddCallback is running — spinner + "Adding …", not clickable.
             if (this.addNewPending) {
                 return `<div class="ms__add-new ms__add-new--loading" aria-busy="true">`
-                    + `<span class="ms__add-new-spinner" aria-hidden="true"></span>`
+                    + `<span class="ms__loader-slot ms__add-new-loader" data-ms-loader="add-new"></span>`
                     + `<span class="ms__add-new-text">${this.getAddNewPendingText(value)}</span>`
                     + `</div>`;
             }
@@ -1942,6 +1951,41 @@ export class MultiSelectEngine<T = any> {
             return this.escapeHtml(this.options.getAddNewTextCallback(this.ctx({ value })));
         }
         return this.resolveLabel('addNew', { value: this.escapeHtml(value) });
+    }
+
+    /**
+     * Draw every loader slot (`[data-ms-loader="<context>"]`) in a freshly rendered subtree
+     * through core `renderLoader()` (SPEC §12.14): instance `renderLoadingCallback` >
+     * page-wide `window.components.renderLoaderCallback` > the default `.ms-loader` span.
+     * Contexts: `search` (async searchCallback in flight, `labels.searching`) and `add-new`
+     * (async beforeAddCallback in flight, `labels.addNewPending`).
+     */
+    private mountLoaders(root: ParentNode): void {
+        root.querySelectorAll<HTMLElement>('[data-ms-loader]').forEach(slot => {
+            const context = slot.dataset.msLoader || 'search';
+            const html = context === 'add-new'
+                ? this.getAddNewPendingText((this.typedTerm || '').trim())
+                : this.resolveLabel('searching');
+            this.loaderRemovers.push(renderLoader(this.hostEl(), slot, context, {
+                prefix: 'ms',
+                label: this.htmlToText(html),
+                renderLoadingCallback: this.options.renderLoadingCallback ?? null,
+            }));
+        });
+    }
+
+    /** Remove every loader drawn by mountLoaders() (runs render-hook cleanups). */
+    private clearLoaders(): void {
+        const removers = this.loaderRemovers;
+        this.loaderRemovers = [];
+        for (const remove of removers) remove();
+    }
+
+    /** Plain text of a label that may contain HTML (labels allow markup) — for aria-label. */
+    private htmlToText(html: string): string {
+        const tpl = document.createElement('template');
+        tpl.innerHTML = html;
+        return (tpl.content.textContent || '').trim();
     }
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
@@ -6007,6 +6051,7 @@ export class MultiSelectEngine<T = any> {
     // ========================================================================
 
     public destroy(): void {
+        this.clearLoaders();
         this.destroyAllTooltips();
         this.hideLabelReveal();
         this.hideMessage();

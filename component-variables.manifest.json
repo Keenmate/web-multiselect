@@ -407,6 +407,26 @@
       "name": "base-z-tooltip",
       "required": false,
       "usage": "Stacking of tooltips; the phone fullscreen sheet sits one step above it"
+    },
+    {
+      "name": "base-loader-icon",
+      "required": false,
+      "usage": "Loader shape (single-colour mask) for --ms-loader-icon"
+    },
+    {
+      "name": "base-loader-rotate",
+      "required": false,
+      "usage": "Loader rotation per cycle (0 = self-animating SVG)"
+    },
+    {
+      "name": "base-loader-duration",
+      "required": false,
+      "usage": "Loader cycle duration (slows under reduced motion)"
+    },
+    {
+      "name": "base-loader-size",
+      "required": false,
+      "usage": "Loader size"
     }
   ],
   "componentVariables": [
@@ -1144,6 +1164,26 @@
       "name": "ms-empty-color",
       "category": "empty",
       "usage": "Empty state text color"
+    },
+    {
+      "name": "ms-loader-icon",
+      "category": "loading",
+      "usage": "Loader shape — mask image tinted by currentColor (chains --base-loader-icon)"
+    },
+    {
+      "name": "ms-loader-rotate",
+      "category": "loading",
+      "usage": "Loader rotation per cycle; 0 for a self-animating SVG (chains --base-loader-rotate)"
+    },
+    {
+      "name": "ms-loader-duration",
+      "category": "loading",
+      "usage": "Loader cycle duration (chains --base-loader-duration)"
+    },
+    {
+      "name": "ms-loader-size",
+      "category": "loading",
+      "usage": "Loader size (chains --base-loader-size)"
     },
     {
       "name": "ms-loader-padding",

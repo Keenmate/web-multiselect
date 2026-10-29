@@ -671,7 +671,14 @@
   --ms-add-new-bg-hover: var(--ms-option-bg-hover);
   --ms-add-new-icon-size: calc(1.6 * var(--ms-rem));
 
-  /* Loader */
+  /* Loader — the shared loader contract (core SPEC §12.14, base-css-variables → Loader).
+     Drawn by .ms-loader (async search, add-new pending). Shape = a single-colour mask
+     tinted by currentColor; --ms-loader-rotate: 0 for a self-animating SVG. Reduced
+     motion slows it via --base-loader-duration (it never stops). */
+  --ms-loader-icon: var(--base-loader-icon, url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M21 12a9 9 0 1 1-6.219-8.56%22/%3E%3C/svg%3E"));
+  --ms-loader-rotate: var(--base-loader-rotate, 1turn);
+  --ms-loader-duration: var(--base-loader-duration, 0.8s);
+  --ms-loader-size: var(--base-loader-size, 1.25em);
   --ms-loader-padding: calc(1.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-loader-gap: calc(0.8 * var(--ms-rem));
 
@@ -914,7 +921,7 @@
 
 }
 
-/* Reduced motion: no transitions (the add-new spinner keeps turning, slower — it shows a state). */
+/* Reduced motion: no transitions (the loader keeps turning, slower — --base-loader-duration). */
 @media (prefers-reduced-motion: reduce) {
   :host {
     --ms-transition-normal: 0s;

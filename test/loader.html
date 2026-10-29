@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — shared loader</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>shared loader (core SPEC §12.14)</h1>
+    <p>Targeted by <code>e2e/loader.spec.ts</code>. The async <code>searchCallback</code> / <code>beforeAddCallback</code>
+       stay pending until <code>window.__settle()</code>, so the loader can be inspected.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">async searchCallback (held until __settle())</div>
+        <web-multiselect id="ms-search" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">allow-add-new + async beforeAddCallback (held until __settle())</div>
+        <web-multiselect id="ms-add" allow-add-new value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const pending = [];
+        window.__settle = () => { while (pending.length) pending.shift()(); };
+        const hold = (value) => new Promise((resolve) => pending.push(() => resolve(value)));
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            document.getElementById('ms-search').searchCallback = ({ term }) =>
+                hold(term ? [{ value: term, label: term.toUpperCase() }] : []);
+            const add = document.getElementById('ms-add');
+            add.options = [{ value: 'a', label: 'Alpha' }];
+            add.beforeAddCallback = ({ value }) => hold({ value, label: value });
+        });
+    </script>
+</body>
+</html>

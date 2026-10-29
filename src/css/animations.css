@@ -1,6 +1,18 @@
 /* animations.css — state transitions are inline on each rule; the only @keyframes is the
-   spinner used by the "add new" pending prompt (an async beforeAddCallback in flight). */
+   shared loader's (core SPEC §12.14 — the drawing contract from base-css-variables). */
 
-@keyframes ms-spin {
-  to { transform: rotate(360deg); }
+/* Default loader drawn by core renderLoader() (async search, add-new pending). */
+.ms-loader {
+  display: inline-block;
+  flex-shrink: 0;
+  inline-size: var(--ms-loader-size);
+  block-size: var(--ms-loader-size);
+  -webkit-mask: var(--ms-loader-icon) center / contain no-repeat;
+          mask: var(--ms-loader-icon) center / contain no-repeat;
+  background: currentColor;
+  animation: ms-loader-spin var(--ms-loader-duration) linear infinite;
+}
+
+@keyframes ms-loader-spin {
+  to { transform: rotate(var(--ms-loader-rotate)); }
 }

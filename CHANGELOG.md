@@ -10,6 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — shared loader (core SPEC §12.14, 2026-10-29)
+
+- **Every loading state draws through core `renderLoader()`:** the async-search loader
+  (context `search`) and the async add-new pending prompt (context `add-new`). Before, the
+  search state rendered a `.pa-loader` that never drew inside the shadow root, and add-new
+  had its own border spinner (`.ms__add-new-spinner`, `@keyframes ms-spin` — removed).
+- **Accessible:** the loader slot (`.ms__loader-slot`) gets `role="status"` + `aria-label` =
+  `labels.searching` / `labels.addNewPending` as plain text; the visible "Searching…" text
+  is `aria-hidden`.
+- **New tokens** `--ms-loader-icon` / `--ms-loader-rotate` / `--ms-loader-duration` /
+  `--ms-loader-size`, chained to `--base-loader-*` (manifest updated); the default
+  `.ms-loader` is a `currentColor` mask. Under reduced motion it slows (contract 1.5s), never stops.
+- **New input `renderLoadingCallback`** (property, `on: 'update'`): draw the loader yourself —
+  `ctx = { component, context, containerElement, element, label }`, optional cleanup return.
+  Beats the page-wide `window.components.renderLoaderCallback`.
+- **Dev dependency:** `@keenmate/base-css-variables` points to `file:../base-css-variables`
+  (2.0.0-rc06 with the `--base-loader-*` tokens is unpublished) — **switch back to
+  `^2.0.0-rc06` before publishing.**
+- **Tests:** `e2e/loader.spec.ts` (+ `test/loader.html`) — default loader with role/label,
+  HTML label → plain aria-label, page hook replaces it + cleanup on remove, instance hook
+  beats the page hook, add-new pending context.
+
 ### Changed — BREAKING (motion and disabled dimming from the contract, 2026-10-29)
 
 - **BREAKING — one duration from the contract:** `--ms-transition-normal` is

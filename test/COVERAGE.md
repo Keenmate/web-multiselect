@@ -56,6 +56,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Empty result shows `labels.noResults` / no options `labels.noData` | ✓      | `search.spec.ts`             | `search.html`             |
 | `min-search-length` defers search until threshold             | ✓      | `search.spec.ts`             | `search.html`             |
 | `searchCallback` async loading + loading message              | ✓      | `search.spec.ts`             | `search.html`             |
+| Shared loader: default + role/aria-label, page hook, instance `renderLoadingCallback`, add-new pending | ✓ | `loader.spec.ts` | `loader.html` |
 | `keep-options-on-search` retains options when search clears   | ✓      | `search.spec.ts`             | `search.html`             |
 | `keep-search-on-close` retains search on close         | ✓      | `search.spec.ts`             | `search.html`             |
 | `beforeSearchCallback` pre-processes / blocks search          | ✓      | `search.spec.ts`             | `search.html`             |

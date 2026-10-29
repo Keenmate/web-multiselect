@@ -554,26 +554,18 @@
   color: var(--ms-add-new-color-hover);
 }
 
-/* Pending state — an async addNewCallback is in flight (spinner + "Adding …"). Not
+/* Pending state — an async addNewCallback is in flight (loader + "Adding …"). Not
    clickable (no data-ms-action on the row), so drop the pointer cursor. */
 .ms__add-new--loading {
   cursor: default;
 }
 
-/* Self-contained spinner (no external .pa-loader dependency — it can't cross the
-   shadow boundary). Sized to the prompt's icon box; tinted by the row's currentColor. */
-.ms__add-new-spinner {
+/* Loader slot (core renderLoader fills it — role="status" + aria-label). */
+.ms__loader-slot {
+  display: inline-flex;
   flex-shrink: 0;
-  width: var(--ms-add-new-icon-size);
-  height: var(--ms-add-new-icon-size);
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-top-color: currentColor;
-  animation: ms-spin 0.6s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ms__add-new-spinner { animation-duration: 1.5s; }
+  align-items: center;
+  justify-content: center;
 }
 
 .ms__add-new-icon {

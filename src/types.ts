@@ -3,7 +3,7 @@
  */
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
-import type { PresentationContext, ComponentContext } from '@keenmate/web-components-core';
+import type { PresentationContext, ComponentContext, RenderLoaderCallback } from '@keenmate/web-components-core';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './tree/ltree-node';
 import type {
@@ -714,6 +714,16 @@ export interface MultiSelectConfig<T = any> {
      * instead of toggling the row.
      */
     renderOptionContentCallback?: (ctx: OptionContentRenderContext<T>) => string | HTMLElement;
+    /**
+     * Draw a loading state yourself (SPEC §12.14 shared loader). Called with
+     * `{ component, context, containerElement, element, label }` — `context` is `'search'`
+     * (async `searchCallback` in flight, label `labels.searching`) or `'add-new'` (async
+     * `beforeAddCallback` in flight, label `labels.addNewPending`). Fill `containerElement`
+     * (it already carries `role="status"` + `aria-label`); optionally return a cleanup.
+     * Beats the page-wide `window.components.renderLoaderCallback`; unset → the default
+     * `.ms-loader` drawn from the `--ms-loader-*` tokens.
+     */
+    renderLoadingCallback?: RenderLoaderCallback | null;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */
     renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
     /**
