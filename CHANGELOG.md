@@ -40,9 +40,7 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
 - **New input `renderLoadingCallback`** (property, `on: 'update'`): draw the loader yourself —
   `ctx = { component, context, containerElement, element, label }`, optional cleanup return.
   Beats the page-wide `window.components.renderLoaderCallback`.
-- **Dev dependency:** `@keenmate/base-css-variables` points to `file:../base-css-variables`
-  (2.0.0-rc06 with the `--base-loader-*` tokens is unpublished) — **switch back to
-  `^2.0.0-rc06` before publishing.**
+- **Dev dependency:** requires `@keenmate/base-css-variables` `^2.0.0-rc06` (the `--base-loader-*` tokens).
 - **Tests:** `e2e/loader.spec.ts` (+ `test/loader.html`) — default loader with role/label,
   HTML label → plain aria-label, page hook replaces it + cleanup on remove, instance hook
   beats the page hook, add-new pending context.
