@@ -20,6 +20,10 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
   `prefers-reduced-motion: reduce`): the floating dropdown's keyboard-focus `scrollIntoView` reads
   it (was always `smooth`). The fullscreen sheet keeps its instant scroll.
 - Manifest: `--ms-scroll-behavior`, `--base-scroll-behavior`, `--base-tree-indent`.
+- **Reduced motion slows the loader without base-css-variables:** the `prefers-reduced-motion`
+  block sets `--ms-loader-duration: var(--base-loader-duration, 1.5s)` (the contract's reduced
+  value as the fallback), so the loader turns at 1.5s even when the page doesn't load
+  base-css-variables; a page-wide `--base-loader-duration` still wins.
 
 ### Changed — shared loader (core SPEC §12.14, 2026-10-29)
 

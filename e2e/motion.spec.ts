@@ -60,3 +60,24 @@ test('reduced motion makes keyboard scrolling instant', async ({ page }) => {
     expect(calls.length).toBeGreaterThan(0);
     expect(new Set(calls)).toEqual(new Set(['auto']));
 });
+
+// The loader slows under reduced motion (1.5s) and never stops — also without base-css-variables
+// on the page (the reduced-motion block's own fallback); --base-loader-duration still wins.
+function loaderDuration(page: Page): Promise<string> {
+    return page.locator('#cs-attr').evaluate(el => getComputedStyle(el).getPropertyValue('--ms-loader-duration').trim());
+}
+
+test('loader: 0.8s by default, 1.5s under reduced motion without base-css-variables', async ({ page }) => {
+    await page.goto(PAGE);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--base-loader-duration').trim())).toBe('');
+    expect(await loaderDuration(page)).toBe('0.8s');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await loaderDuration(page)).toBe('1.5s');
+});
+
+test('loader under reduced motion: a page-wide --base-loader-duration wins', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(PAGE);
+    await page.addStyleTag({ content: ':root { --base-loader-duration: 3s; }' });
+    expect(await loaderDuration(page)).toBe('3s');
+});
