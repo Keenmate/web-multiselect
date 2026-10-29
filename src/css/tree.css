@@ -15,7 +15,7 @@
   /* base = a leaf/first-level row's inline-start padding; step = per-level indent */
   padding-inline-start: calc(
     var(--ms-tree-base-indent, calc(0.75 * var(--ms-rem))) +
-    var(--ms-tree-depth, 0) * var(--ms-tree-indent, calc(1.25 * var(--ms-rem)))
+    var(--ms-tree-depth, 0) * var(--ms-tree-indent, calc(var(--base-tree-indent, 1.6) * var(--ms-rem)))
   );
 }
 

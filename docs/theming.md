@@ -380,6 +380,8 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 |----------|---------|-------------|
 | `--ms-transition-normal` | `var(--base-duration-normal, 0.15s)` | Duration of every transition |
 | `--ms-easing-snappy` | `var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))` | Easing of every transition |
+| `--ms-scroll-behavior` | `var(--base-scroll-behavior, smooth)` | Keyboard-focus scrolling in the floating dropdown (read in JS as `scrollIntoView` `behavior`); `auto` under reduced motion |
+| `--ms-tree-indent` | `calc(var(--base-tree-indent, 1.6) * var(--ms-rem))` | Tree per-level step (16px) |
 | `--ms-disabled-opacity` | `var(--base-disabled-opacity, 0.65)` | Opacity for disabled state |
 | `--ms-disabled-input-opacity` | `var(--ms-disabled-opacity)` | Opacity of a disabled input / checkbox |
 

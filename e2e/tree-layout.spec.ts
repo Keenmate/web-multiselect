@@ -99,3 +99,13 @@ test('reserve-icon-slot: icon-less rows render an empty slot and share the label
     const fuji = await labelOffset(p, '1.1.2'); // no icon → empty slot
     expect(Math.abs(gala - fuji)).toBeLessThanOrEqual(1);
 });
+
+test('one tree level indents by --base-tree-indent (1.6 × the 10px rem = 16px)', async ({ page }) => {
+    const p = picker(page, 'tree-multi');
+    await openDropdown(p);
+    const pad = (path: string) => p.locator(`.ms__option[data-path="${path}"]`).evaluate(el => parseFloat(getComputedStyle(el).paddingInlineStart));
+    expect(await pad('1.1') - await pad('1')).toBeCloseTo(16, 1);
+    // The page-wide contract variable drives the step
+    await page.addStyleTag({ content: ':root { --base-tree-indent: 2; }' });
+    expect(await pad('1.1') - await pad('1')).toBeCloseTo(20, 1);
+});

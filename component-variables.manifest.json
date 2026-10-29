@@ -289,6 +289,16 @@
       "usage": "Standard easing curve (drives --ms-easing-snappy)"
     },
     {
+      "name": "base-scroll-behavior",
+      "required": false,
+      "usage": "Programmatic scrolling of the floating dropdown (drives --ms-scroll-behavior; smooth, auto under reduced motion)"
+    },
+    {
+      "name": "base-tree-indent",
+      "required": false,
+      "usage": "Tree per-level indent multiplier (1.6 × the rem = 16px; drives --ms-tree-indent / --ms-fullscreen-tree-indent)"
+    },
+    {
       "name": "base-checkbox-border-color",
       "required": false,
       "usage": "Option checkbox border color"
@@ -1183,7 +1193,7 @@
     {
       "name": "ms-loader-size",
       "category": "loading",
-      "usage": "Loader size (chains --base-loader-size)"
+      "usage": "Loader size (chains --base-loader-size) — async search and add-new pending"
     },
     {
       "name": "ms-loader-padding",
@@ -1721,6 +1731,11 @@
       "usage": "Snappy easing function"
     },
     {
+      "name": "ms-scroll-behavior",
+      "category": "transition",
+      "usage": "Keyboard-focus scrolling in the floating dropdown, read in JS as scrollIntoView behavior (chains --base-scroll-behavior: smooth; auto under reduced motion)"
+    },
+    {
       "name": "ms-placeholder-opacity",
       "category": "opacity",
       "usage": "Placeholder opacity once ready (default 1: the color is already the faint level)"
@@ -2103,7 +2118,7 @@
     {
       "name": "ms-fullscreen-tree-indent",
       "category": "fullscreen",
-      "usage": "Per-level indent for tree options in the fullscreen overlay"
+      "usage": "Per-level indent for tree options in the fullscreen overlay (--base-tree-indent × --ms-fullscreen-rem)"
     },
     {
       "name": "ms-icon-add-new",
@@ -2348,7 +2363,7 @@
     {
       "name": "ms-tree-indent",
       "category": "tree",
-      "usage": "Per-level indent for tree options in the floating dropdown"
+      "usage": "Per-level indent for tree options in the floating dropdown (default calc(var(--base-tree-indent, 1.6) * var(--ms-rem)) = 16px)"
     },
     {
       "name": "ms-z-index-fullscreen",

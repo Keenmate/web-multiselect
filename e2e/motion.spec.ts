@@ -30,3 +30,33 @@ test('--ms-transition-normal: 0s on the element turns transitions off', async ({
     await page.addStyleTag({ content: '#cs-attr { --ms-transition-normal: 0s; }' });
     expect(await wrapperDuration(page)).toBe('0s');
 });
+
+// Keyboard focus is scrolled into view with --ms-scroll-behavior (read in JS → scrollIntoView behavior).
+async function keyboardScrollBehaviors(page: Page): Promise<string[]> {
+    await page.addInitScript(() => {
+        const calls: string[] = ((window as any).__scrollBehaviors = []);
+        const orig = Element.prototype.scrollIntoView;
+        Element.prototype.scrollIntoView = function (this: Element, arg?: boolean | ScrollIntoViewOptions) {
+            if (arg && typeof arg === 'object') calls.push(String(arg.behavior));
+            return orig.call(this, arg as any);
+        };
+    });
+    await page.goto(PAGE);
+    await page.locator('#cs-attr .ms__input').click();
+    await expect(page.locator('#cs-attr .ms__dropdown')).toBeVisible();
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');
+    return page.evaluate(() => (window as any).__scrollBehaviors);
+}
+
+test('keyboard scrolling in the dropdown is smooth (--base-scroll-behavior)', async ({ page }) => {
+    const calls = await keyboardScrollBehaviors(page);
+    expect(calls.length).toBeGreaterThan(0);
+    expect(new Set(calls)).toEqual(new Set(['smooth']));
+});
+
+test('reduced motion makes keyboard scrolling instant', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const calls = await keyboardScrollBehaviors(page);
+    expect(calls.length).toBeGreaterThan(0);
+    expect(new Set(calls)).toEqual(new Set(['auto']));
+});

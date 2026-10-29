@@ -84,8 +84,7 @@
   --ms-checkbox-size: calc(1.6 * var(--ms-rem));
   --ms-group-label-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem));
   --ms-group-label-padding: calc(0.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
-  /* Reclaim horizontal space for labels: tighter indent than the floating default
-     (0.75 / 1.25 × --ms-rem in tree.css). */
+  /* Phone-sized tree indent (--ms-fullscreen-tree-*; the floating default is in tree.css). */
   --ms-tree-base-indent: var(--ms-fullscreen-tree-base-indent);
   --ms-tree-indent: var(--ms-fullscreen-tree-indent);
 }

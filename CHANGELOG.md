@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed (visual) — tree indent and scrolling follow the contract (base-css-variables rc06)
+
+- **Tree indent:** the per-level step is `calc(var(--base-tree-indent, 1.6) * var(--ms-rem))` —
+  **16px (was `1.25 × --ms-rem` = 12.5px)**, one step with both treeviews and the grid's tree
+  column. The phone overlay's `--ms-fullscreen-tree-indent` uses the same multiplier on
+  `--ms-fullscreen-rem` (was `1.2 ×`); the first-level `--ms-*-tree-base-indent` padding is unchanged.
+- **New `--ms-scroll-behavior`** (`var(--base-scroll-behavior, smooth)`; `auto` under
+  `prefers-reduced-motion: reduce`): the floating dropdown's keyboard-focus `scrollIntoView` reads
+  it (was always `smooth`). The fullscreen sheet keeps its instant scroll.
+- Manifest: `--ms-scroll-behavior`, `--base-scroll-behavior`, `--base-tree-indent`.
+
 ### Changed — shared loader (core SPEC §12.14, 2026-10-29)
 
 - **Every loading state draws through core `renderLoader()`:** the async-search loader

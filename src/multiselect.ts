@@ -3376,14 +3376,23 @@ export class MultiSelectEngine<T = any> {
      * covers the lower viewport, so `block:'nearest'` can bottom-align a match BEHIND the keyboard;
      * centre it instead and scroll INSTANTLY (a smooth animation kicked off per-keystroke is torn
      * down by the next re-render and never settles — the "list jumps every letter" bug). Floating
-     * scrolls the nearest edge smoothly. The caller may override `block`.
+     * scrolls the nearest edge with `--ms-scroll-behavior` (→ `--base-scroll-behavior`: smooth,
+     * `auto` under reduced motion). The caller may override `block`.
      */
     private applyScrollIntoView(el: HTMLElement, opts?: { block?: ScrollLogicalPosition }): void {
         if (this.presentationMode === 'fullscreen') {
             el.scrollIntoView({ block: opts?.block ?? 'center', behavior: 'auto' });
         } else {
-            el.scrollIntoView({ block: opts?.block ?? 'nearest', behavior: 'smooth' });
+            el.scrollIntoView({ block: opts?.block ?? 'nearest', behavior: this.getScrollBehavior() });
         }
+    }
+
+    /** `--ms-scroll-behavior` read off the host (`smooth` when unset / not rendered). */
+    private getScrollBehavior(): ScrollBehavior {
+        const value = typeof getComputedStyle === 'function'
+            ? getComputedStyle(this.hostEl()).getPropertyValue('--ms-scroll-behavior').trim()
+            : '';
+        return (value || 'smooth') as ScrollBehavior;
     }
 
     /**
