@@ -172,16 +172,18 @@ test('form.reset() restores the value selection; JS selection never rewrites the
     expect(await p.getAttribute('value')).toBe('banana,cherry');
     expect(await hidden.inputValue()).toBe(JSON.stringify(['apple']));
 
-    const events = await p.evaluate((el: any) => {
+    const events = await p.evaluate(async (el: any) => {
         const seen: string[] = [];
-        for (const n of ['change', 'select', 'deselect']) el.addEventListener(n, () => seen.push(n));
+        for (const n of ['change', 'select', 'deselect', 'add', 'open', 'close', 'action']) el.addEventListener(n, () => seen.push(n));
         (document.getElementById('init-form') as HTMLFormElement).reset();
+        // Catch anything deferred too (microtask / frame).
+        await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50)));
         return seen;
     });
 
     expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['banana', 'cherry']);
     expect(await hidden.inputValue()).toBe(JSON.stringify(['banana', 'cherry']));
-    // A reset is not a user action — no selection events.
+    // A reset is not a user action — silent, like a native form.reset() (no event at all).
     expect(events).toEqual([]);
 });
 
