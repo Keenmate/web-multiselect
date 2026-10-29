@@ -338,7 +338,7 @@ web-multiselect {
 |----------|-------------|
 | `--ms-transition-normal` | `var(--base-duration-normal, 0.15s)` — every transition; `0s` turns motion off (reduced motion does) |
 | `--ms-easing-snappy` | `var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))` |
-| `--ms-scroll-behavior` | `var(--base-scroll-behavior, smooth)` — keyboard-focus scrolling in the floating dropdown (read in JS); `auto` under reduced motion |
+| `--ms-scroll-behavior` | `var(--base-scroll-behavior, smooth)` — programmatic jumps (`scrollToIndex` / `scrollToValue` / `scrollToGroup`) in the floating dropdown (read in JS); `auto` under reduced motion. Keyboard scrolling is always instant |
 | `--ms-tree-indent` | Tree per-level step, default `calc(var(--base-tree-indent, 1.6) * var(--ms-rem))` = 16px |
 
 ### Base Unit

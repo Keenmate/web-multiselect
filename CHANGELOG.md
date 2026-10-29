@@ -17,8 +17,10 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
   column. The phone overlay's `--ms-fullscreen-tree-indent` uses the same multiplier on
   `--ms-fullscreen-rem` (was `1.2 ×`); the first-level `--ms-*-tree-base-indent` padding is unchanged.
 - **New `--ms-scroll-behavior`** (`var(--base-scroll-behavior, smooth)`; `auto` under
-  `prefers-reduced-motion: reduce`): the floating dropdown's keyboard-focus `scrollIntoView` reads
-  it (was always `smooth`). The fullscreen sheet keeps its instant scroll.
+  `prefers-reduced-motion: reduce`): programmatic jumps in the floating dropdown (`scrollToIndex()` /
+  `scrollToValue()` / `scrollToGroup()`) read it (was always `smooth`). **Keyboard scrolling
+  (arrow keys, navigate-mode typing) is now always instant** (was `smooth`); the fullscreen sheet
+  keeps its instant scroll.
 - Manifest: `--ms-scroll-behavior`, `--base-scroll-behavior`, `--base-tree-indent`.
 - **Reduced motion slows the loader without base-css-variables:** the `prefers-reduced-motion`
   block sets `--ms-loader-duration: var(--base-loader-duration, 1.5s)` (the contract's reduced

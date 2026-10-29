@@ -1733,7 +1733,7 @@
     {
       "name": "ms-scroll-behavior",
       "category": "transition",
-      "usage": "Keyboard-focus scrolling in the floating dropdown, read in JS as scrollIntoView behavior (chains --base-scroll-behavior: smooth; auto under reduced motion)"
+      "usage": "Programmatic jumps (scrollToIndex/scrollToValue/scrollToGroup) in the floating dropdown, read in JS as scrollIntoView behavior (chains --base-scroll-behavior: smooth; auto under reduced motion)"
     },
     {
       "name": "ms-placeholder-opacity",

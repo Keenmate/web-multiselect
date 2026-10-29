@@ -901,8 +901,8 @@
   --ms-transition-normal: var(--base-duration-normal, 0.15s);
   /* Easing is an exact match for --base-ease-standard, so it flows from the shared token. */
   --ms-easing-snappy: var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
-  /* Programmatic scrolling (keyboard focus scrolled into view in the floating dropdown):
-     read in JS as scrollIntoView's `behavior`. auto under reduced motion (block at the end). */
+  /* Programmatic jumps in the floating dropdown (scrollToIndex / scrollToValue / scrollToGroup;
+     keyboard scrolling is always instant): read in JS as scrollIntoView's `behavior`. auto under reduced motion (block at the end). */
   --ms-scroll-behavior: var(--base-scroll-behavior, smooth);
 
   /* ==========================================================================

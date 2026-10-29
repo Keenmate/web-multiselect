@@ -31,8 +31,9 @@ test('--ms-transition-normal: 0s on the element turns transitions off', async ({
     expect(await wrapperDuration(page)).toBe('0s');
 });
 
-// Keyboard focus is scrolled into view with --ms-scroll-behavior (read in JS → scrollIntoView behavior).
-async function keyboardScrollBehaviors(page: Page): Promise<string[]> {
+// Keyboard scrolling is always instant; --ms-scroll-behavior (→ --base-scroll-behavior) drives only
+// programmatic jumps (scrollToIndex / scrollToValue / scrollToGroup). Spy on scrollIntoView behaviors.
+async function spyScrollBehaviors(page: Page): Promise<void> {
     await page.addInitScript(() => {
         const calls: string[] = ((window as any).__scrollBehaviors = []);
         const orig = Element.prototype.scrollIntoView;
@@ -44,21 +45,40 @@ async function keyboardScrollBehaviors(page: Page): Promise<string[]> {
     await page.goto(PAGE);
     await page.locator('#cs-attr .ms__input').click();
     await expect(page.locator('#cs-attr .ms__dropdown')).toBeVisible();
-    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');
-    return page.evaluate(() => (window as any).__scrollBehaviors);
 }
 
-test('keyboard scrolling in the dropdown is smooth (--base-scroll-behavior)', async ({ page }) => {
-    const calls = await keyboardScrollBehaviors(page);
-    expect(calls.length).toBeGreaterThan(0);
-    expect(new Set(calls)).toEqual(new Set(['smooth']));
-});
+function scrollBehaviors(page: Page): Promise<string[]> {
+    return page.evaluate(() => (window as any).__scrollBehaviors.splice(0));
+}
 
-test('reduced motion makes keyboard scrolling instant', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
+async function keyboardScrollBehaviors(page: Page): Promise<string[]> {
+    await spyScrollBehaviors(page);
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');
+    return scrollBehaviors(page);
+}
+
+async function programmaticScrollBehaviors(page: Page): Promise<string[]> {
+    await spyScrollBehaviors(page);
+    await scrollBehaviors(page); // drop anything the open itself did
+    expect(await page.locator('#cs-attr').evaluate(el => (el as any).scrollToIndex(1))).toBe(true);
+    return scrollBehaviors(page);
+}
+
+test('keyboard scrolling in the dropdown is instant (smooth --base-scroll-behavior does not apply)', async ({ page }) => {
     const calls = await keyboardScrollBehaviors(page);
     expect(calls.length).toBeGreaterThan(0);
     expect(new Set(calls)).toEqual(new Set(['auto']));
+});
+
+test('programmatic scrollToIndex follows --ms-scroll-behavior (smooth)', async ({ page }) => {
+    const calls = await programmaticScrollBehaviors(page);
+    expect(calls).toEqual(['smooth']);
+});
+
+test('reduced motion makes programmatic scrolling instant', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const calls = await programmaticScrollBehaviors(page);
+    expect(calls).toEqual(['auto']);
 });
 
 // The loader slows under reduced motion (1.5s) and never stops — also without base-css-variables

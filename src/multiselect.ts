@@ -3368,7 +3368,9 @@ export class MultiSelectEngine<T = any> {
         // Standard mode: use scrollIntoView
         const focusedElement = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
         if (!focusedElement) return;
-        this.applyScrollIntoView(focusedElement);
+        // Keyboard-driven (arrow keys, navigate-mode typing): always instant — a smooth scroll per
+        // keystroke lags behind the focus and is torn down by the next re-render.
+        this.applyScrollIntoView(focusedElement, { isInstant: true });
     }
 
     /**
@@ -3376,14 +3378,18 @@ export class MultiSelectEngine<T = any> {
      * covers the lower viewport, so `block:'nearest'` can bottom-align a match BEHIND the keyboard;
      * centre it instead and scroll INSTANTLY (a smooth animation kicked off per-keystroke is torn
      * down by the next re-render and never settles — the "list jumps every letter" bug). Floating
-     * scrolls the nearest edge with `--ms-scroll-behavior` (→ `--base-scroll-behavior`: smooth,
-     * `auto` under reduced motion). The caller may override `block`.
+     * scrolls the nearest edge: keyboard scrolling (`isInstant`) is always instant; programmatic
+     * jumps (`scrollToIndex` / `scrollToValue` / `scrollToGroup`) use `--ms-scroll-behavior`
+     * (→ `--base-scroll-behavior`: smooth, `auto` under reduced motion). The caller may override `block`.
      */
-    private applyScrollIntoView(el: HTMLElement, opts?: { block?: ScrollLogicalPosition }): void {
+    private applyScrollIntoView(el: HTMLElement, opts?: { block?: ScrollLogicalPosition; isInstant?: boolean }): void {
         if (this.presentationMode === 'fullscreen') {
             el.scrollIntoView({ block: opts?.block ?? 'center', behavior: 'auto' });
         } else {
-            el.scrollIntoView({ block: opts?.block ?? 'nearest', behavior: this.getScrollBehavior() });
+            el.scrollIntoView({
+                block: opts?.block ?? 'nearest',
+                behavior: opts?.isInstant ? 'auto' : this.getScrollBehavior(),
+            });
         }
     }
 
