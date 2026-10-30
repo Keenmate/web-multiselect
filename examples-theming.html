@@ -1610,7 +1610,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
 
             // Preview-as-fullscreen toggle (forces the overlay on desktop so the mode toggle shows).
             document.getElementById('grouped-fs-preview').addEventListener('change', (e) => {
-                groupedSelect.setAttribute('mobile-presentation', e.target.checked ? 'fullscreen' : 'auto');
+                groupedSelect.setAttribute('presentation', e.target.checked ? 'fullscreen' : 'auto');
             });
         });
     </script>

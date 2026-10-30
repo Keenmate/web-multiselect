@@ -263,7 +263,7 @@ test.describe('renderOptionContentCallback tree context', () => {
 
         // Force the fullscreen overlay while open — it live-swaps and re-renders the rows,
         // so the callback is re-invoked with the new presentation (no reopen needed).
-        await p.evaluate((el) => el.setAttribute('mobile-presentation', 'fullscreen'));
+        await p.evaluate((el) => el.setAttribute('presentation', 'fullscreen'));
         await expect(p.locator('.ms__dropdown--fullscreen')).toBeVisible();
         await expect(probe(p, '1.1')).toHaveAttribute('data-presentation', 'fullscreen');
         await expect(probe(p, '1.1')).toHaveAttribute('data-is-fullscreen', 'true');

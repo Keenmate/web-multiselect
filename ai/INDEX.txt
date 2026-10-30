@@ -195,6 +195,7 @@ P
 Partial mode → display-modes.txt
 Performance → virtual-scrolling.txt, advanced-patterns.txt
 Pills → display-modes.txt
+presentation (floating / fullscreen) → display-modes.txt
 Placeholder → search-features.txt, basic-setup.txt
 Popover → display-modes.txt, custom-rendering.txt
 Positioning → display-modes.txt
@@ -207,6 +208,7 @@ R
 release() → advanced-patterns.txt
 ready event → events-callbacks.txt, advanced-patterns.txt
 Render gate (defer) → advanced-patterns.txt
+responsive / responsiveCallback (per-device rules) → display-modes.txt, typescript-types.txt
 renderBadgeContentCallback → custom-rendering.txt
 renderOptionContentCallback → custom-rendering.txt
 renderSelectedContentCallback → custom-rendering.txt, selection-modes.txt

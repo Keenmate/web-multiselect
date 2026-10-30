@@ -120,6 +120,31 @@ npm install @keenmate/web-multiselect
 
 See [docs/usage.md](./docs/usage.md) for the full API and [docs/examples.md](./docs/examples.md) for advanced patterns (async data, virtual scrolling, custom rendering, form integration).
 
+## Responsive rules
+
+Tune what the picker does per device class (`mobile` / `tablet` / `desktop`, from
+`classifyDevice`) without app-side viewport code — a map of partial configs, or a callback
+that computes one. Keys are **configKeys**; set them page-wide, per tag or per instance
+(the generic core mechanism, [core SPEC §6.7](https://github.com/KeenMate/web-components-core/blob/prod/docs/SPEC.md#67-responsive-rules--partial-configs-per-device-class-page--tag--instance)):
+
+```js
+// page-wide (every KeenMate component) and per tag — may be set before the script loads
+window.components.responsive = { mobile: { presentation: 'fullscreen' } };
+window.components['web-multiselect'].responsiveCallback = (ctx) =>
+  ctx.deviceClass === 'mobile' ? { actionsLayout: 'wrap' } : undefined;
+
+// per instance (property, or the JSON attribute responsive='{"tablet":{…}}')
+el.responsive = { tablet: { presentation: 'fullscreen' } };
+el.responsiveCallback = (ctx) => (ctx.env.orientation === 'landscape' ? { badgesThreshold: 5 } : undefined);
+```
+
+Precedence (later wins, key by key): global map → global callback → per-tag map → per-tag
+callback → **the instance's own attributes / properties** → instance map → instance callback.
+An attribute written on an element is never overridden by a page rule; `null` from the
+instance callback ignores every page rule. Rules re-run when the device class / breakpoint /
+orientation changes and never reflect to attributes. Typed as `MultiSelectResponsiveMap` /
+`MultiSelectResponsiveCallback`. Demo: `examples-responsive.html`, `examples-action-buttons.html`.
+
 ## Editor IntelliSense
 
 The package ships editor metadata so you get autocomplete and hover docs for the

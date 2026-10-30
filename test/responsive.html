@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Test — responsive rules (core SPEC §6.7)</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+    <script>
+        // Per-tag rule set BEFORE the component script loads — registerComponent adopts it.
+        window.components = {
+            'web-multiselect': {
+                responsive: { mobile: { presentation: 'floating', badgesDisplayMode: 'count' } }
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>responsive rules</h1>
+    <p>Targeted by <code>e2e/responsive-rules.spec.ts</code>. Per-tag page rule on <code>mobile</code>:
+        <code>{ presentation: 'floating', badgesDisplayMode: 'count' }</code>.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">page — follows the page rule</div>
+        <web-multiselect id="page" multiple="true" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">attr — presentation="auto" + badges-display-mode="partial" beat the page rule</div>
+        <web-multiselect id="attr" multiple="true" presentation="auto" badges-display-mode="partial" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">inst — instance map beats its own attribute</div>
+        <web-multiselect id="inst" multiple="true" presentation="floating" responsive='{"mobile":{"presentation":"fullscreen"}}' value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const fruits = [
+            { value: 'apple',      label: 'Apple' },
+            { value: 'banana',     label: 'Banana' },
+            { value: 'cherry',     label: 'Cherry' },
+            { value: 'date',       label: 'Date' },
+            { value: 'elderberry', label: 'Elderberry' }
+        ];
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['page', 'attr', 'inst']) {
+                document.getElementById(id).options = fruits;
+            }
+        });
+    </script>
+</body>
+</html>

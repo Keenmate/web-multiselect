@@ -87,12 +87,12 @@
         </header>
 
         <!-- ============================================================ -->
-        <!-- 1. mobile-presentation — how the overlay is chosen           -->
+        <!-- 1. presentation — how the overlay is chosen           -->
         <!-- ============================================================ -->
         <div class="card">
-            <h2>RS01 · <code>mobile-presentation</code> — floating vs fullscreen</h2>
+            <h2>RS01 · <code>presentation</code> — floating vs fullscreen</h2>
             <p>
-                The <code>mobile-presentation</code> attribute decides how the open dropdown is
+                The <code>presentation</code> attribute decides how the open dropdown is
                 presented:
             </p>
             <ul>
@@ -124,8 +124,8 @@
 &lt;web-multiselect&gt;&lt;/web-multiselect&gt;
 
 &lt;!-- force one presentation everywhere --&gt;
-&lt;web-multiselect mobile-presentation="floating"&gt;&lt;/web-multiselect&gt;
-&lt;web-multiselect mobile-presentation="fullscreen"&gt;&lt;/web-multiselect&gt;</code></pre>
+&lt;web-multiselect presentation="floating"&gt;&lt;/web-multiselect&gt;
+&lt;web-multiselect presentation="fullscreen"&gt;&lt;/web-multiselect&gt;</code></pre>
             </details>
         </div>
 
@@ -142,7 +142,7 @@
                 search on open instead (type-to-filter immediately, like a native picker).
             </p>
             <p>
-                Both pickers use <code>mobile-presentation="auto"</code>: a normal floating dropdown
+                Both pickers use <code>presentation="auto"</code>: a normal floating dropdown
                 here on desktop, a fullscreen sheet on a phone — where the keyboard difference actually
                 shows. Tick <em>Preview as fullscreen</em> to see the overlay on desktop.
             </p>
@@ -199,7 +199,7 @@ el.shouldFullscreenAutofocus = true;</code></pre>
                 bar (magnifier = navigate, funnel = filter), enabled with
                 <code>show-search-mode-toggle</code> — flips the mode <em>in place</em> without closing the
                 sheet; the host-page radios below do the same by setting the <code>search-mode</code> attribute.
-                The picker uses <code>mobile-presentation="auto"</code>, so on desktop it's a normal floating
+                The picker uses <code>presentation="auto"</code>, so on desktop it's a normal floating
                 dropdown — tick <em>Preview as fullscreen</em> to force the overlay and reveal the built-in toggle.
             </p>
             <div class="controls">
@@ -440,13 +440,85 @@ el.collapseBadgesBelow = null;</code></pre>
             </ul>
             <div class="note warning">
                 <div class="note-title">Two independent axes</div>
-                <code>mobile-presentation</code> (§1) picks <em>floating vs. fullscreen</em> from the device;
+                <code>presentation</code> (§1) picks <em>floating vs. fullscreen</em> from the device;
                 <code>collapse-badges-below</code> picks the <em>badge display</em> from the element's box.
                 They compose — a phone can open fullscreen while a desktop sidebar collapses badges. For a
                 third pattern — swapping a whole config (e.g. a different <code>actionButtons</code> set) by
                 device — see the device-adaptive actions demo on the
                 <a href="examples-action-buttons.html">Action Buttons</a> page.
             </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 10. Responsive rules — page rule, instance map, overrides    -->
+        <!-- ============================================================ -->
+        <div class="card" id="rs10">
+            <h2>RS10 · Responsive rules — page rule, instance map, overrides</h2>
+            <p>
+                A <strong>responsive rule</strong> is a partial config per device class
+                (<code>mobile</code> / <code>tablet</code> / <code>desktop</code>) — a <em>map</em> — or a
+                <em>callback</em> that computes one from the environment. Set it page-wide
+                (<code>window.components.responsive</code>), per tag
+                (<code>window.components['web-multiselect'].responsive</code>) or on one element
+                (<code>el.responsive</code> / the JSON <code>responsive</code> attribute). Rules re-run when
+                the device class, width breakpoint (768 / 1024px, from <code>--base-breakpoint-*</code>) or
+                orientation changes, and never write attributes.
+            </p>
+            <p>
+                Here a <strong>per-tag callback</strong> (opted into by <code>data-rs-demo</code>) switches the
+                badges to <code>count</code> below the desktop breakpoint — <em>narrow the window under
+                1024px</em> and watch. Precedence, later wins per key: global map → global callback → per-tag
+                map → per-tag callback → <strong>the element's own attributes / properties</strong> → instance
+                map → instance callback.
+            </p>
+            <div class="grid-2" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
+                <div class="form-group">
+                    <label>A · follows the page rule</label>
+                    <web-multiselect id="rs10-page" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
+                    <small class="form-text">effective: <code data-rs-readout="rs10-page">…</code></small>
+                </div>
+                <div class="form-group">
+                    <label>B · own attribute beats it</label>
+                    <web-multiselect id="rs10-attr" data-rs-demo multiple="true" badges-display-mode="partial" max-visible-badge-count="2"
+                        value-member="value" display-value-member="label"></web-multiselect>
+                    <small class="form-text"><code>badges-display-mode="partial"</code> → effective: <code data-rs-readout="rs10-attr">…</code></small>
+                </div>
+                <div class="form-group">
+                    <label>C · instance map beats both</label>
+                    <web-multiselect id="rs10-map" data-rs-demo multiple="true" badges-display-mode="partial"
+                        responsive='{"desktop":{"badgesDisplayMode":"compact"},"tablet":{"badgesDisplayMode":"compact"}}'
+                        value-member="value" display-value-member="label"></web-multiselect>
+                    <small class="form-text"><code>responsive='{"desktop":{…"compact"}}'</code> → effective: <code data-rs-readout="rs10-map">…</code></small>
+                </div>
+                <div class="form-group">
+                    <label>D · instance callback opts out (<code>null</code>)</label>
+                    <web-multiselect id="rs10-null" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
+                    <small class="form-text"><code>el.responsiveCallback = () =&gt; null</code> → effective: <code data-rs-readout="rs10-null">…</code></small>
+                </div>
+            </div>
+
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>// page-wide, per tag — may be set BEFORE the component script loads
+// (window.components = { 'web-multiselect': { responsive: {…} } } is adopted on registration)
+window.components['web-multiselect'].responsive = { mobile: { presentation: 'fullscreen' } };   // map
+window.components['web-multiselect'].responsiveCallback = (ctx) =&gt;                          // callback
+  ctx.element.hasAttribute('data-rs-demo') &amp;&amp; ctx.breakpoint !== 'desktop'
+    ? { badgesDisplayMode: 'count' }
+    : undefined;                                   // undefined = nothing to add
+
+&lt;!-- B: an attribute on the element always beats a page rule --&gt;
+&lt;web-multiselect badges-display-mode="partial"&gt;&lt;/web-multiselect&gt;
+
+&lt;!-- C: the instance's own map beats its attributes and the page rules --&gt;
+&lt;web-multiselect responsive='{"desktop":{"badgesDisplayMode":"compact"}}'&gt;&lt;/web-multiselect&gt;
+
+// D: null from the instance callback = ignore every page rule
+el.responsiveCallback = () =&gt; null;
+
+// typed
+import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</code></pre>
+            </details>
         </div>
     </div>
 
@@ -472,13 +544,13 @@ el.collapseBadgesBelow = null;</code></pre>
                 'Messaging': ['Message Queue', 'Pub/Sub', 'Transactional Email', 'SMS', 'Push Notifications']
             });
 
-            // A "Preview as fullscreen" checkbox just flips mobile-presentation between
+            // A "Preview as fullscreen" checkbox just flips presentation between
             // 'fullscreen' (forced overlay on desktop) and 'auto' (floating here) on the
             // given pickers — so the phone UI is inspectable without a phone.
             const wirePreview = (checkboxId, ...els) => {
                 document.getElementById(checkboxId).addEventListener('change', (e) => {
                     const mode = e.target.checked ? 'fullscreen' : 'auto';
-                    els.forEach((el) => el.setAttribute('mobile-presentation', mode));
+                    els.forEach((el) => el.setAttribute('presentation', mode));
                 });
             };
 
@@ -492,7 +564,7 @@ el.collapseBadgesBelow = null;</code></pre>
                 });
             };
 
-            // --- 1. mobile-presentation intro ------------------------
+            // --- 1. presentation intro ------------------------
             const intro = document.getElementById('intro-select');
             intro.options = options;
             wirePreview('intro-fs-preview', intro);
@@ -597,6 +669,41 @@ el.collapseBadgesBelow = null;</code></pre>
             sidebarSelect.options = options;
             sidebarSelect.setSelected(['0-0', '3-0', '4-0']);
         });
+    </script>
+
+    <!-- Responsive rules demo (RS10) -->
+    <script type="module">
+        import '/src/index.ts';
+        const pickOptions = ['Kubernetes', 'Object Storage', 'DNS', 'Key Vault', 'Data Lake', 'Message Queue']
+            .map((label, i) => ({ value: `rs-${i}`, label }));
+        const ids = ['rs10-page', 'rs10-attr', 'rs10-map', 'rs10-null'];
+        const els = ids.map((id) => document.getElementById(id));
+        els.forEach((el) => {
+            el.options = pickOptions;
+            el.value = pickOptions.slice(0, 4).map((o) => o.value);
+        });
+        // D: an instance callback returning null ignores every page rule.
+        document.getElementById('rs10-null').responsiveCallback = () => null;
+
+        // Per-tag map: on a phone every multiselect on this page opens fullscreen (what `auto`
+        // does anyway — a map entry is just a partial config for that device class).
+        window.components['web-multiselect'].responsive = { mobile: { presentation: 'fullscreen' } };
+        // The per-tag page rule — scoped to this demo by the data-rs-demo marker.
+        window.components['web-multiselect'].responsiveCallback = (ctx) =>
+            ctx.element.hasAttribute('data-rs-demo') && ctx.breakpoint !== 'desktop'
+                ? { badgesDisplayMode: 'count' }
+                : undefined;
+
+        // Readouts: the property getter returns the EFFECTIVE value (rules applied).
+        const refresh = async () => {
+            await Promise.all(els.map((el) => el.whenSettled()));
+            els.forEach((el) => {
+                const out = document.querySelector(`[data-rs-readout="${el.id}"]`);
+                if (out) out.textContent = el.badgesDisplayMode;
+            });
+        };
+        refresh();
+        window.addEventListener('resize', () => requestAnimationFrame(refresh));
     </script>
 
     <!-- Development mode: Load from src -->

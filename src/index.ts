@@ -49,12 +49,19 @@ export type {
   PointerType,
   OS,
   BreakpointMap,
+  Presentation,
+  ResponsiveMap,
+  ResponsiveCallback,
+  ResponsiveContext,
 } from '@keenmate/web-components-core';
 
 // Export types
 export type {
   MultiSelectOption,
   MultiSelectConfig,
+  MultiSelectElementConfig,
+  MultiSelectResponsiveMap,
+  MultiSelectResponsiveCallback,
   BadgesDisplayMode,
   BadgesPosition,
   BadgesThresholdMode,

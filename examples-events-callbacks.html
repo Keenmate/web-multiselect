@@ -521,8 +521,8 @@ el.beforeAddCallback = async ({ value }) =&gt; {
                 msgSelect.showMessage('Sticky — tap me to dismiss', { type: 'warning', autoHideMs: 0, placement: msgPlacement.value });
             });
             document.getElementById('msg-fs').addEventListener('click', () => {
-                const isFs = msgSelect.getAttribute('mobile-presentation') === 'fullscreen';
-                msgSelect.setAttribute('mobile-presentation', isFs ? 'floating' : 'fullscreen');
+                const isFs = msgSelect.getAttribute('presentation') === 'fullscreen';
+                msgSelect.setAttribute('presentation', isFs ? 'floating' : 'fullscreen');
             });
         });
     </script>

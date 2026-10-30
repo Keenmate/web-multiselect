@@ -3,7 +3,7 @@
  */
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
-import type { PresentationContext, ComponentContext, RenderLoaderCallback } from '@keenmate/web-components-core';
+import type { PresentationContext, ComponentContext, RenderLoaderCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './tree/ltree-node';
 import type {
@@ -1212,6 +1212,37 @@ export interface MultiSelectConfig<T = any> {
     /** The public facade put on every callback `ctx` / event detail (the element passes its rebuild-proof `el.controller`). */
     controller?: MultiSelectController<T>;
 }
+
+/**
+ * Every configKey a `<web-multiselect>` element accepts: the picker options
+ * ({@link MultiSelectConfig}) plus the element-only inputs (`presentation`, the widths,
+ * `collapseBadgesBelow`). The config type a responsive rule targets.
+ */
+export interface MultiSelectElementConfig<T = any> extends MultiSelectConfig<T> {
+    /** How the open dropdown is presented: `auto` (fullscreen on phones, floating elsewhere), `floating`, `fullscreen`. Attribute `presentation`. */
+    presentation?: 'auto' | 'floating' | 'fullscreen';
+    /** Fixed dropdown width (CSS length). Attribute `dropdown-width`. */
+    dropdownWidth?: string | null;
+    /** Selected-items popover width (CSS length). Attribute `selected-popover-width`. */
+    selectedPopoverWidth?: string | null;
+    /** Collapse the badges to the count view below this host width (px). Attribute `collapse-badges-below`. */
+    collapseBadgesBelow?: number | null;
+}
+
+/**
+ * Responsive rules map (core SPEC §6.7): device class (`mobile` / `tablet` / `desktop`) →
+ * partial element config. Set it page-wide (`window.components.responsive`), per tag
+ * (`window.components['web-multiselect'].responsive`) or per instance (`el.responsive`,
+ * JSON attribute `responsive`).
+ */
+export type MultiSelectResponsiveMap<T = any> = ResponsiveMap<MultiSelectElementConfig<T>>;
+
+/**
+ * Computed responsive rule (core SPEC §6.7): `(ctx) => partial config | undefined`
+ * (`null` from the instance callback = ignore every page rule). `ctx.config` is the
+ * element's BASE config. Page-wide, per tag, or per instance (`el.responsiveCallback`).
+ */
+export type MultiSelectResponsiveCallback<T = any> = ResponsiveCallback<MultiSelectElementConfig<T>>;
 
 /** Detail of the `select` / `deselect` events (and the `onSelect` / `onDeselect` twins). */
 export interface SelectEventDetail<T = any> extends MultiSelectContext<T> {

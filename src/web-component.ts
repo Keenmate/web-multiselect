@@ -38,7 +38,7 @@ import {
   type StyleSlot,
   type EnvironmentSnapshot,
   type ElementSize,
-  type MobilePresentation,
+  type Presentation,
 } from '@keenmate/web-components-core';
 import { MultiSelectEngine } from './multiselect';
 import type {
@@ -151,8 +151,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'valueSeparator',          attribute: 'value-separator',             converter: toText({ default: ',' }), on: 'reinit', description: 'Joins the values in the `text` value format (e.g. `value-separator="|"` → `a|b`) and splits a `text` `value` attribute / property. Default `,`.' },
   { configKey: 'badgeTooltipPlacement',   attribute: 'badge-tooltip-placement',     converter: toEnum(PLACEMENTS, { default: 'top' }), on: 'update', description: 'Preferred placement of a badge tooltip relative to its badge (floating-ui placement).' },
   { configKey: 'optionTooltipPlacement',  attribute: 'option-tooltip-placement',    converter: toEnum(PLACEMENTS, { default: 'top-start' }), on: 'update', description: 'Preferred placement of an option tooltip (floating-ui placement).' },
-  { configKey: 'mobilePresentation',      attribute: 'mobile-presentation',         converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), shouldReflect: true, on: 'update',
-    description: 'How the open dropdown is presented on phones. `auto` (default) keeps the floating panel on desktop/tablet and switches to a full-screen overlay on phone-sized touch devices (touch primary + shorter viewport side < 600px, orientation-robust); `floating` forces the anchored panel everywhere; `fullscreen` forces the full-screen overlay on any device (handy for previews/testing). Resolved reactively from the device/viewport environment.' },
+  { configKey: 'presentation',            attribute: 'presentation',                converter: toEnum(['auto', 'floating', 'fullscreen'] as const, { default: 'auto' }), shouldReflect: true, on: 'update',
+    description: 'How the open dropdown is presented. `auto` (default) keeps the floating panel on desktop/tablet and switches to a full-screen overlay on phone-sized touch devices (touch primary + shorter viewport side < 600px, orientation-robust); `floating` forces the anchored panel everywhere; `fullscreen` forces the full-screen overlay on any device (handy for previews/testing). Resolved reactively from the device/viewport environment. Tune it per device class page-wide with responsive rules (`window.components["web-multiselect"].responsive`).' },
   { configKey: 'shouldFullscreenAutofocus',     attribute: 'fullscreen-autofocus',        converter: toBool('default-false'), on: 'update',
     description: 'In the phone fullscreen overlay, auto-focus the search field on open (pops the soft keyboard immediately). Default `false`: the sheet opens with the list visible and the keyboard closed, appearing only when the user taps the search. Set `true` to type-to-filter right away. No effect in the floating presentation.' },
 
@@ -291,7 +291,7 @@ const EVENTS = [
 // so it can read the private engine; no flush (a staged write keeps the getter on the stored value).
 let liveOptions: (el: HTMLElement) => ReadonlyArray<Record<string, unknown>> | undefined = () => undefined;
 
-const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'mobilePresentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -428,11 +428,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       if (!this.#picker.updateOptions(pickerPartial as Partial<MultiSelectConfig<T>>)) this.#rebuildPicker();
     }
 
-    // `mobilePresentation` is element-only (NON_PICKER_KEYS) — the picker never sees
+    // `presentation` is element-only (NON_PICKER_KEYS) — the picker never sees
     // the raw setting. When the author changes the attribute we re-resolve it
     // against the current environment ourselves (environmentChanged only fires on an
     // env change, not an attribute change).
-    if ('mobilePresentation' in partial) this.#applyPresentation(getEnvironment());
+    if ('presentation' in partial) this.#applyPresentation(getEnvironment());
 
     // `collapseBadgesBelow` is element-only too — re-evaluate against the current
     // box when the threshold is set/changed/cleared (the `sizeChanged` hook only fires
@@ -468,9 +468,9 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#applyPresentation(env);
   }
 
-  /** Resolve `mobile-presentation` against `env` and relay it to the live picker. */
+  /** Resolve `presentation` against `env` and relay it to the live picker. */
   #applyPresentation(env: EnvironmentSnapshot): void {
-    const mode = (this.config.mobilePresentation as MobilePresentation | null) ?? 'auto';
+    const mode = (this.config.presentation as Presentation | null) ?? 'auto';
     // Class-only policy (core §12.9): `resolvePresentation` classifies the device
     // (`classifyDevice`) and applies the default map — fullscreen on a phone, floating
     // on tablet/desktop, which is exactly what this picker renders. The capability gate

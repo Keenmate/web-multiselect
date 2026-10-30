@@ -256,14 +256,17 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
             <h2>AB06 · Device-Adaptive Actions</h2>
             <p>
                 Twelve action buttons fit one row on a wide desktop, but there's no room on a phone, a
-                tablet, or a narrowed window. The fix isn't a CSS trick: define your action sets and pick the right
-                one for the space. The library re-exports the same device/viewport signal the component uses
-                internally, so you react to the <em>event that tells you the device and width</em> and choose
-                accordingly — here, granularly:
+                tablet, or a narrowed window. The fix isn't a CSS trick: define your action sets and let a
+                <strong>responsive rule</strong> pick the right one. A per-tag
+                <code>responsiveCallback</code> on <code>window.components['web-multiselect']</code> returns a
+                partial config for the current device class / breakpoint; the component re-runs it whenever
+                either changes and applies only what changed — no app-side viewport observer, no
+                "did it change" bookkeeping. The rule is page-wide, so it opts in by a marker attribute
+                (<code>data-adaptive-actions</code>); anything set explicitly on a picker still wins over it.
             </p>
             <ul>
-                <li><strong>Desktop, wide (&gt; 600px):</strong> all twelve buttons, one row (<code>nowrap</code>).</li>
-                <li><strong>Desktop, narrowed (≤ 600px):</strong> all twelve, flowed onto two rows (<code>wrap</code>).</li>
+                <li><strong>Desktop, wide (≥ 1024px):</strong> all twelve buttons, one row (<code>nowrap</code>).</li>
+                <li><strong>Desktop, narrowed (&lt; 1024px):</strong> all twelve, flowed onto two rows (<code>wrap</code>).</li>
                 <li><strong>Tablet:</strong> all twelve wrapped — a single row would run beyond the edge.</li>
                 <li><strong>Phone:</strong> the three essentials only, wrapped.</li>
             </ul>
@@ -271,30 +274,30 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
             <div class="demo-area">
                 <label class="demo-label">
                     <code id="adaptive-device">…</code>
-                    <span class="form-text" style="display:inline;">— resize the window (cross 600px) or toggle the device toolbar (DevTools) to see the toolbar re-shape.</span>
+                    <span class="form-text" style="display:inline;">— resize the window (cross 1024px) or toggle the device toolbar (DevTools) to see the toolbar re-shape.</span>
                 </label>
-                <web-multiselect id="ab-adaptive" multiple="true"></web-multiselect>
+                <web-multiselect id="ab-adaptive" multiple="true" data-adaptive-actions></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
                     <pre id="out-adaptive">[]</pre>
                 </div>
             </div>
 
-            <div class="code-block"><pre><span class="comment">// Device + viewport signal, re-exported from the component package — one import,
-// one dependency, the same signal the component reacts to internally.</span>
-import { observeViewport, classifyDevice } from '@keenmate/web-multiselect';
-
-observeViewport((env) =&gt; {
-  const device = classifyDevice(env);           <span class="comment">// 'mobile' | 'tablet' | 'desktop'</span>
-  if (device === 'mobile') {                     <span class="comment">// phone: essentials, wrapped</span>
-    el.actionButtons = mobileActions;  el.actionsLayout = 'wrap';
-  } else if (device === 'tablet') {              <span class="comment">// tablet: full set, wrapped</span>
-    el.actionButtons = desktopActions; el.actionsLayout = 'wrap';
-  } else {                                        <span class="comment">// desktop: two rows once ≤ 600px, else one</span>
-    el.actionButtons = desktopActions;
-    el.actionsLayout = env.viewportWidth &lt;= 600 ? 'wrap' : 'nowrap';
+            <div class="code-block"><pre><span class="comment">// A per-tag responsive rule (core SPEC §6.7). It may be set before the component
+// script loads: window.components = { 'web-multiselect': { responsiveCallback } }.</span>
+window.components['web-multiselect'].responsiveCallback = (ctx) =&gt; {
+  if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;  <span class="comment">// opt-in marker</span>
+  if (ctx.deviceClass === 'mobile') {            <span class="comment">// phone: essentials, wrapped</span>
+    return { actionButtons: mobileActions, actionsLayout: 'wrap' };
   }
-});</pre></div>
+  if (ctx.deviceClass === 'tablet') {            <span class="comment">// tablet: full set, wrapped</span>
+    return { actionButtons: desktopActions, actionsLayout: 'wrap' };
+  }
+  <span class="comment">// desktop: two rows below the tablet breakpoint (1024px, --base-breakpoint-tablet), else one</span>
+  return { actionButtons: desktopActions, actionsLayout: ctx.breakpoint === 'desktop' ? 'nowrap' : 'wrap' };
+};
+
+<span class="comment">// Typed: import type { MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</span></pre></div>
         </div>
 
         <!-- ============================================================= -->
@@ -353,9 +356,9 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
 
     <script type="module">
         import { persistControls } from './examples-controls-store.js';
-        // Device detection re-exported from the component package (same module the page
-        // loads to define the element). The build rewrites /src/index.ts → the dist bundle.
-        import { observeViewport, classifyDevice } from '/src/index.ts';
+        // Loads (and registers) the component — window.components['web-multiselect'] exists
+        // afterwards. The build rewrites /src/index.ts → the dist bundle.
+        import '/src/index.ts';
 
         // ── Datasets (tuple [value, label]) ──────────────────────────────
         const languageOptions = [
@@ -596,25 +599,21 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             abAdaptive.options = itemOptions;
             wireOutput(abAdaptive, document.getElementById('out-adaptive'));
 
+            // Per-tag responsive rule: re-run by the component on a device-class / breakpoint /
+            // orientation change; only the keys that changed are applied.
             const deviceReadout = document.getElementById('adaptive-device');
-            let lastKey = '';
-            observeViewport((env) => {
-                const device = classifyDevice(env);
-                let actions, layout;
-                if (device === 'mobile') { actions = mobileActions; layout = 'wrap'; }
-                else if (device === 'tablet') { actions = desktopActions; layout = 'wrap'; }
-                else { actions = desktopActions; layout = env.viewportWidth <= 600 ? 'wrap' : 'nowrap'; }
-                const key = `${device}|${layout}|${actions.length}`;
-                if (key !== lastKey) {
-                    lastKey = key;
-                    abAdaptive.actionButtons = actions;
-                    abAdaptive.actionsLayout = layout;
-                }
+            window.components['web-multiselect'].responsiveCallback = (ctx) => {
+                if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;
+                let partial;
+                if (ctx.deviceClass === 'mobile') partial = { actionButtons: mobileActions, actionsLayout: 'wrap' };
+                else if (ctx.deviceClass === 'tablet') partial = { actionButtons: desktopActions, actionsLayout: 'wrap' };
+                else partial = { actionButtons: desktopActions, actionsLayout: ctx.breakpoint === 'desktop' ? 'nowrap' : 'wrap' };
                 if (deviceReadout) {
-                    const rows = layout === 'wrap' ? 'two rows' : 'one row';
-                    deviceReadout.textContent = `${device} · ${Math.round(env.viewportWidth)}px · ${actions.length} buttons · ${rows}`;
+                    const rows = partial.actionsLayout === 'wrap' ? 'wrapped' : 'one row';
+                    deviceReadout.textContent = `${ctx.deviceClass} · ${ctx.breakpoint} breakpoint · ${partial.actionButtons.length} buttons · ${rows}`;
                 }
-            });
+                return partial;
+            };
 
             // Persist all control switches to localStorage and restore them on reload —
             // re-applies to every picker via the listeners wired above.

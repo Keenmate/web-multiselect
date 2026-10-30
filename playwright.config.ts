@@ -49,7 +49,7 @@ export default defineConfig({
         },
         {
             // Touch-primary phone context: Pixel 7 emulation gives a coarse pointer
-            // and no hover (isMobile + hasTouch), so `mobile-presentation="auto"`
+            // and no hover (isMobile + hasTouch), so `presentation="auto"`
             // resolves to fullscreen and rotation (viewport swap) is testable.
             name: 'mobile',
             testMatch: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],

@@ -2,7 +2,7 @@ import { test, expect, Page, Locator } from './fixtures';
 
 /**
  * Mobile (fullscreen-overlay) coverage for the features added this cycle. Runs under the
- * `mobile` Playwright project only (Pixel 7 → `mobile-presentation="auto"` resolves to the
+ * `mobile` Playwright project only (Pixel 7 → `presentation="auto"` resolves to the
  * fullscreen overlay). The dropdown list — including flat-group cascade headers, their
  * tristate checkbox and the per-group selected-count chip — renders inside
  * `.ms__dropdown--fullscreen`, so this proves those work under touch + the fullscreen path,
@@ -21,10 +21,10 @@ const val = (p: Locator) => p.evaluate((el: any) => el.selectedValue);
 
 // Force the fullscreen overlay and open it. groups.html carries no `width=device-width`
 // viewport meta, so `auto` detection can't rely on the phone viewport here — `fullscreen`
-// forces the same overlay UI a phone gets (mobile-presentation is applied in place, so the
+// forces the same overlay UI a phone gets (presentation is applied in place, so the
 // options/selection survive). This is the documented preview/testing path.
 async function openFullscreen(p: Locator): Promise<void> {
-    await p.evaluate((el: any) => el.setAttribute('mobile-presentation', 'fullscreen'));
+    await p.evaluate((el: any) => el.setAttribute('presentation', 'fullscreen'));
     await p.locator('.ms__input').click();
     await expect(fullscreen(p)).toBeVisible();
 }

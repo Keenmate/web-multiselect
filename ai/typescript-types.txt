@@ -115,6 +115,17 @@ const config: MultiSelectConfig = {
   badgesDisplayMode: 'badges'
 };
 
+RESPONSIVE RULE TYPES
+---------------------
+import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';
+
+// = core ResponsiveMap / ResponsiveCallback over MultiSelectElementConfig
+// (MultiSelectConfig + element-only inputs: presentation, dropdownWidth, ...)
+const rules: MultiSelectResponsiveMap = { mobile: { presentation: 'fullscreen', actionsLayout: 'wrap' } };
+const rule: MultiSelectResponsiveCallback = (ctx) =>
+  ctx.deviceClass === 'desktop' ? undefined : { badgesDisplayMode: 'count' };
+// ctx: { env, deviceClass, breakpoint, element, component, config /* base config */ }
+
 CONTEXT BASE
 ------------
 Every callback ctx and every event detail extends MultiSelectContext:

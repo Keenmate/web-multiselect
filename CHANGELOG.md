@@ -10,6 +10,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — BREAKING (presentation rename + responsive rules, core rc15, 2026-10-30)
+
+- **`mobile-presentation` / `mobilePresentation` → `presentation`** (values unchanged:
+  `auto` | `floating` | `fullscreen`). No alias — `mobile-presentation="fullscreen"` is now an
+  unknown attribute; write `presentation="fullscreen"`. The core type is `Presentation` (was
+  `MobilePresentation`); core's deprecated `resolveMobilePresentation()` is gone.
+- **Breakpoint defaults follow the base tokens** (core rc15): the `mobile` width bucket ends at
+  768px (was 640), `tablet` at 1024px, overridable page-wide with `--base-breakpoint-mobile` /
+  `--base-breakpoint-tablet` or `configureBreakpoints()`. Device class (`classifyDevice`, the
+  `auto` presentation) is unchanged.
+
+### Added — responsive rules (core SPEC §6.7)
+
+- Every `<web-multiselect>` takes per-device-class partial configs page-wide
+  (`window.components.responsive` / `.responsiveCallback`), per tag
+  (`window.components['web-multiselect'].responsive` / `.responsiveCallback`) or per instance
+  (`el.responsive` / JSON attribute `responsive`, `el.responsiveCallback`). Precedence: page rules
+  < the element's own attributes / properties < the instance's rules. Overrides never reflect.
+- Types `MultiSelectResponsiveMap` / `MultiSelectResponsiveCallback` (core generics over the new
+  `MultiSelectElementConfig` = `MultiSelectConfig` + element-only inputs); core
+  `ResponsiveMap` / `ResponsiveCallback` / `ResponsiveContext` / `Presentation` re-exported.
+- `examples-action-buttons.html` "adaptive" section now uses a per-tag `responsiveCallback`
+  (no app-side `observeViewport`); `examples-responsive.html` shows map + callback + an instance
+  override.
+
 ### Changed (visual) — tree indent and scrolling follow the contract (base-css-variables rc06)
 
 - **Tree indent:** the per-level step is `calc(var(--base-tree-indent, 1.6) * var(--ms-rem))` —

@@ -468,6 +468,33 @@ Partial with tooltips:
   enable-badge-tooltips="true">
 </web-multiselect>
 
+PRESENTATION (FLOATING / FULLSCREEN)
+------------------------------------
+The `presentation` attribute (v3; was `mobile-presentation`) picks how the open
+dropdown is shown:
+  auto        (default) floating panel on desktop/tablet, full-screen overlay on phones
+  floating    anchored panel everywhere
+  fullscreen  full-screen overlay on any device
+
+<web-multiselect presentation="floating"></web-multiselect>
+
+RESPONSIVE RULES (PER DEVICE CLASS)
+-----------------------------------
+Partial configs per device class (mobile / tablet / desktop) — no app-side viewport code.
+Keys are configKeys. Page-wide, per tag, or per instance (core SPEC §6.7):
+
+window.components.responsive = { mobile: { presentation: 'fullscreen' } };
+window.components['web-multiselect'].responsiveCallback = (ctx) =>
+  ctx.deviceClass === 'mobile' ? { actionsLayout: 'wrap' } : undefined;
+select.responsive = { tablet: { presentation: 'fullscreen' } };
+// or <web-multiselect responsive='{"tablet":{"presentation":"fullscreen"}}'>
+
+Precedence (later wins, per key): global map → global callback → per-tag map → per-tag
+callback → the element's own attributes/properties → instance map → instance callback.
+An attribute on the element always beats a page rule. Instance callback returning null =
+ignore all page rules. Overrides never reflect to attributes; they re-apply when the
+device class / breakpoint / orientation changes.
+
 DEBUGGING
 ---------
 Inspect badge state:

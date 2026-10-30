@@ -12,7 +12,7 @@ import { test, expect, Page, Locator } from './fixtures';
  * instance. This spec verifies the warning fires for a transformed ancestor and stays
  * silent for a plain one.
  *
- * Fixture: test/fullscreen-containing-block.html. `mobile-presentation="fullscreen"` forces
+ * Fixture: test/fullscreen-containing-block.html. `presentation="fullscreen"` forces
  * the overlay on any device, so this runs under the default desktop project.
  */
 

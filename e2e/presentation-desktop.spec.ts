@@ -6,7 +6,7 @@ import { test, expect, Page, Locator } from './fixtures';
  * Runs under the default `chromium` (desktop) project: a fine pointer + hover, so
  * NOT `isTouchPrimary`. This pins the rc07 capability gate: `classifyDevice`
  * returns `desktop` at *any* window width for a non-touch device, so shrinking a
- * desktop window to phone-narrow dimensions keeps `mobile-presentation="auto"` on
+ * desktop window to phone-narrow dimensions keeps `presentation="auto"` on
  * the floating panel — it must never flip to the fullscreen sheet. (The touch
  * phone/rotation behavior lives in presentation.spec.ts under the `mobile`
  * project.)
@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
     await page.goto(PAGE);
 });
 
-test.describe('mobile-presentation="auto" on a non-touch desktop', () => {
+test.describe('presentation="auto" on a non-touch desktop', () => {
     test('stays floating even when the window is shrunk to phone-narrow width', async ({ page }) => {
         const p = picker(page, 'auto');
 

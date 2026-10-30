@@ -5,7 +5,7 @@ import { test, expect, Page, Locator } from './fixtures';
  *
  * Runs under the `mobile` Playwright project only (see playwright.config.ts):
  * a Pixel 7 context reports a coarse pointer and no hover, so it is
- * `isTouchPrimary` — the precondition for `mobile-presentation="auto"` to
+ * `isTouchPrimary` — the precondition for `presentation="auto"` to
  * resolve to the fullscreen overlay. A desktop context never takes that branch.
  *
  * "Rotation" in Playwright is a viewport-dimension swap: there is no literal
@@ -49,7 +49,7 @@ test.beforeEach(async ({ page }) => {
     await page.goto(PAGE);
 });
 
-test.describe('mobile-presentation="auto" on a touch phone', () => {
+test.describe('presentation="auto" on a touch phone', () => {
     test('opens as a fullscreen overlay in portrait', async ({ page }) => {
         const p = picker(page, 'auto');
         await input(p).click();

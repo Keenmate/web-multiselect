@@ -279,7 +279,7 @@
             'virtual-scroll-overscan': "Extra rows rendered above / below the viewport for smooth scrolling.",
             'enable-badge-tooltips': "Show hover tooltips on selected badges.",
             'enable-option-tooltips': "Show hover tooltips on dropdown options.",
-            'mobile-presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
+            'presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
             'fullscreen-autofocus': "Auto-focus the search field when the fullscreen overlay opens.",
         };
 
@@ -364,7 +364,7 @@
                 { attr: 'enable-option-tooltips', type: 'bool', def: false },
             ]},
             { name: 'Mobile', props: [
-                { attr: 'mobile-presentation', type: 'enum', opts: ['auto','floating','fullscreen'], def: 'auto' },
+                { attr: 'presentation', type: 'enum', opts: ['auto','floating','fullscreen'], def: 'auto' },
                 { attr: 'fullscreen-autofocus', type: 'bool', def: false },
             ]},
         ];
