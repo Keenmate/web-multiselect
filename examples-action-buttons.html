@@ -259,14 +259,17 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
                 tablet, or a narrowed window. The fix isn't a CSS trick: define your action sets and let a
                 <strong>responsive rule</strong> pick the right one. A per-tag
                 <code>responsiveCallback</code> on <code>window.components['web-multiselect']</code> returns a
-                partial config for the current device class / breakpoint; the component re-runs it whenever
-                either changes and applies only what changed — no app-side viewport observer, no
+                partial config for the current device class / viewport width; the component re-runs it on
+                every device-class flip and (callbacks only) every viewport-width change, and applies only
+                what changed — no app-side viewport observer, no
                 "did it change" bookkeeping. The rule is page-wide, so it opts in by a marker attribute
                 (<code>data-adaptive-actions</code>); anything set explicitly on a picker still wins over it.
             </p>
             <ul>
-                <li><strong>Desktop, wide (≥ 1024px):</strong> all twelve buttons, one row (<code>nowrap</code>).</li>
-                <li><strong>Desktop, narrowed (&lt; 1024px):</strong> all twelve, flowed onto two rows (<code>wrap</code>).</li>
+                <li><strong>Desktop, wide (&gt; 600px):</strong> all twelve buttons, one row (<code>nowrap</code>).</li>
+                <li><strong>Desktop, narrowed (≤ 600px):</strong> all twelve, flowed onto two rows (<code>wrap</code>).
+                    A mouse device stays <code>desktop</code> at any width, so this is a width check
+                    (<code>ctx.env.viewportWidth</code>), not a device class.</li>
                 <li><strong>Tablet:</strong> all twelve wrapped — a single row would run beyond the edge.</li>
                 <li><strong>Phone:</strong> the three essentials only, wrapped.</li>
             </ul>
@@ -274,7 +277,7 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
             <div class="demo-area">
                 <label class="demo-label">
                     <code id="adaptive-device">…</code>
-                    <span class="form-text" style="display:inline;">— resize the window (cross 1024px) or toggle the device toolbar (DevTools) to see the toolbar re-shape.</span>
+                    <span class="form-text" style="display:inline;">— resize the window (cross 600px) or toggle the device toolbar (DevTools) to see the toolbar re-shape.</span>
                 </label>
                 <web-multiselect id="ab-adaptive" multiple="true" data-adaptive-actions></web-multiselect>
                 <div class="output">
@@ -293,8 +296,8 @@ window.components['web-multiselect'].responsiveCallback = (ctx) =&gt; {
   if (ctx.deviceClass === 'tablet') {            <span class="comment">// tablet: full set, wrapped</span>
     return { actionButtons: desktopActions, actionsLayout: 'wrap' };
   }
-  <span class="comment">// desktop: two rows below the tablet breakpoint (1024px, --base-breakpoint-tablet), else one</span>
-  return { actionButtons: desktopActions, actionsLayout: ctx.breakpoint === 'desktop' ? 'nowrap' : 'wrap' };
+  <span class="comment">// desktop (a mouse device at any width): two rows once the window is 600px or narrower</span>
+  return { actionButtons: desktopActions, actionsLayout: ctx.env.viewportWidth &lt;= 600 ? 'wrap' : 'nowrap' };
 };
 
 <span class="comment">// Typed: import type { MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</span></pre></div>
@@ -600,17 +603,17 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             wireOutput(abAdaptive, document.getElementById('out-adaptive'));
 
             // Per-tag responsive rule: re-run by the component on a device-class / breakpoint /
-            // orientation change; only the keys that changed are applied.
+            // orientation change and (callbacks) every viewport-width change; only changed keys apply.
             const deviceReadout = document.getElementById('adaptive-device');
             window.components['web-multiselect'].responsiveCallback = (ctx) => {
                 if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;
                 let partial;
                 if (ctx.deviceClass === 'mobile') partial = { actionButtons: mobileActions, actionsLayout: 'wrap' };
                 else if (ctx.deviceClass === 'tablet') partial = { actionButtons: desktopActions, actionsLayout: 'wrap' };
-                else partial = { actionButtons: desktopActions, actionsLayout: ctx.breakpoint === 'desktop' ? 'nowrap' : 'wrap' };
+                else partial = { actionButtons: desktopActions, actionsLayout: ctx.env.viewportWidth <= 600 ? 'wrap' : 'nowrap' };
                 if (deviceReadout) {
                     const rows = partial.actionsLayout === 'wrap' ? 'wrapped' : 'one row';
-                    deviceReadout.textContent = `${ctx.deviceClass} · ${ctx.breakpoint} breakpoint · ${partial.actionButtons.length} buttons · ${rows}`;
+                    deviceReadout.textContent = `${ctx.deviceClass} · ${ctx.env.viewportWidth}px · ${partial.actionButtons.length} buttons · ${rows}`;
                 }
                 return partial;
             };
