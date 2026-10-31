@@ -23,11 +23,14 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
 
 ### Added — responsive rules (core SPEC §6.7)
 
-- Every `<web-multiselect>` takes per-device-class partial configs page-wide
+- Every `<web-multiselect>` takes partial configs per device class / window width page-wide
   (`window.components.responsive` / `.responsiveCallback`), per tag
   (`window.components['web-multiselect'].responsive` / `.responsiveCallback`) or per instance
   (`el.responsive` / JSON attribute `responsive`, `el.responsiveCallback`). Precedence: page rules
   < the element's own attributes / properties < the instance's rules. Overrides never reflect.
+  A map has two explicit axes (core rc15): `{ device: { mobile|tablet|desktop: … }, breakpoint:
+  { mobile|tablet|desktop: … } }` — `device` = device class by touch capability, `breakpoint` =
+  window width; device wins on the same key. Own widths / combinations → `responsiveCallback`.
 - Types `MultiSelectResponsiveMap` / `MultiSelectResponsiveCallback` (core generics over the new
   `MultiSelectElementConfig` = `MultiSelectConfig` + element-only inputs); core
   `ResponsiveMap` / `ResponsiveCallback` / `ResponsiveContext` / `Presentation` re-exported.

@@ -12,14 +12,14 @@
         // Per-tag rule set BEFORE the component script loads — registerComponent adopts it.
         window.components = {
             'web-multiselect': {
-                responsive: { mobile: { presentation: 'floating', badgesDisplayMode: 'count' } }
+                responsive: { device: { mobile: { presentation: 'floating', badgesDisplayMode: 'count' } } }
             }
         };
     </script>
 </head>
 <body>
     <h1>responsive rules</h1>
-    <p>Targeted by <code>e2e/responsive-rules.spec.ts</code>. Per-tag page rule on <code>mobile</code>:
+    <p>Targeted by <code>e2e/responsive-rules.spec.ts</code>. Per-tag page rule on <code>device.mobile</code>:
         <code>{ presentation: 'floating', badgesDisplayMode: 'count' }</code>.</p>
 
     <div class="fixture">
@@ -34,7 +34,17 @@
 
     <div class="fixture">
         <div class="fixture-label">inst — instance map beats its own attribute</div>
-        <web-multiselect id="inst" multiple="true" presentation="floating" responsive='{"mobile":{"presentation":"fullscreen"}}' value-member="value" display-value-member="label"></web-multiselect>
+        <web-multiselect id="inst" multiple="true" presentation="floating" responsive='{"device":{"mobile":{"presentation":"fullscreen"}}}' value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">axes — breakpoint.mobile → compact, device.mobile → partial (device wins on a phone)</div>
+        <web-multiselect id="axes" multiple="true" responsive='{"breakpoint":{"mobile":{"badgesDisplayMode":"compact"}},"device":{"mobile":{"badgesDisplayMode":"partial"}}}' value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">old — pre-rc15 device-keyed map: warns and is ignored</div>
+        <web-multiselect id="old" multiple="true" responsive='{"mobile":{"presentation":"fullscreen"}}' value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
     <script type="module">
@@ -49,7 +59,7 @@
         ];
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['page', 'attr', 'inst']) {
+            for (const id of ['page', 'attr', 'inst', 'axes', 'old']) {
                 document.getElementById(id).options = fruits;
             }
         });

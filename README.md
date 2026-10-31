@@ -122,27 +122,41 @@ See [docs/usage.md](./docs/usage.md) for the full API and [docs/examples.md](./d
 
 ## Responsive rules
 
-Tune what the picker does per device class (`mobile` / `tablet` / `desktop`, from
-`classifyDevice`) without app-side viewport code — a map of partial configs, or a callback
-that computes one. Keys are **configKeys**; set them page-wide, per tag or per instance
+Tune what the picker does per device or window width without app-side viewport code — a map
+of partial configs, or a callback that computes one. A map has two axes, each keyed
+`mobile` / `tablet` / `desktop`:
+
+- **`device`** — the device class (`classifyDevice`): a phone / tablet by **capability**
+  (touch-primary, then the short side); a mouse device is `desktop` at any width.
+- **`breakpoint`** — the **window width** bucket (768 / 1024px lines, `--base-breakpoint-*`):
+  a narrowed desktop window is `mobile` below 768px.
+
+Within one map the breakpoint entry applies first and the device entry over it (device wins
+on the same key). Own widths or combinations (`ctx.env.viewportWidth`, device class AND
+width, …) go in a `responsiveCallback`. Keys are **configKeys**; set them page-wide, per tag
+or per instance
 (the generic core mechanism, [core SPEC §6.7](https://github.com/KeenMate/web-components-core/blob/prod/docs/SPEC.md#67-responsive-rules--partial-configs-per-device-class-page--tag--instance)):
 
 ```js
 // page-wide (every KeenMate component) and per tag — may be set before the script loads
-window.components.responsive = { mobile: { presentation: 'fullscreen' } };
+window.components.responsive = { device: { mobile: { presentation: 'fullscreen' } } };
 window.components['web-multiselect'].responsiveCallback = (ctx) =>
   ctx.deviceClass === 'mobile' ? { actionsLayout: 'wrap' } : undefined;
 
-// per instance (property, or the JSON attribute responsive='{"tablet":{…}}')
-el.responsive = { tablet: { presentation: 'fullscreen' } };
+// per instance (property, or the JSON attribute responsive='{"device":{"tablet":{…}}}')
+el.responsive = {
+  device:     { tablet: { presentation: 'fullscreen' } },   // a touch tablet
+  breakpoint: { mobile: { badgesDisplayMode: 'count' } },   // any window under 768px
+};
 el.responsiveCallback = (ctx) => (ctx.env.orientation === 'landscape' ? { badgesThreshold: 5 } : undefined);
 ```
 
 Precedence (later wins, key by key): global map → global callback → per-tag map → per-tag
 callback → **the instance's own attributes / properties** → instance map → instance callback.
 An attribute written on an element is never overridden by a page rule; `null` from the
-instance callback ignores every page rule. Rules re-run when the device class / breakpoint /
-orientation changes and never reflect to attributes. Typed as `MultiSelectResponsiveMap` /
+instance callback ignores every page rule. Maps re-run when the device class / breakpoint
+changes, callbacks also on every viewport resize; overrides never reflect to attributes. The
+pre-rc15 device-keyed shape (`{ mobile: … }`) warns and is ignored. Typed as `MultiSelectResponsiveMap` /
 `MultiSelectResponsiveCallback`. Demo: `examples-responsive.html`, `examples-action-buttons.html`.
 
 ## Editor IntelliSense

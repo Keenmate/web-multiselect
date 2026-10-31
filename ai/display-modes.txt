@@ -478,22 +478,29 @@ dropdown is shown:
 
 <web-multiselect presentation="floating"></web-multiselect>
 
-RESPONSIVE RULES (PER DEVICE CLASS)
------------------------------------
-Partial configs per device class (mobile / tablet / desktop) — no app-side viewport code.
+RESPONSIVE RULES (PER DEVICE CLASS / WINDOW WIDTH)
+--------------------------------------------------
+Partial configs per device class or window width — no app-side viewport code. A map has
+two axes, each keyed mobile / tablet / desktop:
+  device     = classifyDevice (touch capability, then short side; a mouse device is desktop)
+  breakpoint = window width bucket (768 / 1024px lines)
+Breakpoint entry applies first, device entry over it (device wins per key). The old
+device-keyed shape { mobile: … } warns and is ignored. Own widths / combinations →
+responsiveCallback (ctx.env.viewportWidth, ctx.deviceClass, ctx.breakpoint).
 Keys are configKeys. Page-wide, per tag, or per instance (core SPEC §6.7):
 
-window.components.responsive = { mobile: { presentation: 'fullscreen' } };
+window.components.responsive = { device: { mobile: { presentation: 'fullscreen' } } };
 window.components['web-multiselect'].responsiveCallback = (ctx) =>
   ctx.deviceClass === 'mobile' ? { actionsLayout: 'wrap' } : undefined;
-select.responsive = { tablet: { presentation: 'fullscreen' } };
-// or <web-multiselect responsive='{"tablet":{"presentation":"fullscreen"}}'>
+select.responsive = { device: { tablet: { presentation: 'fullscreen' } },
+                      breakpoint: { mobile: { badgesDisplayMode: 'count' } } };
+// or <web-multiselect responsive='{"device":{"tablet":{"presentation":"fullscreen"}}}'>
 
 Precedence (later wins, per key): global map → global callback → per-tag map → per-tag
 callback → the element's own attributes/properties → instance map → instance callback.
 An attribute on the element always beats a page rule. Instance callback returning null =
-ignore all page rules. Overrides never reflect to attributes; they re-apply when the
-device class / breakpoint / orientation changes.
+ignore all page rules. Overrides never reflect to attributes; maps re-apply when the
+device class / breakpoint changes, callbacks also on every viewport resize.
 
 DEBUGGING
 ---------

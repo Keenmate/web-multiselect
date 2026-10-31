@@ -208,7 +208,7 @@ R
 release() → advanced-patterns.txt
 ready event → events-callbacks.txt, advanced-patterns.txt
 Render gate (defer) → advanced-patterns.txt
-responsive / responsiveCallback (per-device rules) → display-modes.txt, typescript-types.txt
+responsive / responsiveCallback (per device class / window-width rules) → display-modes.txt, typescript-types.txt
 renderBadgeContentCallback → custom-rendering.txt
 renderOptionContentCallback → custom-rendering.txt
 renderSelectedContentCallback → custom-rendering.txt, selection-modes.txt

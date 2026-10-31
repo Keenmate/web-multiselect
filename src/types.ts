@@ -1230,8 +1230,9 @@ export interface MultiSelectElementConfig<T = any> extends MultiSelectConfig<T> 
 }
 
 /**
- * Responsive rules map (core SPEC §6.7): device class (`mobile` / `tablet` / `desktop`) →
- * partial element config. Set it page-wide (`window.components.responsive`), per tag
+ * Responsive rules map (core SPEC §6.7): `{ device?, breakpoint? }`, each keyed `mobile` /
+ * `tablet` / `desktop` → partial element config. `device` = device class (touch capability,
+ * then short side), `breakpoint` = window-width bucket (768 / 1024px); device wins per key. Set it page-wide (`window.components.responsive`), per tag
  * (`window.components['web-multiselect'].responsive`) or per instance (`el.responsive`,
  * JSON attribute `responsive`).
  */

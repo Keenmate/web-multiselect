@@ -4,13 +4,16 @@ import { test, expect, devices, Page, Locator } from './fixtures';
  * Responsive rules (core SPEC §6.7) on web-multiselect.
  *
  * Fixture test/responsive.html sets a PER-TAG rule before the component script loads
- * (`window.components['web-multiselect'].responsive = { mobile: { presentation: 'floating',
- * badgesDisplayMode: 'count' } }`), so it also covers registerComponent adopting it.
+ * (`window.components['web-multiselect'].responsive = { device: { mobile: { presentation:
+ * 'floating', badgesDisplayMode: 'count' } } }`), so it also covers registerComponent adopting it.
+ * `#axes` carries both map axes (breakpoint.mobile → compact, device.mobile → partial);
+ * `#old` uses the pre-rc15 device-keyed shape, which core ignores.
  *
  * - phone (Pixel 7 emulation → deviceClass `mobile`): the page rule applies to a bare picker,
  *   an attribute on the element beats it, the instance `responsive` map beats the attribute;
  *   overrides never reflect.
- * - desktop: no `desktop` entry → the page rule adds nothing.
+ * - desktop: no `device.desktop` entry → the page rule adds nothing; a narrowed window hits the
+ *   `breakpoint` axis (capability over width: the device stays `desktop`).
  */
 
 const PAGE = '/test/responsive.html';
@@ -75,6 +78,14 @@ test.describe('phone viewport', () => {
         await expect(fullscreen(p)).toBeVisible();
     });
 
+    test('device axis beats the breakpoint axis on the same key; the old map shape is ignored', async ({ page }) => {
+        await page.goto(PAGE);
+        // Pixel 7: deviceClass mobile AND breakpoint mobile → device entry wins
+        expect(await prop(page, 'axes', 'badgesDisplayMode')).toBe('partial');
+        // `{ mobile: … }` (no axis) is ignored → the page rule's `floating` stays
+        expect(await prop(page, 'old', 'presentation')).toBe('floating');
+    });
+
     test('a property assignment becomes explicit and beats the page rule', async ({ page }) => {
         await page.goto(PAGE);
         expect(await prop(page, 'page', 'badgesDisplayMode')).toBe('count');
@@ -89,5 +100,18 @@ test.describe('desktop viewport', () => {
         expect(await prop(page, 'page', 'presentation')).toBe('auto');
         expect(await prop(page, 'page', 'badgesDisplayMode')).toBe('badges');
         expect(await prop(page, 'inst', 'presentation')).toBe('floating');
+        expect(await prop(page, 'axes', 'badgesDisplayMode')).toBe('badges');
+    });
+
+    test('a narrowed desktop window hits the breakpoint axis, not the device axis', async ({ page }) => {
+        await page.setViewportSize({ width: 700, height: 800 });
+        await page.goto(PAGE);
+        expect(await prop(page, 'axes', 'badgesDisplayMode')).toBe('compact');
+        // device stays desktop → the device.mobile page rule does not apply
+        expect(await prop(page, 'page', 'presentation')).toBe('auto');
+
+        // widening across the 768px line flips the breakpoint-only entry off
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await expect.poll(() => prop(page, 'axes', 'badgesDisplayMode')).toBe('badges');
     });
 });

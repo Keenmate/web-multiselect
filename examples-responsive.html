@@ -455,14 +455,17 @@ el.collapseBadgesBelow = null;</code></pre>
         <div class="card" id="rs10">
             <h2>RS10 · Responsive rules — page rule, instance map, overrides</h2>
             <p>
-                A <strong>responsive rule</strong> is a partial config per device class
-                (<code>mobile</code> / <code>tablet</code> / <code>desktop</code>) — a <em>map</em> — or a
-                <em>callback</em> that computes one from the environment. Set it page-wide
+                A <strong>responsive rule</strong> is a partial config per device class or window width
+                — a <em>map</em> with two axes, each keyed <code>mobile</code> / <code>tablet</code> /
+                <code>desktop</code>: <code>device</code> (phone / tablet by touch capability; a mouse device
+                is always <code>desktop</code>) and <code>breakpoint</code> (the window width, 768 / 1024px;
+                device wins on the same key) — or a <em>callback</em> that computes one from the environment
+                (own widths and combinations go there). Set it page-wide
                 (<code>window.components.responsive</code>), per tag
                 (<code>window.components['web-multiselect'].responsive</code>) or on one element
                 (<code>el.responsive</code> / the JSON <code>responsive</code> attribute). Rules re-run when
-                the device class, width breakpoint (768 / 1024px, from <code>--base-breakpoint-*</code>) or
-                orientation changes, and never write attributes.
+                the device class or width breakpoint (768 / 1024px, from <code>--base-breakpoint-*</code>)
+                changes (callbacks also on every resize), and never write attributes.
             </p>
             <p>
                 Here a <strong>per-tag callback</strong> (opted into by <code>data-rs-demo</code>) switches the
@@ -486,9 +489,9 @@ el.collapseBadgesBelow = null;</code></pre>
                 <div class="form-group">
                     <label>C · instance map beats both</label>
                     <web-multiselect id="rs10-map" data-rs-demo multiple="true" badges-display-mode="partial"
-                        responsive='{"desktop":{"badgesDisplayMode":"compact"},"tablet":{"badgesDisplayMode":"compact"}}'
+                        responsive='{"breakpoint":{"desktop":{"badgesDisplayMode":"compact"},"tablet":{"badgesDisplayMode":"compact"}}}'
                         value-member="value" display-value-member="label"></web-multiselect>
-                    <small class="form-text"><code>responsive='{"desktop":{…"compact"}}'</code> → effective: <code data-rs-readout="rs10-map">…</code></small>
+                    <small class="form-text"><code>responsive='{"breakpoint":{"desktop":{…"compact"}}}'</code> → effective: <code data-rs-readout="rs10-map">…</code></small>
                 </div>
                 <div class="form-group">
                     <label>D · instance callback opts out (<code>null</code>)</label>
@@ -501,7 +504,9 @@ el.collapseBadgesBelow = null;</code></pre>
                 <summary>Show code</summary>
 <pre><code>// page-wide, per tag — may be set BEFORE the component script loads
 // (window.components = { 'web-multiselect': { responsive: {…} } } is adopted on registration)
-window.components['web-multiselect'].responsive = { mobile: { presentation: 'fullscreen' } };   // map
+window.components['web-multiselect'].responsive = {                                      // map
+  device: { mobile: { presentation: 'fullscreen' } },        // a phone (touch capability)
+};
 window.components['web-multiselect'].responsiveCallback = (ctx) =&gt;                          // callback
   ctx.element.hasAttribute('data-rs-demo') &amp;&amp; ctx.breakpoint !== 'desktop'
     ? { badgesDisplayMode: 'count' }
@@ -511,7 +516,7 @@ window.components['web-multiselect'].responsiveCallback = (ctx) =&gt;           
 &lt;web-multiselect badges-display-mode="partial"&gt;&lt;/web-multiselect&gt;
 
 &lt;!-- C: the instance's own map beats its attributes and the page rules --&gt;
-&lt;web-multiselect responsive='{"desktop":{"badgesDisplayMode":"compact"}}'&gt;&lt;/web-multiselect&gt;
+&lt;web-multiselect responsive='{"breakpoint":{"desktop":{"badgesDisplayMode":"compact"}}}'&gt;&lt;/web-multiselect&gt;
 
 // D: null from the instance callback = ignore every page rule
 el.responsiveCallback = () =&gt; null;
@@ -687,7 +692,7 @@ import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@k
 
         // Per-tag map: on a phone every multiselect on this page opens fullscreen (what `auto`
         // does anyway — a map entry is just a partial config for that device class).
-        window.components['web-multiselect'].responsive = { mobile: { presentation: 'fullscreen' } };
+        window.components['web-multiselect'].responsive = { device: { mobile: { presentation: 'fullscreen' } } };
         // The per-tag page rule — scoped to this demo by the data-rs-demo marker.
         window.components['web-multiselect'].responsiveCallback = (ctx) =>
             ctx.element.hasAttribute('data-rs-demo') && ctx.breakpoint !== 'desktop'
