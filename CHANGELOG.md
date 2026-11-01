@@ -416,6 +416,7 @@ brings its hover, tint and text along.
 
 ### Internal
 
+- Depends on the published `@keenmate/web-components-core@^1.0.0-rc15` (was the local `file:` link).
 - **`npm run check:contract`** (in `build`): `@keenmate/base-css-variables` ^2.0.0-rc05 as a
   devDependency; `base-contract-check src` fails the build on unknown `--base-*` reads, input
   fallbacks that differ from the contract, and literal fallbacks for derived tokens. Deliberate
