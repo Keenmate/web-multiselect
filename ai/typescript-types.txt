@@ -31,7 +31,7 @@ import type {
   MessageType, MessageOptions, BadgesDisplayMode, SearchMode
 } from '@keenmate/web-multiselect';
 
-Renamed / removed in the interaction-model release (see CHANGELOG [Unreleased]):
+Renamed / removed in the interaction-model release (see CHANGELOG [3.0.0-rc01]):
   WebMultiSelect                 → MultiSelectEngine (standalone engine; element users use el.controller)
   MultiSelectKeyboardController  → MultiSelectController
   MultiSelectKeydownContext      → KeydownContext

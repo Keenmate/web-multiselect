@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0-rc01] - 2026-11-03 [PUBLISHED]
 
-Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
-consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
+A major: callbacks, events and inputs below are breaking, so `^2.x` consumers must not
+auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
 ### Changed — motion level and container scrolling (core rc17, base-css-variables rc08)
 
@@ -94,7 +94,7 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
 - **New input `renderLoadingCallback`** (property, `on: 'update'`): draw the loader yourself —
   `ctx = { component, context, containerElement, element, label }`, optional cleanup return.
   Beats the page-wide `window.components.renderLoaderCallback`.
-- **Dev dependency:** requires `@keenmate/base-css-variables` `^2.0.0-rc06` (the `--base-loader-*` tokens).
+- **Dev dependency:** `@keenmate/base-css-variables` (the `--base-loader-*` tokens; rc06 at the time, now `^2.0.0-rc08`).
 - **Tests:** `e2e/loader.spec.ts` (+ `test/loader.html`) — default loader with role/label,
   HTML label → plain aria-label, page hook replaces it + cleanup on remove, instance hook
   beats the page hook, add-new pending context.
@@ -153,8 +153,8 @@ One vocabulary across the KeenMate components (rulebook D-NC-13..27). No aliases
 | `isActionsSticky` / `sticky-actions` | `isActionsSticky` / `actions-sticky` |
 | `tab-behavior="select-highlighted"` | `tab-behavior="select-focused"` (focus = the keyboard cursor) |
 
-**Selection and state.** `clearSelection()` everywhere; real state is a same-named
-property on the element AND the controller (no `get*()` duplicates).
+**Selection and state.** `clearSelection()` on the controller (`el.controller`); real state is a
+same-named property on the element AND the controller (no `get*()` duplicates).
 
 | Old | New |
 |---|---|
@@ -177,23 +177,23 @@ one ctx.
 |---|---|
 | per-option ctx `{ item }` (`getValueCallback`, `getDisplayValueCallback`, `getIconCallback`, `getIsDisabledCallback`, `getIsSelectableCallback({ item, node })`, all badge / render / tooltip callbacks, `renderSelectedContentCallback`, …) | `{ option }` (`ItemContext.option`) |
 | `renderOptionContentCallback` / `getOptionTooltipCallback` ctx `index` | `optionIndex` |
-| `searchCallback({ term, signal, searchTerm, entries })` | `searchCallback({ term, signal, entries })` — `term` is the `getSearchTermCallback` result for `target: 'callback'` when set, else the typed text (`MultiSelectSearchContext<T, TTerm>`) |
+| `searchCallback(term, signal, { searchTerm, entries })` | `searchCallback({ term, signal, entries })` — `term` is the `getSearchTermCallback` result for `target: 'callback'` when set, else the typed text (`MultiSelectSearchContext<T, TTerm>`) |
 | `searchCallback` `entries[i].item` | `entries[i].data` (core `SearchEntry`; `item` is reserved for action items) |
 | `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
 | `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element) / `void` (controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
 
 **UI strings → `labels`** (rulebook D-NC-24). Every visible text and ARIA label is a key of
 the one `labels` map — property (partial object) or JSON attribute
-(`labels='{"empty":"Nic","searchPlaceholder":"Hledat…"}'`); unset keys fall back to English.
+(`labels='{"noResults":"Nic","searchPlaceholder":"Hledat…"}'`); unset keys fall back to English.
 The per-string inputs are removed:
 
 | Old (attribute / property) | New `labels` key |
 |---|---|
 | `search-placeholder` / `searchPlaceholder` | `searchPlaceholder` (+ `filterPlaceholder` / `navigatePlaceholder` for the mode-aware default with `show-search-mode-toggle`) |
 | `select-placeholder` / `selectPlaceholder` | `selectPlaceholder` |
-| `no-data-placeholder` / `noDataPlaceholder` | `noData` |
-| `empty-message` / `emptyMessage` | `empty` (also the fullscreen "no matches" counter) |
-| `loading-message` / `loadingMessage` | `loading` |
+| `no-data-placeholder` / `noDataPlaceholder` | `noDataPlaceholder` (see leftover decisions below) |
+| `empty-message` / `emptyMessage` | `noData` (no options) / `noResults` (no matches; also the fullscreen counter) |
+| `loading-message` / `loadingMessage` | `searching` |
 | `search-hint` / `searchHint` | `searchHint` |
 | `add-new-text` / `addNewText` | `addNew` (`{value}`) |
 | `add-new-pending-text` / `addNewPendingText` | `addNewPending` (`{value}`) |
@@ -485,7 +485,7 @@ brings its hover, tint and text along.
 
 ### Internal
 
-- Depends on the published `@keenmate/web-components-core@^1.0.0-rc15` (was the local `file:` link).
+- Depends on the published `@keenmate/web-components-core` (was the local `file:` link; rc15 at the time, now `^1.0.0-rc17`).
 - **`npm run check:contract`** (in `build`): `@keenmate/base-css-variables` ^2.0.0-rc06 as a
   devDependency; `base-contract-check src` fails the build on unknown `--base-*` reads, input
   fallbacks that differ from the contract, and literal fallbacks for derived tokens. Deliberate

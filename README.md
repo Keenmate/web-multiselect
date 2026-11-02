@@ -31,12 +31,13 @@ Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.np
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
-## What's New in v3.0.0
+## What's New in v3.0.0-rc01
 
 **A major release — breaking, no aliases.** The callbacks, events and inputs follow the shared
 KeenMate interaction model and naming rulebook (`@keenmate/web-components-core` 1.0.0-rc17), so
-code written for 2.x needs updating. Full old → new tables: the
-[CHANGELOG `[Unreleased]` section](CHANGELOG.md#unreleased); step-by-step:
+code written for 2.x needs updating. Upgrade guide: the
+[3.0.0-rc01 release notes](release-notes/3.0.0-rc01.md); full old → new tables: the
+[CHANGELOG 3.0.0-rc01 section](CHANGELOG.md); step-by-step:
 [ai/migration-guide.txt](ai/migration-guide.txt).
 
 **Breaking changes:**

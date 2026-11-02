@@ -406,7 +406,7 @@ If migrating from older library with IE support:
 FROM WEB-MULTISELECT 2.x (INTERACTION MODEL)
 --------------------------------------------
 The interaction-model release is BREAKING, with no aliases. Full old → new table:
-CHANGELOG.md, section [Unreleased]. The essentials:
+CHANGELOG.md, section [3.0.0-rc01]. The essentials:
 
 - Every callback takes ONE ctx; per-option callbacks read ctx.option:
     getDisplayValueCallback = (item) => item.name      →  ({ option }) => option.name
@@ -445,7 +445,7 @@ CHANGELOG.md, section [Unreleased]. The essentials:
 
 FROM WEB-MULTISELECT 2.x (NAMING UNIFICATION, 3.0)
 -------------------------------------------------
-Same 3.0 release, also no aliases. Full tables: CHANGELOG.md [Unreleased].
+Same 3.0 release, also no aliases. Full tables: CHANGELOG.md [3.0.0-rc01].
 
 Attributes / properties (property / attribute):
     isMultipleEnabled / multiple                 → isMultiple / multiple

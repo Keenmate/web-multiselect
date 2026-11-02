@@ -334,7 +334,7 @@ Q: How do I prevent / veto a selection?
 A: → selection-modes.txt, events-callbacks.txt (beforeSelectCallback / beforeDeselectCallback → return false)
 
 Q: I'm upgrading from web-multiselect 2.x (old callback signatures)
-A: → migration-guide.txt (FROM WEB-MULTISELECT 2.x) and CHANGELOG.md [Unreleased]
+A: → migration-guide.txt (FROM WEB-MULTISELECT 2.x) and CHANGELOG.md [3.0.0-rc01]
 
 FEATURES BY CATEGORY
 ====================
