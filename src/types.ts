@@ -847,7 +847,7 @@ export interface MultiSelectConfig<T = any> {
      * Allow adding new options not in the list (internal: isAddNewAllowed).
      * When on and a search yields no matches, the empty dropdown shows a clickable
      * "add new" prompt (text from `labels.addNew` / `getAddNewTextCallback`) instead of
-     * the `labels.empty` text; choosing it (click or Enter) runs `beforeAddCallback` and fires
+     * the `labels.noResults` text; choosing it (click or Enter) runs `beforeAddCallback` and fires
      * the `add` event.
      */
     isAddNewAllowed?: boolean;

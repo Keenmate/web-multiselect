@@ -251,7 +251,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'beforeSelectCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSelectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture selects an option (`ctx.option`, `ctx.source`) — once per option, also for Select-All / group checkboxes. Return `false` to veto (explain it with `ctx.controller.showMessage`). May be async.' },
   { configKey: 'beforeDeselectCallback',  converter: cb(), on: 'update', type: '(ctx: BeforeDeselectContext) => void | false | Promise<void | false>', description: 'Runs before a user gesture deselects an option (row, badge ×, Clear-All, inline ✕, …) — once per option. Return `false` to veto. May be async.' },
   { configKey: 'beforeAddCallback',       converter: cb(), on: 'update', type: '(ctx: AddContext) => unknown | false | void | Promise<unknown | false | void>', description: 'Runs when the user creates an option from the typed text (`ctx.value`). Return the new option (appended + selected), `false` to cancel (no `add` event), or nothing to only fire `add` and create it yourself. May be async (a spinner shows).' },
-  { configKey: 'getAddNewTextCallback',   converter: cb(), on: 'update', type: '(ctx: AddContext) => string', description: 'Compute the "add new" prompt label from `ctx.value` (returns plain text). Takes precedence over `add-new-text`.' },
+  { configKey: 'getAddNewTextCallback',   converter: cb(), on: 'update', type: '(ctx: AddContext) => string', description: 'Compute the "add new" prompt label from `ctx.value` (returns plain text). Takes precedence over `labels.addNew`.' },
   { configKey: 'beforeKeydownCallback',   converter: cb(), on: 'update', type: '(ctx: KeydownContext) => void | false', description: 'Runs before the built-in keyboard handling (`ctx.event`, `ctx.key`, state; drive the picker via `ctx.controller`). Return `false` to suppress the built-in handling of the key. Synchronous.' },
   { configKey: 'beforeActionCallback',    converter: cb(), on: 'update', type: '(detail: MultiSelectActionEventDetail) => void | false | Promise<void | false>', description: 'Runs before an action item (button or `data-action` trigger) activates: return `false` to cancel its onClick, the `action` event and the built-in. May be async.' },
 ];
@@ -292,6 +292,15 @@ const EVENTS = [
 let liveOptions: (el: HTMLElement) => ReadonlyArray<Record<string, unknown>> | undefined = () => undefined;
 
 const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+
+/** A torn-down picker's live state, carried to the next build (see #buildPicker). */
+type HeldSelection<T> = {
+  /** Raw selection keys in order — including values whose option isn't loaded yet. */
+  selection: string[];
+  selectedOptions: T[];
+  selectedValue: string | number | (string | number)[] | null;
+  formValue: string | string[];
+};
 
 /** CSS-var sugar: configKey → the host CSS custom property it mirrors to. */
 const CSS_VARS: Record<string, string> = {
@@ -334,12 +343,15 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   #shadow: ShadowRoot;
   #picker?: MultiSelectEngine<T>;
-  // A `value` property assigned before the picker was built — applied on the first build.
+  // A `value` property assigned while no picker exists — applied on the next build.
   #pendingValue: string | readonly (string | number)[] | null = null;
+  // The live state of a picker torn down by a removal (removedCallback) — re-seeded when
+  // the element is attached again, and what the getters report while it is detached.
+  #heldState?: HeldSelection<T>;
   #container?: HTMLDivElement;
-  // The `value` (defaultValue) JSON applied at the last build. Lets a rebuild (reinit)
-  // tell an explicit `value` (defaultValue) change (honour the new values) apart from a
-  // cosmetic/structural reinit (preserve the user's runtime selection). See #buildPicker.
+  // The `value` (defaultValue) JSON of the last build. Lets a rebuild tell an explicit
+  // `value` (defaultValue) change (honour the new default) apart from a cosmetic/structural
+  // reinit or a re-attach (keep the live selection). See #buildPicker.
   #lastDefaultValueJSON?: string;
   #customStyles: StyleSlot | null = null;
   // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
@@ -386,6 +398,13 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    */
   formResetCallback(): void {
     this.flush();
+    if (!this.#picker) {
+      // Deferred / detached: forget the assigned or held selection — the next build seeds
+      // the default, exactly what a reset of a built picker leaves.
+      this.#pendingValue = null;
+      this.#heldState = undefined;
+      return;
+    }
     const initial = this.#resolveDefaultValue() ?? [];
     // A single-select holds one value — same rule as the first build.
     this.#picker?.setSelected(this.config.isMultiple === false ? initial.slice(0, 1) : initial);
@@ -422,8 +441,14 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     const pickerPartial: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(partial)) {
       if (NON_PICKER_KEYS.has(key)) continue;
+      // Collapsed by `collapse-badges-below`: the new mode is stored in config and lands
+      // when the box widens again (#restoreBadgesMode) — forwarding it now would undo the collapse.
+      if (key === 'badgesDisplayMode' && this.#badgesCollapsed) continue;
       pickerPartial[key] = value;
     }
+    // `options` resolves through the same source precedence as a build (<option> children >
+    // property > `data-options`), so an assignment can't show a list a rebuild would replace.
+    if ('options' in pickerPartial) pickerPartial.options = this.#resolveOptionData(pickerPartial.options as T[] | null | undefined);
     if (this.#picker && Object.keys(pickerPartial).length > 0) {
       if (!this.#picker.updateOptions(pickerPartial as Partial<MultiSelectConfig<T>>)) this.#rebuildPicker();
     }
@@ -445,14 +470,25 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker?.setDisabled(isDisabled);
   }
 
-  /** Activate: ensure the picker exists (a DOM move destroyed it in disconnect()). */
+  /** Activate: ensure the picker exists (a removal tore it down in removedCallback()). */
   protected override connect(): void {
-    if (!this.#picker) this.#buildPicker();
+    if (!this.#picker) this.#rebuildPicker();
   }
 
-  /** Deactivate: tear the picker down (rebuilt on the next connect). */
+  /**
+   * Deactivate: close the dropdown, keep the picker. A DOM move (reorder, into a dialog /
+   * portal) reconnects in the same task, so the selection, "add new" options and the rest
+   * of the live state survive it; a real removal is handled by removedCallback().
+   */
   protected override disconnect(): void {
-    this.#picker?.destroy();
+    this.#picker?.close();
+  }
+
+  /** Still detached a frame after disconnect (core): a removal — hold the state, release the picker. */
+  protected override removedCallback(): void {
+    if (!this.#picker) return;
+    this.#heldState = this.#captureState(this.#picker);
+    this.#picker.destroy();
     this.#picker = undefined;
   }
 
@@ -535,41 +571,50 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   // ── picker lifecycle ──────────────────────────────────────────────────────
 
+  /**
+   * (Re)build the picker, carrying the live state over: from the current picker (a reinit
+   * from a structural change) or the state held since a removal (re-attach). First build:
+   * neither exists.
+   */
   #rebuildPicker(): void {
-    // Capture the live selection before tearing down so the rebuilt picker can keep
-    // it (a reinit from a cosmetic/structural attribute change shouldn't wipe what
-    // the user picked). #buildPicker decides whether to honour it.
-    const runtimeSelection = this.#picker ? this.#collectSelectedValues() : undefined;
+    const held = this.#picker ? this.#captureState(this.#picker) : this.#heldState;
+    this.#heldState = undefined;
     this.#picker?.destroy();
     this.#picker = undefined;
-    this.#buildPicker(runtimeSelection);
+    this.#buildPicker(held);
   }
 
-  #buildPicker(runtimeSelection?: (string | number)[]): void {
+  #captureState(picker: MultiSelectEngine<T>): HeldSelection<T> {
+    return {
+      selection: picker.getSelectionSnapshot(),
+      selectedOptions: picker.selectedOptions,
+      selectedValue: picker.selectedValue,
+      formValue: picker.getFormValue(),
+    };
+  }
+
+  #buildPicker(held?: HeldSelection<T>): void {
     this.#ensureContainer();
     this.#parseDeclarativeOptionsOnce();
 
     const cfg = this.#assembleConfig();
 
-    // Seed the picker's initial selection. On a rebuild we prefer the user's live
-    // selection (`runtimeSelection`) so a reinit doesn't reset it — UNLESS the
-    // consumer explicitly changed `value` (defaultValue) since the last build, in which
-    // case that new value wins. First build has no runtime selection, so it uses
-    // the configured/declarative initial values.
+    // Seed the picker's initial selection, by precedence:
+    // 1. a `value` property assigned while no picker existed (an explicit current value);
+    // 2. the held live selection — even an empty one (the user cleared it) — UNLESS the
+    //    consumer changed `value` (defaultValue) since the last build: a new default wins;
+    // 3. the default (`value` / defaultValue, or declarative `<option selected>`).
+    // The held selection keeps values whose option isn't loaded yet, so "options not there
+    // yet" can't be mistaken for "cleared".
     const pendingValue = this.#pendingValue;
     this.#pendingValue = null;
-    const configInitial = pendingValue !== null ? this.#parseValue(pendingValue) : this.#resolveDefaultValue();
-    const configJSON = JSON.stringify(configInitial ?? null);
-    // Only preserve a NON-EMPTY runtime selection: an empty one is ambiguous (the
-    // user cleared everything OR the first build ran before options were available,
-    // so `value` (defaultValue) couldn't match yet) — falling back to the configured
-    // initial values keeps declarative `value` (defaultValue) working when options arrive
-    // on a later reinit.
-    const preserve = runtimeSelection !== undefined
-      && runtimeSelection.length > 0
-      && configJSON === this.#lastDefaultValueJSON;
-    const initialValues = preserve ? runtimeSelection : configInitial;
-    this.#lastDefaultValueJSON = configJSON;
+    const defaultValues = this.#resolveDefaultValue();
+    const defaultJSON = JSON.stringify(defaultValues ?? null);
+    const isHeldKept = pendingValue === null && held !== undefined && defaultJSON === this.#lastDefaultValueJSON;
+    const initialValues = pendingValue !== null ? this.#parseValue(pendingValue)
+      : isHeldKept ? held!.selection
+      : defaultValues;
+    this.#lastDefaultValueJSON = defaultJSON;
 
     // The picker reads initial values off the container dataset.
     if (initialValues && initialValues.length > 0) {
@@ -579,6 +624,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     }
 
     this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
+    // Selected options the new list lacks ("add new" ones, from a re-parsed source) stay selected.
+    if (isHeldKept) this.#picker.adoptSelectedOptions(held!.selectedOptions);
     this.#applyCustomStyles();
     // A fresh picker starts 'floating'; re-assert the resolved presentation so a
     // rebuild (reinit) doesn't drop a fullscreen setting until the next env change.
@@ -616,30 +663,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // loop produced, now via the one shared assembler instead of a per-component loop.
     const cfg = this.engineConfig(NON_PICKER_KEYS);
 
-    // Option-data precedence: declarative <option> children > the `options`
-    // property (JS) > the `data-options` attribute (parsed per data-options-format).
-    // `optionsSource`/`optionsFormat` are reactive inputs (observed by the table),
-    // so this whole derivation re-runs on reinit when either attribute changes —
-    // no hand-rolled getAttribute, no non-reactive parse.
-    let optionData = cfg.options as T[] | undefined;
-    if (this.#hasDeclarativeOptions && this.#declarativeOptions) {
-      if (optionData && optionData.length > 0) {
-        dataLogger.warn('[MultiSelectElement] Both declarative <option> elements and programmatic .options detected. Using declarative options.');
-      }
-      optionData = this.#declarativeOptions;
-    } else if (!optionData || optionData.length === 0) {
-      const source = this.config.optionsSource as string | null | undefined;
-      if (source != null) {
-        const format = (this.config.optionsFormat as OptionsFormat) ?? 'json';
-        const { options: parsed, error } = parseOptionsData(source, format, {
-          splitter: this.config.optionsSplitter as string | undefined,
-          rowSplitter: this.config.optionsRowSplitter as string | undefined,
-        });
-        if (error) dataLogger.error(`[MultiSelectElement] ${error}`);
-        optionData = parsed as T[];
-      }
-    }
-    cfg.options = optionData;
+    cfg.options = this.#resolveOptionData(cfg.options as T[] | null | undefined);
 
     // Event bridges: the engine builds each detail (with the context) and reports it
     // through its on* options; the element dispatches it (core calls the on<Name> twin).
@@ -664,6 +688,31 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     return cfg;
   }
 
+  /**
+   * Option-data precedence: declarative <option> children > the `options` property (JS) >
+   * the `data-options` attribute (parsed per data-options-format). Shared by a build and an
+   * in-place `options` update. `optionsSource`/`optionsFormat` are reactive inputs (observed
+   * by the table), so a change to either re-runs this on reinit.
+   */
+  #resolveOptionData(property: T[] | null | undefined): T[] | null | undefined {
+    if (this.#hasDeclarativeOptions && this.#declarativeOptions) {
+      if (property && property.length > 0) {
+        dataLogger.warn('[MultiSelectElement] Both declarative <option> elements and programmatic .options detected. Using declarative options.');
+      }
+      return this.#declarativeOptions;
+    }
+    if (property && property.length > 0) return property;
+    const source = this.config.optionsSource as string | null | undefined;
+    if (source == null) return property;
+    const format = (this.config.optionsFormat as OptionsFormat) ?? 'json';
+    const { options: parsed, error } = parseOptionsData(source, format, {
+      splitter: this.config.optionsSplitter as string | undefined,
+      rowSplitter: this.config.optionsRowSplitter as string | undefined,
+    });
+    if (error) dataLogger.error(`[MultiSelectElement] ${error}`);
+    return parsed as T[];
+  }
+
   #resolveDefaultValue(): (string | number)[] | undefined {
     if (this.#declarativeSelectedValues && this.#declarativeSelectedValues.length > 0) {
       return this.#declarativeSelectedValues;
@@ -675,12 +724,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   /** Parse a `value` (attribute grammar) per the current `value-format` / `value-separator`. */
   #parseValue(value: string | readonly (string | number)[]): (string | number)[] {
     return parseDefaultValue(value, this.config.valueFormat as string | undefined, this.config.valueSeparator as string | undefined);
-  }
-
-  #collectSelectedValues(): (string | number)[] {
-    const val = this.#picker?.selectedValue;
-    if (val == null) return [];
-    return Array.isArray(val) ? val : [val];
   }
 
   // ── §12.8 custom styles ───────────────────────────────────────────────────
@@ -813,7 +856,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   /** The selection — a scalar (or null) in single-select, an array in multi-select. Same as `controller.selectedValue`. */
   get selectedValue(): string | number | (string | number)[] | null {
     this.flush(); // apply a pending `options = …` before reading live picker state
-    return this.#picker?.selectedValue ?? null;
+    return this.#picker ? this.#picker.selectedValue : this.#heldState?.selectedValue ?? null;
   }
 
   /**
@@ -828,6 +871,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   get value(): string | string[] {
     this.flush();
     if (this.#picker) return this.#picker.getFormValue();
+    if (this.#pendingValue === null && this.#heldState) return this.#heldState.formValue; // removed: the last value
     // Not built yet: the pending assignment / default value, in the submitted form.
     const isArray = this.config.valueFormat === 'array' && !this.config.getValueFormatCallback;
     const values = this.#pendingValue !== null ? this.#parseValue(this.#pendingValue) : this.#resolveDefaultValue() ?? [];
@@ -845,13 +889,13 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   /** The first selected option (the only one in single-select), or null. Same as `controller.selectedOption`. */
   get selectedOption(): T | null {
     this.flush();
-    return this.#picker?.selectedOption ?? null;
+    return this.#picker ? this.#picker.selectedOption : this.#heldState?.selectedOptions[0] ?? null;
   }
 
   /** The selected option objects, in selection order. Same as `controller.selectedOptions`. */
   get selectedOptions(): T[] {
     this.flush();
-    return this.#picker ? this.#picker.selectedOptions : [];
+    return this.#picker ? this.#picker.selectedOptions : [...(this.#heldState?.selectedOptions ?? [])];
   }
 
   /** The option whose value equals `value` (compared as strings), or `null` — also finds a selected option no longer in `options`. Same as `controller.getOptionByValue()`. */
@@ -995,6 +1039,9 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   protected override destroyCallback(): void {
     this.#picker?.destroy();
     this.#picker = undefined;
+    this.#heldState = undefined;
+    // ElementInternals outlive the element's teardown (core): drop a format-error validity.
+    this.setFormatError(null);
   }
 
   /**

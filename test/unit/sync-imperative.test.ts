@@ -43,7 +43,7 @@ describe('synchronous imperative API after a property write', () => {
     });
 
     it('compact mode renders the picked option, not undefined (the original crash)', () => {
-        mount({ 'badges-threshold': '5', 'badges-threshold-mode': 'compact' });
+        mount({ 'badges-threshold': '5', 'badges-display-mode': 'compact' });
         el.options = ITEMS;
         el.setSelected(['js', 'ts', 'py']);
         const badges = el.shadowRoot.querySelector('.ms__badges')?.textContent ?? '';

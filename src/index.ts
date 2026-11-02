@@ -42,6 +42,8 @@ export {
   observeThemeContext,
 } from '@keenmate/web-components-core';
 export type { ColorScheme, ThemeMode, ThemeSource } from '@keenmate/web-components-core';
+// `renderLoadingCallback(ctx)` — the loader slot's context (core SPEC §12.14).
+export type { LoaderRenderContext } from '@keenmate/web-components-core';
 export type {
   EnvironmentSnapshot,
   DeviceClass,
@@ -65,6 +67,9 @@ export type {
   BadgesDisplayMode,
   BadgesPosition,
   BadgesThresholdMode,
+  ActionsLayout,
+  ActionsPosition,
+  ActionsAlign,
   SearchInputMode,
   SearchMode,
   SearchBehavior,

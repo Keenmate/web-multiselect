@@ -99,6 +99,8 @@ export class MultiSelectEngine<T = any> {
     // so the public `isOpen` accessor (get/set) can drive open()/close() without
     // recursing. See the imperative API at the bottom of the class.
     #isOpen = false;
+    /** Set by destroy(): async continuations (before* hooks, actions) must not touch a torn-down engine. */
+    #isDestroyed = false;
     private selectedValues = new Set<string>();
     private selectedByValue = new Map<string, T>();
     private allOptions: T[] = [];
@@ -473,7 +475,9 @@ export class MultiSelectEngine<T = any> {
      */
     private prepareSearchTerm(term: string, useCallback: boolean): ActiveSearchTerm {
         // Below min-search-length there is no term: no filtering, no navigate jumps, no highlight.
-        if (term.trim().length < (this.options.minSearchLength || 0)) return NO_SEARCH_TERM;
+        // Measured on the text as typed (same gate as the searchCallback path) — whitespace can
+        // be meaningful (" b" for a code); trimming is the term preparation's call, not the gate's.
+        if (term.length < (this.options.minSearchLength || 0)) return NO_SEARCH_TERM;
         const callback = useCallback ? this.options.getSearchTermCallback : null;
         return prepareSearchTerm(term, {
             behavior: this.options.searchBehavior || 'normalized',
@@ -2399,7 +2403,13 @@ export class MultiSelectEngine<T = any> {
                 this.renderDropdown();
                 return;
             }
-            if ('value' in gate && gate.value != null) processedValue = String(gate.value);
+            if ('value' in gate) {
+                // Only a string replaces the term; anything else (`true`, `null`, …) = continue.
+                if (typeof gate.value === 'string') processedValue = gate.value;
+                else if (gate.value != null && gate.value !== true) {
+                    dataLogger.warn(`[${this.instanceId}] beforeSearchCallback returned a ${typeof gate.value} — expected false, a string or nothing; continuing with the typed term`);
+                }
+            }
             if (processedValue !== value) {
                 dataLogger.debug(`[${this.instanceId}] beforeSearchCallback transformed: "${value}" -> "${processedValue}"`);
             }
@@ -2422,7 +2432,6 @@ export class MultiSelectEngine<T = any> {
             // Check minimum search length
             if (processedValue.length < this.options.minSearchLength || noCallbackTerm) {
                 this.abortInFlightSearch(); // No longer want any in-flight results
-                this.isLoading = false; // Stop loading state
                 if (this.options.shouldKeepOptionsOnSearch) {
                     // Keep showing initial options (full tree in tree mode).
                     if (this.isTreeMode()) this.rebuildTreeVisibleFromMatches(this.allOptions);
@@ -2539,14 +2548,21 @@ export class MultiSelectEngine<T = any> {
         }
     }
 
-    /** Abort the search request currently in flight, if any. The aborted request's results
-     *  are then ignored (and the consumer's `searchCallback` can short-circuit its fetch via
-     *  the `AbortSignal` it was handed). */
+    /** Abort the search request currently in flight (and any debounced one not yet sent), and
+     *  leave the loading state. The aborted request's results are then ignored (and the
+     *  consumer's `searchCallback` can short-circuit its fetch via the `AbortSignal` it was
+     *  handed). Every path that drops the typed term calls this — otherwise the dropped
+     *  request's results are discarded unseen and the loader stays up. */
     private abortInFlightSearch(): void {
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = undefined;
+        }
         if (this.searchAbortController) {
             this.searchAbortController.abort();
             this.searchAbortController = undefined;
         }
+        this.isLoading = false;
     }
 
     /**
@@ -3268,6 +3284,9 @@ export class MultiSelectEngine<T = any> {
      * other `data-*`).
      */
     private activateActionTrigger(trigger: HTMLElement, sourceEvent: Event): void {
+        // A disabled control runs no actions — consumer ones included. (Readonly still does:
+        // an action may only inspect; the built-in select-all / clear are vetoed per option.)
+        if (this.options.isDisabled) return;
         const configuredIndex = trigger.dataset.msItemIndex;
         const configured = configuredIndex !== undefined ? this.getActionItems()[Number(configuredIndex)] : undefined;
 
@@ -3313,8 +3332,9 @@ export class MultiSelectEngine<T = any> {
             detail,
             beforeActionCallback: this.options.beforeActionCallback,
             // The event reports the state the built-in / onClick left: refresh the selection snapshot.
-            emitAction: (d) => this.options.onAction?.(Object.assign(d, this.selectionSnapshot())),
-            runBuiltIn: (d) => this.runBuiltInAction(d.action),
+            // An async beforeActionCallback may outlive the engine (reinit / DOM move): then nothing runs.
+            emitAction: (d) => { if (!this.#isDestroyed) this.options.onAction?.(Object.assign(d, this.selectionSnapshot())); },
+            runBuiltIn: (d) => this.#isDestroyed ? undefined : this.runBuiltInAction(d.action),
         });
     }
 
@@ -3336,6 +3356,7 @@ export class MultiSelectEngine<T = any> {
         this.input.value = '';
         if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
         this.typedTerm = '';
+        this.abortInFlightSearch();
         this.resetVisibleToAll();
         this.matchingIndices.clear();
         this.focusedIndex = -1;
@@ -3547,6 +3568,11 @@ export class MultiSelectEngine<T = any> {
                 const isChecked = nodeCheckState(index, node, checked) === 'checked';
                 void then(this.vetoOne(isChecked ? 'deselect' : 'select', option, 'option'), (isAllowed) => {
                     if (!isAllowed) return;
+                    // An async veto: the subtree may have flipped meanwhile (a second click) —
+                    // the approved direction no longer applies, so don't toggle it back.
+                    if (this.cascadeIndex !== index) return;
+                    const isCheckedNow = nodeCheckState(index, node, new Set(expandToAtoms(index, this.selectedValues))) === 'checked';
+                    if (isCheckedNow !== isChecked) return;
                     this.toggleTreeCascade(node);
                     if (this.options.shouldCloseOnSelect) this.close();
                 });
@@ -3597,7 +3623,8 @@ export class MultiSelectEngine<T = any> {
             kind === 'select' ? 'beforeSelectCallback' : 'beforeDeselectCallback');
         return then(gate, (g: BeforeCallbackResult) => {
             if (g.isRejected) interactionLogger.debug(`[${this.instanceId}] ${kind} blocked by before${kind === 'select' ? 'Select' : 'Deselect'}Callback (${source})`);
-            return !g.isRejected;
+            // Torn down while an async hook ran (reinit / DOM move): nothing may change.
+            return !g.isRejected && !this.#isDestroyed;
         });
     }
 
@@ -3658,7 +3685,8 @@ export class MultiSelectEngine<T = any> {
      * `option` only when one was created here.
      */
     private async handleAddNew(value: string): Promise<void> {
-        if (this.isInteractionBlocked()) return;
+        // One creation at a time: Enter on the pending prompt must not run the hook again.
+        if (this.isInteractionBlocked() || this.addNewPending) return;
         try {
             let newOption: T | undefined;
 
@@ -3678,6 +3706,7 @@ export class MultiSelectEngine<T = any> {
                 } finally {
                     this.addNewPending = false;
                 }
+                if (this.#isDestroyed) return; // torn down (reinit / DOM move) while the hook ran
 
                 // Cancel: no push, no select, no `add` event; the search stays so the user can adjust.
                 if (gate.isRejected) {
@@ -3686,7 +3715,8 @@ export class MultiSelectEngine<T = any> {
                     return;
                 }
                 // `== null` (not falsy) so a valid primitive-mode option of 0 / "" still creates.
-                if ('value' in gate && gate.value != null) newOption = gate.value;
+                // `true` is never an option: it means "go ahead" (the consumer creates it).
+                if ('value' in gate && gate.value != null && (gate.value as unknown) !== true) newOption = gate.value;
             }
 
             if (newOption !== undefined) {
@@ -3699,6 +3729,7 @@ export class MultiSelectEngine<T = any> {
                 // "one filtered result" state and shows the full (now longer) list — otherwise it
                 // stays stuck showing only the just-added row until the user searches again.
                 this.typedTerm = '';
+                this.abortInFlightSearch();
                 this.input.value = '';
                 if (this.fullscreenSearchInput) this.fullscreenSearchInput.value = '';
                 this.matchingIndices.clear();
@@ -4055,6 +4086,7 @@ export class MultiSelectEngine<T = any> {
         // Clear the search unless it is kept (default: kept in multi-select, cleared in single-select)
         if (!this.shouldKeepSearchOnClose()) {
             this.typedTerm = '';
+            this.abortInFlightSearch();
             // Only clear input in multi-select mode or when search is enabled
             if (this.options.isMultiple || this.options.isSearchEnabled) {
                 this.input.value = '';
@@ -5373,6 +5405,8 @@ export class MultiSelectEngine<T = any> {
      * `select`/`deselect` flood a bulk change would otherwise cause.
      */
     public setSelected(values: (string | number)[], opts: { notify?: boolean } = {}): void {
+        // Single-select holds at most one value, whichever API set it (el.value = 'a,b' included).
+        if (!this.options.isMultiple && values.length > 1) values = values.slice(0, 1);
         this.selectedValues = new Set(values.map(v => String(v)));
         this.selectedByValue.clear();
         values.forEach(value => {
@@ -5547,7 +5581,8 @@ export class MultiSelectEngine<T = any> {
 
         // Search input display mode
         if ('searchInputMode' in partial) {
-            this.input.readOnly = this.options.searchInputMode === 'readonly';
+            // Same rule as applyInteractionState(): a readonly control stays read-only.
+            this.input.readOnly = !!this.options.isReadonly || this.options.searchInputMode === 'readonly';
             // Hide via `visibility` (not `display`) so the input keeps its flex space
             // and the trailing toggle stays at the trailing edge (see reinit path).
             this.input.style.visibility = this.options.searchInputMode === 'hidden' ? 'hidden' : '';
@@ -5614,6 +5649,40 @@ export class MultiSelectEngine<T = any> {
     }
 
     /** The selection as returned to forms/consumers — a scalar (or null) in single-select, an array in multi-select. */
+    /**
+     * The raw selection keys, in selection order — including values whose option isn't in the
+     * list (yet). What a rebuild re-seeds from, so "not loaded yet" can't read as "cleared".
+     */
+    public getSelectionSnapshot(): string[] {
+        return [...this.selectedValues];
+    }
+
+    /**
+     * Re-attach selected option objects the current list doesn't contain (an "add new" option,
+     * or one dropped from `options`) after a rebuild re-seeded their values — otherwise they'd
+     * stay unresolved and vanish from the value. Silent.
+     */
+    public adoptSelectedOptions(options: readonly T[]): void {
+        let isChanged = false;
+        for (const option of options) {
+            const valueKey = String(this.getItemValue(option));
+            if (!this.selectedValues.has(valueKey) || this.selectedByValue.has(valueKey)) continue;
+            this.selectedByValue.set(valueKey, option);
+            isChanged = true;
+        }
+        if (!isChanged) return;
+        // Keep selection order: selectedByValue follows selectedValues.
+        const ordered = new Map<string, T>();
+        for (const valueKey of this.selectedValues) {
+            const option = this.selectedByValue.get(valueKey);
+            if (option !== undefined) ordered.set(valueKey, option);
+        }
+        this.selectedByValue = ordered;
+        this.renderDropdown();
+        this.renderBadges();
+        this.updateHiddenInput();
+    }
+
     public get selectedValue(): string | number | (string | number)[] | null {
         if (this.selectedByValue.size === 0) {
             return this.options.isMultiple ? [] : null;
@@ -6066,15 +6135,15 @@ export class MultiSelectEngine<T = any> {
     // ========================================================================
 
     public destroy(): void {
+        if (this.#isDestroyed) return;
+        this.#isDestroyed = true;
+        const wasOpen = this.#isOpen;
+        this.#isOpen = false;
         this.clearLoaders();
         this.destroyAllTooltips();
         this.hideLabelReveal();
         this.hideMessage();
 
-        if (this.searchDebounceTimer) {
-            clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = undefined;
-        }
         this.abortInFlightSearch();
 
         if (this.dropdownCleanup) this.dropdownCleanup();
@@ -6117,9 +6186,17 @@ export class MultiSelectEngine<T = any> {
         if (this.hint) this.hint.remove();
         if (this.selectedPopover) this.selectedPopover.remove();
 
+        // The hidden form inputs live in the host's light DOM, outside `element` — a rebuilt
+        // engine starts with an empty list, so leaving them would submit stale duplicates.
+        this.hiddenInputs.forEach(input => input.remove());
+        this.hiddenInputs = [];
+
         // Clear the element's content to prevent duplication on re-initialization
         this.element.innerHTML = '';
         this.element.classList.remove('ms', 'ms--open', 'ms--no-checkboxes');
+
+        // Torn down while open (reinit / DOM move / destroy()): pair the `open` with a `close`.
+        if (wasOpen) this.options.onClose?.(this.ctx({}));
 
         initLogger.info(`[${this.instanceId}] Component destroyed`);
     }
