@@ -380,15 +380,30 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 |----------|---------|-------------|
 | `--ms-transition-normal` | `var(--base-duration-normal, 0.15s)` | Duration of every transition |
 | `--ms-easing-snappy` | `var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))` | Easing of every transition |
-| `--ms-scroll-behavior` | `var(--base-scroll-behavior, smooth)` | Programmatic jumps (`scrollToIndex` / `scrollToValue` / `scrollToGroup`) in the floating dropdown (read in JS as `scrollIntoView` `behavior`); `auto` under reduced motion. Keyboard scrolling is always instant |
+| `--ms-scroll-behavior` | `var(--base-scroll-behavior, smooth)` | Programmatic jumps (`scrollToIndex` / `scrollToValue` / `scrollToGroup`) in the floating dropdown (read in JS as the list scroll's `behavior`); `auto` under reduced motion and `motion="none"`. Keyboard scrolling is always instant |
 | `--ms-tree-indent` | `calc(var(--base-tree-indent, 1.6) * var(--ms-rem))` | Tree per-level step (16px) |
 | `--ms-disabled-opacity` | `var(--base-disabled-opacity, 0.65)` | Opacity for disabled state |
 | `--ms-disabled-input-opacity` | `var(--ms-disabled-opacity)` | Opacity of a disabled input / checkbox |
 
-**Motion off** is CSS only: `--ms-transition-normal: 0s` on the `<web-multiselect>` element
-itself (not a parent — the shadow root's `:host` re-declares it), or `--base-duration-normal: 0s`
-page-wide. Under `prefers-reduced-motion: reduce` the component sets `--ms-transition-normal: 0s`
-itself; the shared loader (async search, add-new pending) keeps turning, slower (it shows a state).
+**Motion level** (web-components-core): `motion="none | snappy | smooth"` on the element
+(`el.motion = 'none'`), `data-motion="…"` on any ancestor (a section, `<html>`), or
+`window.components.motion = 'none'` for every component left on `auto`. A level sets the
+`--base-duration-*` speeds and `--base-scroll-behavior`; the `--ms-*` motion variables read them.
+
+| Level | `--base-duration-normal` (→ `--ms-transition-normal`) | Scrolling |
+|---|---|---|
+| `none` | `0s` | instant |
+| `snappy` | `0.08s` | smooth |
+| `smooth` | `0.25s` | smooth |
+| `auto` (default) | inherited from a section / the page, else `0.15s` | smooth |
+
+**Reduced motion** (`prefers-reduced-motion: reduce`) beats every level: core sets the speeds to
+`0s` and scrolling to instant on every page, with or without base-css-variables. The component has
+no reduced-motion block of its own. The shared loader (async search, add-new pending) keeps turning
+— it shows a state — at 0.8s, slowed to 1.5s by base-css-variables' `--base-loader-duration`.
+
+Motion off in CSS: `--ms-transition-normal: 0s` on the `<web-multiselect>` element itself (not a
+parent — the shadow root's `:host` re-declares it), or `--base-duration-normal: 0s` page-wide.
 
 ## Cascade layers / override contract
 

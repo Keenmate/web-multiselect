@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
@@ -2312,7 +2312,7 @@ export class MultiSelectEngine<T = any> {
 
         // Scroll-to-dismiss: a real drag on the options list means "let me browse" —
         // blur the sheet search so the soft keyboard tucks away and the full list shows.
-        // touchmove is a genuine user gesture (programmatic scrollIntoView from typing /
+        // touchmove is a genuine user gesture (programmatic list scrolling from typing /
         // match-stepping never fires it), so auto-scroll-to-match won't wrongly dismiss
         // the keyboard mid-type. Fullscreen only; passive so it never blocks the scroll.
         this.dropdown.addEventListener('touchmove', (e) => {
@@ -3056,7 +3056,7 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Bring the focused option into the middle of the list right after open — instantly and by
-     * scrolling only the list itself (scrollIntoView would also scroll the page, and a smooth
+     * scrolling only the list itself (a page scroll would move the whole page, and a smooth
      * scroll from the top reads as a jump).
      */
     private revealFocusedOnOpen(): void {
@@ -3067,16 +3067,10 @@ export class MultiSelectEngine<T = any> {
         }
         const el = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
         // The scroller differs by presentation (.ms__dropdown-inner floating, .ms__options in the
-        // fullscreen sheet): take the nearest ancestor that actually scrolls.
-        let scroller = el?.parentElement ?? null;
-        while (scroller && scroller !== this.dropdown.parentElement
-            && !(scroller.scrollHeight > scroller.clientHeight && /auto|scroll/.test(getComputedStyle(scroller).overflowY))) {
-            scroller = scroller.parentElement;
-        }
-        if (!el || !scroller || scroller === this.dropdown.parentElement) return;
-        const box = scroller.getBoundingClientRect();
-        const row = el.getBoundingClientRect();
-        scroller.scrollTop += (row.top - box.top) - (box.height - row.height) / 2;
+        // fullscreen sheet): the nearest one inside the dropdown. None (the list fits) → nothing to do.
+        const scroller = el && findScrollContainer(el, { stopAt: this.dropdown.parentElement });
+        if (!el || !scroller) return;
+        scrollIntoContainer(el, { block: 'center', container: scroller });
     }
 
     /** `tab-behavior`, resolved: unset = `select-focused` (single) / `close` (multi). */
@@ -3386,30 +3380,35 @@ export class MultiSelectEngine<T = any> {
             this.virtualScroll.scrollToIndex(this.focusedIndex, 'nearest');
             return;
         }
-        // Standard mode: use scrollIntoView
+        // Standard mode: scroll the list to the row
         const focusedElement = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
         if (!focusedElement) return;
         // Keyboard-driven (arrow keys, navigate-mode typing): always instant — a smooth scroll per
         // keystroke lags behind the focus and is torn down by the next re-render.
-        this.applyScrollIntoView(focusedElement, { isInstant: true });
+        this.applyScrollIntoContainer(focusedElement, { isInstant: true });
     }
 
     /**
-     * scrollIntoView with the fullscreen-safe default. In the fullscreen sheet the soft keyboard
+     * Bring `el` into view by scrolling the list around it, never the page (core
+     * `scrollIntoContainer`; with no scroller inside the dropdown it falls back to the page's
+     * `scrollIntoView`), with the fullscreen-safe default. In the fullscreen sheet the soft keyboard
      * covers the lower viewport, so `block:'nearest'` can bottom-align a match BEHIND the keyboard;
      * centre it instead and scroll INSTANTLY (a smooth animation kicked off per-keystroke is torn
      * down by the next re-render and never settles — the "list jumps every letter" bug). Floating
      * scrolls the nearest edge: keyboard scrolling (`isInstant`) is always instant; programmatic
      * jumps (`scrollToIndex` / `scrollToValue` / `scrollToGroup`) use `--ms-scroll-behavior`
-     * (→ `--base-scroll-behavior`: smooth, `auto` under reduced motion). The caller may override `block`.
+     * (→ `--base-scroll-behavior`: smooth; `auto` under reduced motion or `motion="none"`).
+     * The caller may override `block`.
      */
-    private applyScrollIntoView(el: HTMLElement, opts?: { block?: ScrollLogicalPosition; isInstant?: boolean }): void {
+    private applyScrollIntoContainer(el: HTMLElement, opts?: { block?: ScrollLogicalPosition; isInstant?: boolean }): void {
+        const stopAt = this.dropdown.parentElement;
         if (this.presentationMode === 'fullscreen') {
-            el.scrollIntoView({ block: opts?.block ?? 'center', behavior: 'auto' });
+            scrollIntoContainer(el, { block: opts?.block ?? 'center', behavior: 'auto', stopAt });
         } else {
-            el.scrollIntoView({
+            scrollIntoContainer(el, {
                 block: opts?.block ?? 'nearest',
                 behavior: opts?.isInstant ? 'auto' : this.getScrollBehavior(),
+                stopAt,
             });
         }
     }
@@ -3491,7 +3490,7 @@ export class MultiSelectEngine<T = any> {
             ) as HTMLElement | null;
             if (label) {
                 interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — header found, scrolling label into view (block=${block})`);
-                this.applyScrollIntoView(label, { block });
+                this.applyScrollIntoContainer(label, { block });
                 return Promise.resolve(true);
             }
         }
@@ -3524,8 +3523,8 @@ export class MultiSelectEngine<T = any> {
                 }
                 const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
                 if (el) {
-                    this.applyScrollIntoView(el, opts);
-                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via DOM scrollIntoView`);
+                    this.applyScrollIntoContainer(el, opts);
+                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via the DOM row`);
                     return resolve(true);
                 }
                 // Not rendered yet (virtual instance still initializing, or sheet mid-build): retry once.

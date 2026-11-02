@@ -523,7 +523,10 @@ Removed:
   show-debug-info / showDebugInfo and the Debug Info panel (.ms__debug-*, --ms-debug-*) — use
   el.enableLogging() or window.components['web-multiselect'].logging.
   --ms-transition-fast — every transition reads --ms-transition-normal
-  (var(--base-duration-normal, 0.15s)); motion off: --ms-transition-normal: 0s on the element.
+  (var(--base-duration-normal, 0.15s)); motion off: motion="none" (core motion level) or
+  --ms-transition-normal: 0s on the element.
+  The component's own @media (prefers-reduced-motion) block — core applies reduced motion on
+  every page (0s, instant scrolling); the loader's 1.5s slowdown comes from base-css-variables.
 
 Visual / platform:
   Browser floor Chrome/Edge 119+, Firefox 128+, Safari 18+ (relative-colour syntax).

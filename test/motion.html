@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — motion level and list scrolling</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+        /* The page scrolls too: a list jump must move the list, never the page. */
+        .tall { height: 3000px; }
+    </style>
+</head>
+<body>
+    <h1>motion level and list scrolling</h1>
+    <p>Targeted by <code>e2e/motion.spec.ts</code>. No base-css-variables on the page: the motion
+       level and reduced motion come from web-components-core alone.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">long list (60 options) — the dropdown scrolls</div>
+        <web-multiselect id="mo-list" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture" data-motion="smooth" id="mo-section">
+        <div class="fixture-label">inside data-motion="smooth"</div>
+        <web-multiselect id="mo-nested" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="tall"></div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = Array.from({ length: 60 }, (_, i) => ({ value: `v${i}`, label: `Option ${i}` }));
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['mo-list', 'mo-nested']) document.getElementById(id).options = items;
+        });
+    </script>
+</body>
+</html>

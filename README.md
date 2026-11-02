@@ -34,7 +34,7 @@ Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.np
 ## What's New in v3.0.0
 
 **A major release — breaking, no aliases.** The callbacks, events and inputs follow the shared
-KeenMate interaction model and naming rulebook (`@keenmate/web-components-core` 1.0.0-rc15), so
+KeenMate interaction model and naming rulebook (`@keenmate/web-components-core` 1.0.0-rc17), so
 code written for 2.x needs updating. Full old → new tables: the
 [CHANGELOG `[Unreleased]` section](CHANGELOG.md#unreleased); step-by-step:
 [ai/migration-guide.txt](ai/migration-guide.txt).
@@ -69,11 +69,15 @@ code written for 2.x needs updating. Full old → new tables: the
 - **Defer / ready from core** — `el.release()` (was `el.ready()`), host attribute `ready` +
   `:state(ready)` (was `is-ready`), `el.whenReady()`, property `shouldDefer`.
 - **Removed:** `show-debug-info` and the debug panel (use `el.enableLogging()`),
-  `--ms-transition-fast` (one duration: `--ms-transition-normal`).
+  `--ms-transition-fast` (one duration: `--ms-transition-normal`), the component's own
+  `prefers-reduced-motion` block (core applies reduced motion on every page; the 1.5s loader
+  slowdown needs base-css-variables).
 - **Browser floor: Chrome/Edge 119+, Firefox 128+, Safari 18+** (relative-colour syntax in the
   standalone colour fallbacks).
 
-**Also new:** responsive rules (below), `disabled` / `readonly`, `open` / `close` /
+**Also new:** the `motion` level (`motion="none | snappy | smooth"`, `data-motion` on a section,
+`window.components.motion`), list scrolling that never moves the page, responsive rules (below),
+`disabled` / `readonly`, `open` / `close` /
 `value-format-error` events, `getOptionByValue()`, the shared loader (`renderLoadingCallback`),
 standalone colours that follow the base-css-variables contract (accent `#3b82f6`; disabled rows
 are tinted).

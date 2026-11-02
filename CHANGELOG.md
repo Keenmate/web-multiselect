@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — motion level and container scrolling (core rc17, base-css-variables rc08)
+
+- **Requires `@keenmate/web-components-core` `^1.0.0-rc17`** (dev: `@keenmate/base-css-variables`
+  `^2.0.0-rc08`).
+- **New `motion` attribute / property** (from core, on every component): `none` | `snappy` |
+  `smooth` | `auto` (default). Also `data-motion="…"` on any ancestor and
+  `window.components.motion` page-wide. A level sets the `--base-duration-*` speeds and
+  `--base-scroll-behavior`, which `--ms-transition-normal` / `--ms-scroll-behavior` read.
+- **BREAKING — no reduced-motion block of its own:** the component's
+  `@media (prefers-reduced-motion: reduce)` block is gone. Core now applies the OS setting on every
+  page, with or without base-css-variables (`--base-duration-*: 0s`, `--base-scroll-behavior: auto`),
+  and it beats every motion level. The loader no longer slows to 1.5s on its own: that comes from
+  base-css-variables' `--base-loader-duration` (without it the loader keeps 0.8s).
+- **The list scrolls, never the page:** keyboard moves, the open-time jump to the selected option
+  and `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` scroll only the dropdown's own list
+  (core `scrollIntoContainer()`), where `scrollIntoView()` also scrolled every scrollable ancestor,
+  page included. With no scroller in the dropdown (the list fits) it falls back to the page.
+
 ### Changed — BREAKING (browser floor and disabled rows)
 
 - **Browser floor raised to Chrome/Edge 119+, Firefox 128+, Safari 18+** — the standalone colour
@@ -55,15 +73,11 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
   column. The phone overlay's `--ms-fullscreen-tree-indent` uses the same multiplier on
   `--ms-fullscreen-rem` (was `1.2 ×`); the first-level `--ms-*-tree-base-indent` padding is unchanged.
 - **New `--ms-scroll-behavior`** (`var(--base-scroll-behavior, smooth)`; `auto` under
-  `prefers-reduced-motion: reduce`): programmatic jumps in the floating dropdown (`scrollToIndex()` /
+  reduced motion and `motion="none"`): programmatic jumps in the floating dropdown (`scrollToIndex()` /
   `scrollToValue()` / `scrollToGroup()`) read it (was always `smooth`). **Keyboard scrolling
   (arrow keys, navigate-mode typing) is now always instant** (was `smooth`); the fullscreen sheet
   keeps its instant scroll.
 - Manifest: `--ms-scroll-behavior`, `--base-scroll-behavior`, `--base-tree-indent`.
-- **Reduced motion slows the loader without base-css-variables:** the `prefers-reduced-motion`
-  block sets `--ms-loader-duration: var(--base-loader-duration, 1.5s)` (the contract's reduced
-  value as the fallback), so the loader turns at 1.5s even when the page doesn't load
-  base-css-variables; a page-wide `--base-loader-duration` still wins.
 
 ### Changed — shared loader (core SPEC §12.14, 2026-10-29)
 
@@ -76,7 +90,7 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
   is `aria-hidden`.
 - **New tokens** `--ms-loader-icon` / `--ms-loader-rotate` / `--ms-loader-duration` /
   `--ms-loader-size`, chained to `--base-loader-*` (manifest updated); the default
-  `.ms-loader` is a `currentColor` mask. Under reduced motion it slows (contract 1.5s), never stops.
+  `.ms-loader` is a `currentColor` mask. It never stops; under reduced motion base-css-variables slows it to 1.5s.
 - **New input `renderLoadingCallback`** (property, `on: 'update'`): draw the loader yourself —
   `ctx = { component, context, containerElement, element, label }`, optional cleanup return.
   Beats the page-wide `window.components.renderLoaderCallback`.
@@ -92,14 +106,15 @@ consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 
   removed (it was `150ms` — the same speed — and its uses read `--ms-transition-normal` now).
   Snapped: the dropdown / popover fades were `200ms`, now `0.15s` (the contract has no 0.2s
   speed; snappy wins).
-- **Motion off is CSS only:** `--ms-transition-normal: 0s`, or `--base-duration-*: 0s` page-wide.
-  `prefers-reduced-motion: reduce` sets `--ms-transition-normal: 0s` (before: only the add-new
-  spinner slowed down; it still does — it shows a state).
+- **Motion off:** `motion="none"` (see the motion level above), `--ms-transition-normal: 0s`, or
+  `--base-duration-*: 0s` page-wide. Reduced motion zeroes the speeds (before: only the add-new
+  spinner slowed down).
 - **Disabled dimming:** `--ms-disabled-input-opacity` follows `--ms-disabled-opacity` (both
   read `--base-disabled-opacity`, 0.65 — no visual change); the fullscreen nav button reads
   `--ms-disabled-opacity` instead of the base token directly.
-- **Tests:** `e2e/motion.spec.ts` — default 0.15s; 0s under reduced motion, with
-  `--base-duration-normal: 0s` and with `--ms-transition-normal: 0s`.
+- **Tests:** `e2e/motion.spec.ts` — default 0.15s; 0s under reduced motion (with and without
+  base-css-variables), with `motion="none"`, `--base-duration-normal: 0s` and
+  `--ms-transition-normal: 0s`; the motion levels; a list jump that leaves the page still.
 
 ### Changed — BREAKING (suite-wide naming unification, 2026-10-27)
 

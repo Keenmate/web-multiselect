@@ -673,8 +673,8 @@
 
   /* Loader — the shared loader contract (core SPEC §12.14, base-css-variables → Loader).
      Drawn by .ms-loader (async search, add-new pending). Shape = a single-colour mask
-     tinted by currentColor; --ms-loader-rotate: 0 for a self-animating SVG. Reduced
-     motion slows it to 1.5s (--base-loader-duration; the fallback below) — it never stops. */
+     tinted by currentColor; --ms-loader-rotate: 0 for a self-animating SVG. It never stops:
+     base-css-variables slows it to 1.5s under reduced motion (--base-loader-duration). */
   --ms-loader-icon: var(--base-loader-icon, url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23000%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M21 12a9 9 0 1 1-6.219-8.56%22/%3E%3C/svg%3E"));
   --ms-loader-rotate: var(--base-loader-rotate, 1turn);
   --ms-loader-duration: var(--base-loader-duration, 0.8s);
@@ -896,13 +896,17 @@
   /* ==========================================================================
      TRANSITIONS & EFFECTS
      ========================================================================== */
-  /* One duration, from the contract's speeds (only those four exist). Motion off: set it to 0s
-     here, or --base-duration-*: 0s page-wide; reduced motion does that (block at the end). */
+  /* One duration, from the contract's speeds (only those four exist). The motion level (core:
+     motion="none|snappy|smooth", data-motion on a section, window.components.motion) and the OS
+     reduced-motion setting set the --base-duration-* / --base-scroll-behavior tokens; the component
+     only reads them — no prefers-reduced-motion block of its own. Motion off: motion="none",
+     or 0s here. */
   --ms-transition-normal: var(--base-duration-normal, 0.15s);
   /* Easing is an exact match for --base-ease-standard, so it flows from the shared token. */
   --ms-easing-snappy: var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   /* Programmatic jumps in the floating dropdown (scrollToIndex / scrollToValue / scrollToGroup;
-     keyboard scrolling is always instant): read in JS as scrollIntoView's `behavior`. auto under reduced motion (block at the end). */
+     keyboard scrolling is always instant): read in JS as the list scroll's `behavior`. auto under
+     reduced motion and motion="none". */
   --ms-scroll-behavior: var(--base-scroll-behavior, smooth);
 
   /* ==========================================================================
@@ -924,13 +928,3 @@
 
 }
 
-/* Reduced motion: no transitions (the loader keeps turning, slower — --base-loader-duration). */
-@media (prefers-reduced-motion: reduce) {
-  :host {
-    --ms-transition-normal: 0s;
-    --ms-scroll-behavior: var(--base-scroll-behavior, auto);
-    /* Contract rule: a read inside the reduced-motion block falls back to the reduced value,
-       so the loader slows even without base-css-variables on the page. */
-    --ms-loader-duration: var(--base-loader-duration, 1.5s);
-  }
-}
