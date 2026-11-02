@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Target: **3.0.0-rc01** — a major: callbacks, events and inputs below are breaking, so `^2.x`
 consumers must not auto-pull it. (Folds in the unpublished 2.6.0-rc04 core-rc15 rebuild.)
 
+### Changed — BREAKING (browser floor and disabled rows)
+
+- **Browser floor raised to Chrome/Edge 119+, Firefox 128+, Safari 18+** — the standalone colour
+  fallbacks (hover, tint, text-on-accent, surfaces) are derived with relative-colour syntax
+  (`oklch(from …)` / `color(from …)`), the same floor as `@keenmate/base-css-variables` 2.x.
+  Older browsers drop those declarations.
+- **Disabled option rows get a tinted background standalone:** `--ms-option-disabled-bg` is
+  `var(--ms-disabled-bg)` (was `transparent`). Set `--ms-option-disabled-bg: transparent` to keep
+  the old look.
+
 ### Changed — BREAKING (presentation rename + responsive rules, core rc15, 2026-10-30)
 
 - **`mobile-presentation` / `mobilePresentation` → `presentation`** (values unchanged:
@@ -155,7 +165,7 @@ one ctx.
 | `searchCallback({ term, signal, searchTerm, entries })` | `searchCallback({ term, signal, entries })` — `term` is the `getSearchTermCallback` result for `target: 'callback'` when set, else the typed text (`MultiSelectSearchContext<T, TTerm>`) |
 | `searchCallback` `entries[i].item` | `entries[i].data` (core `SearchEntry`; `item` is reserved for action items) |
 | `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) |
-| `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element + controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
+| `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` → `boolean` (element) / `void` (controller) | → `Promise<boolean>` (resolves once scrolled; `false` when closed / not in the visible list) |
 
 **UI strings → `labels`** (rulebook D-NC-24). Every visible text and ARIA label is a key of
 the one `labels` map — property (partial object) or JSON attribute
@@ -248,29 +258,29 @@ Callbacks, events and action buttons follow the shared KeenMate interaction mode
 (web-components-core `/actions`). No aliases — rename on upgrade.
 
 **Every callback takes ONE `ctx` argument.** The option a per-option callback is about is
-`ctx.item`. Every `ctx` (and every event detail) also carries `controller` (the public facade,
+`ctx.option` (see the naming-unification ctx-noun table above). Every `ctx` (and every event detail) also carries `controller` (the public facade,
 also `el.controller`), `element` (the host) — both non-enumerable, so `JSON.stringify` / logs /
 LiveView `pushEvent` see only the data — and the presentation flags (`presentation`,
 `isFullscreen`, `isModal`).
 
 | Old | New |
 |---|---|
-| `getValueCallback(item)`, `getDisplayValueCallback(item)`, `getIconCallback(item)`, `getSubtitleCallback(item)`, `getGroupCallback(item)`, `getFullTitleCallback(item)`, `getSearchValueCallback(item)`, `getSelectedOrderCallback(item)`, `getPathCallback(item)` | same names, `(ctx)` → read `ctx.item` |
-| `getDisabledCallback(item)` | `getIsDisabledCallback({ item })` |
-| `getIsSelectableCallback(node)` | `getIsSelectableCallback({ item, node })` |
-| `getBadgeDisplayCallback(item, ctx?)`, `getBadgeClassCallback`, `getSelectedItemClassCallback`, `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback` | `(ctx)` — `{ item, displayMode, isInPopover }` (always complete now; outside a render `displayMode` is the configured mode, `isInPopover` false) |
-| `renderOptionContentCallback(item, ctx)`, `getOptionTooltipCallback(item, ctx?)` | `(ctx)` — `{ item, index, isSelected, … }` |
-| `renderBadgeContentCallback(item, ctx)`, `renderBadgeCallback(item, ctx)`, `renderSelectedItemContentCallback(item, ctx)` | `(ctx)` — `{ item, displayMode, isInPopover }` |
-| `renderSelectedContentCallback(item, ctx)` | `(ctx)` — `{ item }` |
+| `getValueCallback(item)`, `getDisplayValueCallback(item)`, `getIconCallback(item)`, `getSubtitleCallback(item)`, `getGroupCallback(item)`, `getFullTitleCallback(item)`, `getSearchValueCallback(item)`, `getSelectedOrderCallback(item)`, `getPathCallback(item)` | same names, `(ctx)` → read `ctx.option` |
+| `getDisabledCallback(item)` | `getIsDisabledCallback({ option })` |
+| `getIsSelectableCallback(node)` | `getIsSelectableCallback({ option, node })` |
+| `getBadgeDisplayCallback(item, ctx?)`, `getBadgeClassCallback`, `getSelectedItemClassCallback`, `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback` | `(ctx)` — `{ option, displayMode, isInPopover }` (always complete now; outside a render `displayMode` is the configured mode, `isInPopover` false) |
+| `renderOptionContentCallback(item, ctx)`, `getOptionTooltipCallback(item, ctx?)` | `(ctx)` — `{ option, optionIndex, isSelected, … }` |
+| `renderBadgeContentCallback(item, ctx)`, `renderBadgeCallback(item, ctx)`, `renderSelectedItemContentCallback(item, ctx)` | `(ctx)` — `{ option, displayMode, isInPopover }` |
+| `renderSelectedContentCallback(item, ctx)` | `(ctx)` — `{ option }` |
 | `renderGroupLabelContentCallback(groupName, ctx)` | `(ctx)` — `ctx.groupName` |
 | `getCounterCallback(count, moreCount?)` | `getCounterCallback({ count, moreCount? })` |
 | `getCountLabelCallback(selected, total)` | `getCountLabelCallback({ selectedCount, totalCount, groupName? })` |
 | `getValueFormatCallback(values)` | `getValueFormatCallback({ selectedValues, selectedOptions })` |
 | `getAddNewTextCallback(value)` | `getAddNewTextCallback({ value })` |
 | `getSearchTermCallback(term, { target, behavior, match })` | `getSearchTermCallback({ term, target, behavior, match })` |
-| `searchCallback(term, signal, { searchTerm, entries })` | `searchCallback({ term, signal, searchTerm, entries })` |
+| `searchCallback(term, signal, { searchTerm, entries })` | `searchCallback({ term, signal, entries })` (`entries[i].data` is the option) |
 | `customStylesCallback()` | `getCustomStylesCallback(ctx)` |
-| `selectedOrderCompareCallback(a, b)` | unchanged — the one positional exception (handed to `Array.prototype.sort`) |
+| `selectedOrderCompareCallback(a, b)` | `selectedOrderCompareCallback({ a, b })` (`SelectedOrderCompareContext`) — returns a sort number as before |
 
 **Before-hooks — one contract:** `false` cancels, nothing continues, a value replaces; may be
 async (except keydown); a throw cancels (logged).
@@ -279,7 +289,7 @@ async (except keydown); a throw cancels (logged).
 |---|---|
 | `beforeSelectCallback(option, selectedOptions)` → `false` / a string (veto + toast) | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` → `false` vetoes. Explain a veto with `ctx.controller.showMessage(text, { type: 'warning' })`; a returned string no longer vetoes. May be async. |
 | `beforeDeselectCallback(option, selectedOptions)` | `beforeDeselectCallback(ctx)` — same shape and contract |
-| bulk gestures (Select-All, Clear-All, group checkbox, tree-cascade toggle, inline ✕, count ×, "+N more" ×) bypassed the vetoes | each option goes through the veto (`ctx.source`: `select-all` / `clear-all` / `group` / `clear` / `badge` / `option`); vetoed ones are skipped, the rest apply in ONE change. `setSelected()` and form reset stay veto-free. |
+| bulk gestures (Select-All, Clear-selection, group checkbox, tree-cascade toggle, inline ✕, count ×, "+N more" ×) bypassed the vetoes | each option goes through the veto (`ctx.source`: `select-all` / `clear-selection` / `group` / `clear` / `badge` / `option`); vetoed ones are skipped, the rest apply in ONE change. `setSelected()` and form reset stay veto-free. |
 | `beforeSearchCallback(term)` → string / `null` | `beforeSearchCallback({ term })` → a string replaces the term, `false` skips the search (was `null`) |
 | `addNewCallback(value)` → option / `null` cancels | `beforeAddCallback({ value })` → the option (appended + selected), `false` cancels (was `null`), nothing → only the `add` event fires (create it yourself) |
 | `keydownCallback(ctx)` → `true` = handled | `beforeKeydownCallback(ctx)` → `false` suppresses the built-in handling (synchronous). `ctx.controller` is the one public controller (focus methods included); `ctx.selectedValues` holds the real values (was strings). |
@@ -294,7 +304,7 @@ async (except keydown); a throw cancels (logged).
 | `getTextCallback(ms, ctx)`, `getIsVisibleCallback`, `getIsDisabledCallback`, `getClassCallback`, `getTooltipCallback` | `(ctx)` — the ctx is the selection snapshot (`selectedValues`, `selectedOptions`, `options`, `selectedCount`, `optionCount`, `isOpen`, `searchTerm`) |
 | `ctx.button` | gone — at activation the clicked item is `detail.item` |
 | `onClick` only ran for `custom` buttons | runs for built-ins too, before the built-in |
-| — | string shorthand: `actionButtons: ['select-all', 'clear-all']` (default text from `labels.selectAll` / `labels.clearAll`) |
+| — | string shorthand: `actionButtons: ['select-all', 'clear-selection']` (default text from `labels.selectAll` / `labels.clearSelection`) |
 | — | `icon`, `isDanger`, `isToggled` / `getIsToggledCallback` (toggle state ON → `aria-pressed`, `.ms__action-btn--toggled`; named `isToggled`, not `isActive`, per core), `getIconCallback` |
 | button text inserted as HTML | text and icon are inserted as text |
 | `data-button-index` on the button | `data-ms-item-index`; `data-action` = built-in name or `custom`, `data-id` = the item `id` |
@@ -314,7 +324,7 @@ async (except keydown); a throw cancels (logged).
 
 | Old | New |
 |---|---|
-| `MultiSelectKeyboardController` (keydown only) + `MultiSelectController` | one `MultiSelectController` — `el.controller` and `ctx.controller` everywhere; adds `isOpen`, `refresh()`, the focus methods, `selectValue` / `deselectValue` / `toggleFocused`; `scrollTo*` return `boolean`; `setSearch` removed (use `search`) |
+| `MultiSelectKeyboardController` (keydown only) + `MultiSelectController` | one `MultiSelectController` — `el.controller` and `ctx.controller` everywhere; adds `isOpen`, `refresh()`, the focus methods, `selectValue` / `deselectValue` / `toggleFocused`; `scrollTo*` return `Promise<boolean>`; `setSearch` removed (use `search`) |
 | `showMessage(content, { variant, duration })` | `showMessage(content, { type, autoHideMs, placement })`; `MessageVariant` → `MessageType` |
 | `WebMultiSelect` export | `MultiSelectEngine` (standalone use only — drive the element through `el.controller`) |
 | engine options `onAddNew({ value, option })`, `onSelect(option)`, `onDeselect(option)`, `onChange(options)` | `onAdd(detail)`, `onSelect(detail)`, `onDeselect(detail)`, `onChange(detail)`, `onAction(detail)` |
@@ -329,7 +339,7 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 
 - **`value` / `label` / `group` / `icon` / `subtitle` / `disabled` are now the real member
   defaults** (`valueMember`, `displayValueMember`, `groupMember`, `iconMember`,
-  `subtitleMember`, `disabledMember`), for every data source — not only declarative `<option>`
+  `subtitleMember`, `isDisabledMember`), for every data source — not only declarative `<option>`
   children. `ms.options = [{ value: 1, label: 'Prague' }]` now works with no configuration
   (before, it rendered `[N/A]` and `selectedValue` returned `null`). Consequences: data that
   happens to carry a `group` / `icon` / `subtitle` / `disabled` field is now grouped / iconed /
@@ -343,9 +353,9 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 ### Changed — BREAKING (form reset)
 
 - **`form.reset()` restores the initial selection instead of clearing it.** The default is
-  `initial-values` (attribute or property) or declarative `<option selected>` children, like a
-  native `<select>`; with no initial values the selection is cleared as before. Selecting from
-  JS never rewrites `initial-values`, so it stays the reset default (same rule as
+  the `value` attribute / `defaultValue` property (was `initial-values`) or declarative
+  `<option selected>` children, like a native `<select>`; with no initial values the selection is cleared as before. Selecting from
+  JS never rewrites `value` / `defaultValue`, so it stays the reset default (same rule as
   web-daterangepicker's `value`). A reset no longer fires `deselect` / `change` (it is not a
   user action, and a native `<select>` doesn't fire them either).
 
@@ -361,15 +371,59 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 - `--ms-action-button-danger-color`, `--ms-action-button-toggled-color`,
   `--ms-action-button-icon-gap`; `.ms__action-btn--danger`, `.ms__action-btn--toggled`,
   `.ms__action-btn-icon`, `.ms__action-btn-label`.
-- `labels.selectAll` / `labels.clearAll` (default text of the built-in buttons).
+- `labels.selectAll` / `labels.clearSelection` (default text of the built-in buttons).
 - Exported types for every callback ctx: `MultiSelectContext`, `ItemContext`, `TreeNodeContext`,
   `CounterContext`, `CountLabelContext`, `ValueFormatContext`, `AddContext`,
   `BeforeSearchContext`, `SearchTermCallbackContext`, `MultiSelectSearchContext`,
-  `BeforeSelectContext`, `SelectionSource`, `KeydownContext`, `MultiSelectAction`,
-  `MultiSelectActionItem`, `MultiSelectActionEventDetail`, `MessageType`, `MessageOptions`.
+  `BeforeSelectContext`, `BeforeDeselectContext`, `SelectedOrderCompareContext`, `SelectionSource`,
+  `KeydownContext`, `MultiSelectAction`, `MultiSelectActionItem`, `MultiSelectActionEventDetail`,
+  `OpenEventDetail`, `CloseEventDetail`, `ValueFormatErrorEventDetail`, `MessageType`, `MessageOptions`.
 
 ### Fixed
 
+- **Stale hidden form inputs:** a picker rebuild (any reinit input — `labels`, `multiple`, `name`,
+  `data-options`, …), a removal or `destroy()` left the previous `<input type="hidden">` fields in
+  the light DOM, so the form submitted the old value next to the new one (and under the old `name`).
+  `destroy()` now also clears a `value-format-error` validity.
+- **Selection lost or resurrected on a rebuild:** a `value` assigned before the first build
+  was reset by the next rebuild, and a selection the user had cleared came back as the default.
+  A rebuild now keeps the live selection (an empty one included, and values whose option isn't
+  loaded yet); only a changed `value` attribute (defaultValue) replaces it. Selected "add new"
+  options stay selected when the option source is re-parsed.
+- **DOM moves keep the picker:** moving the element (reorder, into a `<dialog>`, a portal)
+  rebuilt it and reset the selection to the default. A move now only closes the dropdown; the
+  picker is released when the element stays detached (core `removedCallback`), and re-attaching
+  restores its selection. While detached, `value` / `selectedValue` / `selectedOptions` report
+  the held state.
+- **Loader stuck on:** clearing the search (Escape, `clearSearch()`, closing, "add new") or a
+  `beforeSearchCallback` veto while an async `searchCallback` was in flight left "Searching…"
+  up on every later open. Dropping the term now aborts the request (and a pending debounce).
+- **A torn-down picker kept acting:** an async `before*Callback` / `beforeActionCallback` that
+  resolved after a rebuild or `destroy()` still selected and fired `select` / `change` /
+  `action`. It now does nothing. A teardown while open fires `close` (no unpaired `open`).
+- `el.value = 'a,b'` / `setSelected([...])` on a single-select held several values.
+- Enter on a pending "add new" prompt ran `beforeAddCallback` again and duplicated the option.
+- `beforeAddCallback` returning `true` added an option `true`, and `beforeSearchCallback`
+  returning `true` searched for `"true"`. `true` now means "go ahead" in both; a non-string
+  term from `beforeSearchCallback` is ignored with a warning.
+- A tree-cascade toggle with an async `beforeSelectCallback` / `beforeDeselectCallback` could
+  flip the subtree back when clicked twice while the veto was pending.
+- Changing `search-input-mode` live made a `readonly` control typeable.
+- A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
+- `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
+  collapse until the next resize; the new mode now lands when the box widens.
+- `el.options = …` skipped the source precedence: with `<option>` children it showed the
+  assigned list until the next rebuild switched back; `el.options = []` blanked out a
+  `data-options` list. It now resolves exactly like a build (`<option>` > `options` >
+  `data-options`).
+- `form.reset()` while deferred or detached was ignored — a `value` assigned earlier was
+  applied on release.
+- `min-search-length` counts the term as typed on both paths (the built-in search trimmed it,
+  the `searchCallback` path didn't): `" b"` passes a minimum of 2. Trimming is the term
+  preparation's job (`getSearchTermCallback`); return `''` from it (or `false` from
+  `beforeSearchCallback`) to refuse a term.
+- Exported `ActionsLayout`, `ActionsPosition`, `ActionsAlign` and core's `LoaderRenderContext`
+  (the `renderLoadingCallback` context).
 - `data-action` markup inside rendered option content was hijacked as an action button
   (a `select-all` there ran Select-All, anything else did nothing); it now fires the `action`
   event and never toggles the row.
@@ -412,12 +466,12 @@ brings its hover, tint and text along.
 - **Scales:** standalone z-index = the contract's (dropdown 7500, popover 7600, tooltip 9000,
   were 9999 / 10000 / 10000); disabled opacity 0.65 everywhere (was 0.4 / 0.5 / 0.6); shadows
   use one shadow color (15% light / 40% dark; dropdown `0 8px 16px`); the info icon is the
-  contract's glyph; the debug panel's mono font is the contract's stack.
+  contract's glyph.
 
 ### Internal
 
 - Depends on the published `@keenmate/web-components-core@^1.0.0-rc15` (was the local `file:` link).
-- **`npm run check:contract`** (in `build`): `@keenmate/base-css-variables` ^2.0.0-rc05 as a
+- **`npm run check:contract`** (in `build`): `@keenmate/base-css-variables` ^2.0.0-rc06 as a
   devDependency; `base-contract-check src` fails the build on unknown `--base-*` reads, input
   fallbacks that differ from the contract, and literal fallbacks for derived tokens. Deliberate
   differences (10px rem base, inherited font, option-title state colors) are in

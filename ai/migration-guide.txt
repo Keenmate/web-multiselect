@@ -7,7 +7,7 @@ CRITICAL: Guide for migrating from other multiselect libraries
 - From Tom Select
 - From React Select
 - From Vue Multiselect
-- From web-multiselect 2.x (pre interaction model)
+- From web-multiselect 2.x (→ 3.0: interaction model, naming, labels, value, …)
 - Common pitfalls and solutions
 
 FROM SELECT2
@@ -48,8 +48,8 @@ Select2 → Web Multiselect
 select2:select → 'select'
 select2:unselect → 'deselect'
 select2:change → 'change'
-select2:open → (no direct equivalent)
-select2:close → (no direct equivalent)
+select2:open → 'open'
+select2:close → 'close'
 
 FROM CHOICES.JS
 ---------------
@@ -314,8 +314,8 @@ Old:
 
 New (CSS variables):
 web-multiselect {
-  --ml-accent-color: #3b82f6;
-  --ml-border-radius: 0.5rem;
+  --ms-accent-color: #3b82f6;
+  --ms-border-radius: 0.5rem;
 }
 
 Or inject styles:
@@ -394,10 +394,10 @@ No framework dependencies needed
 
 BROWSER SUPPORT
 ---------------
-Most modern libraries and web-multiselect:
-- Chrome/Edge 67+
-- Firefox 63+
-- Safari 10.1+
+web-multiselect 3.x (relative-colour syntax in the standalone colour fallbacks):
+- Chrome/Edge 119+
+- Firefox 128+
+- Safari 18+
 
 If migrating from older library with IE support:
 - Web Components don't support IE11
@@ -442,6 +442,94 @@ CHANGELOG.md, section [Unreleased]. The essentials:
 - Internal controls use data-ms-action (show-selected, clear-count, remove-hidden, add-new);
   a renderBadgeCallback remove control is data-ms-action="remove" (or .ms__badge-remove).
   data-action / data-id are now only for action items.
+
+FROM WEB-MULTISELECT 2.x (NAMING UNIFICATION, 3.0)
+-------------------------------------------------
+Same 3.0 release, also no aliases. Full tables: CHANGELOG.md [Unreleased].
+
+Attributes / properties (property / attribute):
+    isMultipleEnabled / multiple                 → isMultiple / multiple
+    isCloseOnSelect / close-on-select            → shouldCloseOnSelect / close-on-select
+    formFieldId / name                           → name / name
+    disabledMember / disabled-member             → isDisabledMember / is-disabled-member
+    badgesMaxVisible / badges-max-visible        → maxVisibleBadgeCount / max-visible-badge-count
+    optionHeight / option-height                 → virtualScrollItemHeight / virtual-scroll-item-height
+    virtualScrollBuffer / virtual-scroll-buffer  → virtualScrollOverscan / virtual-scroll-overscan
+    should-keep-search-on-close                  → keep-search-on-close (shouldKeepSearchOnClose)
+    isKeepOptionsOnSearch                        → shouldKeepOptionsOnSearch (keep-options-on-search)
+    isIconSlotReserved                           → shouldReserveIconSlot (reserve-icon-slot)
+    isOptionTooltipFollowCursor                  → shouldOptionTooltipFollowCursor
+    isPruneMissingSelectionEnabled               → shouldPruneMissingSelection (prune-missing-selection)
+    isPlacementLocked                            → shouldLockPlacement (lock-placement)
+    fullscreenAutofocus                          → shouldFullscreenAutofocus (fullscreen-autofocus)
+    isActionsSticky / sticky-actions             → isActionsSticky / actions-sticky
+    tab-behavior="select-highlighted"            → tab-behavior="select-focused"
+    mobile-presentation / mobilePresentation     → presentation (auto | floating | fullscreen)
+  The `mobile` width breakpoint is now 768px (was 640); device class is unchanged.
+
+UI strings → labels (property = partial object, or JSON attribute):
+    <web-multiselect search-placeholder="Search…" empty-message="Nothing">
+  → <web-multiselect labels='{"searchPlaceholder":"Search…","noResults":"Nothing"}'>
+    search-placeholder → searchPlaceholder     select-placeholder → selectPlaceholder
+    no-data-placeholder → noDataPlaceholder    empty-message → noResults (search miss) / noData (no options)
+    loading-message → searching                search-hint → searchHint
+    add-new-text → addNew ({value})            add-new-pending-text → addNewPending ({value})
+    remove-button-tooltip-text ({0}) → removeItem ({item})
+    selected-popover-title → selectedPopoverTitle ({count})
+    labels.groupSelectedLabel → groupSelected; labels.clearAll → clearSelection
+    (the old labels.clearSelection, the ✕ aria-label → clearAllSelections)
+  A label set to '' is deliberately empty; unset keys fall back to English.
+
+Initial selection and form value:
+    initial-values / initialValues      → value attribute / defaultValue property
+    value-format="csv"                  → value-format="text" (+ value-separator, default ",")
+  The value attribute is parsed per value-format (json / array: ["a","b"]; text: a,b).
+  el.value is now the LIVE submitted value (string, or string[] for array); the live
+  selection stays selectedValue.
+  form.reset() now RESTORES the initial selection (value / defaultValue / <option selected>)
+  instead of clearing it, and fires no deselect / change.
+
+Defer / ready (core BlissElement):
+    deferRender property                → shouldDefer (the attribute stays defer)
+    el.ready()                          → el.release() (removing defer still releases)
+    is-ready host attribute             → ready attribute + :state(ready); el.isReady,
+                                          el.whenReady(): Promise<void>
+    :host([defer]:not([is-ready]))      → :host([defer]:not([ready]))
+    el.destroy()                        → core destroy(): the element stays inert afterwards
+
+Selection state → properties (element AND el.controller):
+    controller.clearAll(), engine clearAll()  → clearSelection()
+    action id / SelectionSource 'clear-all'   → 'clear-selection'
+    getSelected()                       → selectedOptions
+    getValue()                          → selectedValue
+    el.selectedItem                     → selectedOption
+    controller.getOptions()             → controller.options
+    el.searchText                       → searchTerm
+    scrollToIndex / Value / Group()     → return Promise<boolean>
+  New: getOptionByValue(value), isMessageShown, disabled / readonly, open / close events.
+
+Member defaults for all data:
+  value / label / group / icon / subtitle / disabled are the defaults of valueMember,
+  displayValueMember, groupMember, iconMember, subtitleMember, isDisabledMember for every data
+  source, so [{ value: 1, label: 'Prague' }] works with no config. Data that happens to carry a
+  group / icon / subtitle / disabled field now uses it — set the member to null to opt out.
+  A get*Callback now ALWAYS overrides its member (before: the member won when present).
+
+Action buttons:
+  The toggle state of an action item is isToggled / getIsToggledCallback (aria-pressed,
+  .ms__action-btn--toggled) — not isActive.
+
+Removed:
+  show-debug-info / showDebugInfo and the Debug Info panel (.ms__debug-*, --ms-debug-*) — use
+  el.enableLogging() or window.components['web-multiselect'].logging.
+  --ms-transition-fast — every transition reads --ms-transition-normal
+  (var(--base-duration-normal, 0.15s)); motion off: --ms-transition-normal: 0s on the element.
+
+Visual / platform:
+  Browser floor Chrome/Edge 119+, Firefox 128+, Safari 18+ (relative-colour syntax).
+  Disabled option rows are tinted standalone (--ms-option-disabled-bg → var(--ms-disabled-bg));
+  set it to transparent for the old look. To recolor the field border set
+  --ms-input-border-color (--ms-border-color is dividers only).
 
 MIGRATION CHECKLIST
 -------------------

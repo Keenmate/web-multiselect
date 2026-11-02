@@ -257,21 +257,21 @@ Control badge appearance:
 CSS variables:
 <style>
   web-multiselect {
-    --ml-badge-text-bg: #eff6ff;
-    --ml-badge-text-color: #3b82f6;
-    --ml-badge-gap: 0.25rem;
-    --ml-badge-height: 36px;
-    --ml-badge-font-size: 0.875rem;
-    --ml-badge-padding-h: 0.75rem;
-    --ml-badge-border-radius: 0.375rem;
+    --ms-badge-text-bg: #eff6ff;
+    --ms-badge-text-color: #3b82f6;
+    --ms-badges-gap: 0.25rem;
+    --ms-badge-height: 36px;
+    --ms-badge-font-size: 0.875rem;
+    --ms-badge-text-padding: 0 0.75rem;
+    --ms-badge-border-radius: 0.375rem;
   }
 </style>
 
 Counter badge different color:
 <style>
   web-multiselect {
-    --ml-badge-counter-text-bg: #d1d5db;
-    --ml-badge-counter-text-color: #6b7280;
+    --ms-badge-counter-text-bg: #d1d5db;
+    --ms-badge-counter-text-color: #6b7280;
   }
 </style>
 
@@ -357,7 +357,7 @@ Default: Wraps to multiple lines
 CSS control:
 <style>
   web-multiselect {
-    --ml-badge-gap: 0.5rem;  /* Space between badges */
+    --ms-badges-gap: 0.5rem;  /* Space between badges */
   }
 </style>
 
@@ -371,7 +371,7 @@ function updateBadgeMode() {
   if (window.innerWidth < 768) {
     select.badgesDisplayMode = 'count';  // Mobile
   } else {
-    select.badgesDisplayMode = 'pills';  // Desktop
+    select.badgesDisplayMode = 'badges';  // Desktop
   }
 }
 
@@ -422,7 +422,7 @@ Badges have built-in animations:
 Disable via CSS:
 <style>
   web-multiselect {
-    --ml-transition-duration: 0ms;
+    --ms-transition-normal: 0ms;
   }
 </style>
 

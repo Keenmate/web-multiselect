@@ -85,8 +85,7 @@ Common HTML attributes:
   labels='{"searchPlaceholder":"Search..."}'
   show-checkboxes="true"         <!-- Show checkboxes (default) -->
   close-on-select="false"        <!-- Keep open after selection -->
-  max-height="20rem"             <!-- Dropdown height -->
-  input-size="md">               <!-- Input size: xs|sm|md|lg|xl -->
+  max-height="20rem">            <!-- Dropdown height -->
   <option value="1">Option 1</option>
   <option value="2">Option 2</option>
 </web-multiselect>
@@ -332,10 +331,12 @@ select.remove();
 
 BROWSER SUPPORT
 ---------------
-Requires modern browsers with Web Components support:
-- Chrome/Edge 67+
-- Firefox 63+
-- Safari 10.1+
+Requires modern browsers (v3): Web Components, CSS @layer and relative-colour syntax
+(oklch(from ...) / color(from ...), used by the standalone colour fallbacks - the same floor as
+@keenmate/base-css-variables 2.x):
+- Chrome/Edge 119+
+- Firefox 128+
+- Safari 18+
 
 No polyfills needed for modern browsers.
 

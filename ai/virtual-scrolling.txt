@@ -141,9 +141,8 @@ Virtual scroll requires fixed item height:
 ✅ Correct:
 <style>
   web-multiselect {
-    --ml-option-padding-v: 0.75rem;
-    --ml-option-font-size: 1rem;
-    --ml-option-line-height: 1.5;
+    --ms-option-padding: 0.75rem 1.2rem;
+    --ms-option-title-font-size: 1rem;
   }
 </style>
 <web-multiselect virtual-scroll-item-height="50">
@@ -313,7 +312,7 @@ select.renderOptionContentCallback = (context) => {
   return `
     <div style="height: 50px; display: flex; align-items: center;">
       ${context.isSelected ? '✓ ' : ''}
-      ${context.item.icon || ''} ${context.item.label}
+      ${context.option.icon || ''} ${context.option.label}
     </div>
   `;
 };

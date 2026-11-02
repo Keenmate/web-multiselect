@@ -141,8 +141,6 @@ I
 Icons → data-handling.txt, styling-theming.txt
 Import → import-patterns.txt
 value → form-integration.txt, selection-modes.txt
-input-size → styling-theming.txt
-inputSize → styling-theming.txt
 Installation → basic-setup.txt
 Internationalization → display-modes.txt, events-callbacks.txt
 ready → advanced-patterns.txt
@@ -218,7 +216,7 @@ RTL → rtl-support.txt
 
 S
 -
-SCSS → styling-theming.txt, import-patterns.txt
+Stylesheet import → import-patterns.txt
 Search → search-features.txt
 searchCallback → search-features.txt, events-callbacks.txt
 search-input-mode → search-features.txt
@@ -371,7 +369,7 @@ PERFORMANCE
 
 CUSTOMIZATION
 - CSS variables → styling-theming.txt
-- SCSS → styling-theming.txt
+- Stylesheet import → import-patterns.txt
 - Custom rendering → custom-rendering.txt
 - Action buttons → action-buttons.txt
 

@@ -4,7 +4,7 @@ STYLING & THEMING
 CRITICAL: 150+ CSS variables for customization
 - Shadow DOM encapsulation
 - CSS variables penetrate Shadow boundary
-- SCSS customization available
+- --base-* tokens (@keenmate/base-css-variables) page-wide
 - Custom styles via callback
 - Complete theme control
 
@@ -15,216 +15,157 @@ Component uses CSS custom properties (variables):
 Basic usage:
 <style>
   web-multiselect {
-    --ml-accent-color: #3b82f6;
-    --ml-text-primary: #111827;
-    --ml-border-radius: 0.5rem;
+    --ms-accent-color: #3b82f6;
+    --ms-text-color-1: #111827;
+    --ms-border-radius: 0.5rem;
   }
 </style>
 
-All variables prefixed with --ml-
+All variables prefixed with --ms-
 
 COLORS
 ------
-Primary colors:
+Primary colors (defaults; most read a --base-* token first, then fall back):
 
---ml-accent-color: #3b82f6           /* Primary brand color */
---ml-accent-color-hover: #2563eb    /* Hover state */
---ml-text-primary: #111827          /* Main text */
---ml-text-secondary: #6b7280        /* Secondary text */
---ml-text-disabled: #9ca3af         /* Disabled text */
---ml-border-color: #e5e7eb          /* Borders */
---ml-bg-primary: #ffffff            /* Main background */
---ml-bg-secondary: #f9fafb          /* Secondary background */
+--ms-accent-color: var(--base-primary-color, #3b82f6)   /* Primary brand color */
+--ms-accent-color-hover: var(--base-primary-color-hover, <derived from --ms-accent-color>)
+--ms-text-color-1: var(--base-text-color-1, light-dark(#334155, #f1f5f9))  /* Main text */
+--ms-text-color-3: var(--base-text-color-3, <--ms-text-color-1 mixed 55% into --ms-main-bg>)  /* Muted text */
+--ms-border-color: var(--base-border-color, <derived from --ms-main-bg>)  /* Borders / dividers */
+--ms-main-bg: var(--base-main-bg, light-dark(#ffffff, #1e293b))  /* Main background */
 
-INPUT SIZE ATTRIBUTE
---------------------
-Control input field dimensions with the input-size attribute:
+SIZING / SCALING WITH --ms-rem
+------------------------------
+There is no size attribute. All sizes are multiples of --ms-rem (default: var(--base-rem, 10px)):
 
-Attribute: input-size
-Values: xs | sm | md (default) | lg | xl
+<!-- Compact (80%) -->
+<web-multiselect style="--ms-rem: 8px;"></web-multiselect>
 
-Usage:
-<web-multiselect input-size="lg"></web-multiselect>
+<!-- Default (100%) -->
+<web-multiselect></web-multiselect>
 
-JavaScript API:
-const select = document.querySelector('web-multiselect');
-select.inputSize = 'sm';
+<!-- Large (120%) - everything scales proportionally; input height = 3.5 x 12 = 42px -->
+<web-multiselect style="--ms-rem: 12px;"></web-multiselect>
 
-Size values (using --ms-rem for scaling, Pure Admin standard):
-- xs: Extra small (31px height, 12px font)
-- sm: Small (33px height, 13px font)
-- md: Medium/default (35px height, 14px font)
-- lg: Large (38px height, 16px font)
-- xl: Extra large (41px height, 18px font)
-
-CSS Variables (per size, using calc() for scalability):
---ms-input-size-xs-font: calc(1.2 * var(--ms-rem))      /* 12px */
---ms-input-size-xs-padding-v: calc(0.4 * var(--ms-rem)) /* 4px */
---ms-input-size-xs-padding-h: calc(0.8 * var(--ms-rem)) /* 8px */
---ms-input-size-xs-height: calc(3.1 * var(--ms-rem))    /* 31px */
-
---ms-input-size-sm-font: calc(1.3 * var(--ms-rem))      /* 13px */
---ms-input-size-sm-padding-v: calc(0.5 * var(--ms-rem)) /* 5px */
---ms-input-size-sm-padding-h: calc(0.8 * var(--ms-rem)) /* 8px */
---ms-input-size-sm-height: calc(3.3 * var(--ms-rem))    /* 33px */
-
---ms-input-size-md-font: calc(1.4 * var(--ms-rem))      /* 14px */
---ms-input-size-md-padding-v: calc(0.8 * var(--ms-rem)) /* 8px */
---ms-input-size-md-padding-h: calc(1.2 * var(--ms-rem)) /* 12px */
---ms-input-size-md-height: calc(3.5 * var(--ms-rem))    /* 35px */
-
---ms-input-size-lg-font: calc(1.6 * var(--ms-rem))      /* 16px */
---ms-input-size-lg-padding-v: calc(1 * var(--ms-rem))   /* 10px */
---ms-input-size-lg-padding-h: calc(1.4 * var(--ms-rem)) /* 14px */
---ms-input-size-lg-height: calc(3.8 * var(--ms-rem))    /* 38px */
-
---ms-input-size-xl-font: calc(1.8 * var(--ms-rem))      /* 18px */
---ms-input-size-xl-padding-v: calc(1.2 * var(--ms-rem)) /* 12px */
---ms-input-size-xl-padding-h: calc(1.6 * var(--ms-rem)) /* 16px */
---ms-input-size-xl-height: calc(4.1 * var(--ms-rem))    /* 41px */
-
-SCALING WITH --ms-rem
----------------------
-All sizes are based on --ms-rem (default: 10px) for scalable sizing:
-
-/* Default (10px base) - produces standard pixel values */
-web-multiselect {
-  --ms-rem: 10px;  /* default */
-}
-
-/* Pure Admin (10px rem base) - scale with document */
-web-multiselect {
-  --ms-rem: 1rem;  /* inherits from html { font-size: 10px } */
-}
-
-/* Custom scaling - everything scales proportionally */
-web-multiselect {
-  --ms-rem: 12px;  /* MD = 3.5 × 12 = 42px */
-}
-
-Direct override (px):
+For targeted control override the individual --ms-input-* variables (see INPUT STYLING), e.g.:
 <style>
   web-multiselect {
-    --ms-input-size-lg-height: 42px;
-  }
-</style>
-
-Override with calc:
-<style>
-  web-multiselect {
-    --ms-input-size-md-height: calc(4.2 * var(--ms-rem));  /* 42px */
+    --ms-input-height: calc(4.2 * var(--ms-rem));  /* 42px at the default rem */
   }
 </style>
 
 Consistent with web-daterangepicker:
-Both components use identical size scales for visual consistency.
+Both components use the same --*-rem scaling approach (--ms-rem / --drp-rem).
 
 INPUT STYLING
 -------------
-Input field variables:
+Input field variables (defaults):
 
---ml-input-bg: #ffffff              /* Input background */
---ml-input-text: #111827            /* Input text color */
---ml-input-border: #d1d5db          /* Input border */
---ml-input-border-focus: #3b82f6   /* Focus border */
---ml-input-padding-v: 0.5rem        /* Vertical padding */
---ml-input-padding-h: 0.75rem       /* Horizontal padding */
---ml-input-font-size: 1rem          /* Text size */
---ml-input-line-height: 1.5         /* Line height */
---ml-input-border-radius: 0.375rem  /* Border radius */
---ml-input-min-height: 2.5rem       /* Minimum height */
+--ms-input-bg: var(--base-input-bg, var(--ms-main-bg))              /* Input background */
+--ms-input-color: var(--base-input-text-color, var(--ms-text-color-1))  /* Input text color */
+--ms-input-border-color: var(--base-input-border-color, <--ms-text-color-1 mixed into --ms-main-bg>)
+--ms-input-border-focus: var(--base-input-border-focus, var(--ms-border-width) solid var(--ms-accent-color))
+--ms-input-padding-h: calc(1.2 * var(--ms-rem))                     /* Horizontal padding */
+--ms-input-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))  /* Text size */
+--ms-input-border-radius: var(--ms-border-radius-md)                /* Border radius */
+--ms-input-height: calc(var(--base-input-size-md-height, 3.5) * var(--ms-rem))  /* Height */
+--ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-3))
 
 Example:
 <style>
   web-multiselect {
-    --ml-input-border-radius: 0.5rem;
-    --ml-input-padding-v: 0.75rem;
-    --ml-input-padding-h: 1rem;
+    --ms-input-border-radius: 0.5rem;
+    --ms-input-height: 3rem;
+    --ms-input-padding-h: 1rem;
   }
 </style>
 
 DROPDOWN STYLING
 ----------------
-Dropdown/popover variables:
+Dropdown/popover variables (defaults):
 
---ml-dropdown-bg: #ffffff           /* Dropdown background */
---ml-dropdown-border: #e5e7eb       /* Dropdown border */
---ml-dropdown-shadow: ...           /* Box shadow */
---ml-dropdown-border-radius: 0.5rem
---ml-dropdown-max-height: 20rem     /* Max height */
---ml-dropdown-min-width: 200px      /* Min width */
---ml-dropdown-padding: 0.5rem
---ml-dropdown-z-index: 1000
+--ms-dropdown-bg: var(--base-dropdown-bg, var(--ms-main-bg))
+--ms-dropdown-border-color: var(--ms-border-color)
+--ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 8px 16px var(--ms-shadow-color))
+--ms-dropdown-border-radius: var(--ms-border-radius-lg)
+--ms-options-max-height: calc(32 * var(--ms-rem))   /* Max height of the options list */
+--ms-dropdown-width: var(--ms-input-current-width)  /* Width = the live input width */
+--ms-options-padding: 0
+--ms-z-index-dropdown: var(--base-z-dropdown, 7500)
+
+Width: set --ms-dropdown-width to fix the panel width (e.g. 60rem). To bound it instead,
+use the dropdown-min-width / dropdown-max-width attributes (any CSS length):
+<web-multiselect dropdown-min-width="20rem" dropdown-max-width="40rem"></web-multiselect>
 
 Shadow example:
 <style>
   web-multiselect {
-    --ml-dropdown-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --ms-dropdown-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 </style>
 
 OPTION STYLING
 --------------
-Dropdown option variables:
+Dropdown option variables (defaults):
 
---ml-option-padding-v: 0.75rem
---ml-option-padding-h: 1rem
---ml-option-font-size: 1rem
---ml-option-line-height: 1.5
---ml-option-hover-bg: #f3f4f6        /* Hover background */
---ml-option-focus-bg: #eff6ff        /* Focus background */
---ml-option-selected-bg: #eff6ff     /* Selected background */
---ml-option-selected-color: #3b82f6  /* Selected text */
---ml-option-disabled-opacity: 0.5
+--ms-option-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))  /* Row padding (vertical horizontal) */
+--ms-option-padding-h: calc(1.2 * var(--ms-rem))  /* Only read by no-checkbox rows (.ms--no-checkboxes) */
+--ms-option-title-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))
+--ms-option-bg-hover: var(--ms-primary-bg)          /* Hover background */
+--ms-option-bg-focused: var(--ms-option-bg-hover)   /* Focus background */
+--ms-option-bg-selected: var(--base-selected-bg, var(--ms-accent-color-light))  /* Selected background */
+--ms-option-color-selected: var(--base-selected-text-color, currentColor)      /* Selected text */
+--ms-disabled-opacity: var(--base-disabled-opacity, 0.65)
 
 BADGE STYLING
 -------------
-Badge/pill variables:
+Badge/pill variables (defaults):
 
---ml-badge-text-bg: #eff6ff          /* Regular badge background */
---ml-badge-text-color: #3b82f6      /* Regular badge text */
---ml-badge-counter-text-bg: #d1d5db /* Counter badge background (gray) */
---ml-badge-counter-text-color: #6b7280 /* Counter badge text */
---ml-badge-gap: 0.25rem              /* Space between badges */
---ml-badge-height: 36px              /* Badge height */
---ml-badge-font-size: 0.875rem       /* Badge text size */
---ml-badge-padding-h: 0.75rem        /* Horizontal padding */
---ml-badge-border-radius: 0.375rem   /* Border radius */
---ml-badge-remove-button-size: 1rem  /* X button size */
+--ms-badge-text-bg: var(--ms-accent-color-light)     /* Regular badge background */
+--ms-badge-text-color: var(--ms-accent-text-color)   /* Regular badge text */
+--ms-badge-counter-text-bg: color-mix(in srgb, var(--ms-text-color-1) 10%, transparent)  /* Counter badge background */
+--ms-badge-counter-text-color: var(--ms-text-color-1)  /* Counter badge text */
+--ms-badges-gap: calc(0.8 * var(--ms-rem))           /* Space between badges */
+--ms-badge-height: calc(2.7 * var(--ms-rem))         /* Badge height */
+--ms-badge-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))  /* Badge text size */
+--ms-badge-text-padding: 0 calc(0.8 * var(--ms-rem)) /* Badge text padding */
+--ms-badge-border-radius: var(--ms-border-radius-sm) /* Border radius */
+--ms-badge-remove-width: calc(2.7 * var(--ms-rem))   /* X button width */
 
-Distinguish counter badges:
+Distinguish counter badges (example values):
 <style>
   web-multiselect {
-    --ml-badge-text-bg: #eff6ff;
-    --ml-badge-text-color: #3b82f6;
-    --ml-badge-counter-text-bg: #d1d5db;  /* Different for count mode */
-    --ml-badge-counter-text-color: #6b7280;
+    --ms-badge-text-bg: #eff6ff;
+    --ms-badge-text-color: #3b82f6;
+    --ms-badge-counter-text-bg: #d1d5db;  /* Different for count mode */
+    --ms-badge-counter-text-color: #6b7280;
   }
 </style>
 
 CHECKBOX STYLING
 ----------------
-Checkbox variables:
+Checkbox variables (defaults):
 
---ml-checkbox-size: 16px             /* Checkbox size */
---ml-checkbox-border: #d1d5db        /* Border color */
---ml-checkbox-bg: #ffffff            /* Background */
---ml-checkbox-checked-bg: #3b82f6    /* Checked background */
---ml-checkbox-checked-border: #3b82f6
---ml-checkbox-scale: 1               /* Scale multiplier */
---ml-checkbox-margin-top: 0.125rem   /* Top spacing */
---ml-checkbox-align: flex-start      /* Vertical alignment */
+--ms-checkbox-size: calc(1.6 * var(--ms-rem))        /* Checkbox size */
+--ms-checkbox-border-color: var(--base-checkbox-border-color, var(--ms-input-border-color))
+--ms-checkbox-bg: var(--ms-input-bg)                 /* Background */
+--ms-checkbox-checked-bg: var(--ms-accent-color)     /* Checked background */
+--ms-checkbox-checked-border: var(--ms-checkbox-border-width-scaled) solid var(--ms-accent-color)
+--ms-checkbox-scale: var(--base-checkbox-scale, 1)   /* Scale multiplier */
+--ms-checkbox-margin-top: 0                          /* Top spacing */
+--ms-checkbox-align: center                          /* Vertical alignment */
 
-Alignment options:
-- flex-start: Top aligned
-- center: Center aligned (default)
-- flex-end: Bottom aligned
+Alignment: use the checkbox-align attribute (top | center (default) | bottom):
+<web-multiselect checkbox-align="top"></web-multiselect>
+
+The attribute marks each row with data-checkbox-align, and options.css overrides
+--ms-checkbox-align (and, for top, --ms-checkbox-margin-top) per row - so prefer the
+attribute over setting --ms-checkbox-align on the host.
 
 Example:
 <style>
   web-multiselect {
-    --ml-checkbox-size: 18px;
-    --ml-checkbox-align: center;
+    --ms-checkbox-size: 18px;
   }
 </style>
 
@@ -232,64 +173,59 @@ ICON STYLING
 ------------
 Icon variables:
 
---ml-icon-size: 1.25rem              /* Icon size */
---ml-icon-margin: 0.5rem             /* Spacing */
+--ms-option-icon-size: calc(2 * var(--ms-rem))       /* Icon size */
+--ms-option-content-gap: calc(0.8 * var(--ms-rem))   /* Spacing */
 
 SEARCH INPUT
 ------------
 Search-specific variables:
 
---ml-search-input-padding: 0.75rem
---ml-search-input-font-size: 1rem
---ml-search-input-border: #d1d5db
---ml-search-input-focus-border: #3b82f6
---ml-search-placeholder-color: #9ca3af
+--ms-input-placeholder-color: var(--base-input-placeholder-color, var(--ms-text-color-3))
 
 GROUP STYLING
 -------------
 Option group variables:
 
---ml-group-header-bg: #f9fafb
---ml-group-header-text: #6b7280
---ml-group-header-font-size: 0.875rem
---ml-group-header-padding: 0.5rem 1rem
---ml-group-header-font-weight: 600
+--ms-group-label-color: var(--ms-text-color-3)
+--ms-group-label-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))
+--ms-group-label-padding: calc(0.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem))
+--ms-group-label-font-weight: var(--base-font-weight-semibold, 600)
 
 ACTION BUTTONS
 --------------
 Action button variables:
 
---ml-action-button-bg: #f3f4f6
---ml-action-button-color: #374151
---ml-action-button-hover-bg: #e5e7eb
---ml-action-button-border: 1px solid #d1d5db
---ml-action-button-padding: 0.5rem 1rem
---ml-action-button-font-size: 0.875rem
---ml-action-button-border-radius: 0.375rem
+--ms-action-button-bg: transparent
+--ms-action-button-color: var(--ms-text-color-1)
+--ms-action-button-bg-hover: var(--ms-primary-bg)
+--ms-action-btn-border: var(--ms-border-width) solid var(--ms-action-button-border-color)
+--ms-action-btn-padding: calc(0.4 * var(--ms-rem)) calc(0.8 * var(--ms-rem))
+--ms-action-btn-font-size: calc(var(--base-font-size-xs, 1.2) * var(--ms-rem))
+--ms-action-btn-border-radius: var(--ms-border-radius-sm)
 
 TOOLTIPS
 --------
 Tooltip variables:
 
---ml-tooltip-bg: #1f2937
---ml-tooltip-color: #ffffff
---ml-tooltip-padding: 0.5rem 0.75rem
---ml-tooltip-border-radius: 0.375rem
---ml-tooltip-font-size: 0.875rem
---ml-tooltip-max-width: 200px
---ml-tooltip-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+--ms-tooltip-bg: var(--base-tooltip-bg, <derived from --ms-text-color-1 / --ms-main-bg>)
+--ms-tooltip-text-color: var(--base-tooltip-text-color, light-dark(var(--ms-main-bg), var(--ms-text-color-1)))
+--ms-tooltip-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))
+--ms-tooltip-border-radius: var(--ms-border-radius-lg)
+--ms-tooltip-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))
+--ms-tooltip-max-width: calc(32 * var(--ms-rem))
+--ms-tooltip-shadow: var(--base-shadow-md, 0 2px 8px var(--ms-shadow-color))
 
 TRANSITIONS
 -----------
 Animation variables:
 
---ml-transition-duration: 150ms
---ml-transition-timing: cubic-bezier(0.4, 0, 0.2, 1)
+--ms-transition-normal: var(--base-duration-normal, 0.15s)
+--ms-easing-snappy: var(--base-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))
 
 Disable animations:
 <style>
   web-multiselect {
-    --ml-transition-duration: 0ms;
+    --ms-transition-normal: 0ms;
   }
 </style>
 
@@ -297,8 +233,8 @@ Z-INDEX
 -------
 Layering variables:
 
---ml-dropdown-z-index: 1000
---ml-tooltip-z-index: 2000
+--ms-z-index-dropdown: var(--base-z-dropdown, 7500)
+--ms-tooltip-z-index: var(--base-z-tooltip, 9000)
 
 COMPLETE THEME EXAMPLE
 ----------------------
@@ -307,30 +243,30 @@ Custom brand theme:
 <style>
   web-multiselect {
     /* Brand colors */
-    --ml-accent-color: #10b981;       /* Green */
-    --ml-accent-color-hover: #059669;
+    --ms-accent-color: #10b981;       /* Green */
+    --ms-accent-color-hover: #059669;
 
     /* Input */
-    --ml-input-border-radius: 0.75rem;
-    --ml-input-padding-v: 0.75rem;
+    --ms-input-border-radius: 0.75rem;
+    --ms-input-height: 3rem;
 
     /* Dropdown */
-    --ml-dropdown-border-radius: 0.75rem;
-    --ml-dropdown-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --ms-dropdown-border-radius: 0.75rem;
+    --ms-dropdown-box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 
     /* Options */
-    --ml-option-hover-bg: #ecfdf5;
-    --ml-option-focus-bg: #d1fae5;
-    --ml-option-padding-v: 1rem;
+    --ms-option-bg-hover: #ecfdf5;
+    --ms-option-bg-focused: #d1fae5;
+    --ms-option-padding: 1rem;
 
     /* Badges */
-    --ml-badge-text-bg: #d1fae5;
-    --ml-badge-text-color: #059669;
-    --ml-badge-border-radius: 9999px;  /* Fully rounded */
+    --ms-badge-text-bg: #d1fae5;
+    --ms-badge-text-color: #059669;
+    --ms-badge-border-radius: 9999px;  /* Fully rounded */
 
     /* Checkboxes */
-    --ml-checkbox-checked-bg: #10b981;
-    --ml-checkbox-checked-border: #10b981;
+    --ms-checkbox-checked-bg: #10b981;
+    --ms-checkbox-checked-border: 1px solid #10b981;
   }
 </style>
 
@@ -342,32 +278,31 @@ Create dark theme:
   @media (prefers-color-scheme: dark) {
     web-multiselect {
       /* Backgrounds */
-      --ml-bg-primary: #1f2937;
-      --ml-bg-secondary: #111827;
+      --ms-main-bg: #1f2937;
 
       /* Text */
-      --ml-text-primary: #f9fafb;
-      --ml-text-secondary: #d1d5db;
+      --ms-text-color-1: #f9fafb;
+      --ms-text-color-3: #d1d5db;
 
       /* Borders */
-      --ml-border-color: #374151;
+      --ms-border-color: #374151;
 
       /* Input */
-      --ml-input-bg: #374151;
-      --ml-input-text: #f9fafb;
-      --ml-input-border: #4b5563;
+      --ms-input-bg: #374151;
+      --ms-input-color: #f9fafb;
+      --ms-input-border-color: #4b5563;
 
       /* Dropdown */
-      --ml-dropdown-bg: #374151;
-      --ml-dropdown-border: #4b5563;
+      --ms-dropdown-bg: #374151;
+      --ms-dropdown-border-color: #4b5563;
 
       /* Options */
-      --ml-option-hover-bg: #4b5563;
-      --ml-option-focus-bg: #1e3a8a;
+      --ms-option-bg-hover: #4b5563;
+      --ms-option-bg-focused: #1e3a8a;
 
       /* Badges */
-      --ml-badge-text-bg: #1e40af;
-      --ml-badge-text-color: #93c5fd;
+      --ms-badge-text-bg: #1e40af;
+      --ms-badge-text-color: #93c5fd;
     }
   }
 </style>
@@ -379,28 +314,12 @@ Or with class:
   }
 </style>
 
-SCSS CUSTOMIZATION
-------------------
-Use SCSS for advanced theming:
-
-// styles.scss
-@use '@keenmate/web-multiselect/scss' with (
-  $ml-primary: #10b981,
-  $ml-border-radius: 0.5rem,
-  $ml-font-family: 'Inter, sans-serif',
-  $ml-spacing-unit: 0.25rem
-);
-
-Available SCSS variables:
-- $ml-primary: Primary color
-- $ml-secondary: Secondary color
-- $ml-border-radius: Border radius
-- $ml-font-family: Font stack
-- $ml-spacing-unit: Base spacing
-- And many more...
-
-Requires sass package:
-npm install -D sass
+STYLESHEET CUSTOMIZATION (NO SCSS)
+----------------------------------
+There is no SCSS entry point (the SCSS source was replaced by plain CSS + --ms-* variables).
+Theme with the --ms-* variables above (set on the <web-multiselect> element itself), page-wide
+--base-* tokens from @keenmate/base-css-variables, or getCustomStylesCallback. The plain CSS
+source ships as '@keenmate/web-multiselect/css' (src/css/main.css) for bundlers that process CSS.
 
 CUSTOM STYLES CALLBACK
 ----------------------
@@ -420,8 +339,8 @@ select.getCustomStylesCallback = (ctx) => {
     }
 
     .badge-urgent {
-      --ml-badge-text-bg: #fee2e2;
-      --ml-badge-text-color: #dc2626;
+      --ms-badge-text-bg: #fee2e2;
+      --ms-badge-text-color: #dc2626;
       font-weight: 600;
     }
 
@@ -437,16 +356,16 @@ Adjust for different screen sizes:
 
 <style>
   web-multiselect {
-    --ml-input-padding-v: 0.75rem;
-    --ml-badge-height: 36px;
+    --ms-input-height: 3rem;
+    --ms-badge-height: 36px;
   }
 
   @media (max-width: 768px) {
     web-multiselect {
-      --ml-input-padding-v: 0.5rem;
-      --ml-badge-height: 32px;
-      --ml-option-padding-v: 0.5rem;
-      --ml-dropdown-max-height: 15rem;
+      --ms-input-height: 2.5rem;
+      --ms-badge-height: 32px;
+      --ms-option-padding: 0.5rem 1rem;
+      --ms-options-max-height: 15rem;
     }
   }
 </style>
@@ -479,7 +398,7 @@ Cannot style internal elements directly:
 ✅ Use CSS variables instead:
 <style>
   web-multiselect {
-    --ml-option-color: red;
+    --ms-option-text-color: red;
   }
 </style>
 
@@ -487,13 +406,11 @@ Or getCustomStylesCallback for complex styling
 
 BROWSER COMPATIBILITY
 ---------------------
-CSS variables supported:
-- Chrome/Edge 49+
-- Firefox 31+
-- Safari 9.1+
-- All modern browsers
-
-Fallbacks not needed for modern browsers
+The standalone colour fallbacks use relative-colour syntax (oklch(from ...) / color(from ...)),
+so the floor is the same as @keenmate/base-css-variables 2.x:
+- Chrome/Edge 119+
+- Firefox 128+
+- Safari 18+
 
 PERFORMANCE
 -----------
@@ -505,8 +422,8 @@ CSS variable changes are fast:
 Changing many variables:
 <style>
   web-multiselect.custom-theme {
-    --ml-accent-color: #10b981;
-    --ml-accent-color-hover: #059669;
+    --ms-accent-color: #10b981;
+    --ms-accent-color-hover: #059669;
     /* ... 20+ variables */
   }
 </style>
@@ -521,8 +438,8 @@ No direct integration (Shadow DOM)
 Use CSS variables:
 <style>
   web-multiselect {
-    --ml-accent-color: theme('colors.blue.500');
-    --ml-border-radius: theme('borderRadius.lg');
+    --ms-accent-color: theme('colors.blue.500');
+    --ms-border-radius: theme('borderRadius.lg');
   }
 </style>
 
@@ -542,7 +459,7 @@ Inspect Shadow DOM:
 Check variable values:
 const select = document.querySelector('web-multiselect');
 const styles = getComputedStyle(select);
-console.log(styles.getPropertyValue('--ml-accent-color'));
+console.log(styles.getPropertyValue('--ms-accent-color'));
 
 BEST PRACTICES
 --------------
@@ -565,29 +482,29 @@ COMMON THEMES
 Minimal:
 <style>
   web-multiselect {
-    --ml-input-border: none;
-    --ml-input-border-radius: 0;
-    --ml-dropdown-border-radius: 0;
-    --ml-badge-border-radius: 0;
+    --ms-input-border: none;
+    --ms-input-border-radius: 0;
+    --ms-dropdown-border-radius: 0;
+    --ms-badge-border-radius: 0;
   }
 </style>
 
 Rounded:
 <style>
   web-multiselect {
-    --ml-input-border-radius: 9999px;
-    --ml-badge-border-radius: 9999px;
-    --ml-dropdown-border-radius: 1rem;
+    --ms-input-border-radius: 9999px;
+    --ms-badge-border-radius: 9999px;
+    --ms-dropdown-border-radius: 1rem;
   }
 </style>
 
 Colorful:
 <style>
   web-multiselect {
-    --ml-accent-color: #8b5cf6;
-    --ml-option-hover-bg: #f3e8ff;
-    --ml-badge-text-bg: #ede9fe;
-    --ml-badge-text-color: #7c3aed;
+    --ms-accent-color: #8b5cf6;
+    --ms-option-bg-hover: #f3e8ff;
+    --ms-badge-text-bg: #ede9fe;
+    --ms-badge-text-color: #7c3aed;
   }
 </style>
 

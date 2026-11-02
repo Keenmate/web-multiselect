@@ -18,7 +18,7 @@ Customize dropdown option appearance:
 select.renderOptionContentCallback = (context) => {
   return `
     <div class="custom-option">
-      ${context.item.icon || ''} ${context.item.label}
+      ${context.option.icon || ''} ${context.option.label}
       ${context.isSelected ? '✓' : ''}
     </div>
   `;
@@ -26,8 +26,8 @@ select.renderOptionContentCallback = (context) => {
 
 Context object (OptionContentRenderContext):
 {
-  item: T,                // The option
-  index: number,          // Option index in list
+  option: T,              // The option
+  optionIndex: number,    // Option index in the filtered list
   isSelected: boolean,    // Currently selected
   isFocused: boolean,     // Keyboard focused
   isMatched: boolean,     // Matches search (navigate mode)
@@ -70,9 +70,11 @@ select.renderBadgeContentCallback = ({ option, isInPopover }) => {
 
 Context object (BadgeContentRenderContext):
 {
-  item: T,                // The selected option
-  displayMode: string,    // 'badges' | 'count' | 'compact' | 'partial' | 'none'
-  isInPopover: boolean    // Rendering in popover vs main area
+  option: T,              // The selected option
+  displayMode: BadgesDisplayMode, // 'badges' | 'count' | 'compact' | 'partial' | 'none'
+  isInPopover: boolean,   // Rendering in popover vs main area
+  controller, element,    // non-enumerable
+  presentation, isFullscreen, isModal
 }
 
 RENDER WHOLE BADGE
@@ -134,8 +136,8 @@ select.renderOptionContentCallback = (context) => {
   if (context.isFocused) {
     return `
       <div class="option-focused">
-        <strong>${context.item.label}</strong>
-        ${context.item.description}
+        <strong>${context.option.label}</strong>
+        ${context.option.description}
       </div>
     `;
   }
@@ -143,12 +145,12 @@ select.renderOptionContentCallback = (context) => {
   if (context.isSelected) {
     return `
       <div class="option-selected">
-        ✓ ${context.item.label}
+        ✓ ${context.option.label}
       </div>
     `;
   }
 
-  return `<div>${context.item.label}</div>`;
+  return `<div>${context.option.label}</div>`;
 };
 
 CONDITIONAL RENDERING
@@ -156,15 +158,15 @@ CONDITIONAL RENDERING
 Show/hide elements based on data:
 
 select.renderOptionContentCallback = (context) => {
-  const badge = context.item.isNew ? '<span class="badge-new">NEW</span>' : '';
-  const icon = context.item.icon ? `<img src="${context.item.icon}" />` : '';
-  const subtitle = context.item.subtitle ? `<div class="subtitle">${context.item.subtitle}</div>` : '';
+  const badge = context.option.isNew ? '<span class="badge-new">NEW</span>' : '';
+  const icon = context.option.icon ? `<img src="${context.option.icon}" />` : '';
+  const subtitle = context.option.subtitle ? `<div class="subtitle">${context.option.subtitle}</div>` : '';
 
   return `
     <div class="option">
       ${icon}
       <div class="content">
-        <div class="label">${context.item.label} ${badge}</div>
+        <div class="label">${context.option.label} ${badge}</div>
         ${subtitle}
       </div>
       ${context.isSelected ? '<span class="check">✓</span>' : ''}
@@ -180,14 +182,14 @@ select.renderOptionContentCallback = (context) => {
   return `
     <div class="option-grid">
       <div class="col-1">
-        <img src="${context.item.avatar}" class="avatar" />
+        <img src="${context.option.avatar}" class="avatar" />
       </div>
       <div class="col-2">
-        <div class="name">${context.item.name}</div>
-        <div class="role">${context.item.role}</div>
+        <div class="name">${context.option.name}</div>
+        <div class="role">${context.option.role}</div>
       </div>
       <div class="col-3">
-        <span class="status ${context.item.status}">${context.item.status}</span>
+        <span class="status ${context.option.status}">${context.option.status}</span>
       </div>
     </div>
   `;
@@ -235,11 +237,11 @@ select.renderOptionContentCallback = (context) => {
   div.className = 'custom-option';
 
   const icon = document.createElement('span');
-  icon.textContent = context.item.icon || '';
+  icon.textContent = context.option.icon || '';
   div.appendChild(icon);
 
   const label = document.createElement('span');
-  label.textContent = context.item.label;
+  label.textContent = context.option.label;
   div.appendChild(label);
 
   if (context.isSelected) {
@@ -385,12 +387,12 @@ Render based on runtime state:
 
 select.renderOptionContentCallback = (context) => {
   const user = getCurrentUser();
-  const isOwner = context.item.ownerId === user.id;
+  const isOwner = context.option.ownerId === user.id;
   const canEdit = user.permissions.includes('edit');
 
   return `
     <div class="option">
-      ${context.item.label}
+      ${context.option.label}
       ${isOwner ? '<span class="badge-owner">Owner</span>' : ''}
       ${canEdit ? '<span class="icon-edit">✏️</span>' : ''}
     </div>
@@ -403,17 +405,17 @@ Optimize rendering for large lists:
 
 // ❌ Slow: Complex rendering for every option
 select.renderOptionContentCallback = (context) => {
-  const data = expensiveCalculation(context.item);
+  const data = expensiveCalculation(context.option);
   return `<div>${data}</div>`;
 };
 
 // ✅ Fast: Pre-calculate or cache
 const cache = new Map();
 select.renderOptionContentCallback = (context) => {
-  if (!cache.has(context.item.value)) {
-    cache.set(context.item.value, expensiveCalculation(context.item));
+  if (!cache.has(context.option.value)) {
+    cache.set(context.option.value, expensiveCalculation(context.option));
   }
-  return `<div>${cache.get(context.item.value)}</div>`;
+  return `<div>${cache.get(context.option.value)}</div>`;
 };
 
 ACCESSIBILITY
@@ -425,7 +427,7 @@ select.renderOptionContentCallback = (context) => {
     <div role="option"
          aria-selected="${context.isSelected}"
          aria-disabled="${context.isDisabled}">
-      ${context.item.label}
+      ${context.option.label}
     </div>
   `;
 };
@@ -438,14 +440,14 @@ Use multiple rendering callbacks together:
 select.renderOptionContentCallback = (context) => {
   return `
     <div class="dropdown-option">
-      ${context.item.icon} ${context.item.label}
+      ${context.option.icon} ${context.option.label}
     </div>
   `;
 };
 
 // Badge in main area
 select.renderBadgeContentCallback = (context) => {
-  return context.item.code;  // Short form
+  return context.option.code;  // Short form
 };
 
 // Item in popover
@@ -491,16 +493,16 @@ DEBUGGING RENDERING
 Log rendering calls:
 
 select.renderOptionContentCallback = (context) => {
-  console.log('Rendering:', context.item.label, context);
+  console.log('Rendering:', context.option.label, context);
 
-  return `<div>${context.item.label}</div>`;
+  return `<div>${context.option.label}</div>`;
 };
 
 Check context values:
 select.renderOptionContentCallback = (context) => {
   return `
     <div>
-      ${context.item.label}
+      ${context.option.label}
       <small>
         S:${context.isSelected}
         F:${context.isFocused}
@@ -538,7 +540,7 @@ With selection indicator:
 select.renderOptionContentCallback = (context) => {
   return `
     <div>
-      ${context.isSelected ? '✓ ' : ''}${context.item.label}
+      ${context.isSelected ? '✓ ' : ''}${context.option.label}
     </div>
   `;
 };

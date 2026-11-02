@@ -549,8 +549,8 @@ Customize how options appear in the dropdown:
 
 **Context object** (`OptionContentRenderContext` — the callback's single `ctx` argument):
 
-- `item` — the option being rendered.
-- `index: number` — index of the option in the filtered list.
+- `option` — the option being rendered.
+- `optionIndex: number` — index of the option in the filtered list.
 - `isSelected: boolean` — whether the option is currently selected.
 - `isFocused: boolean` — whether the option is currently focused (keyboard navigation).
 - `isMatched: boolean` — whether the option matches the current search term (navigate mode only).

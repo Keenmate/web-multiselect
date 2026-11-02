@@ -131,7 +131,7 @@ Open dropdown:
 
 Focus indicators:
 - Visual highlight on focused option
-- CSS variable: --ml-option-focus-bg
+- CSS variable: --ms-option-bg-focused
 
 ACCESSIBILITY
 -------------

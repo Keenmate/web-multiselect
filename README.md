@@ -31,49 +31,54 @@ Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.np
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
-## What's New in v2.6.0-rc03
+## What's New in v3.0.0
 
-Keyboard form flow for single-select, plus a visible highlight. See the
-[release notes](release-notes/2.6.0-rc03.md); one behaviour change: single-select now clears its
-search when it closes.
+**A major release — breaking, no aliases.** The callbacks, events and inputs follow the shared
+KeenMate interaction model and naming rulebook (`@keenmate/web-components-core` 1.0.0-rc15), so
+code written for 2.x needs updating. Full old → new tables: the
+[CHANGELOG `[Unreleased]` section](CHANGELOG.md#unreleased); step-by-step:
+[ai/migration-guide.txt](ai/migration-guide.txt).
 
-- **Keyboard — Tab can select** — Tab (and Shift+Tab) used to close the dropdown and move on, dropping the highlighted option, so typing `cesky kru` and tabbing to the next field left it empty. The new `tab-behavior` attribute decides what Tab selects before focus moves: `select-highlighted` takes the highlighted option, including the first match highlighted while typing; `select-navigated` only takes an option the user moved to with the arrows (typing resets it); `close` selects nothing, as in 2.5. Unset means `select-highlighted` in single-select and `close` in multi-select. Tab only ever adds, so it never un-picks in multi-select, and a `beforeSelectCallback` veto still applies. A Tab selection fires `select` / `change` and updates the form value like Enter.
-- **Keyboard — single-select opens at its value** — Opening a single-select with no search term now highlights the selected option and scrolls it to the middle of the list, like a native `<select>`: with Item 30 of 50 selected, ArrowUp goes to 29 instead of starting from the top. The scroll is instant and moves only the list, never the page; with virtual scrolling the row is rendered first. Typing still highlights the first match, and tabbing straight through changes nothing.
-- **Search — single-select clears the term on close** — `should-keep-search-on-close` is now tristate: unset keeps the term in multi-select, where you reopen and keep picking, but clears it in single-select, where it is finished once a value is picked or focus leaves. Before, tabbing out after typing `cesk` and coming back with Shift+Tab reopened the field with `cesk` in the box and the list still filtered — in a cascade of selects you had to delete it every time. Behaviour change: `should-keep-search-on-close="true"` restores the old single-select behaviour.
-- **Theming — the focused option is filled again** — 2.6.0-rc01 marked keyboard focus with the shared contract's 1px inset ring and no fill, as in the tree components. In a combobox the focused option is what Enter / Tab will pick, and with a single result its ring sat on the panel border, so nothing looked highlighted. `--ms-option-bg-focused` now uses the hover fill under the ring and deliberately no longer reads `--base-focused-bg` — a documented exception to the contract; override `--ms-option-bg-focused` to change it.
-- **Search — primitives now live in web-components-core** — Normalization, matching and highlight mapping moved to `@keenmate/web-components-core/search` (core 1.0.0-rc14), so other Keenmate components (web-treeview next) match and highlight exactly the same way. `src/search.ts` is gone; `normalizeSearchText` and the search types are re-exported under the same names. No API or behaviour change: the e2e suite passed unchanged and the bundle size is flat (412 kB).
+**Breaking changes:**
 
-## What's New in v2.6.0-rc02
+- **Callbacks take one `ctx`** — per-option callbacks read `ctx.option` (row callbacks also
+  `ctx.optionIndex`), e.g. `getDisplayValueCallback: ({ option }) => option.name`; every ctx
+  carries `controller` / `element`. Before-hooks cancel with `false`
+  (`beforeSelectCallback`, `beforeAddCallback` (was `addNewCallback`), `beforeKeydownCallback`
+  (was `keydownCallback`)). `on*` properties receive the event **detail**. Custom action
+  buttons use `id` + `onClick(detail)`; a new `action` event reports every button /
+  `data-action` click; the toggle state is `isToggled` / `getIsToggledCallback`.
+- **One naming vocabulary** — `isMultiple`, `shouldCloseOnSelect`, `name`, `isDisabledMember` /
+  `is-disabled-member`, `maxVisibleBadgeCount`, `virtualScrollItemHeight`, … (attributes derived
+  from the property names).
+- **UI strings → `labels`** — `search-placeholder`, `select-placeholder`, `empty-message`,
+  `loading-message`, `add-new-text`, … are gone; set `labels` (property or JSON attribute,
+  `labels='{"selectPlaceholder":"Pick a country"}'`). Empty states are `noData` / `noResults`.
+- **Initial selection = `value` / `defaultValue`** (was `initial-values` / `initialValues`), parsed
+  per `value-format`; `el.value` is the live submitted value. `value-format="csv"` → `text`
+  (joined by the new `value-separator`).
+- **`form.reset()` restores the initial selection** (was: cleared it), without firing
+  `deselect` / `change`.
+- **Selection state is properties** — `selectedOptions` / `selectedValue` / `selectedOption` /
+  `searchTerm` on the element and `el.controller` (was `getSelected()` / `getValue()` /
+  `selectedItem` / `searchText`); `el.controller.clearSelection()` (was `clearAll()`; action id
+  and label `clear-selection` / `labels.clearSelection`).
+- **Member defaults for all data** — `value` / `label` / `group` / `icon` / `subtitle` /
+  `disabled`, so `[{ value, label }]` works without configuration; a `get*Callback` always beats its member.
+- **`presentation`** (was `mobile-presentation`); the `mobile` width breakpoint is 768px (was 640).
+- **Defer / ready from core** — `el.release()` (was `el.ready()`), host attribute `ready` +
+  `:state(ready)` (was `is-ready`), `el.whenReady()`, property `shouldDefer`.
+- **Removed:** `show-debug-info` and the debug panel (use `el.enableLogging()`),
+  `--ms-transition-fast` (one duration: `--ms-transition-normal`).
+- **Browser floor: Chrome/Edge 119+, Firefox 128+, Safari 18+** (relative-colour syntax in the
+  standalone colour fallbacks).
 
-The first 2.6 release on npm (rc01 never reached it), so it also carries everything from
-2.6.0-rc01 (see the [CHANGELOG](CHANGELOG.md)). **Read the [release notes](release-notes/2.6.0-rc02.md) before upgrading from
-2.5**: search now ignores accents by default, and a theme signal on a wrapper `<div>` needs
-`theme-source`.
+**Also new:** responsive rules (below), `disabled` / `readonly`, `open` / `close` /
+`value-format-error` events, `getOptionByValue()`, the shared loader (`renderLoadingCallback`),
+standalone colours that follow the base-css-variables contract (accent `#3b82f6`; disabled rows
+are tinted).
 
-- **Search — accent-insensitive by default** — Built-in search used to lowercase and nothing more, so `ces` never found `Český` and `muller` never found `Müller`. The new `search-behavior` attribute picks the normalization: `normalized` (the new default) ignores case and diacritics, `case-insensitive` restores the previous behavior, and `exact` ignores nothing. Every mode compares Unicode NFC, so composed and decomposed accents match each other, and the `<mark>` highlight follows the same rules, so `ces` highlights `Čes`. The setting is live: a page-level switch re-runs the open search in place. The normalization is exported as `normalizeSearchText(text, behavior?)` for your own code.
-- **Search — choose where the term matches** — The new `search-match` attribute sets where built-in search looks: `contains` (the default, as before), `equals` (the whole value, for codes: `haxkl324` finds `HAxKL324` but not `HAxKL3245`), `starts-with` / `ends-with` (the whole value), `word-starts-with` / `word-ends-with` (any word, so `kru` finds `Český Krumlov`), or `regex`. A regex runs against the raw search value without normalization, so case and accents are up to the pattern, and an unfinished pattern keeps the last valid result while you type.
-- **Search — prepare the term, or bring your own engine** — `getSearchTermCallback(term, context)` turns typed text into what search looks for. For built-in search it returns a string or a `RegExp`, e.g. so `ha-324/56` finds `HA 324-56` and `HA32456`. For your own `searchCallback` it can return anything, objects included. `searchCallback` gets a third `context` argument with that prepared `searchTerm` and `entries`, every option paired with its search value. That value may now be an object such as `{ title, zip }` from `getSearchValueCallback`, so a FlexSearch or server search can match postal codes. `entries` is built on first access and stays the same array until the options change, so an engine can key its index on it. Existing `(term, signal)` callbacks keep working, and results may be returned synchronously.
-- **Search — values prepared once, not per keystroke** — Each option's search value, from `searchValueMember` / `getSearchValueCallback` or the display value, is computed and normalized once, then cached. A keystroke over 2,000 options is now 2,000 lookups, where it used to re-read and re-lowercase every value. Replacing `options`, calling `refresh()`, or changing a member or callback re-prepares the values.
-- **Dark mode — works in Firefox and Safari** — The component no longer relies on `:host-context()`, which Firefox doesn't support and Safari only partly supports. It reads the `data-context-theme` attribute that `@keenmate/web-components-core` 1.0.0-rc13 sets after detecting the page theme once (`data-theme`, `data-bs-theme`, or `.dark` / `.light` on `<html>` / `<body>`), shared by every Keenmate component. A per-instance `data-theme` still wins. Behaviour change: a theme signal on a wrapper `<div>` now needs `theme-source="closest"` or a selector. `setThemeMode()`, `getThemeContext()` and `observeThemeContext()` are re-exported from core.
-- **Theming — follows base-css-variables 2.0.0-rc03** — Selected options read `--base-selected-*` (renamed from `--base-highlighted-*`). The placeholder and hint use text step 3, because step 4 was too faint to read. Primary used as text (badges, "add new", the fullscreen info icon) reads `--base-primary-text-color` for at least 4.5:1 contrast. Disabled controls share `--base-disabled-opacity`. Standalone fallbacks now match the contract defaults (accent `#0ea5e9`).
-- **Fixes — fullscreen in Firefox/Safari, group count chip, trailing spaces** — `mobile-presentation="fullscreen"` closed itself the moment it opened in Firefox and WebKit, because a zero-delay timer cleared the open-gesture guard before the follow-up `click`. The guard now lasts the whole gesture. The per-group count chip gets vertical padding so its `[N]` no longer touches the edges, and group headers grow about 4px to fit it without shifting when it toggles. Flat-list search now trims the term like tree search does, so `york ` (with a trailing space) finds `New York`.
-
-> **Breaking change in the next 2.x release — interaction model.** Every callback now takes one
-> `ctx` argument (per-option callbacks read `ctx.option`, e.g. `getDisplayValueCallback: ({ option }) => option.name`),
-> `on*` properties receive the event **detail** (`el.onSelect = (detail) => detail.option`),
-> `addNewCallback` / `keydownCallback` / `getDisabledCallback` / `customStylesCallback` became
-> `beforeAddCallback` / `beforeKeydownCallback` / `getIsDisabledCallback` / `getCustomStylesCallback`,
-> before-hooks cancel with `false`, custom action buttons use `id` + `onClick(detail)`, a new
-> `action` event reports every button / `data-action` click, and `el.controller` is the public
-> facade. The full old → new table is in the [CHANGELOG `[Unreleased]` section](CHANGELOG.md#unreleased);
-> the docs below already describe the new API.
->
-> **v3.0.0-rc01 also unifies the names with the other KeenMate components** (no aliases):
-> `isMultiple`, `shouldCloseOnSelect`, `name`, `clearSelection()`, `selectedOptions` /
-> `selectedValue` on the element and the controller, `ctx.option` / `optionIndex`, every UI
-> string in `labels` (also a JSON attribute), new `disabled` / `readonly` and `open` / `close`
-> events, core `defer` / `release()` / `ready`. See the CHANGELOG "suite-wide naming
-> unification" tables.
+Earlier releases: [2.6.0-rc03](release-notes/2.6.0-rc03.md), [2.6.0-rc02](release-notes/2.6.0-rc02.md), [CHANGELOG](CHANGELOG.md).
 
 ## Install
 
@@ -90,7 +95,7 @@ npm install @keenmate/web-multiselect
   import '@keenmate/web-multiselect';
 </script>
 
-<web-multiselect placeholder="Pick a country">
+<web-multiselect labels='{"selectPlaceholder": "Pick a country"}'>
   <option value="cz">Czech Republic</option>
   <option value="sk">Slovakia</option>
   <option value="at">Austria</option>
@@ -202,11 +207,11 @@ plain text, as are `showMessage()` strings and `renderSelectedContentCallback` (
 
 ## Browser support
 
-Modern evergreen browsers — anything with native `customElements`, Shadow DOM, and CSS `@layer` support:
+Modern evergreen browsers — the standalone colour fallbacks use CSS relative-colour syntax (`oklch(from …)`), the same floor as `@keenmate/base-css-variables` 2.x:
 
-- Chrome / Edge 99+
-- Firefox 97+
-- Safari 15.4+
+- Chrome / Edge 119+
+- Firefox 128+
+- Safari 18+
 
 No polyfills are shipped. SSR-safe: the module imports without crashing in Node, but renders only after hydration in the browser.
 

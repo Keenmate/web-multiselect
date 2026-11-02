@@ -288,7 +288,7 @@ RENDER CALLBACK TYPES
 Rendering function signatures:
 
 interface OptionContentRenderContext<T> extends ItemContext<T> {
-  index: number;
+  optionIndex: number;
   isSelected: boolean;
   isFocused: boolean;
   isMatched: boolean;

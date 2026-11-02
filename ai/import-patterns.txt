@@ -156,8 +156,8 @@ Web Component:
 Types:
 @keenmate/web-multiselect (included in package)
 
-SCSS:
-@keenmate/web-multiselect/scss
+Stylesheet:
+@keenmate/web-multiselect/style.css (built) or @keenmate/web-multiselect/css (source)
 
 FRAMEWORK-SPECIFIC IMPORTS
 ---------------------------
@@ -231,20 +231,11 @@ export default {
   ]
 }
 
-SCSS CUSTOMIZATION
-------------------
-Import and customize via SCSS:
-
-✅ @use '@keenmate/web-multiselect/scss' with (
-  $ml-primary: #10b981,
-  $ml-border-radius: 0.5rem,
-  $ml-font-family: 'Inter, sans-serif'
-);
-
-Available variables: See styling-theming.txt
-
-Requires sass or sass-embedded:
-npm install -D sass
+CSS SOURCE
+----------
+There is no SCSS entry point. For bundlers that process CSS, import the plain CSS source:
+@import '@keenmate/web-multiselect/css';   (or the built '@keenmate/web-multiselect/style.css')
+Theme it with --ms-* variables: see styling-theming.txt
 
 TREE SHAKING
 ------------
@@ -263,7 +254,7 @@ Package has side effects (Web Component registration):
 
 package.json:
 {
-  "sideEffects": ["**/*.css", "**/*.scss", "dist/multiselect.js"]
+  "sideEffects": ["./dist/multiselect.js", "./dist/multiselect.umd.js", "*.css"]
 }
 
 This ensures:
@@ -336,7 +327,7 @@ Fix: Styles are in Shadow DOM, use CSS variables
 ❌ .web-multiselect { color: red; }  // Won't work (Shadow DOM)
 
 ✅ web-multiselect {
-     --ml-text-primary: red;  // Works (CSS variables)
+     --ms-text-color-1: red;  // Works (CSS variables)
    }
 
 IMPORT IN DIFFERENT ENVIRONMENTS
@@ -465,6 +456,6 @@ Default import:     import '@keenmate/web-multiselect';
 Types:              import type { MultiSelectOption } from '...';
 Logging:            import { enableLogging } from '...';
 Core class:         import { MultiSelectEngine } from '...';
-SCSS:               @use '@keenmate/web-multiselect/scss';
+Stylesheet:         import '@keenmate/web-multiselect/style.css';
 Global API:         window.components['web-multiselect']
 Version:            window.components['web-multiselect'].version()

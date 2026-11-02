@@ -382,10 +382,10 @@ select.searchCallback = async ({ term, signal }) => {
 Catch render errors:
 select.renderOptionContentCallback = (context) => {
   try {
-    return customRender(context.item, context);
+    return customRender(context.option, context);
   } catch (error) {
     console.error('Render error:', error);
-    return context.item.label;  // Fallback
+    return context.option.label;  // Fallback
   }
 };
 

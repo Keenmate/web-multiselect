@@ -52,15 +52,15 @@ select.renderOptionContentCallback = (context) => {
   if (context.isSelected) {
     return `
       <div class="option-selected">
-        ✓ <strong>${context.item.label}</strong>
-        ${context.item.addedBy === user.id ? '<span class="badge-you">You</span>' : ''}
+        ✓ <strong>${context.option.label}</strong>
+        ${context.option.addedBy === user.id ? '<span class="badge-you">You</span>' : ''}
       </div>
     `;
   }
 
   // Highlight matches in search
   if (context.isMatched) {
-    const highlighted = highlightSearchTerm(context.item.label, searchTerm);
+    const highlighted = highlightSearchTerm(context.option.label, searchTerm);
     return `<div class="option-matched">${highlighted}</div>`;
   }
 
@@ -68,8 +68,8 @@ select.renderOptionContentCallback = (context) => {
   if (context.isDisabled) {
     return `
       <div class="option-disabled">
-        ${context.item.label}
-        <span class="reason">${context.item.disabledReason}</span>
+        ${context.option.label}
+        <span class="reason">${context.option.disabledReason}</span>
       </div>
     `;
   }
@@ -77,7 +77,7 @@ select.renderOptionContentCallback = (context) => {
   // Default rendering
   return `
     <div class="option">
-      ${context.item.icon || ''} ${context.item.label}
+      ${context.option.icon || ''} ${context.option.label}
     </div>
   `;
 };
@@ -97,20 +97,20 @@ select.getBadgeClassCallback = ({ option }: { option: PriorityOption }) => {
 select.getCustomStylesCallback = () => {
   return `
     .badge-low {
-      --ml-badge-text-bg: #f3f4f6;
-      --ml-badge-text-color: #6b7280;
+      --ms-badge-text-bg: #f3f4f6;
+      --ms-badge-text-color: #6b7280;
     }
     .badge-medium {
-      --ml-badge-text-bg: #dbeafe;
-      --ml-badge-text-color: #2563eb;
+      --ms-badge-text-bg: #dbeafe;
+      --ms-badge-text-color: #2563eb;
     }
     .badge-high {
-      --ml-badge-text-bg: #fef3c7;
-      --ml-badge-text-color: #d97706;
+      --ms-badge-text-bg: #fef3c7;
+      --ms-badge-text-color: #d97706;
     }
     .badge-urgent {
-      --ml-badge-text-bg: #fee2e2;
-      --ml-badge-text-color: #dc2626;
+      --ms-badge-text-bg: #fee2e2;
+      --ms-badge-text-color: #dc2626;
       font-weight: 600;
     }
   `;
@@ -453,7 +453,7 @@ select.renderOptionContentCallback = (context) => {
     lastRenderTime = now;
   }
 
-  return `<div>${context.item.label}</div>`;
+  return `<div>${context.option.label}</div>`;
 };
 
 ACCESSIBILITY ENHANCEMENTS
@@ -461,7 +461,7 @@ ACCESSIBILITY ENHANCEMENTS
 Enhanced ARIA support:
 
 select.renderOptionContentCallback = (context) => {
-  const ariaLabel = `${context.item.label}, ${context.item.subtitle || ''}, ${context.isSelected ? 'selected' : 'not selected'}`;
+  const ariaLabel = `${context.option.label}, ${context.option.subtitle || ''}, ${context.isSelected ? 'selected' : 'not selected'}`;
 
   return `
     <div
@@ -469,7 +469,7 @@ select.renderOptionContentCallback = (context) => {
       aria-label="${ariaLabel}"
       aria-selected="${context.isSelected}"
       aria-disabled="${context.isDisabled}">
-      ${context.item.label}
+      ${context.option.label}
     </div>
   `;
 };

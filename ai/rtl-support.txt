@@ -222,19 +222,17 @@ Controlled via CSS logical properties
 
 CSS VARIABLES RTL
 -----------------
-Margins/padding adapt automatically:
+Margins/padding adapt automatically (the CSS uses logical properties):
 
-LTR variables:
---ml-option-padding-h: 1rem
+--ms-option-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))  /* option row padding (default) */
 
-Becomes in RTL:
-padding-inline-start: 1rem  /* Right */
-padding-inline-end: 1rem    /* Left */
+The horizontal part applies to the inline start/end, so in RTL it sits on the right/left
+without any extra variables.
 
 Custom RTL styling:
 <style>
   web-multiselect[dir="rtl"] {
-    --ml-custom-rtl-spacing: 0.5rem;
+    --ms-option-padding: calc(0.8 * var(--ms-rem)) calc(0.8 * var(--ms-rem));
   }
 </style>
 

@@ -385,9 +385,10 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 | `--ms-disabled-opacity` | `var(--base-disabled-opacity, 0.65)` | Opacity for disabled state |
 | `--ms-disabled-input-opacity` | `var(--ms-disabled-opacity)` | Opacity of a disabled input / checkbox |
 
-**Motion off** is CSS only: `--ms-transition-normal: 0s` on the element (or a parent), or
-`--base-duration-*: 0s` page-wide. Under `prefers-reduced-motion: reduce` the component sets
-`--ms-transition-normal: 0s` itself; the add-new spinner keeps turning, slower (it shows a state).
+**Motion off** is CSS only: `--ms-transition-normal: 0s` on the `<web-multiselect>` element
+itself (not a parent — the shadow root's `:host` re-declares it), or `--base-duration-normal: 0s`
+page-wide. Under `prefers-reduced-motion: reduce` the component sets `--ms-transition-normal: 0s`
+itself; the shared loader (async search, add-new pending) keeps turning, slower (it shows a state).
 
 ## Cascade layers / override contract
 
