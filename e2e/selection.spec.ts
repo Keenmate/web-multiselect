@@ -109,3 +109,41 @@ test.describe('value attribute', () => {
         await expect(p.locator('.ms__option')).toHaveCount(3);
     });
 });
+
+// A press on an option must not take focus off the search input: the row's checkbox is
+// focusable, and letting it take focus dropped the wrapper's :focus-within ring for a moment
+// (a flash on every select) and, with close-on-select / single-select, lost focus for good.
+test.describe('focus stays on the input when an option is clicked', () => {
+    async function trackFocusLoss(p: Locator): Promise<void> {
+        await p.evaluate((el: any) => {
+            el.__focusOuts = 0;
+            el.shadowRoot.querySelector('.ms__input').addEventListener('focusout', () => { el.__focusOuts++; });
+        });
+    }
+    const focusOuts = (p: Locator) => p.evaluate((el: any) => el.__focusOuts);
+    const isInputFocused = (p: Locator) => p.evaluate((el: any) => el.shadowRoot.activeElement?.classList.contains('ms__input') ?? false);
+
+    test('multi-select: the input never blurs, the ring stays', async ({ page }) => {
+        const p = picker(page, 'multi');
+        await openDropdown(p);
+        await trackFocusLoss(p);
+        await optionByValue(p, 'banana').click();
+        await optionByValue(p, 'cherry').click();
+        expect(await getValue(p)).toEqual(['banana', 'cherry']);
+        expect(await focusOuts(p)).toBe(0);
+        expect(await p.locator('.ms__input-wrapper').evaluate(w => w.matches(':focus-within'))).toBe(true);
+    });
+
+    test('single-select: after the pick the dropdown closes and the input keeps focus', async ({ page }) => {
+        const p = picker(page, 'single');
+        await openDropdown(p);
+        await trackFocusLoss(p);
+        await optionByValue(p, 'banana').click();
+        expect(await getValue(p)).toBe('banana');
+        await expect(p.locator('.ms__dropdown')).toBeHidden();
+        expect(await focusOuts(p)).toBe(0);
+        expect(await isInputFocused(p)).toBe(true);
+        await page.waitForTimeout(200);
+        await expect(p.locator('.ms__dropdown')).toBeHidden(); // the kept focus doesn't reopen it
+    });
+});

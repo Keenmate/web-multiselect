@@ -2303,16 +2303,15 @@ export class MultiSelectEngine<T = any> {
         };
         document.addEventListener('keydown', this.documentKeydownHandler);
 
-        // In the fullscreen overlay, a tap on an option must not move focus. Each row
-        // holds a focusable checkbox and the sheet's search is a text input; letting the
-        // tap shift focus either blurs the search (dropping the soft keyboard mid-search)
-        // or, combined with the underlying control input, pops the keyboard when it should
-        // stay down. preventDefault on mousedown blocks the focus/selection the tap would
-        // cause while leaving the click (which drives selection) intact. Floating keeps its
-        // native focus behavior (checkbox → input refocus in handleDropdownClick). The
-        // guard is scoped to option rows so header controls (search, close) still focus.
+        // A press on an option must not move focus. Each row holds a focusable checkbox:
+        // letting the press focus it blurs the search input. Floating: the wrapper's
+        // :focus-within ring dropped and came back (a flash on every select), and with
+        // close-on-select the refocus never ran, so focus was lost. Fullscreen: the sheet
+        // search blurred (dropping the soft keyboard mid-search) or the underlying control
+        // input popped the keyboard. preventDefault on mousedown blocks the focus/selection
+        // the press would cause while leaving the click (which drives selection) intact.
+        // Scoped to option rows so header controls (search, close) still focus.
         this.dropdown.addEventListener('mousedown', (e) => {
-            if (this.presentationMode !== 'fullscreen') return;
             const onOption = (e.target as HTMLElement).closest('.ms__option');
             if (onOption) e.preventDefault();
         });
@@ -2859,10 +2858,9 @@ export class MultiSelectEngine<T = any> {
                 // ArrowDown/ArrowUp move relative to where the user clicked.
                 this.focusedIndex = optionIndex;
                 this.toggleOption(this.filteredOptions[optionIndex]);
-                // Each option contains a focusable <input type="checkbox">, so
-                // clicking pulls focus off the search input — and the keydown
-                // listener is bound to the input. Put focus back so the user
-                // can keep navigating with the keyboard.
+                // The mousedown guard keeps focus on the search input (the keydown
+                // listener is bound to it); this refocus is the fallback when focus
+                // was elsewhere (e.g. a click on the open list after Tab moved on).
                 //
                 // FLOATING only. In the fullscreen overlay `this.input` is the
                 // control input hidden BEHIND the sheet; focusing it pops the soft

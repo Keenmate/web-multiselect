@@ -428,6 +428,10 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   `visibility: hidden`, which takes no clicks and no focus, so a click on the field did nothing
   and Tab skipped the control. The hidden input is now transparent (`.ms__input--hidden`) and
   read-only: a click on the field opens / closes the dropdown, and focus, arrows and Enter work.
+- **The input's focus ring flashed on every option click:** pressing an option moved focus to
+  its checkbox, so the wrapper's `:focus-within` ring dropped and came back; with single-select /
+  `close-on-select` focus was lost for good (Tab restarted from the page). A press on an option
+  no longer moves focus (as the fullscreen sheet already did); the input keeps it throughout.
 - A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
 - `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
   collapse until the next resize; the new mode now lands when the box widens.
