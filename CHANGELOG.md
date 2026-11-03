@@ -424,6 +424,10 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
 - A tree-cascade toggle with an async `beforeSelectCallback` / `beforeDeselectCallback` could
   flip the subtree back when clicked twice while the veto was pending.
 - Changing `search-input-mode` live made a `readonly` control typeable.
+- **`search-input-mode="hidden"` opened only from the chevron:** the input was hidden with
+  `visibility: hidden`, which takes no clicks and no focus, so a click on the field did nothing
+  and Tab skipped the control. The hidden input is now transparent (`.ms__input--hidden`) and
+  read-only: a click on the field opens / closes the dropdown, and focus, arrows and Enter work.
 - A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
 - `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
   collapse until the next resize; the new mode now lands when the box widens.

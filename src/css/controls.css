@@ -58,6 +58,13 @@
   outline: none;
 }
 
+/* search-input-mode="hidden": transparent, not visibility:hidden — the input still fills the row,
+   takes the opening click and keyboard focus (it is read-only, so nothing can be typed). */
+.ms__input--hidden {
+  opacity: 0;
+  caret-color: transparent;
+}
+
 .ms__input::placeholder {
   color: var(--ms-input-placeholder-color);
   opacity: 0; /* Hidden until [data-placeholder-ready] is set (see web-component.ts) */

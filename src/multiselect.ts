@@ -1073,15 +1073,9 @@ export class MultiSelectEngine<T = any> {
         this.input.placeholder = this.getPlaceholderText();
         this.input.autocomplete = 'off';
 
-        // Apply searchInputMode
-        if (this.options.searchInputMode === 'readonly') {
-            this.input.readOnly = true;
-        } else if (this.options.searchInputMode === 'hidden') {
-            // Hide with `visibility` (not `display`) so the input keeps its `flex: 1`
-            // box and still fills the row — otherwise the trailing toggle/counter
-            // collapse to the leading edge instead of staying at the trailing edge.
-            this.input.style.visibility = 'hidden';
-        }
+        // Apply searchInputMode (readonly / hidden: no typing; hidden: also invisible)
+        this.input.readOnly = this.isInputReadOnly();
+        this.input.classList.toggle('ms__input--hidden', this.options.searchInputMode === 'hidden');
 
         // Chevron rendered via a CSS mask icon (see .ms__toggle in controls.css) for
         // consistency with the other glyphs — no text character. It's now a real flex
@@ -2037,6 +2031,19 @@ export class MultiSelectEngine<T = any> {
         });
 
         return groups;
+    }
+
+    /**
+     * The input takes no typing: a readonly control, or `search-input-mode` `readonly` / `hidden`.
+     * `hidden` keeps the input in place, transparent (`.ms__input--hidden`), not `visibility: hidden`:
+     * it still fills the row (the toggle stays at the trailing edge), takes the click that opens the
+     * dropdown, and keeps keyboard focus (Tab, arrows, Enter) — a `visibility: hidden` input gets
+     * neither clicks nor focus, so only the chevron opened it.
+     */
+    private isInputReadOnly(): boolean {
+        return !!this.options.isReadonly
+            || this.options.searchInputMode === 'readonly'
+            || this.options.searchInputMode === 'hidden';
     }
 
     /** Whether the input currently functions as a usable search field (drives placeholder wording). */
@@ -5460,7 +5467,7 @@ export class MultiSelectEngine<T = any> {
         this.element.classList.toggle('ms--readonly', isReadonly && !isDisabled);
         if (this.input) {
             this.input.disabled = isDisabled;
-            this.input.readOnly = isReadonly || this.options.searchInputMode === 'readonly';
+            this.input.readOnly = this.isInputReadOnly();
             if (isDisabled || isReadonly) this.input.setAttribute('aria-readonly', String(isReadonly && !isDisabled));
             else this.input.removeAttribute('aria-readonly');
         }
@@ -5581,10 +5588,8 @@ export class MultiSelectEngine<T = any> {
         // Search input display mode
         if ('searchInputMode' in partial) {
             // Same rule as applyInteractionState(): a readonly control stays read-only.
-            this.input.readOnly = !!this.options.isReadonly || this.options.searchInputMode === 'readonly';
-            // Hide via `visibility` (not `display`) so the input keeps its flex space
-            // and the trailing toggle stays at the trailing edge (see reinit path).
-            this.input.style.visibility = this.options.searchInputMode === 'hidden' ? 'hidden' : '';
+            this.input.readOnly = this.isInputReadOnly();
+            this.input.classList.toggle('ms__input--hidden', this.options.searchInputMode === 'hidden');
         }
 
         // An in-place options swap keeps the dropdown open — preserve the scroll offset so the

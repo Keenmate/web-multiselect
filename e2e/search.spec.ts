@@ -484,9 +484,32 @@ test.describe('search-input-mode', () => {
         await expect(input(p)).toHaveAttribute('readonly', '');
     });
 
-    test('hidden removes the input from layout', async ({ page }) => {
+    test('hidden: the field is invisible and takes no typing', async ({ page }) => {
         const p = picker(page, 'hidden-input');
-        await expect(input(p)).toBeHidden();
+        await expect(input(p)).toHaveCSS('opacity', '0');
+        await expect(input(p)).toHaveAttribute('readonly', '');
+    });
+
+    test('hidden: a click on the field opens the dropdown (not only the chevron)', async ({ page }) => {
+        const p = picker(page, 'hidden-input');
+        await p.locator('.ms__input-wrapper').click({ position: { x: 20, y: 10 } });
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        // a second click on the field closes it again
+        await p.locator('.ms__input-wrapper').click({ position: { x: 20, y: 10 } });
+        await expect(p.locator('.ms__dropdown')).toBeHidden();
+    });
+
+    test('hidden: keyboard focus, arrows and Enter still work; typing does not filter', async ({ page }) => {
+        const p = picker(page, 'hidden-input');
+        await input(p).focus();
+        await expect(input(p)).toBeFocused();
+        await page.keyboard.press('ArrowDown');
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        await page.keyboard.type('zzz');
+        await expect(visibleOptions(p)).toHaveCount(5);
+        await page.keyboard.press('ArrowDown');
+        await page.keyboard.press('Enter');
+        await expect.poll(() => p.evaluate((el: any) => el.selectedOptions.length)).toBe(1);
     });
 });
 
