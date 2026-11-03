@@ -55,10 +55,10 @@ code written for 2.x needs updating. Upgrade guide: the
 - **UI strings → `labels`** — `search-placeholder`, `select-placeholder`, `empty-message`,
   `loading-message`, `add-new-text`, … are gone; set `labels` (property or JSON attribute,
   `labels='{"selectPlaceholder":"Pick a country"}'`). Empty states are `noData` / `noResults`.
-- **Initial selection = `value` / `defaultValue`** (was `initial-values` / `initialValues`), parsed
+- **Initial selection = `value` / `defaultValue`** — was `initial-values` / `initialValues`; parsed
   per `value-format`; `el.value` is the live submitted value. `value-format="csv"` → `text`
   (joined by the new `value-separator`).
-- **`form.reset()` restores the initial selection** (was: cleared it), without firing
+- **`form.reset()` restores the initial selection** — it used to clear it; it does so without firing
   `deselect` / `change`.
 - **Selection state is properties** — `selectedOptions` / `selectedValue` / `selectedOption` /
   `searchTerm` on the element and `el.controller` (was `getSelected()` / `getValue()` /
@@ -66,14 +66,14 @@ code written for 2.x needs updating. Upgrade guide: the
   and label `clear-selection` / `labels.clearSelection`).
 - **Member defaults for all data** — `value` / `label` / `group` / `icon` / `subtitle` /
   `disabled`, so `[{ value, label }]` works without configuration; a `get*Callback` always beats its member.
-- **`presentation`** (was `mobile-presentation`); the `mobile` width breakpoint is 768px (was 640).
+- **`presentation`** — was `mobile-presentation`; the `mobile` width breakpoint is 768px (was 640).
 - **Defer / ready from core** — `el.release()` (was `el.ready()`), host attribute `ready` +
   `:state(ready)` (was `is-ready`), `el.whenReady()`, property `shouldDefer`.
-- **Removed:** `show-debug-info` and the debug panel (use `el.enableLogging()`),
+- **Removed** — `show-debug-info` and the debug panel (use `el.enableLogging()`),
   `--ms-transition-fast` (one duration: `--ms-transition-normal`), the component's own
   `prefers-reduced-motion` block (core applies reduced motion on every page; the 1.5s loader
   slowdown needs base-css-variables).
-- **Browser floor: Chrome/Edge 119+, Firefox 128+, Safari 18+** (relative-colour syntax in the
+- **Browser floor** — Chrome/Edge 119+, Firefox 128+, Safari 18+ (relative-colour syntax in the
   standalone colour fallbacks).
 
 **Also new:** the `motion` level (`motion="none | snappy | smooth"`, `data-motion` on a section,
