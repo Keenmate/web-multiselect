@@ -238,7 +238,7 @@ export class VirtualScroll<T> {
      * Scroll to make item at index visible (like scrollIntoView with block: 'nearest')
      * Only scrolls if item is outside visible area, and scrolls minimally
      */
-    public scrollToIndex(index: number, block: 'start' | 'center' | 'nearest' = 'start'): void {
+    public scrollToIndex(index: number, block: 'start' | 'center' | 'end' | 'nearest' = 'start'): void {
         if (index < 0 || index >= this.items.length) {
             return;
         }
@@ -254,6 +254,8 @@ export class VirtualScroll<T> {
         let target: number;
         if (block === 'center') {
             target = itemTop - (this.viewportHeight - this.itemHeight) / 2;
+        } else if (block === 'end') {
+            target = itemBottom - this.viewportHeight;
         } else if (block === 'nearest') {
             const viewportTop = this.container.scrollTop;
             const viewportBottom = viewportTop + this.viewportHeight;

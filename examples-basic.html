@@ -274,6 +274,21 @@
                 filtered list. <code>clearSearch()</code> reveals a filtered-out option so you can then
                 scroll to it.
             </p>
+            <div class="controls">
+                <span><code>block</code>:</span>
+                <label><input type="radio" name="scroll-block" value="" checked> default (<code>start</code>)</label>
+                <label><input type="radio" name="scroll-block" value="start"> start</label>
+                <label><input type="radio" name="scroll-block" value="center"> center</label>
+                <label><input type="radio" name="scroll-block" value="end"> end</label>
+                <label><input type="radio" name="scroll-block" value="nearest"> nearest</label>
+                <span class="muted" style="margin-inline-start:0.5rem">where the target lands; <code>nearest</code> moves only if it's out of view</span>
+            </div>
+            <div class="controls">
+                <span><code>--ms-scroll-behavior</code>:</span>
+                <label><input type="radio" name="scroll-behavior" value="" checked> default (<code>smooth</code>)</label>
+                <label><input type="radio" name="scroll-behavior" value="auto"> auto (instant)</label>
+                <span class="muted" style="margin-inline-start:0.5rem">the motion level / reduced motion also set it; virtual scroll always jumps</span>
+            </div>
             <div class="grid">
                 <div class="form-group">
                     <label>Grouped (headers)</label>
@@ -290,7 +305,7 @@
                             <button type="button" data-scroll-grouped="index:0">⇱ index 0</button>
                         </div>
                     </div>
-                    <small class="form-text"><code>scrollToGroup</code> centers the group header.</small>
+                    <small class="form-text"><code>scrollToGroup</code> brings the group header into view.</small>
                 </div>
 
                 <div class="form-group">
@@ -316,9 +331,12 @@
             <details class="mt-1">
                 <summary>Show code</summary>
 <pre><code>el.open();
-el.scrollToGroup('backend');   // header centered (or the group's first row in virtual mode)
-el.scrollToValue('redis');     // → Promise<false> if filtered out by the current search
-el.scrollToIndex(0);
+el.scrollToGroup('backend');   // header at the top (or the group's first row in virtual mode)
+el.scrollToValue('redis', { block: 'center' });   // → Promise<false> if filtered out by the current search
+el.scrollToIndex(0, { block: 'nearest' });       // start (default) | center | end | nearest
+
+// Smooth or instant: --ms-scroll-behavior (smooth by default; auto under reduced motion / motion="none")
+el.style.setProperty('--ms-scroll-behavior', 'auto');
 
 // Reveal a filtered-out option, then scroll to it:
 el.clearSearch();
@@ -539,6 +557,33 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { value: 'redis', label: 'Redis', icon: '🔴', group: 'database' }
         ];
 
+        // BU05's grouped list: the same groups, long enough that every group overflows the
+        // dropdown on its own — so each scrollTo* jump actually has to scroll.
+        const scrollGroupedTechnologies = [
+            ...groupedTechnologies.filter(t => t.group === 'frontend'),
+            { value: 'solid', label: 'Solid', icon: '💠', group: 'frontend' },
+            { value: 'preact', label: 'Preact', icon: '⚡', group: 'frontend' },
+            { value: 'lit', label: 'Lit', icon: '🔆', group: 'frontend' },
+            { value: 'qwik', label: 'Qwik', icon: '🚀', group: 'frontend' },
+            { value: 'ember', label: 'Ember.js', icon: '🐹', group: 'frontend' },
+            { value: 'alpine', label: 'Alpine.js', icon: '🏔️', group: 'frontend' },
+            ...groupedTechnologies.filter(t => t.group === 'backend'),
+            { value: 'fastapi', label: 'FastAPI', icon: '🐍', group: 'backend' },
+            { value: 'spring', label: 'Spring Boot', icon: '🌱', group: 'backend' },
+            { value: 'aspnet', label: 'ASP.NET Core', icon: '🟣', group: 'backend' },
+            { value: 'laravel', label: 'Laravel', icon: '🧱', group: 'backend' },
+            { value: 'phoenix', label: 'Phoenix', icon: '🔥', group: 'backend' },
+            { value: 'gin', label: 'Gin', icon: '🍸', group: 'backend' },
+            ...groupedTechnologies.filter(t => t.group === 'database'),
+            { value: 'mysql', label: 'MySQL', icon: '🐬', group: 'database' },
+            { value: 'sqlite', label: 'SQLite', icon: '🪶', group: 'database' },
+            { value: 'mariadb', label: 'MariaDB', icon: '🦭', group: 'database' },
+            { value: 'cassandra', label: 'Cassandra', icon: '👁️', group: 'database' },
+            { value: 'neo4j', label: 'Neo4j', icon: '🕸️', group: 'database' },
+            { value: 'elastic', label: 'Elasticsearch', icon: '🔎', group: 'database' },
+            { value: 'clickhouse', label: 'ClickHouse', icon: '🏠', group: 'database' }
+        ];
+
         const allCountries = [
             'Afghanistan|af','Albania|al','Algeria|dz','Argentina|ar','Armenia|am','Australia|au','Austria|at',
             'Azerbaijan|az','Bahrain|bh','Bangladesh|bd','Belarus|by','Belgium|be','Belize|bz','Bolivia|bo',
@@ -685,7 +730,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 scrollLogEl.appendChild(row);
                 scrollLogEl.scrollTop = scrollLogEl.scrollHeight;
             };
-            if (scrollGrouped) scrollGrouped.options = groupedTechnologies;
+            if (scrollGrouped) scrollGrouped.options = scrollGroupedTechnologies;
             if (scrollVirtual) scrollVirtual.options = allCountries;
 
             const describeViewport = (el, targetValue) => {
@@ -708,17 +753,30 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 scrollLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows "${first}" … "${last}" (${visible.length} rows)${targetNote}`);
             };
 
+            // The block option for every BU05 jump ('' = the method's default, 'start').
+            const scrollBlock = () => document.querySelector('input[name="scroll-block"]:checked').value;
+            document.querySelectorAll('input[name="scroll-behavior"]').forEach((r) =>
+                r.addEventListener('change', (e) => {
+                    if (!e.target.checked) return;
+                    for (const el of [scrollGrouped, scrollVirtual]) {
+                        if (e.target.value) el.style.setProperty('--ms-scroll-behavior', e.target.value);
+                        else el.style.removeProperty('--ms-scroll-behavior');
+                    }
+                }));
             const runScroll = (el, spec) => {
                 el.open();
                 if (spec === 'clear') { el.clearSearch(); scrollLog('clearSearch() — search reset, full list restored'); return; }
                 const [kind, arg] = spec.split(':');
+                const block = scrollBlock();
+                const opts = block ? { block } : undefined;
                 let ok, target = null;
-                if (kind === 'group')      { ok = el.scrollToGroup(arg); }
-                else if (kind === 'value') { ok = el.scrollToValue(arg); target = arg; }
-                else if (kind === 'index') { ok = el.scrollToIndex(Number(arg)); }
-                const call = kind === 'index' ? `scrollToIndex(${arg})`
-                    : kind === 'group' ? `scrollToGroup('${arg}')`
-                    : `scrollToValue('${arg}')`;
+                if (kind === 'group')      { ok = el.scrollToGroup(arg, opts); }
+                else if (kind === 'value') { ok = el.scrollToValue(arg, opts); target = arg; }
+                else if (kind === 'index') { ok = el.scrollToIndex(Number(arg), opts); }
+                const optsText = opts ? `, { block: '${block}' }` : '';
+                const call = kind === 'index' ? `scrollToIndex(${arg}${optsText})`
+                    : kind === 'group' ? `scrollToGroup('${arg}'${optsText})`
+                    : `scrollToValue('${arg}'${optsText})`;
                 ok.then((r) => scrollLog(`▶ ${call} → ${r}`));
                 setTimeout(() => describeViewport(el, target), 90);
             };

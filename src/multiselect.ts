@@ -3518,10 +3518,8 @@ export class MultiSelectEngine<T = any> {
             const attempt = (retried: boolean): void => {
                 if (!this.#isOpen || index < 0 || index >= this.filteredOptions.length) return resolve(false);
                 if (this.virtualScroll) {
-                    // Map the DOM ScrollLogicalPosition to the virtual list's supported blocks ('end' → nearest).
-                    const vBlock = opts?.block === 'center' ? 'center'
-                        : opts?.block === 'nearest' ? 'nearest'
-                        : 'start';
+                    // The DOM ScrollLogicalPosition, as the virtual list's index math (default 'start').
+                    const vBlock = opts?.block ?? 'start';
                     this.virtualScroll.scrollToIndex(index, vBlock);
                     interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${vBlock})`);
                     return resolve(true);

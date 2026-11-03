@@ -439,6 +439,8 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   measure `--ms-badge-height` and the row gap `--ms-selected-popover-body-gap` in the popover
   itself; set it only to force a different height. A presentation switch (floating ⇄ fullscreen)
   while the popover is open rebuilds the virtual list, so the rows and the scroll area follow.
+- **`scrollToIndex` / `scrollToValue` / `scrollToGroup` with `{ block: 'end' }` in virtual-scroll
+  mode put the row at the top** (it fell through to `start`); it now lands at the bottom edge.
 - A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
 - `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
   collapse until the next resize; the new mode now lands when the box widens.
