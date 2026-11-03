@@ -400,7 +400,7 @@ el.scrollToValue('jp');</code></pre>
             <p>
                 Two independent switches for the built-in search. <code>search-behavior</code> decides how text
                 is <strong>normalized</strong>: <code>normalized</code> (the default) ignores case and accents, so
-                <code>cesky</code> finds <em>Český Krumlov</em>; <code>case-insensitive</code> ignores case only;
+                <code>zurich</code> finds <em>Zürich</em>; <code>case-insensitive</code> ignores case only;
                 <code>exact</code> ignores nothing. <code>search-match</code> decides <strong>where</strong> the
                 term must appear. Both are live: flip them with a term typed and the list re-filters in place.
                 Each option's search value is normalized once and cached, not on every keystroke.
@@ -430,20 +430,21 @@ el.scrollToValue('jp');</code></pre>
                 <web-multiselect
                     id="ex-search-match"
                     value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Try cesky, nad, kralove, ^(Ústí|Nové)…"}'>
+                    display-value-member="label" labels='{"searchPlaceholder": "Try zurich, PARIS, de, io, ^(San|Santa) …"}'>
                 </web-multiselect>
             </div>
             <div class="note">
-                <p><strong>Things to try:</strong></p>
+                <p><strong>Things to try</strong> (all typeable on any keyboard):</p>
                 <ul>
-                    <li><code>cesky</code>: matches under <code>normalized</code>; switch to <code>case-insensitive</code> and it's gone (<code>česk</code> still works).</li>
-                    <li><code>brno</code> with <code>equals</code>: only the whole value counts (and case doesn't), so <code>brn</code> finds nothing.</li>
-                    <li><code>nad</code>: <code>contains</code> / <code>word-starts-with</code> find the "…nad Labem" towns; <code>starts-with</code> finds nothing.</li>
-                    <li><code>kralove</code>: <code>ends-with</code> finds <em>Hradec Králové</em>; <code>word-ends-with</code> adds <em>Dvůr Králové nad Labem</em>.</li>
-                    <li><code>^(Ústí|Nové)</code> with <code>regex</code>. Keep typing an unfinished pattern like <code>^(Ústí</code> and the last valid result stays.</li>
+                    <li><code>zurich</code> / <code>sao</code> / <code>krakow</code>: match under <code>normalized</code> (accents ignored); switch to <code>case-insensitive</code> and they're gone.</li>
+                    <li><code>PARIS</code>: found by <code>normalized</code> and <code>case-insensitive</code>; <code>exact</code> needs <code>Paris</code>.</li>
+                    <li><code>new york</code> with <code>equals</code>: only the whole value counts (and case doesn't), so <code>york</code> finds nothing.</li>
+                    <li><code>de</code>: <code>contains</code> finds <em>Bordeaux</em> too; <code>word-starts-with</code> only <em>Rio de Janeiro</em> / <em>New Delhi</em>; <code>starts-with</code> nothing.</li>
+                    <li><code>io</code>: <code>ends-with</code> finds nothing; <code>word-ends-with</code> finds <em>Rio de Janeiro</em> (the word "Rio").</li>
+                    <li><code>^(San|Santa) </code> with <code>regex</code>. Keep typing an unfinished pattern like <code>^(San</code> and the last valid result stays.</li>
                 </ul>
                 <p><strong>Regex skips normalization:</strong> the pattern runs against the raw text, so
-                <code>search-behavior</code> doesn't apply. <code>^ces</code> finds nothing; <code>^Čes</code> does.</p>
+                <code>search-behavior</code> doesn't apply. <code>^Sao</code> finds nothing; <code>^S.o </code> finds <em>São Paulo</em> (the <code>.</code> matches the <em>ã</em>).</p>
             </div>
 
             <details class="mt-1">
@@ -811,10 +812,13 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
 
             // ── BU07 · Search matching ───────────────────────────────────
             const exMatch = document.getElementById('ex-search-match');
+            // Mostly plain Latin; the accented ones (Zürich, São Paulo, …) are there to be found by
+            // typing WITHOUT the accent — nothing in "Things to try" needs a special keyboard.
             exMatch.options = [
-                'Praha', 'Brno', 'Ostrava', 'Plzeň', 'Olomouc', 'České Budějovice', 'Český Krumlov',
-                'Český Těšín', 'Hradec Králové', 'Ústí nad Labem', 'Ústí nad Orlicí', 'Dvůr Králové nad Labem',
-                'Nové Město na Moravě', 'Nové Město nad Metují', 'Kraków', 'Łódź', 'Gdańsk', 'Zürich', 'München'
+                'Paris', 'Lyon', 'Bordeaux', 'Marseille', 'New York', 'New Orleans', 'New Delhi',
+                'San Francisco', 'San Diego', 'Santa Monica', 'Santa Cruz', 'Los Angeles', 'Las Vegas',
+                'Rio de Janeiro', 'Buenos Aires', 'Cape Town', 'São Paulo', 'Zürich', 'München', 'Kraków',
+                'Málaga', 'Montréal', 'Reykjavík'
             ].map((label, i) => ({ value: String(i), label }));
             document.querySelectorAll('input[name="sm-behavior"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) exMatch.setAttribute('search-behavior', e.target.value); }));
