@@ -154,7 +154,7 @@ multiselect.setSelected(['js', 'ts']);
 | `max-visible-badge-count` | `number` | `3` | Max badges shown in partial mode |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
 | `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
-| `badge-height` | `number` | `36` | Fixed badge height in px used for layout/virtualization |
+| `badge-height` | `number` | — (`--ms-badge-height`) | Row height in px of the selected-items popover in virtual-scroll mode (100+ selected). Unset, the rows use `--ms-badge-height` like every other badge |
 | `show-badge-full-title` | `boolean` | `false` | Show the full title (`full-title-member` / `getFullTitleCallback`) on badges instead of the short label |
 | `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `selectedValue`, `selectedOptions` and form output keep pick order; the dropdown is never reordered |
 | `selected-order-member` | `string` | - | Property used as the sort key when `selected-order="member"`. Numeric keys sort numerically. Overridden by `getSelectedOrderCallback` |

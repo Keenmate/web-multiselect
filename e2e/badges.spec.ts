@@ -248,3 +248,72 @@ test.describe('selected-order', () => {
         expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['a']);
     });
 });
+
+// The selected-items popover switches to virtual scrolling at 100+ selected. Its rows used a
+// fixed 36px (`badge-height` default) while every other badge is --ms-badge-height (27px).
+test.describe('virtual popover rows match the badge height', () => {
+    async function openBigPopover(page: Page, attrs: Record<string, string> = {}, style = ''): Promise<Locator> {
+        const id = 'vp-' + Math.random().toString(36).slice(2, 8);
+        await page.evaluate(({ id, attrs, style }) => {
+            const el = document.createElement('web-multiselect') as any;
+            el.id = id;
+            el.setAttribute('badges-display-mode', 'count');
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            if (style) el.setAttribute('style', style);
+            document.body.appendChild(el);
+            el.options = Array.from({ length: 120 }, (_, i) => ({ value: 'v' + i, label: 'Item ' + i }));
+            el.setSelected(el.options.map((o: any) => o.value));
+        }, { id, attrs, style });
+        const p = page.locator('#' + id);
+        await p.locator('[data-ms-action="show-selected"]').first().click();
+        await expect(p.locator('.ms__selected-popover-body--virtual .ms__badge').first()).toBeVisible();
+        return p;
+    }
+    const rowHeight = (p: Locator) => p.locator('.ms__selected-popover-body--virtual .ms__badge').first().evaluate(b => b.getBoundingClientRect().height);
+    const rowPitch = (p: Locator) => p.locator('.ms__selected-popover-body--virtual .ms__badge').evaluateAll(bs => bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top);
+    const badgeHeightVar = (p: Locator) => p.evaluate(el => {
+        const probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute;height:var(--ms-badge-height)';
+        el.shadowRoot!.appendChild(probe);
+        const h = probe.getBoundingClientRect().height;
+        probe.remove();
+        return h;
+    });
+
+    test('default: rows are --ms-badge-height (27px), spaced by the body gap', async ({ page }) => {
+        const p = await openBigPopover(page);
+        expect(await badgeHeightVar(p)).toBe(27);
+        expect(await rowHeight(p)).toBe(27);
+        expect(await rowPitch(p)).toBe(27 + 4); // --ms-selected-popover-body-gap
+    });
+
+    test('a themed --ms-badge-height reaches the virtual rows', async ({ page }) => {
+        const p = await openBigPopover(page, {}, '--ms-badge-height: 40px');
+        expect(await rowHeight(p)).toBe(40);
+    });
+
+    test('an explicit badge-height still wins', async ({ page }) => {
+        const p = await openBigPopover(page, { 'badge-height': '50' });
+        expect(await rowHeight(p)).toBe(50);
+    });
+
+    test('fullscreen sheet: virtual rows match the larger non-virtual badges of the sheet', async ({ page }) => {
+        const nonVirtualHeight = await page.evaluate(async () => {
+            const el = document.createElement('web-multiselect') as any;
+            el.setAttribute('presentation', 'fullscreen');
+            el.setAttribute('badges-display-mode', 'count');
+            document.body.appendChild(el);
+            el.options = Array.from({ length: 10 }, (_, i) => ({ value: 'v' + i, label: 'Item ' + i }));
+            el.setSelected(el.options.map((o: any) => o.value));
+            await new Promise((r) => setTimeout(r, 100));
+            el.shadowRoot.querySelector('[data-ms-action="show-selected"]').click();
+            await new Promise((r) => setTimeout(r, 300));
+            const h = el.shadowRoot.querySelector('.ms__selected-popover-body .ms__badge').getBoundingClientRect().height;
+            el.remove();
+            return h;
+        });
+        expect(nonVirtualHeight).toBeGreaterThan(27); // the sheet's own --ms-badge-height
+        const p = await openBigPopover(page, { presentation: 'fullscreen' });
+        expect(Math.abs(await rowHeight(p) - nonVirtualHeight)).toBeLessThan(0.5);
+    });
+});

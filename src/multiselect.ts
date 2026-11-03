@@ -4500,9 +4500,35 @@ export class MultiSelectEngine<T = any> {
      * virtual list's fixed height agrees with the non-virtual pills.
      */
     private scaledBadgeHeight(): number {
-        const base = this.options.badgeHeight ?? 36;
-        if (this.presentationMode !== 'fullscreen') return base;
-        return Math.round(base * this.fullscreenScale() * 1.2);
+        const explicit = this.options.badgeHeight;
+        if (explicit != null && explicit > 0) {
+            if (this.presentationMode !== 'fullscreen') return explicit;
+            return Math.round(explicit * this.fullscreenScale() * 1.2);
+        }
+        // Unset: the same --ms-badge-height the control's badges and the non-virtual popover use
+        // (the fullscreen popover overrides it in CSS), so the rows match them and follow a theme.
+        return this.measurePopoverLength('--ms-badge-height') || 36;
+    }
+
+    /** Gap between virtual popover rows (px): --ms-selected-popover-body-gap, as the CSS margin. */
+    private popoverBadgeGap(): number {
+        const measured = this.measurePopoverLength('--ms-selected-popover-body-gap');
+        return measured > 0 ? measured : Math.round(4 * this.fullscreenScale());
+    }
+
+    /**
+     * A length variable resolved where the popover's badges resolve it (inside the popover, so
+     * the fullscreen overrides apply), in px. Measured on a probe, not parseFloat()-ed: the
+     * variables are calc()s of --ms-rem. 0 when computed styles aren't readable (jsdom).
+     */
+    private measurePopoverLength(name: string): number {
+        if (typeof getComputedStyle !== 'function') return 0;
+        const probe = document.createElement('span');
+        probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:var(${name})`;
+        this.selectedPopover.appendChild(probe);
+        const px = parseFloat(getComputedStyle(probe).height);
+        probe.remove();
+        return Number.isFinite(px) ? px : 0;
     }
 
     /**
@@ -4983,6 +5009,9 @@ export class MultiSelectEngine<T = any> {
         this.hideMessage();
 
         this.showSelectedPopover = true;
+        // The fullscreen modifier goes on BEFORE the render: it re-declares --ms-badge-height for
+        // the sheet, and the virtual list measures its row height from that variable.
+        this.selectedPopover.classList.toggle('ms__selected-popover--fullscreen', this.presentationMode === 'fullscreen');
         this.renderSelectedPopover();
         this.selectedPopover.classList.add('ms__selected-popover--visible');
 
@@ -4997,7 +5026,6 @@ export class MultiSelectEngine<T = any> {
             // header + close button, so it just needs the modifier class + scroll lock.
             // Push a history entry too, so the phone Back gesture closes the sheet instead
             // of navigating the page away (same guard the options dropdown uses).
-            this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
             this.lockBodyScroll();
             this.clampDocumentOverflowX();
             this.pushOverlayHistory();
@@ -5123,7 +5151,7 @@ export class MultiSelectEngine<T = any> {
         // Initialize or update virtual scroll (same pattern as dropdown)
         // Add gap to itemHeight (4px default gap between badges), scaled to match.
         const badgeHeight = this.scaledBadgeHeight();
-        const gap = Math.round(4 * this.fullscreenScale()); // 0.25rem default gap
+        const gap = this.popoverBadgeGap();
         const itemHeight = badgeHeight + gap;
         const bufferSize = this.options.virtualScrollOverscan ?? 10;
 

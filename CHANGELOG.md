@@ -432,6 +432,12 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   its checkbox, so the wrapper's `:focus-within` ring dropped and came back; with single-select /
   `close-on-select` focus was lost for good (Tab restarted from the page). A press on an option
   no longer moves focus (as the fullscreen sheet already did); the input keeps it throughout.
+- **Selected-items popover rows at 100+ selected matched no other badge:** in virtual-scroll mode
+  the rows were a fixed `badge-height` of 36px (fullscreen: 36 × scale × 1.2), while every other
+  badge is `--ms-badge-height` (27px; 4.2 × `--ms-rem` in the fullscreen sheet), and a theme's
+  `--ms-badge-height` never reached them. **`badge-height` now has no default:** unset, the rows
+  measure `--ms-badge-height` and the row gap `--ms-selected-popover-body-gap` in the popover
+  itself; set it only to force a different height.
 - A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
 - `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
   collapse until the next resize; the new mode now lands when the box widens.

@@ -1040,7 +1040,7 @@ export interface MultiSelectConfig<T = any> {
     virtualScrollThreshold?: number;
     /** Fixed height for each option in pixels (required for virtual scroll, default: 50) */
     virtualScrollItemHeight?: number;
-    /** Fixed height for each badge in selected items popover in pixels (required for virtual scroll, default: 36) */
+    /** Row height (px) of the selected-items popover in virtual-scroll mode. Unset (default): `--ms-badge-height`, matching every other badge. */
     badgeHeight?: number;
     /** Buffer size for virtual scroll - items above/below viewport (default: 10) */
     virtualScrollOverscan?: number;

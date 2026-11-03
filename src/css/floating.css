@@ -94,8 +94,8 @@
    this they'd keep base-size text/padding inside the enlarged sheet and read as
    cramped. Re-declaring them here — where --ms-rem is --ms-fullscreen-rem — scales
    the pill height, text, padding and remove button up with the rest of the overlay.
-   The row height is also mirrored in JS (scaledBadgeHeight → --ms-badge-height-virtual)
-   for the virtual list, so both paths agree. */
+   The virtual list measures its row height from this --ms-badge-height (scaledBadgeHeight →
+   --ms-badge-height-virtual), so both paths agree. */
 .ms__selected-popover--fullscreen {
   --ms-badge-height: calc(4.2 * var(--ms-rem));
   --ms-badge-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
