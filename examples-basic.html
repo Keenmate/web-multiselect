@@ -789,12 +789,23 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             const exSearch = document.getElementById('ex-search');
             exSearch.options = countriesWithFlags;
 
+            // The hint names Ctrl/Cmd + ↓ / ↑ only in navigate mode — the only mode with matches to jump
+            // between (in filter mode the list is the matches; plain ↓ / ↑ walk it).
+            const srchHint = document.getElementById('srch-hint');
+            const applySearchHint = () => {
+                const isNavigate = exSearch.getAttribute('search-mode') === 'navigate';
+                const text = !srchHint.checked ? ''
+                    : isNavigate ? 'Ctrl/Cmd + ↓ / ↑ to jump between matches · Enter to select · Esc to clear'
+                    : '↓ / ↑ to move · Enter to select · Esc to clear';
+                exSearch.labels = { ...exSearch.labels, searchHint: text };
+            };
             document.querySelectorAll('input[name="srch-mode"]').forEach((r) =>
-                r.addEventListener('change', (e) => { if (e.target.checked) exSearch.setAttribute('search-mode', e.target.value); }));
-            document.getElementById('srch-hint').addEventListener('change', (e) =>
-                e.target.checked
-                    ? exSearch.labels = { ...exSearch.labels, searchHint: 'Ctrl/Cmd + ↓ / ↑ to jump · Enter to select · Esc to clear' }
-                    : exSearch.labels = { ...exSearch.labels, searchHint: '' });
+                r.addEventListener('change', (e) => {
+                    if (!e.target.checked) return;
+                    exSearch.setAttribute('search-mode', e.target.value);
+                    applySearchHint();
+                }));
+            srchHint.addEventListener('change', applySearchHint);
             document.getElementById('srch-min').addEventListener('change', (e) =>
                 exSearch.setAttribute('min-search-length', e.target.value));
 
