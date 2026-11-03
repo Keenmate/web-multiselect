@@ -316,4 +316,15 @@ test.describe('virtual popover rows match the badge height', () => {
         const p = await openBigPopover(page, { presentation: 'fullscreen' });
         expect(Math.abs(await rowHeight(p) - nonVirtualHeight)).toBeLessThan(0.5);
     });
+
+    test('a live presentation switch re-measures the open virtual rows', async ({ page }) => {
+        const p = await openBigPopover(page, { presentation: 'floating' });
+        expect(await rowHeight(p)).toBe(27);
+        await p.evaluate(el => el.setAttribute('presentation', 'fullscreen'));
+        await expect(p.locator('.ms__selected-popover--fullscreen')).toHaveCount(1);
+        await expect.poll(() => rowHeight(p)).toBeGreaterThan(40); // the sheet's 4.2 × --ms-rem
+        await p.evaluate(el => el.setAttribute('presentation', 'floating'));
+        await expect(p.locator('.ms__selected-popover--fullscreen')).toHaveCount(0);
+        await expect.poll(() => rowHeight(p)).toBe(27);
+    });
 });

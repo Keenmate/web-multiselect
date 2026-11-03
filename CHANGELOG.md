@@ -437,7 +437,8 @@ CSS that targeted `.ms__badge[data-action="show-selected"]` → `[data-ms-action
   badge is `--ms-badge-height` (27px; 4.2 × `--ms-rem` in the fullscreen sheet), and a theme's
   `--ms-badge-height` never reached them. **`badge-height` now has no default:** unset, the rows
   measure `--ms-badge-height` and the row gap `--ms-selected-popover-body-gap` in the popover
-  itself; set it only to force a different height.
+  itself; set it only to force a different height. A presentation switch (floating ⇄ fullscreen)
+  while the popover is open rebuilds the virtual list, so the rows and the scroll area follow.
 - A disabled control still ran consumer `data-action` triggers (rendered badges, messages).
 - `badges-display-mode` changed while `collapse-badges-below` had collapsed the badges undid the
   collapse until the next resize; the new mode now lands when the box widens.

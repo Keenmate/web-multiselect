@@ -4365,13 +4365,28 @@ export class MultiSelectEngine<T = any> {
                 this.selectedPopoverPlacement = null;
                 this.clearFloatingInlineGeometry(this.selectedPopover);
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
+                this.rebuildSelectedPopoverVirtual();
                 this.lockBodyScroll();
             } else {
                 this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
+                this.rebuildSelectedPopoverVirtual();
                 this.unlockBodyScroll();
                 this.positionSelectedPopover();
             }
         }
+    }
+
+    /**
+     * An open virtual popover across a presentation switch: its row height (measured from the
+     * presentation's --ms-badge-height) and body sizing (fixed scroll box vs flex-fill) are baked
+     * in when the list is built — rebuild it for the new presentation. No-op when not virtual.
+     */
+    private rebuildSelectedPopoverVirtual(): void {
+        if (!this.selectedPopoverVirtualScroll) return;
+        this.selectedPopoverVirtualScroll.destroy();
+        this.selectedPopoverVirtualScroll = null;
+        this.selectedPopoverContainer = null;
+        this.renderSelectedPopover();
     }
 
     /**
