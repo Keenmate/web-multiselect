@@ -383,6 +383,31 @@ el.scrollToValue('jp');</code></pre>
                     icon-member="flag" labels='{"searchPlaceholder": "Type to search countries…"}'>
                 </web-multiselect>
             </div>
+
+            <p style="margin-top:1.5rem">
+                <strong>Drive it from code.</strong> <code>search(term)</code> applies a query exactly as if the
+                user typed it (the mode above, <code>min-search-length</code>, <code>beforeSearchCallback</code>,
+                an async <code>searchCallback</code>) but does <em>not</em> open the dropdown;
+                <code>searchTerm</code> reads the current query; <code>clearSearch()</code> resets it. There's no
+                separate "filter" method: <code>search-mode</code> decides what the query does. Handy for
+                deep-links ("open with a query pre-filled"), syncing an external field or restoring saved state.
+            </p>
+            <div class="controls">
+                <input type="text" id="srch-api-term" value="an" placeholder="query, e.g. an" style="padding:0.3rem 0.5rem; width:10rem">
+                <button type="button" id="srch-api-apply"><code>search(term)</code> + <code>open()</code></button>
+                <button type="button" id="srch-api-clear"><code>clearSearch()</code></button>
+                <span><code>searchTerm</code> = <code id="srch-api-out">""</code></span>
+            </div>
+            <details class="mt-1">
+                <summary>Show code</summary>
+<pre><code>const el = document.querySelector('web-multiselect');
+el.searchMode = 'filter';   // or 'navigate' — what the query does
+el.search('an');            // apply as if typed (does not open)
+el.open();                  // …open to see it
+el.searchTerm;              // → "an"
+el.clearSearch();           // → ""</code></pre>
+            </details>
+
             <div class="note">
                 <p><strong>When to use each mode:</strong></p>
                 <ul>
@@ -807,6 +832,21 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                     applySearchHint();
                 }));
             srchHint.addEventListener('change', applySearchHint);
+
+            // Drive it from code: search(term) / clearSearch(), searchTerm read live (typing too —
+            // the search box's `input` event is composed, so it reaches the host).
+            const srchApiOut = document.getElementById('srch-api-out');
+            const showSearchTerm = () => { srchApiOut.textContent = JSON.stringify(exSearch.searchTerm); };
+            exSearch.addEventListener('input', showSearchTerm);
+            document.getElementById('srch-api-apply').addEventListener('click', () => {
+                exSearch.search(document.getElementById('srch-api-term').value);
+                exSearch.open();
+                showSearchTerm();
+            });
+            document.getElementById('srch-api-clear').addEventListener('click', () => {
+                exSearch.clearSearch();
+                showSearchTerm();
+            });
             document.getElementById('srch-min').addEventListener('change', (e) =>
                 exSearch.setAttribute('min-search-length', e.target.value));
 

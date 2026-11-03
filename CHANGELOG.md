@@ -1297,7 +1297,7 @@ _First stable of the 2.2 line — includes everything from 2.2.0-rc01 and 2.2.0-
   (`el.clearSearch(); el.scrollToValue(v)`) without a bespoke `reveal` flag. A **`searchText`**
   getter (element + picker) reads the current search box text and a **`search(term)`** method sets it
   programmatically — filtering exactly as if typed (runs `beforeSearchCallback` / `minSearchLength` /
-  async `searchCallback`), without opening the dropdown (demo: `examples-data-api.html` §API08). The
+  async `searchCallback`), without opening the dropdown (demo: `examples-basic.html` §BU06, "Drive it from code"). The
   query's behavior follows `searchMode` (filter / navigate) and `searchCallback` — no separate
   "filter" method, since the mode already governs that. Virtual
   `scrollToIndex` was also made **deterministic** (aligns to `start` by default, clamps, refreshes
