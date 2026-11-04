@@ -7,33 +7,37 @@
     <style>
         .controls button { margin: 0.25rem; }
 
-        /* Live registry inspector — box from shared `.log-panel--dark`; this
-           is just the two-column dt/dd grid on top of it. */
+        /* Live registry inspector — box from the kit's `.log-panel--dark` (a console, dark in
+           both themes); this is the two-column dt/dd grid and its chips on top of it. */
         .registry {
             display: grid;
             grid-template-columns: max-content 1fr;
             gap: 0.4rem 1rem;
         }
-        .registry dt { color: #7dd3fc; white-space: nowrap; }
-        .registry dd { margin: 0; color: #e2e8f0; word-break: break-word; }
-        .registry .muted { color: #94a3b8; }
-        .pill {
+        .registry dt { color: var(--kmwc-console-info-color); white-space: nowrap; }
+        .registry dd { margin: 0; color: var(--kmwc-console-text-color); word-break: break-word; }
+        .registry .muted { color: var(--kmwc-console-muted-color); }
+        .registry .chip {
             display: inline-block;
-            background: #1e293b;
-            color: #7dd3fc;
-            border: 1px solid #334155;
+            background: color-mix(in srgb, var(--kmwc-console-text-color) 8%, transparent);
+            color: var(--kmwc-console-info-color);
+            border: 1px solid color-mix(in srgb, var(--kmwc-console-text-color) 22%, transparent);
             border-radius: 999px;
             padding: 0.05rem 0.5rem;
             margin: 0 0.2rem 0.2rem 0;
             font-size: 0.78rem;
         }
-        .pill.on { color: #86efac; border-color: #166534; background: #052e16; }
+        .registry .chip.on {
+            color: var(--kmwc-console-ok-color);
+            border-color: color-mix(in srgb, var(--kmwc-console-ok-color) 45%, transparent);
+            background: color-mix(in srgb, var(--kmwc-console-ok-color) 12%, transparent);
+        }
         .count-badge {
             display: inline-block;
             min-width: 1.4rem;
             text-align: center;
-            background: #2563eb;
-            color: #fff;
+            background: var(--kmwc-accent-color);
+            color: var(--kmwc-text-color-on-accent);
             border-radius: 999px;
             padding: 0.05rem 0.5rem;
             font-weight: 700;
@@ -41,7 +45,7 @@
         #dynamic-hosts { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
         #dynamic-hosts:empty::after {
             content: "No dynamic instances yet — click \"Add a picker\".";
-            color: #6b7280; font-style: italic;
+            color: var(--kmwc-text-color-3); font-style: italic;
         }
     </style>
 
@@ -206,10 +210,10 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
                 // Reflect each category's effective level from the underlying loggers.
                 const lvl = window.__catLevel?.[c];
                 const on = lvl && lvl !== 'silent';
-                return `<span class="pill ${on ? 'on' : ''}">${esc(c.split(':')[1] || c)}${on ? ` · ${lvl}` : ''}</span>`;
+                return `<span class="chip ${on ? 'on' : ''}">${esc(c.split(':')[1] || c)}${on ? ` · ${lvl}` : ''}</span>`;
             }).join('');
             const instPills = instances.length
-                ? instances.map((el, i) => `<span class="pill">${esc(el.id || `#${i}`)}</span>`).join('')
+                ? instances.map((el, i) => `<span class="chip">${esc(el.id || `#${i}`)}</span>`).join('')
                 : '<span class="muted">none connected</span>';
 
             view.innerHTML = `

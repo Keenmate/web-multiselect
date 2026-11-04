@@ -5,11 +5,11 @@
     <link rel="stylesheet" href="/src/css/main.css">
 
     <style>
-        /* Box comes from shared `.log-panel`; page keeps its entry-tag colors. */
-        .tag-prop  { color: #9b1d8e; font-weight: 600; }
-        .tag-event { color: #0066cc; font-weight: 600; }
-        .tag-block { color: #c0392b; font-weight: 600; }
-        .tag-ok    { color: #1e7e34; font-weight: 600; }
+        /* Box comes from the kit's `.log-panel`; page keeps its entry-tag colours (theme-aware). */
+        .tag-prop  { color: light-dark(#9b1d8e, #f0abfc); font-weight: 600; }
+        .tag-event { color: var(--kmwc-info-color); font-weight: 600; }
+        .tag-block { color: var(--kmwc-danger-color); font-weight: 600; }
+        .tag-ok    { color: var(--kmwc-success-color); font-weight: 600; }
         .legend { font-size: 0.8125rem; margin-top: 0.25rem; }
     </style>
 

@@ -6,15 +6,8 @@
 
     <!-- Merged from base-variables page: page-specific styles -->
     <style>
-    /* Controls Panel */
-    .controls {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    }
-
+    /* TH11 typography panel: a kit .card; each row is a kit .controls row, so
+       attachControlsPersistence('theming') still finds the inputs. */
     .controls-header {
       display: flex;
       justify-content: space-between;
@@ -29,15 +22,6 @@
       padding: 0;
     }
 
-    /* Red danger button for reset */
-    .reset-btn {
-      background: #e53e3e;
-    }
-
-    .reset-btn:hover {
-      background: #c53030;
-    }
-
     .control-section {
       margin-bottom: 1.5rem;
     }
@@ -50,65 +34,27 @@
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #6b7280;
+      color: var(--kmwc-text-color-3);
       margin: 0 0 0.75rem 0;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--kmwc-border-color);
       padding-bottom: 0.5rem;
     }
 
     .section-desc {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--kmwc-text-color-3);
       margin: 0 0 0.75rem 0;
       line-height: 1.4;
     }
 
     .section-desc strong {
-      color: #374151;
+      color: var(--kmwc-text-color-2);
     }
 
-    .control-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .control-group label {
-      font-size: 0.75rem;
-      color: #374151;
-      font-weight: 500;
-    }
-
-    .control-group input {
-      padding: 0.5rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-    }
-
-    .control-group input[type="text"] {
-      width: 250px;
-    }
-
-    .control-group input[type="number"] {
-      width: 80px;
-    }
-
+    /* .control-row / .control-group and the fields come from the kit. */
     .font-link-input {
-      width: 100%;
-    }
-
-    /* Shadow variant of the shared `.demo-card` (no border). */
-    .demo-card {
-      --demo-card-border: none;
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+      width: 28rem;
+      max-width: 100%;
     }
 
     /* Multiselect wrapper for better layout */
@@ -118,11 +64,11 @@
       gap: 1rem;
     }
 
-    /* Current values dump — box from shared `.log-panel--dark`; kept green +
-       preformatted for the terminal-style values readout. */
+    /* Current values dump — box from the kit's `.log-panel--dark` (a console, dark in
+       both themes); green + preformatted for the terminal-style values readout. */
     .current-values {
       --log-max-height: 300px;
-      color: #a5d6a7;
+      color: var(--kmwc-console-highlight-color);
       margin-top: 2rem;
       font-size: 0.75rem;
       line-height: 1.6;
@@ -130,7 +76,7 @@
     }
 
     .current-values-header {
-      color: #93c5fd;
+      color: var(--kmwc-console-info-color);
       font-weight: bold;
       margin-bottom: 0.5rem;
     }
@@ -172,17 +118,17 @@
         .narrow-demo-card h4 {
             margin: 0 0 0.25rem 0;
             font-size: 0.875rem;
-            color: #374151;
+            color: var(--kmwc-text-color-2);
         }
 
         .narrow-demo-card p {
             margin: 0 0 0.75rem 0;
             font-size: 0.7rem;
-            color: #6b7280;
+            color: var(--kmwc-text-color-3);
         }
 
         .narrow-demo-card code {
-            background: #f3f4f6;
+            background: var(--kmwc-inline-code-bg);
             padding: 0.125rem 0.375rem;
             border-radius: 3px;
             font-size: 0.65rem;
@@ -196,16 +142,18 @@
         #font-lexend { --base-font-family: "Lexend", sans-serif; }
         #font-mono { --base-font-family: "Fira Code", monospace; }
 
-        /* Gray-fill variant of the shared `.demo-card`. */
+        /* Gray-fill variant of the kit's `.demo-card`. */
         .comparison-card {
-            --demo-card-bg: #f9fafb;
+            --demo-card-bg: var(--kmwc-elevated-bg);
             --demo-card-border: none;
         }
     </style>
 
     <!-- Page-specific styles -->
-    <style>
-        /* Grid comes from shared `.card-grid`; wider min for side-by-side themes. */
+    <!-- Theme gallery (TH01–TH06) and the color-scheme demo: each card IS a fixed theme —
+         its colours are the demo, so they stay put when the page theme flips. -->
+    <style data-kmwc-fixed-colors>
+        /* Grid comes from the kit's `.card-grid`; wider min for side-by-side themes. */
         .theme-grid {
             --grid-min: 500px;
             margin-bottom: 2rem;
@@ -505,10 +453,10 @@
             --ms-scrollbar-thumb-bg-hover: #1976d2;
         }
 
-        .form-text {
-            display: block;
-            margin-top: 0.25rem;
+        /* The kit's .form-text, toned to each theme card's own text colour. */
+        .theme-card .form-text {
             font-size: 0.75rem;
+            color: inherit;
             opacity: 0.7;
         }
 
@@ -547,11 +495,14 @@
         }
         .scheme-demo .form-text { color: inherit; }
 
+    </style>
+
+    <style>
         /* Segmented Auto / Light / Dark switch built from radios. */
         .segmented {
             display: inline-flex;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border: 1px solid var(--kmwc-border-color-strong);
+            border-radius: var(--kmwc-radius-md);
             overflow: hidden;
             margin-bottom: 1.25rem;
         }
@@ -559,13 +510,13 @@
             padding: 0.4rem 1rem;
             cursor: pointer;
             font-size: 0.9rem;
-            background: #f8fafc;
-            color: #334155;
-            border-inline-start: 1px solid #cbd5e1;
+            background: var(--kmwc-elevated-bg);
+            color: var(--kmwc-text-color-2);
+            border-inline-start: 1px solid var(--kmwc-border-color-strong);
         }
         .segmented label:first-of-type { border-inline-start: none; }
         .segmented input { position: absolute; opacity: 0; pointer-events: none; }
-        .segmented label:has(input:checked) { background: #667eea; color: #fff; }
+        .segmented label:has(input:checked) { background: var(--kmwc-accent-color); color: var(--kmwc-text-color-on-accent); }
     </style>
 
         <!-- Built-in Color Scheme (auto / light / dark) -->
@@ -724,7 +675,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                     </tr>
                 </tbody>
             </table>
-            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">
+            <p style="font-size: 0.875rem; color: var(--kmwc-text-color-3); margin-bottom: 1.5rem;">
                 <strong>Note:</strong> the input height is <code>calc(3.5 * var(--ms-rem))</code> and font
                 <code>calc(1.4 * var(--ms-rem))</code>, so both track the base unit. For Pure Admin, set
                 <code>--ms-rem: 1rem</code> (with <code>html { font-size: 10px }</code>).
@@ -887,16 +838,16 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
     <!-- ===== Merged from base-variables page ===== -->
 
     <!-- Controls Panel -->
-    <div class="controls">
+    <div class="card">
       <div class="controls-header">
         <h2>TH11 · Typography Controls</h2>
-        <button class="reset-btn" id="resetBtn">Reset All</button>
+        <button class="btn-danger" id="resetBtn">Reset All</button>
       </div>
 
       <!-- Font Link -->
       <div class="control-section">
         <h3>Font Link (Google Fonts, etc.)</h3>
-        <div class="control-row">
+        <div class="control-row controls">
           <div class="control-group">
             <label for="fontLink">Paste &lt;link&gt; tag or URL</label>
             <input type="text" id="fontLink" class="font-link-input" placeholder="e.g., https://fonts.googleapis.com/css2?family=Lexend...">
@@ -908,7 +859,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       <!-- Font Family -->
       <div class="control-section">
         <h3>Font Family</h3>
-        <div class="control-row">
+        <div class="control-row controls">
           <div class="control-group">
             <label for="fontFamily">--base-font-family</label>
             <input type="text" id="fontFamily" placeholder="e.g., 'Lexend', sans-serif">
@@ -926,7 +877,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
           <strong>base:</strong> input text &bull;
           <strong>lg:</strong> large displays
         </p>
-        <div class="control-row">
+        <div class="control-row controls">
           <div class="control-group">
             <label for="fontSize2xs">2xs</label>
             <input type="number" id="fontSize2xs" value="1" step="0.1">
@@ -953,7 +904,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       <!-- Font Weights -->
       <div class="control-section">
         <h3>Font Weights</h3>
-        <div class="control-row">
+        <div class="control-row controls">
           <div class="control-group">
             <label for="fontWeightNormal">normal</label>
             <input type="number" id="fontWeightNormal" value="400" step="100" min="100" max="900">
@@ -972,7 +923,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
       <!-- Line Heights -->
       <div class="control-section">
         <h3>Line Heights</h3>
-        <div class="control-row">
+        <div class="control-row controls">
           <div class="control-group">
             <label for="lineHeightTight">tight</label>
             <input type="number" id="lineHeightTight" value="1.25" step="0.05" min="1" max="3">
@@ -1434,7 +1385,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 </tbody>
             </table>
 
-            <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem;">
+            <p style="font-size: 0.875rem; color: var(--kmwc-text-color-3); margin-top: 1rem;">
                 <strong>Note:</strong> CSS variables must be set on the <code>&lt;web-multiselect&gt;</code> element itself (or via inherited CSS), not on wrapper divs, due to Shadow DOM encapsulation.
             </p>
         </section>

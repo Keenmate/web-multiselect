@@ -6,15 +6,15 @@
 
     <!-- Page-specific styles -->
     <style>
-        /* Grid comes from shared `.card-grid`; this just tunes the columns and
+        /* Grid comes from the kit's `.card-grid`; this just tunes the columns and
            adds the panel chrome. */
         .stats {
             --grid-min: 200px;
             --grid-gap: 1rem;
             margin-top: 1.5rem;
             padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: var(--kmwc-elevated-bg);
+            border-radius: var(--kmwc-radius-md);
         }
 
         .stat {
@@ -24,12 +24,12 @@
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            color: var(--kmwc-accent-color);
         }
 
         .stat-label {
             font-size: 0.875rem;
-            color: #666;
+            color: var(--kmwc-text-color-3);
             margin-top: 0.25rem;
         }
 
@@ -284,15 +284,15 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
 
                     return `
                         <div style="display: flex; gap: 0.5rem; align-items: center; padding: 0.25rem 0;">
-                            <div style="width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.875rem; font-weight: bold;">
+                            <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--kmwc-header-bg); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--kmwc-text-color-on-accent); font-size: 0.875rem; font-weight: bold;">
                                 ${option.id}
                             </div>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 600; font-size: 0.875rem;">${option.name}</div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; margin-top: 0.125rem;">
-                                    <span style="color: #666;">${option.category}</span>
-                                    <span style="color: #10b981; font-weight: 600;">$${option.price}</span>
-                                    <span style="color: #f59e0b;">${stars} ${option.rating}</span>
+                                    <span style="color: var(--kmwc-text-color-3);">${option.category}</span>
+                                    <span style="color: var(--kmwc-success-color); font-weight: 600;">$${option.price}</span>
+                                    <span style="color: var(--kmwc-warning-color);">${stars} ${option.rating}</span>
                                     <span style="color: ${stockColor};">${stockStatus}</span>
                                 </div>
                             </div>
@@ -315,7 +315,7 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                             <span style="font-size: 1rem;">${priorityIcons[option.priority]}</span>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: 500; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${option.name}</div>
-                                <div style="font-size: 0.6875rem; color: #666; margin-top: 0.125rem;">
+                                <div style="font-size: 0.6875rem; color: var(--kmwc-text-color-3); margin-top: 0.125rem;">
                                     $${option.price} • ${stars} ${option.rating}
                                 </div>
                             </div>

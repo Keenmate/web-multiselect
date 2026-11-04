@@ -13,25 +13,25 @@
             gap: 0.75rem;
             margin-bottom: 0.75rem;
             font-size: 0.875rem;
-            color: #2d3748;
+            color: var(--kmwc-text-color-1);
         }
 
         .delay-control input[type="range"] {
             flex: 1;
             max-width: 280px;
-            accent-color: #667eea;
         }
 
         .delay-control .delay-value {
-            font-family: 'Courier New', monospace;
+            font-family: var(--kmwc-mono-font-family);
             font-weight: 600;
-            color: #667eea;
+            color: var(--kmwc-accent-color);
             min-width: 5.5ch;
             text-align: right;
         }
 
         /* Request log — shows fetches firing, completing, and being cancelled.
-           Box comes from shared `.log-panel--dark`; this tunes height + entries. */
+           Box comes from the kit's `.log-panel--dark` (a console, dark in both themes);
+           this tunes height + entries. */
         .req-log {
             --log-max-height: 9rem;
             margin-top: 0.75rem;
@@ -39,14 +39,14 @@
 
         .req-log:empty:before {
             content: "Request activity will appear here…";
-            color: #718096;
+            color: var(--kmwc-console-muted-color);
         }
 
         .req-log .entry { padding: 0.15rem 0; white-space: pre-wrap; }
-        .req-log .entry--start     { color: #90cdf4; }
-        .req-log .entry--done      { color: #9ae6b4; }
-        .req-log .entry--cancelled { color: #fbb6ce; }
-        .req-log .entry--error     { color: #feb2b2; }
+        .req-log .entry--start     { color: var(--kmwc-console-info-color); }
+        .req-log .entry--done      { color: var(--kmwc-console-ok-color); }
+        .req-log .entry--cancelled { color: var(--kmwc-console-warn-color); }
+        .req-log .entry--error     { color: var(--kmwc-console-err-color); }
 
         /* `form` panel + `.form-actions` footer come from the devkit examples kit. */
 
@@ -66,7 +66,7 @@
             content: "✓";
             position: absolute;
             left: 0;
-            color: #667eea;
+            color: var(--kmwc-accent-color);
             font-weight: bold;
         }
     </style>
@@ -526,10 +526,10 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                         ></web-multiselect>
                     </div>
 
-                    <div style="padding-left: 1.5rem; border-left: 3px solid #e2e8f0;">
+                    <div style="padding-left: 1.5rem; border-left: 3px solid var(--kmwc-border-color);">
                         <label class="demo-label">
                             2️⃣ Select Business Unit
-                            <span id="bu-status" style="color: #a0aec0; font-weight: normal; font-size: 0.875rem;">(select organization first)</span>
+                            <span id="bu-status" style="color: var(--kmwc-text-color-3); font-weight: normal; font-size: 0.875rem;">(select organization first)</span>
                         </label>
                         <web-multiselect
                             id="cascade-bu"
@@ -539,10 +539,10 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                         ></web-multiselect>
                     </div>
 
-                    <div style="padding-left: 3rem; border-left: 3px solid #e2e8f0;">
+                    <div style="padding-left: 3rem; border-left: 3px solid var(--kmwc-border-color);">
                         <label class="demo-label">
                             3️⃣ Select Department
-                            <span id="dept-status" style="color: #a0aec0; font-weight: normal; font-size: 0.875rem;">(select business unit first)</span>
+                            <span id="dept-status" style="color: var(--kmwc-text-color-3); font-weight: normal; font-size: 0.875rem;">(select business unit first)</span>
                         </label>
                         <web-multiselect
                             id="cascade-dept"
@@ -846,7 +846,7 @@ el.refresh();                     // silent repaint — never call both after an
                     const timestamp = new Date().toLocaleTimeString();
                     const logEntry = document.createElement('div');
                     logEntry.style.marginBottom = '0.5rem';
-                    logEntry.innerHTML = `<strong style="color: #0066cc;">[${timestamp}] ${eventName}:</strong> ${JSON.stringify(detail, null, 2)}`;
+                    logEntry.innerHTML = `<strong style="color: var(--kmwc-info-color);">[${timestamp}] ${eventName}:</strong> ${JSON.stringify(detail, null, 2)}`;
                     eventLog.appendChild(logEntry);
                     eventLog.scrollTop = eventLog.scrollHeight;
                 };

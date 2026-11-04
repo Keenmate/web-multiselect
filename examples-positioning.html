@@ -14,20 +14,20 @@
         .wrap-container-type { container-type: inline-size; }
         .wrap-contain-paint  { contain: paint; }
 
-        /* Tiny status pill — shared `.note` would be too heavy here, this sits inline
+        /* Tiny status pill — the kit's `.note` would be too heavy here, this sits inline
            with the multiselect to reflect live drift state. */
         .status {
-            font-family: ui-monospace, Consolas, monospace;
+            font-family: var(--kmwc-mono-font-family);
             font-size: 0.85rem;
             padding: 8px 10px;
             border-radius: 4px;
-            background: #edf2f7;
-            color: #2d3748;
+            background: var(--kmwc-inline-code-bg);
+            color: var(--kmwc-text-color-1);
             margin-top: 0.75rem;
             min-height: 1.2em;
         }
-        .status.ok      { background: #d6fbd6; color: #1a4d1a; }
-        .status.drifted { background: #fbd6d6; color: #6a1a1a; }
+        .status.ok      { background: color-mix(in srgb, var(--kmwc-success-color) 15%, transparent); color: var(--kmwc-success-color); }
+        .status.drifted { background: color-mix(in srgb, var(--kmwc-danger-color) 15%, transparent); color: var(--kmwc-danger-color); }
     </style>
 
         <!-- ────────────────────────────────────────────────────────────────────── -->
