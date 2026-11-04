@@ -105,7 +105,7 @@ npm run dev
 This starts the Vite development server with:
 - Hot Module Replacement (HMR)
 - Fast refresh on file changes
-- Available at http://localhost:5173
+- Available at http://localhost:12100 (the registered port block in package.json#kmwc.ports; the examples preview is 12101, the image 12110)
 
 Open `index.html` in your browser to test your changes in real-time.
 
@@ -177,7 +177,7 @@ web-multiselect/
 ├── index.html                # Demo page
 ├── package.json              # Package configuration
 ├── tsconfig.json             # TypeScript configuration
-├── vite.config.ts            # Vite build configuration
+├── vite.config.ts            # defineComponentConfig() from the devkit (settings: package.json#kmwc)
 ├── Makefile                  # Build automation (Unix)
 ├── make.bat                  # Build automation (Windows)
 ├── .gitignore
@@ -267,7 +267,7 @@ Make sure you've run `make setup` or `npm install` first.
 
 ### Port already in use
 
-If port 5173 is in use, Vite will automatically try the next available port. Check the console output for the actual URL.
+The dev server is strict: it runs only on `kmwc.ports.dev` (12100) and fails instead of hopping to another port. `make kill-port` frees 12100 / 12101.
 
 ### Build fails
 

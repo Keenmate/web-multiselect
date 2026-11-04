@@ -55,3 +55,5 @@ vscode.css-custom-data.json
 
 # Per-developer Make config (container runner, ports)
 .makefile.env
+# kmwc
+dist-examples/

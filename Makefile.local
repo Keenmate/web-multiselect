@@ -1,0 +1,20 @@
+# Repo-specific Make targets (included by the devkit-generated Makefile).
+.PHONY: test-unit test-e2e-all clean-dist preview update-deps install-dev
+
+test-unit: ## Run the vitest unit tests
+	npm run test:unit
+
+test-e2e-all: ## Run e2e on chromium, firefox, webkit + mobile (4 workers)
+	npm run test:e2e:all
+
+clean-dist: ## Clean only the dist folder
+	npm run clean:dist
+
+preview: build ## Preview the library build (vite preview)
+	npm run preview
+
+update-deps: ## Update dependencies
+	npm update
+
+install-dev: ## Pack a tarball to install into another project (npm install <tgz>)
+	npm pack
