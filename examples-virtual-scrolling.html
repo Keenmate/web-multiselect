@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Scrolling — MultiSelect</title>
+<meta name="kmwc:title" content="Virtual Scrolling">
+<meta name="kmwc:subtitle" content="Blazing-fast performance with 15,000 options using virtual scrolling and real-time metrics">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -40,14 +34,6 @@
         }
 
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Virtual Scrolling</h1>
-            <p class="subtitle">Blazing-fast performance with 15,000 options using virtual scrolling and real-time metrics</p>
-        </header>
 
         <div class="card">
             <h2>VS01 · Large Dataset — Performance &amp; Scroll-to API</h2>
@@ -177,8 +163,6 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
                 </span>
             </div>
         </div>
-
-    </div>
 
     <script type="module">
         // Generate 15,000 random options
@@ -435,9 +419,3 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
             }
         });
     </script>
-
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

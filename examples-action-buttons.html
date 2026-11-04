@@ -1,25 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Action Buttons Examples - MultiSelect</title>
+<meta name="kmwc:title" content="Action Buttons Examples">
+<meta name="kmwc:subtitle" content="Everything the action bar can do, each as ONE live picker you configure with control switches — built-in &amp; static props, the dynamic callbacks (and their priority over statics), custom actions, icon buttons, layout, and a device-adaptive toolbar.">
+<meta name="kmwc:body-class" content="dark-output">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
     <!-- Font Awesome for the icon-buttons chapter (font must be registered at document level) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body class="dark-output">
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Action Buttons Examples</h1>
-            <p class="subtitle">Everything the action bar can do, each as ONE live picker you configure with control switches — built-in &amp; static props, the dynamic callbacks (and their priority over statics), custom actions, icon buttons, layout, and a device-adaptive toolbar.</p>
-        </header>
 
         <!-- ============================================================= -->
         <!-- AB01 · Built-in & static properties                            -->
@@ -355,10 +342,9 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                 </ul>
             </div>
         </div>
-    </div>
 
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
         // Loads (and registers) the component — window.components['web-multiselect'] exists
         // afterwards. The build rewrites /src/index.ts → the dist bundle.
         import '/src/index.ts';
@@ -620,13 +606,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
 
             // Persist all control switches to localStorage and restore them on reload —
             // re-applies to every picker via the listeners wired above.
-            persistControls('action-buttons');
+            attachControlsPersistence('action-buttons');
         });
     </script>
-
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

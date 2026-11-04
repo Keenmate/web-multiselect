@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data & API — MultiSelect</title>
+<meta name="kmwc:title" content="Data &amp; API">
+<meta name="kmwc:subtitle" content="Feeding the component data — custom objects, [key,value] tuples, member callbacks, async search, and cascading — plus the public API: form integration, value access methods, and events.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -54,7 +48,7 @@
         .req-log .entry--cancelled { color: #fbb6ce; }
         .req-log .entry--error     { color: #feb2b2; }
 
-        /* `form` panel + `.form-actions` footer now live in examples-shared.css. */
+        /* `form` panel + `.form-actions` footer come from the devkit examples kit. */
 
         /* Feature list styling */
         .feature-list {
@@ -76,14 +70,6 @@
             font-weight: bold;
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Data &amp; API</h1>
-            <p class="subtitle">Feeding the component data — custom objects, [key,value] tuples, member callbacks, async search, and cascading — plus the public API: form integration, value access methods, and events.</p>
-        </header>
 
         <!-- Example 1: Custom Object Structure with Members -->
         <section class="example-section">
@@ -368,7 +354,6 @@ multiselect.isOpen;          // → true / false
 multiselect.isOpen = true;   // open by assignment
 multiselect.isOpen = false;  // close by assignment</pre></div>
         </section>
-
 
         <!-- Example 8: Async Search / Lookup -->
         <section class="example-section">
@@ -836,7 +821,6 @@ el.options = await fetchFromServer();
 option.disabled = true;           // or: disabledIds.add(id)
 el.refresh();                     // silent repaint — never call both after an assign</pre></div>
         </section>
-    </div>
 
     <script type="module">
         import '/src/index.ts';
@@ -1824,14 +1808,7 @@ el.refresh();                     // silent repaint — never call both after an
 
     </script>
 
-
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
-        window.addEventListener('load', () => persistControls('data-api'));
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
+        window.addEventListener('load', () => attachControlsPersistence('data-api'));
     </script>
-</body>
-</html>

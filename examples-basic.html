@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basic Usage — MultiSelect</title>
+<meta name="kmwc:title" content="Basic Usage">
+<meta name="kmwc:subtitle" content="The essentials, each as ONE live picker you configure with control switches — selection &amp; input mode, content &amp; display, groups, the scroll-to API, and search — plus a declarative, no-JavaScript setup.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Basic Usage</h1>
-            <p class="subtitle">The essentials, each as ONE live picker you configure with control switches — selection &amp; input mode, content &amp; display, groups, the scroll-to API, and search — plus a declarative, no-JavaScript setup.</p>
-        </header>
 
         <!-- ============================================================= -->
         <!-- BU01 · Selection & input mode                                  -->
@@ -554,10 +540,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             </details>
         </div>
 
-    </div>
-
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
 
         // ── Datasets ─────────────────────────────────────────────────────
         const languages = [
@@ -911,13 +895,6 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
 
             // Persist all control switches to localStorage and restore them on
             // reload — re-applies to every picker via the listeners wired above.
-            persistControls('basic');
+            attachControlsPersistence('basic');
         });
     </script>
-
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

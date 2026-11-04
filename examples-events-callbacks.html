@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MultiSelect — Events, Handlers & Interceptors</title>
+<meta name="kmwc:title" content="Events, Handlers &amp; Interceptors">
+<meta name="kmwc:subtitle" content="The notification surface, end to end: fire-and-forget <strong>events</strong> (DOM <code>CustomEvent</code> + the <code>on*</code> property twin) and return-consuming <strong>interceptors</strong> that can veto an action before it happens.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -18,18 +12,6 @@
         .tag-ok    { color: #1e7e34; font-weight: 600; }
         .legend { font-size: 0.8125rem; margin-top: 0.25rem; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Events, Handlers &amp; Interceptors</h1>
-            <p class="subtitle">
-                The notification surface, end to end: fire-and-forget <strong>events</strong>
-                (DOM <code>CustomEvent</code> + the <code>on*</code> property twin) and
-                return-consuming <strong>interceptors</strong> that can veto an action before it happens.
-            </p>
-        </header>
 
         <!-- ============================================================ -->
         <!-- 1. EVENTS — DOM events and the on* property twin             -->
@@ -356,7 +338,6 @@ el.beforeAddCallback = async ({ value }) =&gt; {
                 <code>controller</code> (the same facade as <code>el.controller</code>) and <code>element</code>.
             </p>
         </div>
-    </div>
 
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {
@@ -526,10 +507,3 @@ el.beforeAddCallback = async ({ value }) =&gt; {
             });
         });
     </script>
-
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

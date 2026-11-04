@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Builder — MultiSelect</title>
-    <link rel="stylesheet" href="examples-shared.css">
+<meta name="kmwc:title" content="Builder">
+<meta name="kmwc:subtitle" content="A live playground: tweak every attribute from the property panel on the right, paste your own data, and copy the generated markup. Changed properties are highlighted.">
+
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
     <style>
@@ -150,14 +146,6 @@
         }
         .builder-tip[data-show] { opacity: 1; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Builder</h1>
-            <p class="subtitle">A live playground: tweak every attribute from the property panel on the right, paste your own data, and copy the generated markup. Changed properties are highlighted.</p>
-        </header>
 
         <div class="toolbar">
             <button id="reset-btn" class="secondary">Reset all</button>
@@ -193,7 +181,6 @@
             <!-- RIGHT: property grid -->
             <div class="props" id="props"></div>
         </div>
-    </div>
 
     <script type="module">
         import '/src/index.ts';
@@ -537,8 +524,3 @@
             renderMarkup();
         });
     </script>
-
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

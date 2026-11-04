@@ -1,21 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>External Search (FlexSearch) - MultiSelect</title>
+<meta name="kmwc:title" content="External Search (FlexSearch)">
+<meta name="kmwc:subtitle" content="Plug a real search engine into <code>searchCallback</code> — the library stays dependency-free">
 
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>External Search (FlexSearch)</h1>
-            <p class="subtitle">Plug a real search engine into <code>searchCallback</code> — the library stays dependency-free</p>
-        </header>
 
         <!-- Demo A: why + wire-up + flat accent folding -->
         <section class="example-section">
@@ -137,9 +124,7 @@ el.searchCallback = ({ term, entries }) =&gt;
                 </div>
             </div>
         </section>
-    </div>
 
-    <script type="module" src="/src/index.ts"></script>
     <script type="module">
         // Each demo is wired INDEPENDENTLY and defensively. Previously this module
         // used a static `import` of the FlexSearch helper plus a top-level
@@ -326,7 +311,3 @@ el.searchCallback = ({ term, entries }) =&gt;
             }
         })();
     </script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

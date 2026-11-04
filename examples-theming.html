@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Theming &amp; Sizing — MultiSelect</title>
+<meta name="kmwc:title" content="Theming &amp; Sizing">
+<meta name="kmwc:subtitle" content="Customize appearance with CSS custom properties — dark mode and theme presets, the --base-* typography integration, and REM-based sizing of inputs and fonts.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -110,7 +104,6 @@
     .font-link-input {
       width: 100%;
     }
-
 
     /* Shadow variant of the shared `.demo-card` (no border). */
     .demo-card {
@@ -574,14 +567,6 @@
         .segmented input { position: absolute; opacity: 0; pointer-events: none; }
         .segmented label:has(input:checked) { background: #667eea; color: #fff; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Theming &amp; Sizing</h1>
-            <p class="subtitle">Customize appearance with CSS custom properties — dark mode and theme presets, the --base-* typography integration, and REM-based sizing of inputs and fonts.</p>
-        </header>
 
         <!-- Built-in Color Scheme (auto / light / dark) -->
         <section class="example-section" style="margin-bottom: 3rem;">
@@ -1526,7 +1511,6 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 </tbody>
             </table>
         </section>
-    </div>
 
     <script type="module">
         // Sample data for all examples — one grouped dataset shared by every demo.
@@ -1950,12 +1934,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
         });
     </script>
 
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
-        window.addEventListener('load', () => persistControls('theming'));
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
+        window.addEventListener('load', () => attachControlsPersistence('theming'));
     </script>
-</body>
-</html>

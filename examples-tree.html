@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tree of Options - MultiSelect</title>
+<meta name="kmwc:title" content="Tree of Options">
+<meta name="kmwc:subtitle" content="Render options as an always-expanded hierarchy, indented by depth">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -15,14 +9,6 @@
         /* TR02 only: dim a .controls group when its inputs are disabled. */
         .controls[data-disabled="true"] { opacity: 0.45; }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Tree of Options</h1>
-            <p class="subtitle">Render options as an always-expanded hierarchy, indented by depth</p>
-        </header>
 
         <!-- ============================================================= -->
         <!-- TR01 · The tree model — path-member + custom separator          -->
@@ -543,9 +529,7 @@ el.scrollToGroup('x');           // → resolves false in tree mode
 el.clearSearch();
 el.scrollToValue('2211');</pre></div>
         </section>
-    </div>
 
-    <script type="module" src="/src/index.ts"></script>
     <script type="module">
         // Each option carries a materialized dot-path; parent/level are derived from it.
         const categories = [
@@ -935,11 +919,7 @@ el.scrollToValue('2211');</pre></div>
                 });
         });
     </script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
-        window.addEventListener('load', () => persistControls('tree'));
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
+        window.addEventListener('load', () => attachControlsPersistence('tree'));
     </script>
-</body>
-</html>

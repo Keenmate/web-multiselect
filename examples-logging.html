@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logging & Diagnostics — MultiSelect</title>
+<meta name="kmwc:title" content="Logging &amp; Diagnostics">
+<meta name="kmwc:subtitle" content="The global component registry from <code>@keenmate/web-components-core</code> — introspection, logging controls, and the live-instance list">
 
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
-    <link rel="stylesheet" href="/dist/style.css">
 
     <style>
         .controls button { margin: 0.25rem; }
@@ -50,14 +44,6 @@
             color: #6b7280; font-style: italic;
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Logging &amp; Diagnostics</h1>
-            <p class="subtitle">The global component registry from <code>@keenmate/web-components-core</code> — introspection, logging controls, and the live-instance list</p>
-        </header>
 
         <div class="note warning">
             <strong>Open the DevTools Console (F12).</strong> On load the component
@@ -178,11 +164,10 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
 // (targets el.log; the shared category loggers above stay unchanged).
             </div>
         </div>
-    </div>
 
     <script type="module">
-        // Importing the module runs registerComponent() → window.components is populated.
-        import '/dist/multiselect.js';
+        // The component entry (loaded in <head> by the devkit layout) runs registerComponent(),
+        // so window.components is populated before this script runs.
 
         const TAG = 'web-multiselect';
         const reg = () => window.components?.[TAG];
@@ -333,7 +318,3 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
         // Keep the instance list honest even if instances change outside our buttons.
         setInterval(() => refreshRegistry(), 2000);
     </script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>

@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>MultiSelect — Responsive & Mobile</title>
+<meta name="kmwc:title" content="Responsive &amp; Mobile">
+<meta name="kmwc:subtitle" content="Everything responsive in one place. First, how the dropdown <strong>presents on phones</strong> — a fullscreen overlay with its own search header, the soft-keyboard policy, and a touch stand-in for keyboard match-stepping. Then how it reacts to its <strong>own box</strong> in a narrow column (independent of the device), and RTL mirroring of the whole thing.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
 
@@ -72,19 +66,6 @@
             .sidebar-layout .sidebar { flex-basis: auto; width: 100%; }
         }
     </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Responsive &amp; Mobile</h1>
-            <p class="subtitle">
-                Everything responsive in one place. First, how the dropdown <strong>presents on phones</strong>
-                — a fullscreen overlay with its own search header, the soft-keyboard policy, and a touch
-                stand-in for keyboard match-stepping. Then how it reacts to its <strong>own box</strong> in a
-                narrow column (independent of the device), and RTL mirroring of the whole thing.
-            </p>
-        </header>
 
         <!-- ============================================================ -->
         <!-- 1. presentation — how the overlay is chosen           -->
@@ -525,7 +506,6 @@ el.responsiveCallback = () =&gt; null;
 import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</code></pre>
             </details>
         </div>
-    </div>
 
     <!-- Mobile / fullscreen demos (own module scope) -->
     <script type="module">
@@ -711,13 +691,7 @@ import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@k
         window.addEventListener('resize', () => requestAnimationFrame(refresh));
     </script>
 
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
-        window.addEventListener('load', () => persistControls('responsive'));
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
+        window.addEventListener('load', () => attachControlsPersistence('responsive'));
     </script>
-</body>
-</html>

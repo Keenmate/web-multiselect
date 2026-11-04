@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tooltips Examples - MultiSelect</title>
+<meta name="kmwc:title" content="Tooltips Examples">
+<meta name="kmwc:subtitle" content="Hover tooltips on dropdown options and selected badges — each as ONE live picker you configure with control switches: enable, placement, follow-cursor, delay, custom content, independent styling, and badge tooltips.">
 
-    <!-- Shared example styles -->
-    <link rel="stylesheet" href="examples-shared.css">
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <a href="index.html" class="back-link">← Back to Examples</a>
-            <h1>Tooltips Examples</h1>
-            <p class="subtitle">Hover tooltips on dropdown options and selected badges — each as ONE live picker you configure with control switches: enable, placement, follow-cursor, delay, custom content, independent styling, and badge tooltips.</p>
-        </header>
 
         <!-- ============================================================= -->
         <!-- TT01 · Option tooltips                                          -->
@@ -179,10 +165,9 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
                 badge tooltip's placement / delay / offset settings.
             </div>
         </div>
-    </div>
 
     <script type="module">
-        import { persistControls } from './examples-controls-store.js';
+        import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
 
         // ── Datasets ─────────────────────────────────────────────────────
         const fruitOptions = [
@@ -269,13 +254,6 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
 
             // Persist all control switches to localStorage and restore them on
             // reload — re-applies to every picker via the listeners wired above.
-            persistControls('tooltips');
+            attachControlsPersistence('tooltips');
         });
     </script>
-
-    <!-- Development mode: Load from src -->
-    <script type="module" src="/src/index.ts"></script>
-    <script type="module" src="examples-copy-link.js"></script>
-    <script type="module" src="examples-chapter-nav.js"></script>
-</body>
-</html>
