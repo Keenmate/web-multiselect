@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runs, never inside a tag or an entity: a term like `amp` on `Tom &amp; Jerry` or `b` on
   `<b>Bold</b>` no longer breaks the markup. A match that crosses a tag (`Pra<b>ha</b>`) isn't
   highlighted.
+- **`collapse-badges-below` reads the layout width** (`offsetWidth`), the same number core rc18's
+  `sizeChanged()` reports, so a `transform: scale()` on the control or an ancestor no longer makes
+  the first check and later resizes disagree.
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when

@@ -462,7 +462,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // `collapseBadgesBelow` is element-only too — re-evaluate against the current
     // box when the threshold is set/changed/cleared (the `sizeChanged` hook only fires
     // on a box change, not an attribute change).
-    if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.getBoundingClientRect().width);
+    if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.offsetWidth);
   }
 
   /** `disabled` input or ancestor `<fieldset disabled>` flipped (core): apply it in place. */
@@ -633,9 +633,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // Likewise re-assert the container-responsive badge collapse: the fresh picker
     // is at the base badges mode, so reset our flag and re-evaluate the current box
     // (the throttled `sizeChanged` hook would otherwise leave it uncollapsed until the
-    // next box change). getBoundingClientRect is the synchronous read core suggests.
+    // next box change). offsetWidth is the layout width (no transforms) — the same number
+    // core's sizeChanged() reports since rc18, so the first read and the hook agree.
     this.#badgesCollapsed = false;
-    this.#applyBadgeCollapse(this.getBoundingClientRect().width);
+    this.#applyBadgeCollapse(this.offsetWidth);
   }
 
   #ensureContainer(): void {
