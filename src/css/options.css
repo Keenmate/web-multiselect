@@ -234,6 +234,12 @@
   color: var(--ms-option-color-matched-hover, var(--ms-option-color-matched, var(--ms-option-text-color)));
 }
 
+/* A disabled row never lights up under the pointer, matched or not (it can't be the active
+   row either — the keyboard skips it). Placed after the matched hover so it wins. */
+.ms__option--disabled.ms__option--matched:hover {
+  background: var(--ms-option-disabled-bg);
+}
+
 /* Selected + Focused */
 .ms__option--selected.ms__option--focused {
   background: var(--ms-option-bg-selected-focused);

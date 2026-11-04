@@ -10,7 +10,7 @@ This component is designed to be navigable from the keyboard alone and to work w
 | **↑ / ↓** | Navigate up/down through options. When the "add new" prompt is shown (no matches, `allow-add-new`), highlights it |
 | **Ctrl + ↑ / Ctrl + ↓** (Cmd on macOS) | Jump between matched items (navigate mode only) |
 | **Page Up / Page Down** | Move focus by 10 options at a time |
-| **Home / End** | Jump to first / last option. Caret-aware: while the search box has text, Home/End first move the text caret and only jump in the list once the caret is already at that end |
+| **Home / End** | Jump to the first / last enabled option. Caret-aware: while the search box has text, Home/End first move the text caret and only jump in the list once the caret is already at that end |
 | **Enter** | Toggle the focused option (selects it, or deselects it if already selected). With no focused option, `allow-add-new="true"`, no matches and search text: add the typed entry |
 | **Escape** | Close popover → clear search → close dropdown (priority order) |
 | **Tab** | Close dropdown and move to next field |
@@ -76,7 +76,7 @@ These are the ARIA keys; `labels` also holds every visible string — all keys a
 - Arrow-key navigation moves a *visual* focus indicator through options without moving DOM focus — the search input stays focused so typing continues to filter.
 - **Escape** behaves in priority order: close the selected-items popover (if open) → clear the search text (if any) → close the dropdown.
 - **Tab** closes the dropdown and moves DOM focus to the next focusable element in the page, matching native `<select>` semantics.
-- In flat lists, disabled options can receive the keyboard focus indicator but cannot be toggled (Enter and click are ignored on them). In tree mode, non-selectable nodes (`is-selectable-member` / `getIsSelectableCallback`) are skipped during keyboard navigation.
+- Disabled options and, in tree mode, non-selectable nodes (`is-selectable-member` / `getIsSelectableCallback`) are skipped by every navigation key (↑ / ↓, Home / End, Page Up / Page Down, Ctrl + ↑ / ↓) and by the auto-focus of the first search result or the selected option on open — the same rule as core's menus. Arrowing past the last enabled option stays on it; when every option is disabled nothing is highlighted. Hovering a disabled option doesn't highlight it either, and Enter / click are ignored on it.
 
 ## Form integration & screen readers
 

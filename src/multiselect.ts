@@ -608,6 +608,40 @@ export class MultiSelectEngine<T = any> {
         return node ? node.isSelectable !== false : true;
     }
 
+    /**
+     * Whether the keyboard highlight may land on the visible row at `index`: the option isn't
+     * disabled and (tree mode) the node is selectable. Arrow keys, Home/End, PageUp/PageDown,
+     * Ctrl+arrow match jumps and every auto-focus (first search result, the selected row on
+     * open) skip rows that fail this, so a disabled row is never the active one (core review
+     * A-21, like core `/menu`).
+     */
+    private isIndexFocusable(index: number): boolean {
+        const option = this.filteredOptions[index];
+        if (option === undefined) return false;
+        return !this.getItemDisabled(option) && this.isIndexSelectable(index);
+    }
+
+    /** The first focusable visible row, or -1 when there is none (every row disabled). */
+    private firstFocusableIndex(): number {
+        const total = this.filteredOptions.length;
+        for (let i = 0; i < total; i++) if (this.isIndexFocusable(i)) return i;
+        return -1;
+    }
+
+    /**
+     * Keep the highlight valid after the list changed under it (options swapped, `refresh()`):
+     * clamp it into range, then move it off a row that is no longer focusable (an option that
+     * became disabled) to the nearest focusable one, preferring upwards; none: -1.
+     */
+    private clampFocusedIndex(): void {
+        if (this.focusedIndex < 0) return;
+        const total = this.filteredOptions.length;
+        if (this.focusedIndex >= total) this.focusedIndex = total - 1;
+        if (this.focusedIndex >= 0 && !this.isIndexFocusable(this.focusedIndex)) {
+            this.focusedIndex = this.resolveFocusableIndex(this.focusedIndex, -1, total);
+        }
+    }
+
     /** Whether an option may be selected. Always true outside tree mode. */
     private isOptionSelectable(option: T): boolean {
         if (!this.isTreeMode()) return true;
@@ -970,7 +1004,7 @@ export class MultiSelectEngine<T = any> {
         all.forEach((node, index) => {
             if (this.matchesSearchTerm(node.data as T, term)) {
                 this.matchingIndices.add(index);
-                if (firstMatchIndex === -1) firstMatchIndex = index;
+                if (firstMatchIndex === -1 && this.isIndexFocusable(index)) firstMatchIndex = index;
             }
         });
         return firstMatchIndex;
@@ -2491,7 +2525,7 @@ export class MultiSelectEngine<T = any> {
                 this.matchingIndices.clear();
                 // Auto-focus the first row only once there's a term (parity with open() and
                 // the flat branches) — an empty box leaves nothing focused.
-                this.focusedIndex = this.currentSearchTerm().kind !== 'none' && this.filteredOptions.length > 0 ? 0 : -1;
+                this.focusedIndex = this.currentSearchTerm().kind !== 'none' ? this.firstFocusableIndex() : -1;
                 this.renderDropdown();
                 return;
             }
@@ -2512,8 +2546,8 @@ export class MultiSelectEngine<T = any> {
                     // FILTER MODE: Hide non-matching options (current behavior)
                     this.filteredOptions = this.allOptions.filter(option => this.matchesSearchTerm(option, term));
                     this.matchingIndices.clear(); // Not used in filter mode
-                    // Auto-focus first result
-                    this.focusedIndex = this.filteredOptions.length > 0 ? 0 : -1;
+                    // Auto-focus the first result that can take focus (disabled rows are skipped)
+                    this.focusedIndex = this.firstFocusableIndex();
                     dataLogger.debug(`[${this.instanceId}] Filter mode: ${this.filteredOptions.length} matches for "${processedValue}"`);
                 } else {
                     // NAVIGATE MODE: Keep all options visible, jump to first match, highlight all matches
@@ -2525,7 +2559,7 @@ export class MultiSelectEngine<T = any> {
                     this.allOptions.forEach((option, index) => {
                         if (this.matchesSearchTerm(option, term)) {
                             this.matchingIndices.add(index);
-                            if (firstMatchIndex === -1) {
+                            if (firstMatchIndex === -1 && this.isIndexFocusable(index)) {
                                 firstMatchIndex = index;
                             }
                         }
@@ -2611,9 +2645,9 @@ export class MultiSelectEngine<T = any> {
             this.isLoading = false;
             this.matchingIndices.clear(); // Async search doesn't use matching indices
 
-            // Auto-focus first option if search is enabled and there are results
-            this.focusedIndex = (this.options.isSearchEnabled && this.filteredOptions.length > 0) ? 0 : -1;
-            this.isFocusNavigated = false; // results replaced the list - row 0 is auto-focused
+            // Auto-focus the first focusable result if search is enabled (disabled rows are skipped)
+            this.focusedIndex = this.options.isSearchEnabled ? this.firstFocusableIndex() : -1;
+            this.isFocusNavigated = false; // results replaced the list - the first row is auto-focused
             this.renderDropdown();
             // Results just replaced an empty/loading panel — its height changed, so
             // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
@@ -3009,9 +3043,9 @@ export class MultiSelectEngine<T = any> {
         if (total === 0) return;
         const target = compute(this.focusedIndex, total);
         if (target < 0) return;
-        // Tree mode: never land focus on a non-selectable node — scan past it in
-        // the movement direction (then the opposite direction as a fallback).
-        const next = this.resolveSelectableIndex(target, dir, total);
+        // Never land focus on a disabled option or a non-selectable tree node — scan past
+        // it in the movement direction (then the opposite direction as a fallback).
+        const next = this.resolveFocusableIndex(target, dir, total);
         if (next < 0) return;
         this.focusedIndex = next;
         this.isFocusNavigated = true;
@@ -3021,18 +3055,17 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Given a target index and a preferred direction, return the nearest index
-     * whose node is selectable (skipping non-selectable tree nodes). Falls back to
-     * the opposite direction, then to -1 if nothing is selectable. No-op outside
-     * tree mode.
+     * Given a target index and a preferred direction, return the nearest focusable index
+     * ({@link isIndexFocusable}: skips disabled options and non-selectable tree nodes). Falls
+     * back to the opposite direction, then to -1 if nothing is focusable. So ArrowDown past the
+     * last enabled row stays on it, Home/End land on the first/last enabled row.
      */
-    private resolveSelectableIndex(start: number, dir: 1 | -1, total: number): number {
-        if (!this.isTreeMode()) return start;
+    private resolveFocusableIndex(start: number, dir: 1 | -1, total: number): number {
         let i = start;
-        while (i >= 0 && i < total && !this.isIndexSelectable(i)) i += dir;
+        while (i >= 0 && i < total && !this.isIndexFocusable(i)) i += dir;
         if (i < 0 || i >= total) {
             i = start - dir;
-            while (i >= 0 && i < total && !this.isIndexSelectable(i)) i -= dir;
+            while (i >= 0 && i < total && !this.isIndexFocusable(i)) i -= dir;
         }
         return (i >= 0 && i < total) ? i : -1;
     }
@@ -3052,7 +3085,9 @@ export class MultiSelectEngine<T = any> {
      */
     private getOpenFocusIndex(): number {
         if (this.options.isMultiple || this.typedTerm || this.selectedValues.size === 0) return -1;
-        return this.filteredOptions.findIndex(o => this.selectedValues.has(String(this.getItemValue(o))));
+        const index = this.filteredOptions.findIndex(o => this.selectedValues.has(String(this.getItemValue(o))));
+        // A selected option that is disabled can't be the active row: start from nothing.
+        return index >= 0 && this.isIndexFocusable(index) ? index : -1;
     }
 
     /**
@@ -3106,9 +3141,14 @@ export class MultiSelectEngine<T = any> {
         this.renderDropdown();
     }
 
+    /** Matches the highlight can land on (disabled matches are skipped), in list order. */
+    private focusableMatches(): number[] {
+        return Array.from(this.matchingIndices).filter(i => this.isIndexFocusable(i)).sort((a, b) => a - b);
+    }
+
     private focusNextMatch(): void {
-        if (this.matchingIndices.size === 0) return;
-        const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
+        const matched = this.focusableMatches();
+        if (matched.length === 0) return;
         const currentIndex = matched.findIndex(idx => idx === this.focusedIndex);
         const nextIndex = (currentIndex + 1) % matched.length;
         this.focusBy(() => matched[nextIndex]);
@@ -3116,8 +3156,8 @@ export class MultiSelectEngine<T = any> {
     }
 
     private focusPreviousMatch(): void {
-        if (this.matchingIndices.size === 0) return;
-        const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
+        const matched = this.focusableMatches();
+        if (matched.length === 0) return;
         const currentIndex = matched.findIndex(idx => idx === this.focusedIndex);
         const prevIndex = currentIndex <= 0 ? matched.length - 1 : currentIndex - 1;
         this.focusBy(() => matched[prevIndex]);
@@ -4867,7 +4907,8 @@ export class MultiSelectEngine<T = any> {
             }
         }
 
-        const disabled = total === 0;
+        // Prev / next jump only between matches that can take focus (disabled ones are skipped).
+        const disabled = total === 0 || this.focusableMatches().length === 0;
         if (this.fullscreenNavPrev) this.fullscreenNavPrev.disabled = disabled;
         if (this.fullscreenNavNext) this.fullscreenNavNext.disabled = disabled;
     }
@@ -5633,9 +5674,7 @@ export class MultiSelectEngine<T = any> {
         // An in-place options swap keeps the dropdown open — preserve the scroll offset so the
         // list doesn't jump to the top on every pick, and clamp a now-out-of-range focus so it
         // can't highlight a row that the new (shorter) list no longer has.
-        if (optionsChanged && this.focusedIndex >= this.filteredOptions.length) {
-            this.focusedIndex = this.filteredOptions.length - 1;
-        }
+        if (optionsChanged) this.clampFocusedIndex();
         this.renderDropdown({ preserveScroll: optionsChanged });
         this.renderBadges();
         this.updateHiddenInput();
@@ -5671,9 +5710,8 @@ export class MultiSelectEngine<T = any> {
         // references to the same option objects, so the repaint reflects any in-place field
         // mutation. Re-deriving match membership would mean re-running the sync filter or an
         // async searchCallback, which is out of scope for a view refresh.
-        if (this.focusedIndex >= this.filteredOptions.length) {
-            this.focusedIndex = this.filteredOptions.length - 1;
-        }
+        // Also moves the highlight off an option that was just disabled in place.
+        this.clampFocusedIndex();
         this.renderDropdown({ preserveScroll: true });
         this.renderBadges();
         this.updateHiddenInput();

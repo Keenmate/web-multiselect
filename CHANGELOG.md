@@ -35,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   padding). `.ms__loading-text` is unchanged. Page CSS or `custom-styles` that targeted the old
   container class must rename it.
 
+### Changed
+- **Arrow keys skip disabled options** (core review A-21, the same rule as core's menus and the
+  MUI / Radix / React Aria defaults). ↑ / ↓, Home / End, Page Up / Page Down and Ctrl + ↑ / ↓ (navigate
+  mode) never land on a disabled option, and neither does the auto-focus of the first search result,
+  the first navigate-mode match or the selected option on open. Arrowing past the last enabled
+  option stays on it; with every option disabled nothing is highlighted (Enter selects nothing).
+  Previously the highlight stopped on a disabled row and its focus ring vanished under the disabled
+  style. An option disabled in place (then `refresh()`) loses the highlight to its nearest enabled
+  neighbour. A disabled row that matches the search no longer lights up on hover.
+
 ### Fixed
 - **Disabled / readonly badges no longer show a remove ✕:** a `disabled` or `readonly` control
   still drew the ✕ on every badge (and on the count / "+N more" badge), inviting a click that
@@ -63,6 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Core rc18 renames:** `anchor({ placedCallback, driftCallback })` → `onPlaced` / `onDrift`,
   `prepareSearchTerm({ objectTermCallback })` → `onObjectTerm`, `toEnum({ shouldNullOnInvalid })`
   → `isNullable` (`tab-behavior`). No consumer-facing change.
+- **Tests:** `e2e/keyboard.spec.ts` "arrow keys skip disabled options" (fixture rows disabled at
+  the start, in the middle and at the end of `test/keyboard.html`): ↑ / ↓ / Home / End / PageUp /
+  PageDown landings, disabled first search result, a search matching only disabled rows, navigate
+  Ctrl + ↑ / ↓, an all-disabled list, hover. `e2e/loader.spec.ts` asserts the spinner gets no
+  container padding.
+
 
 
 ## [3.0.0-rc01] - 2026-11-03 [PUBLISHED]

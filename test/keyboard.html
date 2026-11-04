@@ -28,6 +28,21 @@
             value-member="value" display-value-member="label" group-member="group"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">disabled options at the start, in the middle and at the end (arrow keys skip them)</div>
+        <web-multiselect id="kb-disabled" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">same list, navigate mode (Ctrl+↓/↑ skips disabled matches)</div>
+        <web-multiselect id="kb-disabled-navigate" search-mode="navigate" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">every option disabled (nothing can be active)</div>
+        <web-multiselect id="kb-all-disabled" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -45,7 +60,22 @@
             { value: 'v3', label: 'Kale',   group: 'Vegetables' }
         ];
 
+        // Disabled: first row, rows 3-4 (a run in the middle) and the last row.
+        const withDisabled = [
+            { value: 'alpha',   label: 'Alpha (off)', disabled: true },
+            { value: 'bravo',   label: 'Bravo' },
+            { value: 'charlie', label: 'Charlie' },
+            { value: 'delta',   label: 'Delta (off)', disabled: true },
+            { value: 'echo',    label: 'Echo (off)', disabled: true },
+            { value: 'foxtrot', label: 'Foxtrot' },
+            { value: 'golf',    label: 'Golf (off)', disabled: true }
+        ];
+        const allDisabled = withDisabled.map(o => ({ ...o, disabled: true }));
+
         customElements.whenDefined('web-multiselect').then(() => {
+            document.getElementById('kb-disabled').options = withDisabled;
+            document.getElementById('kb-disabled-navigate').options = withDisabled;
+            document.getElementById('kb-all-disabled').options = allDisabled;
             document.getElementById('kb-filter').options = items;
             document.getElementById('kb-navigate').options = items;
             document.getElementById('kb-grouped').options = grouped;

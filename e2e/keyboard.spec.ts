@@ -250,3 +250,126 @@ test.describe('beforeKeydownCallback — consumer keyboard hook', () => {
         expect(await p.evaluate((el: any) => el.selectedValue.length)).toBe(total);
     });
 });
+
+// Core review A-21 (2026-11-04): ↑ / ↓ / Home / End / PageUp / PageDown skip disabled options,
+// like core /menu. Fixture rows: Alpha (off) · Bravo · Charlie · Delta (off) · Echo (off) ·
+// Foxtrot · Golf (off) — disabled at the start, a run in the middle, and at the end.
+test.describe('arrow keys skip disabled options', () => {
+    /** No disabled row may ever carry the active (focused) state. */
+    async function expectNoDisabledFocused(p: Locator): Promise<void> {
+        await expect(p.locator('.ms__option--focused.ms__option--disabled')).toHaveCount(0);
+    }
+
+    test('ArrowDown skips a disabled first row and a disabled run in the middle', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+
+        await page.keyboard.press('ArrowDown');            // nothing → Bravo (Alpha is disabled)
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await page.keyboard.press('ArrowDown');
+        await expect(focused(p)).toHaveText(/Charlie/);
+        await page.keyboard.press('ArrowDown');            // Delta + Echo disabled → Foxtrot
+        await expect(focused(p)).toHaveText(/Foxtrot/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('ArrowDown on the last enabled row stays put (the disabled last row is skipped)', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await page.keyboard.press('End');
+        await expect(focused(p)).toHaveText(/Foxtrot/);
+        await page.keyboard.press('ArrowDown');
+        await expect(focused(p)).toHaveText(/Foxtrot/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('ArrowUp skips the middle run and stops on the first enabled row', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await page.keyboard.press('End');                  // Foxtrot
+        await page.keyboard.press('ArrowUp');              // Echo + Delta disabled → Charlie
+        await expect(focused(p)).toHaveText(/Charlie/);
+        await page.keyboard.press('ArrowUp');
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await page.keyboard.press('ArrowUp');              // Alpha disabled → stays on Bravo
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('Home / End land on the first / last enabled row', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await page.keyboard.press('End');
+        await expect(focused(p)).toHaveText(/Foxtrot/);
+        await page.keyboard.press('Home');
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('PageDown / PageUp past the ends land on the last / first enabled row', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await page.keyboard.press('PageDown');
+        await expect(focused(p)).toHaveText(/Foxtrot/);
+        await page.keyboard.press('PageUp');
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('the first search result that is disabled is not auto-focused', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        // "a" matches Alpha (off), Bravo, Charlie, Delta (off) — Alpha is first but disabled.
+        await p.locator('.ms__input').fill('a');
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await page.keyboard.press('Enter');
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['bravo']);
+    });
+
+    test('a search matching only disabled rows leaves nothing active; Enter selects nothing', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await p.locator('.ms__input').fill('off');
+        await expect(p.locator('.ms__option')).toHaveCount(4);
+        await expect(focused(p)).toHaveCount(0);
+        await page.keyboard.press('ArrowDown');
+        await expect(focused(p)).toHaveCount(0);
+        await page.keyboard.press('Enter');
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
+    });
+
+    test('navigate mode: the first match and Ctrl+↓ / Ctrl+↑ skip disabled matches', async ({ page }) => {
+        const p = picker(page, 'kb-disabled-navigate');
+        await openWithKeyboard(p);
+        await p.locator('.ms__input').fill('a');           // matches Alpha (off), Bravo, Charlie, Delta (off)
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await page.keyboard.press('Control+ArrowDown');
+        await expect(focused(p)).toHaveText(/Charlie/);
+        await page.keyboard.press('Control+ArrowDown');    // Delta disabled → wraps to Bravo
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await page.keyboard.press('Control+ArrowUp');      // wraps back → Charlie (not Delta)
+        await expect(focused(p)).toHaveText(/Charlie/);
+        await expectNoDisabledFocused(p);
+    });
+
+    test('every option disabled: no key makes a row active', async ({ page }) => {
+        const p = picker(page, 'kb-all-disabled');
+        await openWithKeyboard(p);
+        for (const key of ['ArrowDown', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp']) {
+            await page.keyboard.press(key);
+            await expect(focused(p)).toHaveCount(0);
+        }
+    });
+
+    test('hovering a disabled row does not make it active', async ({ page }) => {
+        const p = picker(page, 'kb-disabled');
+        await openWithKeyboard(p);
+        await page.keyboard.press('ArrowDown');            // Bravo
+        await p.locator('.ms__option').filter({ hasText: 'Delta' }).hover();
+        await expect(focused(p)).toHaveText(/Bravo/);
+        await expectNoDisabledFocused(p);
+        // …and the next arrow still moves from Bravo, not from the hovered row.
+        await page.keyboard.press('ArrowDown');
+        await expect(focused(p)).toHaveText(/Charlie/);
+    });
+});
