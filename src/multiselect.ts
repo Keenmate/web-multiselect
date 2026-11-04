@@ -1343,7 +1343,7 @@ export class MultiSelectEngine<T = any> {
         if (this.isLoading) {
             // The spinner is drawn by core renderLoader() into the slot (SPEC §12.14) — the
             // slot carries role="status" + aria-label, so the visible text is aria-hidden.
-            html += '<div class="ms__loader">';
+            html += '<div class="ms__loading">';
             html += '<span class="ms__loader-slot" data-ms-loader="search"></span>';
             html += `<div class="ms__loading-text" aria-hidden="true">${this.resolveLabel('searching')}</div>`;
             html += '</div>';
@@ -1953,7 +1953,7 @@ export class MultiSelectEngine<T = any> {
     /**
      * Draw every loader slot (`[data-ms-loader="<context>"]`) in a freshly rendered subtree
      * through core `renderLoader()` (SPEC §12.14): instance `renderLoadingCallback` >
-     * page-wide `window.components.renderLoaderCallback` > the default `.ms-loader` span.
+     * page-wide `window.components.renderLoadingCallback` > the default `.ms__loader` span.
      * Contexts: `search` (async searchCallback in flight, `labels.searching`) and `add-new`
      * (async beforeAddCallback in flight, `labels.addNewPending`).
      */

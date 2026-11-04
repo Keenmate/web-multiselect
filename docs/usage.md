@@ -527,8 +527,8 @@ multiselect.renderOptionContentCallback = ({ option }) => {
 // Loading states (async search, async add-new) — the shared KeenMate loader.
 // ctx: { component, context: 'search' | 'add-new', containerElement, element, label }.
 // Fill containerElement (already role="status" + aria-label); optionally return a cleanup.
-// Beats the page-wide window.components.renderLoaderCallback (one hook for every
-// KeenMate component); unset = the default .ms-loader drawn from --ms-loader-* tokens.
+// Beats the page-wide window.components.renderLoadingCallback (one hook for every
+// KeenMate component); unset = the default .ms__loader drawn from --ms-loader-* tokens.
 multiselect.renderLoadingCallback = ({ containerElement }) => {
   containerElement.innerHTML = '<span class="my-dots"><i></i><i></i><i></i></span>';
 };

@@ -720,8 +720,8 @@ export interface MultiSelectConfig<T = any> {
      * (async `searchCallback` in flight, label `labels.searching`) or `'add-new'` (async
      * `beforeAddCallback` in flight, label `labels.addNewPending`). Fill `containerElement`
      * (it already carries `role="status"` + `aria-label`); optionally return a cleanup.
-     * Beats the page-wide `window.components.renderLoaderCallback`; unset → the default
-     * `.ms-loader` drawn from the `--ms-loader-*` tokens.
+     * Beats the page-wide `window.components.renderLoadingCallback`; unset → the default
+     * `.ms__loader` drawn from the `--ms-loader-*` tokens.
      */
     renderLoadingCallback?: RenderLoaderCallback | null;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */

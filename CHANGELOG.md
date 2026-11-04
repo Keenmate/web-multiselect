@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `renderLoaderCallback`), the same name as the instance property.
   - New **`input-rejected`** event (twin `onInputRejected`) for every refused attribute / property
     write; `setAttributes()` returns the rejections.
+- **The default loader is `<span class="ms__loader">`** (core rc18; was `.ms-loader`). Page CSS that
+  styled `.ms-loader` stops matching: rename it to `.ms__loader`. The `--ms-loader-*` tokens and the
+  `ms-loader-spin` keyframes keep their names.
+- **The dropdown's loading-state container is `.ms__loading`** (was `.ms__loader`, which is now the
+  spinner itself; keeping both would have given the spinner the container's flex, min-height and
+  padding). `.ms__loading-text` is unchanged. Page CSS or `custom-styles` that targeted the old
+  container class must rename it.
 
 ### Fixed
 - **Disabled / readonly badges no longer show a remove ✕:** a `disabled` or `readonly` control

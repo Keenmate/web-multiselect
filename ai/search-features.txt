@@ -297,7 +297,7 @@ role="status" + aria-label = labels.searching (plain text). Change its look:
   SVG), --ms-loader-duration, --ms-loader-size — chained to --base-loader-*, so a
   page-wide --base-loader-icon changes every KeenMate component at once.
 - Page-wide hook (every component):
-  window.components.renderLoaderCallback = ({ component, context, containerElement }) => {
+  window.components.renderLoadingCallback = ({ component, context, containerElement }) => {
     containerElement.innerHTML = '<span class="my-dots"></span>';
   };
 - Instance hook (wins over the page hook), context 'search' or 'add-new':

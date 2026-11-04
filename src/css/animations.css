@@ -1,8 +1,9 @@
 /* animations.css — state transitions are inline on each rule; the only @keyframes is the
    shared loader's (core SPEC §12.14 — the drawing contract from base-css-variables). */
 
-/* Default loader drawn by core renderLoader() (async search, add-new pending). */
-.ms-loader {
+/* Default loader drawn by core renderLoader() (async search, add-new pending):
+   <span class="ms__loader"> (core rc18+). */
+.ms__loader {
   display: inline-block;
   flex-shrink: 0;
   inline-size: var(--ms-loader-size);
