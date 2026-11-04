@@ -65,11 +65,10 @@ import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import {
     NO_SEARCH_TERM,
     createRegexCompiler,
-    findHighlightRanges,
+    highlightHtml,
     matchesSearchTerm,
     normalizeSearchText,
     prepareSearchTerm,
-    wrapRanges,
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
@@ -2004,19 +2003,16 @@ export class MultiSelectEngine<T = any> {
     /**
      * Wrap the current term's matches in `<mark>`, under the same rules as the search itself
      * (`ces` highlights `Čes` in `Český`; word modes only mark word starts/ends; a regex marks
-     * its own matches). For text terms the label is normalized one code point at a time while
-     * recording where each normalized character came from, so ranges map back onto the
-     * original text.
+     * its own matches). Display values are trusted HTML (rendered as-is, like the subtitle and
+     * icon), so core's `highlightHtml` marks only text runs — never inside a tag or an entity.
      */
     private highlightMatch(text: string): string {
         const term = this.currentSearchTerm();
         if (term.kind === 'none' || !text) return text;
-        const r = findHighlightRanges(text, term, {
+        return highlightHtml(text, term, {
             behavior: this.options.searchBehavior || 'normalized',
             match: this.options.searchMatch || 'contains',
         });
-        // No escape: display values may carry trusted HTML (unchanged pre-core behaviour).
-        return wrapRanges(r.text, r.ranges);
     }
 
     private groupOptions(options: T[]): Record<string, T[]> {

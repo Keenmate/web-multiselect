@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control and in the selected-items popover (the popover is a sibling of `.ms`, so it gets its
   own `ms__selected-popover--readonly` class). A disabled control's badges also dim with the
   field (`--ms-disabled-input-opacity`).
+- **Search highlighting goes through core `highlightHtml()`** (core rc18 made `wrapRanges()` escape
+  by default). Option labels are trusted HTML, as before, and the `<mark>` is now placed only in text
+  runs, never inside a tag or an entity: a term like `amp` on `Tom &amp; Jerry` or `b` on
+  `<b>Bold</b>` no longer breaks the markup. A match that crosses a tag (`Pra<b>ha</b>`) isn't
+  highlighted.
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
