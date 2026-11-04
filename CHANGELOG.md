@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc02] - 2026-11-04
 
+### Changed — BREAKING (core rc18)
+- **Requires `@keenmate/web-components-core` `^1.0.0-rc18`.** What that changes on `<web-multiselect>`
+  (core behaviour, no component code):
+  - **Number attributes are strict:** `badge-height="24px"`, `virtual-scroll-item-height="1.5"`,
+    `badge-tooltip-offset="1e1"` used to be read as 24 / 1 / 1; they now warn, fire `input-rejected`
+    and keep the previous value. Pixel attributes take a bare integer (drop the unit).
+  - **`el.x = undefined` resets an input to its default** (like removing its attribute) instead of
+    being rejected with a warning; `el.label = ''`-style writes to a text input store the fallback.
+  - **Enum attributes match case-insensitively** (`search-mode="NAVIGATE"` is `navigate`) and are trimmed.
+  - **Page-wide motion is written to `<html data-motion>`**, not to each host left on `auto`, so a
+    nearer `<section data-motion>` now wins over `window.components.motion`. A host gets
+    `data-motion` only for its own `motion`.
+  - **Log levels coalesce closest-first** (element → `window.components['web-multiselect'].logging`
+    → `window.components.logging` → `warn`): `el.enableLogging('error')` makes that element quieter
+    than its type, `el.disableLogging()` silences it, new `el.resetLogging()` clears it. Instance
+    `debug` / `trace` lines print through `console.log` (Chrome hid `console.debug`).
+  - **The page-wide loader hook is `window.components.renderLoadingCallback`** (was
+    `renderLoaderCallback`), the same name as the instance property.
+  - New **`input-rejected`** event (twin `onInputRejected`) for every refused attribute / property
+    write; `setAttributes()` returns the rejections.
+
 ### Fixed
 - **Disabled / readonly badges no longer show a remove ✕:** a `disabled` or `readonly` control
   still drew the ✕ on every badge (and on the count / "+N more" badge), inviting a click that
@@ -24,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   just `<head>` — the text "<head>" in a tooltip and a script comment on
   `examples-action-buttons.html` also matched, and the snippet's HTML comment inside the
   page's module script aborted it (every AB picker rendered empty).
+- **Core rc18 renames:** `anchor({ placedCallback, driftCallback })` → `onPlaced` / `onDrift`,
+  `prepareSearchTerm({ objectTermCallback })` → `onObjectTerm`, `toEnum({ shouldNullOnInvalid })`
+  → `isNullable` (`tab-behavior`). No consumer-facing change.
+
 
 ## [3.0.0-rc01] - 2026-11-03 [PUBLISHED]
 

@@ -112,7 +112,7 @@
     "vitest": "^2.1.9"
   },
   "dependencies": {
-    "@keenmate/web-components-core": "^1.0.0-rc17"
+    "@keenmate/web-components-core": "^1.0.0-rc18"
   },
   "kmwc": {
     "title": "Web MultiSelect",

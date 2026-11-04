@@ -4,7 +4,7 @@
  */
 
 // Positioning runs entirely on the core /positioning module. The dropdown/popover
-// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `driftCallback` options — core owns
+// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `onDrift` options — core owns
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
@@ -484,7 +484,7 @@ export class MultiSelectEngine<T = any> {
             match: this.options.searchMatch || 'contains',
             regex: this.searchRegex,
             getSearchTermCallback: callback ? (t) => callback(this.ctx(this.searchTermContext(t, 'internal'))) : undefined,
-            objectTermCallback: () => {
+            onObjectTerm: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
                 console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
@@ -4179,22 +4179,22 @@ export class MultiSelectEngine<T = any> {
             // → re-flip every frame (default shouldFlip:true, no lock).
             lockPlacement: locked ? 'freeze' : false,
             // Narrow floating-ui's fixed-position containing-block heuristic to what browsers
-            // reliably honour (transform/perspective/filter/backdrop-filter/will-change),
+            // really honour (transform/perspective/filter/backdrop-filter/will-change and, since
+            // core rc18, contain: paint|layout|strict|content; container-type is ignored),
             // resolved from the portaled panel — core builds the custom platform for us. The
             // panel is appended to `container` (default document.body), so its containing block
             // can differ from the input's; measuring from the panel is what the browser does.
-            // For other CB-establishing properties (contain, container-type) the browser keeps
-            // fixed elements viewport-anchored, so `driftCallback` catches the inverse edge case and
-            // warns, pointing at the likely culprit.
+            // Anything the heuristic still misses is caught by `onDrift`, which warns, pointing
+            // at the likely culprit.
             shouldUseFixedContainingBlock: true,
             // Viewport-safety cap (core rc03): core's size() middleware sets the panel's
             // inline max-width to the space available on the resolved side (so long content
             // wraps instead of overflowing the viewport edge). We COMPOSE it with the
-            // author-chosen fixed `dropdownMaxWidth` in placedCallback (not beforeComputeCallback): this
+            // author-chosen fixed `dropdownMaxWidth` in onPlaced (not beforeComputeCallback): this
             // middleware runs during positioning and would otherwise clobber a fixed cap set
-            // earlier. placedCallback runs after it, so it gets the final say.
+            // earlier. onPlaced runs after it, so it gets the final say.
             maxWidth: { padding: 8 },
-            driftCallback: (report) => this.warnDrift(report),
+            onDrift: (report) => this.warnDrift(report),
             beforeComputeCallback: () => {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
@@ -4208,7 +4208,7 @@ export class MultiSelectEngine<T = any> {
                 (this.options.hostElement ?? this.element).style.setProperty('--ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
-            placedCallback: (resolved) => {
+            onPlaced: (resolved) => {
                 // Record the placement once (the hint mirrors it); after freeze it never changes.
                 if (!opts.getPlacement()) opts.setPlacement(resolved);
                 // Compose the author cap with core's viewport cap. Core's size() apply just set
@@ -4230,9 +4230,9 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Surface a multiselect-branded, once-per-instance warning when core's drift check
-     * (`anchor`'s `driftCallback`) reports the panel didn't land where it was positioned. The
+     * (`anchor`'s `onDrift`) reports the panel didn't land where it was positioned. The
      * consumer has an ancestor that establishes a fixed containing block but isn't on the
-     * reliable-anchors list (likely `contain: paint|layout|strict` or `container-type`).
+     * reliable-anchors list.
      * We can't fix it from inside the library, but we point at the likely culprit. Core
      * owns the measurement + culprit-finding + CB-CSS diagnostic (`detectFixedDrift`).
      */
