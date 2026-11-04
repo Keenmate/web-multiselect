@@ -926,6 +926,11 @@
       "usage": "Selected option text color; reads --base-selected-text-color"
     },
     {
+      "name": "ms-option-color-selected-focused",
+      "category": "option",
+      "usage": "Text color of a selected option while keyboard-focused (unset: falls back to --ms-option-color-selected)"
+    },
+    {
       "name": "ms-option-outline-selected",
       "category": "option",
       "usage": "Selected option ring (inset outline shorthand); reads --base-selected-outline (default none)"
@@ -946,6 +951,11 @@
       "usage": "Option focused color; reads --base-focused-text-color"
     },
     {
+      "name": "ms-option-color-focused-hover",
+      "category": "option",
+      "usage": "Text color of the focused option on hover (unset: falls back to --ms-option-color-focused)"
+    },
+    {
       "name": "ms-option-outline-color-focused",
       "category": "option",
       "usage": "Focus outline color, used only when --base-focused-outline is absent"
@@ -954,6 +964,11 @@
       "name": "ms-option-color-matched",
       "category": "option",
       "usage": "Matched option color"
+    },
+    {
+      "name": "ms-option-color-matched-hover",
+      "category": "option",
+      "usage": "Text color of a search-matched option on hover (unset: falls back to --ms-option-color-matched)"
     },
     {
       "name": "ms-option-border-matched-color",
@@ -1021,6 +1036,11 @@
       "usage": "Option title color"
     },
     {
+      "name": "ms-option-title-color-hover",
+      "category": "option-content",
+      "usage": "Option title color on hover (unset: falls back to --ms-option-title-color)"
+    },
+    {
       "name": "ms-option-title-color-focused",
       "category": "option",
       "usage": "Title color of the keyboard-focused option (reads --base-focused-text-color)"
@@ -1029,6 +1049,11 @@
       "name": "ms-option-title-color-selected",
       "category": "option",
       "usage": "Title color of a selected option (reads --base-selected-text-color)"
+    },
+    {
+      "name": "ms-option-title-color-selected-hover",
+      "category": "option",
+      "usage": "Title color of a selected option on hover (unset: falls back to --ms-option-title-color-selected)"
     },
     {
       "name": "ms-option-subtitle-margin-top",
@@ -1049,6 +1074,21 @@
       "name": "ms-option-subtitle-color",
       "category": "option-content",
       "usage": "Option subtitle color"
+    },
+    {
+      "name": "ms-option-subtitle-color-hover",
+      "category": "option-content",
+      "usage": "Option subtitle color on hover (unset: falls back to --ms-option-subtitle-color)"
+    },
+    {
+      "name": "ms-option-subtitle-color-selected",
+      "category": "option-content",
+      "usage": "Subtitle color of a selected option (unset: falls back to --ms-option-subtitle-color)"
+    },
+    {
+      "name": "ms-option-subtitle-color-selected-hover",
+      "category": "option-content",
+      "usage": "Subtitle color of a selected option on hover (unset: falls back to --ms-option-subtitle-color-selected)"
     },
     {
       "name": "ms-option-mark-bg",
@@ -1699,6 +1739,11 @@
       "name": "ms-line-height-relaxed",
       "category": "typography",
       "usage": "Relaxed line height"
+    },
+    {
+      "name": "ms-font-family",
+      "category": "typography",
+      "usage": "Component font family (unset by default: falls back to --base-font-family, then inherit)"
     },
     {
       "name": "ms-border-radius-sm",

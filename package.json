@@ -46,8 +46,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "check:vars": "node scripts/check-variable-manifest.mjs",
-    "check:vars:strict": "node scripts/check-variable-manifest.mjs --strict",
+    "check:vars": "kmwc check-vars",
+    "check:vars:strict": "kmwc check-vars --strict",
     "check:contract": "base-contract-check src",
     "analyze": "cem analyze",
     "build": "npm run clean:dist && npm run check:vars:strict && npm run check:contract && npm run analyze && vite build",
@@ -143,7 +143,10 @@
     },
     "cssVariables": {
       "internalVariables": [
-        "ms-input-current-width"
+        "ms-input-current-width",
+        "ms-option-height",
+        "ms-badge-height-virtual",
+        "ms-tree-depth"
       ]
     }
   }
