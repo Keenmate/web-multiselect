@@ -44,6 +44,8 @@ export {
 export type { ColorScheme, ThemeMode, ThemeSource } from '@keenmate/web-components-core';
 // `renderLoadingCallback(ctx)` — the loader slot's context (core SPEC §12.14).
 export type { LoaderRenderContext } from '@keenmate/web-components-core';
+// `input-rejected` event detail (core: every refused attribute / property write).
+export type { InputRejection } from '@keenmate/web-components-core';
 export type {
   EnvironmentSnapshot,
   DeviceClass,

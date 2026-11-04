@@ -78,6 +78,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PageDown landings, disabled first search result, a search matching only disabled rows, navigate
   Ctrl + ↑ / ↓, an all-disabled list, hover. `e2e/loader.spec.ts` asserts the spinner gets no
   container padding.
+- **CEM:** the manifest config no longer excludes `src/index.ts` (core rc18's `blissAnalyzerConfig()`
+  scans it); the regenerated manifest / web-types list `input-rejected` and `BlissElement`'s API
+  (`release`, `destroy`, `whenReady`, `whenSettled`, `flush`, `setAttributes`, `batch`,
+  `enableLogging`, `resetLogging`, `validity`, …). `InputRejection` is re-exported; `docs/usage.md`
+  lists the `input-rejected` event.
+
 
 
 
