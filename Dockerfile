@@ -94,10 +94,13 @@ RUN sed -i "s#from 'flexsearch'#from './lib/flexsearch.js'#g" /usr/share/nginx/h
 # opening <head>. The snippet lives in plausible-snippet.html (kept out of the
 # page sources so `vite dev` serves untracked, analytics-free HTML); sed's `r`
 # reads it in and appends it after the matched line. Applies to the top-level
-# example pages and the docs.
+# example pages and the docs. The match is anchored to a line that is ONLY `<head>`:
+# a bare /<head>/ also hits the text "<head>" in tooltips and JS comments, and a snippet
+# (an HTML comment) appended inside a <script type="module"> is a syntax error that
+# aborts the page's module — every picker on examples-action-buttons.html rendered empty.
 COPY --from=build /app/plausible-snippet.html /tmp/plausible-snippet.html
 RUN for f in /usr/share/nginx/html/*.html /usr/share/nginx/html/docs/*.html; do \
-        [ -f "$f" ] && sed -i '/<head>/r /tmp/plausible-snippet.html' "$f"; \
+        [ -f "$f" ] && sed -i '/^[[:space:]]*<head>[[:space:]]*$/r /tmp/plausible-snippet.html' "$f"; \
     done; rm /tmp/plausible-snippet.html /usr/share/nginx/html/plausible-snippet.html
 
 # Note: index.html's version badge uses a Vite-only JSON import

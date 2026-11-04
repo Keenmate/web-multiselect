@@ -24,6 +24,19 @@
   border: var(--ms-input-border);
 }
 
+/* Disabled / readonly: the selection can't change (badge removal is gated in JS), so
+   don't draw the badge ✕ — in the control and in the selected-items popover. */
+.ms--disabled .ms__badge-remove,
+.ms--readonly .ms__badge-remove,
+.ms__selected-popover--readonly .ms__badge-remove {
+  display: none;
+}
+
+/* Disabled badges dim with the field. */
+.ms--disabled .ms__badges {
+  opacity: var(--ms-disabled-input-opacity);
+}
+
 /* No checkboxes modifier (for simple select mode) */
 .ms--no-checkboxes .ms__option {
   gap: 0; /* Remove gap since there's no checkbox */

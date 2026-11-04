@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc02] - 2026-11-04
+
+### Fixed
+- **Disabled / readonly badges no longer show a remove ✕:** a `disabled` or `readonly` control
+  still drew the ✕ on every badge (and on the count / "+N more" badge), inviting a click that
+  did nothing — removal was already blocked in JS. The ✕ is now hidden in both states, in the
+  control and in the selected-items popover (the popover is a sibling of `.ms`, so it gets its
+  own `ms__selected-popover--readonly` class). A disabled control's badges also dim with the
+  field (`--ms-disabled-input-opacity`).
+
+### Internal
+- **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
+  re-enabled); readonly badges and the readonly popover have no ✕.
+- **Examples:** BU01–BU03 have disabled rows (`disabled: true` on the option object); BU04
+  adds `<option disabled>` to the declarative pickers and a `disabled` vs `readonly` row.
+- **Example site:** the Dockerfile injects the analytics snippet only after a line that is
+  just `<head>` — the text "<head>" in a tooltip and a script comment on
+  `examples-action-buttons.html` also matched, and the snippet's HTML comment inside the
+  page's module script aborted it (every AB picker rendered empty).
+
 ## [3.0.0-rc01] - 2026-11-03 [PUBLISHED]
 
 A major: callbacks, events and inputs below are breaking, so `^2.x` consumers must not

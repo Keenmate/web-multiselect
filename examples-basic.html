@@ -27,7 +27,10 @@
                 One picker, many behaviors. Flip between multi- and single-select, add the inline
                 clear (✕) and the count badge, change the search-input mode (a <code>readonly</code>
                 or <code>hidden</code> search gives keyboard-only navigation), toggle
-                <code>close-on-select</code>, and switch text direction (LTR / RTL).
+                <code>close-on-select</code>, and switch text direction (LTR / RTL). PHP is a disabled
+                row: <code>disabled: true</code> on the option object (the default
+                <code>is-disabled-member</code>) keeps it visible but not pickable. BU02 and BU03 have
+                disabled rows too.
             </p>
 
             <div class="controls">
@@ -183,7 +186,8 @@
                 <code>&lt;option&gt;</code> / <code>&lt;optgroup&gt;</code> children inside the element
                 and the component parses them once from the light DOM. It reads each option's
                 <code>value</code>, its text, the <code>selected</code> attribute, and
-                <code>data-icon</code> / <code>data-subtitle</code>. Single-select is
+                <code>data-icon</code> / <code>data-subtitle</code> and <code>disabled</code> (the option
+                stays visible but can't be picked). Single-select is
                 <code>multiple="false"</code>. Even custom styling stays script-free — the
                 <code>custom-styles</code> attribute injects raw CSS into the shadow DOM (the
                 declarative twin of <code>getCustomStylesCallback</code>).
@@ -206,11 +210,11 @@
                         custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"searchPlaceholder": "Select fruits…"}'>
                         <option value="apple" data-icon="🍎">Apple</option>
                         <option value="banana" data-icon="🍌" selected>Banana</option>
-                        <option value="orange" data-icon="🍊">Orange</option>
+                        <option value="orange" data-icon="🍊" disabled>Orange</option>
                         <option value="grape" data-icon="🍇" selected>Grape</option>
                         <option value="strawberry" data-icon="🍓">Strawberry</option>
                     </web-multiselect>
-                    <small class="form-text">Row icons from <code>data-icon</code>; the pill-shaped badges are pure <code>custom-styles</code> — no JS.</small>
+                    <small class="form-text">Row icons from <code>data-icon</code>; the pill-shaped badges are pure <code>custom-styles</code> — no JS. Orange is <code>&lt;option disabled&gt;</code>.</small>
                 </div>
             </div>
 
@@ -221,7 +225,7 @@
                         <optgroup label="Frontend">
                             <option value="js" data-icon="🟨">JavaScript</option>
                             <option value="ts" data-icon="🔷">TypeScript</option>
-                            <option value="html" data-icon="📄">HTML</option>
+                            <option value="html" data-icon="📄" disabled>HTML</option>
                         </optgroup>
                         <optgroup label="Backend">
                             <option value="python" data-icon="🐍" selected>Python</option>
@@ -229,7 +233,7 @@
                             <option value="go" data-icon="🐹">Go</option>
                         </optgroup>
                     </web-multiselect>
-                    <small class="form-text">The <code>&lt;optgroup&gt;</code> <code>label</code> becomes the group header.</small>
+                    <small class="form-text">The <code>&lt;optgroup&gt;</code> <code>label</code> becomes the group header. HTML is disabled.</small>
                 </div>
 
                 <div class="form-group">
@@ -240,6 +244,28 @@
                         <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
                     </web-multiselect>
                     <small class="form-text">Second-line descriptions come from <code>data-subtitle</code>.</small>
+                </div>
+            </div>
+
+            <div class="grid mt-1">
+                <div class="form-group">
+                    <label>Whole control <code>disabled</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                    <web-multiselect id="decl-disabled" disabled show-counter show-clear>
+                        <option value="red" selected>Red</option>
+                        <option value="green" selected>Green</option>
+                        <option value="blue">Blue</option>
+                    </web-multiselect>
+                    <small class="form-text">No interaction, not focusable, and the value is <strong>not</strong> submitted with a form — like a native <code>disabled</code> control. A disabled <code>&lt;fieldset&gt;</code> does the same. The counter still shows the tally (dimmed); the inline clear (✕) and the badge ✕ are hidden.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Whole control <code>readonly</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                    <web-multiselect id="decl-readonly" readonly show-counter show-clear>
+                        <option value="red" selected>Red</option>
+                        <option value="green" selected>Green</option>
+                        <option value="blue">Blue</option>
+                    </web-multiselect>
+                    <small class="form-text">The selection can't be changed and the dropdown doesn't open, but the control stays focusable and its value <strong>is</strong> submitted. The counter shows the tally; the inline clear (✕) and the badge ✕ are hidden.</small>
                 </div>
             </div>
 
@@ -257,8 +283,13 @@
     &lt;option value="js" data-icon="🟨"&gt;JavaScript&lt;/option&gt;
     &lt;option value="react" data-icon="⚛️"
             data-subtitle="A JS library for building UIs"&gt;React&lt;/option&gt;
+    &lt;option value="html" disabled&gt;HTML&lt;/option&gt;  &lt;!-- visible, not pickable --&gt;
   &lt;/optgroup&gt;
-&lt;/web-multiselect&gt;</code></pre>
+&lt;/web-multiselect&gt;
+
+&lt;!-- The whole control: disabled (not submitted) vs readonly (submitted) --&gt;
+&lt;web-multiselect disabled&gt;…&lt;/web-multiselect&gt;
+&lt;web-multiselect readonly&gt;…&lt;/web-multiselect&gt;</code></pre>
             </details>
         </div>
 
@@ -535,7 +566,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { value: 'python', label: 'Python', icon: '🐍' },
             { value: 'java', label: 'Java', icon: '☕' },
             { value: 'csharp', label: 'C#', icon: '💜' },
-            { value: 'php', label: 'PHP', icon: '🐘' },
+            { value: 'php', label: 'PHP', icon: '🐘', disabled: true },
             { value: 'ruby', label: 'Ruby', icon: '💎' },
             { value: 'go', label: 'Go', icon: '🐹' }
         ];
@@ -547,8 +578,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { value: 'svelte', label: 'Svelte', icon: '🔥', year: 2016, subtitle: 'Cybernetically enhanced web apps' },
             { value: 'solid', label: 'Solid', icon: '💎', year: 2018, subtitle: 'Simple and performant reactivity' },
             { value: 'preact', label: 'Preact', icon: '⚡', year: 2015, subtitle: 'Fast 3kB alternative to React' },
-            { value: 'ember', label: 'Ember.js', icon: '🐹', year: 2011, subtitle: 'A framework for ambitious web developers' },
-            { value: 'backbone', label: 'Backbone.js', icon: '🦴', year: 2010, subtitle: 'Models, views and events for structure' },
+            { value: 'ember', label: 'Ember.js', icon: '🐹', year: 2011, subtitle: 'A framework for ambitious web developers', disabled: true },
+            { value: 'backbone', label: 'Backbone.js', icon: '🦴', year: 2010, subtitle: 'Models, views and events for structure', disabled: true },
             { value: 'alpine', label: 'Alpine.js', icon: '🏔️', year: 2019, subtitle: 'Behaviour directly in your markup' },
             { value: 'lit', label: 'Lit', icon: '🔆', year: 2019, subtitle: 'Simple, fast web components' },
             { value: 'qwik', label: 'Qwik', icon: '🚀', year: 2021, subtitle: 'Resumable apps, instant loading' },
@@ -576,7 +607,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { value: 'angular', label: 'Angular', icon: '🅰️', group: 'frontend' },
             { value: 'nodejs', label: 'Node.js', icon: '🟢', group: 'backend' },
             { value: 'django', label: 'Django', icon: '🐍', group: 'backend' },
-            { value: 'rails', label: 'Ruby on Rails', icon: '💎', group: 'backend' },
+            { value: 'rails', label: 'Ruby on Rails', icon: '💎', group: 'backend', disabled: true },
             { value: 'express', label: 'Express', icon: '🚂', group: 'backend' },
             { value: 'postgres', label: 'PostgreSQL', icon: '🐘', group: 'database' },
             { value: 'mongodb', label: 'MongoDB', icon: '🍃', group: 'database' },

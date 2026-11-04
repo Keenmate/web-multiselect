@@ -5504,6 +5504,9 @@ export class MultiSelectEngine<T = any> {
         const isReadonly = !!this.options.isReadonly;
         this.element.classList.toggle('ms--disabled', isDisabled);
         this.element.classList.toggle('ms--readonly', isReadonly && !isDisabled);
+        // The selected popover is a sibling of .ms (not inside it): mirror readonly so it
+        // drops its badge ✕ too (a disabled control never shows the popover).
+        this.selectedPopover?.classList.toggle('ms__selected-popover--readonly', isReadonly && !isDisabled);
         if (this.input) {
             this.input.disabled = isDisabled;
             this.input.readOnly = this.isInputReadOnly();

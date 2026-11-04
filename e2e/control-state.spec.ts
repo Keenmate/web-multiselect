@@ -49,10 +49,37 @@ test('readonly: focusable, not openable, badge removal blocked, value submitted'
     await expect(input).toBeFocused();
     await page.keyboard.press('ArrowDown');
     expect(await p.evaluate((el: any) => el.isOpen)).toBe(false);
-    await p.locator('.ms__badge-remove').first().click({ force: true });
+    // The badge has no ✕ (the selection can't change); removal is also gated in JS.
+    await expect(p.locator('.ms__badge')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove')).toBeHidden();
+    await p.locator('.ms__badge-remove').first().dispatchEvent('click');
     expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
     await expect(p.locator('.ms__input-clear')).toBeHidden();
     expect(await formData(page)).toHaveProperty('f-readonly', JSON.stringify(['apple']));
+});
+
+test('disabled: badges dim and have no remove button; re-enabling brings it back', async ({ page }) => {
+    const p = ms(page, 'ms-disabled');
+    await expect(p.locator('.ms__badge')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove')).toBeHidden();
+    expect(Number(await p.locator('.ms__badges').evaluate(el => getComputedStyle(el).opacity))).toBeLessThan(1);
+    await p.evaluate((el: any) => { el.isDisabled = false; });
+    await expect(p.locator('.ms__badge-remove')).toBeVisible();
+    expect(await p.locator('.ms__badges').evaluate(el => getComputedStyle(el).opacity)).toBe('1');
+});
+
+test('readonly: the selected-items popover has no remove buttons either', async ({ page }) => {
+    const p = ms(page, 'ms-readonly');
+    await p.evaluate((el: any) => { el.badgesDisplayMode = 'count'; });
+    await p.locator('.ms__badge--counter').click();
+    const popover = p.locator('.ms__selected-popover');
+    await expect(popover).toHaveClass(/ms__selected-popover--visible/);
+    await expect(popover).toHaveClass(/ms__selected-popover--readonly/);
+    await expect(popover.locator('.ms__badge')).toHaveCount(1);
+    await expect(popover.locator('.ms__badge-remove')).toBeHidden();
+    // Leaving readonly brings the ✕ back.
+    await p.evaluate((el: any) => { el.isReadonly = false; });
+    await expect(popover).not.toHaveClass(/ms__selected-popover--readonly/);
 });
 
 test('an ancestor <fieldset disabled> disables the control (and re-enables it)', async ({ page }) => {
