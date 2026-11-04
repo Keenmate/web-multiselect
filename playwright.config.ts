@@ -1,12 +1,13 @@
-import { defineConfig, devices } from '@playwright/test';
+import { definePlaywrightConfig, devices } from '@keenmate/web-components-devkit/playwright';
 
 /**
  * Playwright config for end-to-end tests.
  *
- * Specs live in e2e/ and target dedicated fixture pages under test/*.html
- * (served by the vite dev server on port 12200). The fixture pages are
- * intentionally separate from the examples-*.html development pages so they
- * stay minimal and focused on the feature under test.
+ * Specs live in e2e/ and target dedicated fixture pages under test/*.html. The
+ * fixture pages are intentionally separate from the examples-*.html development
+ * pages so they stay minimal and focused on the feature under test. baseURL and
+ * the `npm run dev` web server come from package.json#kmwc.ports.dev (the devkit
+ * preset), so the port can't drift from vite.config / the Makefile.
  *
  * Commands:
  *   npm run test:e2e:install   # one-time: download chromium, firefox, webkit binaries
@@ -16,77 +17,24 @@ import { defineConfig, devices } from '@playwright/test';
  *   npm run test:e2e:ui        # Playwright Test UI (debugging)
  *   npm run test:e2e:headed    # watch the browser do its thing
  */
-export default defineConfig({
-    testDir: './e2e',
-    timeout: 30_000,
-    expect: { timeout: 5_000 },
+const viewport = { width: 1440, height: 1024 };
 
-    fullyParallel: true,
-    forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+// The desktop projects own every spec except the touch-only ones — a desktop context
+// reports a fine pointer + hover, so the phone (fullscreen) branch never engages there.
+const touchOnlySpecs = ['**/presentation.spec.ts', '**/mobile-features.spec.ts'];
 
-    reporter: process.env.CI ? 'github' : 'list',
-
-    use: {
-        baseURL: 'http://localhost:12200',
-        trace: 'on-first-retry',
-        screenshot: 'only-on-failure',
-        video: 'retain-on-failure'
-    },
-
-    projects: [
-        {
-            name: 'chromium',
-            // The desktop project owns every spec except the touch-only ones — a desktop
-            // context reports a fine pointer + hover, so the phone (fullscreen) branch never
-            // engages there. `presentation` and `mobile-features` are mobile-project only.
-            testIgnore: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
-            use: {
-                ...devices['Desktop Chrome'],
-                viewport: { width: 1440, height: 1024 }
-            }
-        },
-        {
-            // Touch-primary phone context: Pixel 7 emulation gives a coarse pointer
-            // and no hover (isMobile + hasTouch), so `presentation="auto"`
-            // resolves to fullscreen and rotation (viewport swap) is testable.
-            name: 'mobile',
-            testMatch: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
-            use: { ...devices['Pixel 7'] }
-        },
-        {
-            // Same desktop suite on Gecko and WebKit (Safari's engine).
-            name: 'firefox',
-            testIgnore: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
-            use: {
-                ...devices['Desktop Firefox'],
-                viewport: { width: 1440, height: 1024 }
-            }
-        },
-        {
-            name: 'webkit',
-            testIgnore: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
-            use: {
-                ...devices['Desktop Safari'],
-                viewport: { width: 1440, height: 1024 }
-            }
-        },
-        {
-            // iOS Safari: WebKit supports isMobile/hasTouch emulation (Firefox does not,
-            // so there is no mobile-firefox project).
-            name: 'mobile-webkit',
-            testMatch: ['**/presentation.spec.ts', '**/mobile-features.spec.ts'],
-            use: { ...devices['iPhone 14'] }
-        }
-    ],
-
-    webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:12200',
-        reuseExistingServer: !process.env.CI,
-        timeout: 60_000,
-        stdout: 'ignore',
-        stderr: 'pipe'
-    }
+export default definePlaywrightConfig({
+  projects: [
+    { name: 'chromium', testIgnore: touchOnlySpecs, use: { ...devices['Desktop Chrome'], viewport } },
+    // Touch-primary phone context: Pixel 7 emulation gives a coarse pointer and no hover
+    // (isMobile + hasTouch), so `presentation="auto"` resolves to fullscreen and rotation
+    // (viewport swap) is testable.
+    { name: 'mobile', testMatch: touchOnlySpecs, use: { ...devices['Pixel 7'] } },
+    // Same desktop suite on Gecko and WebKit (Safari's engine).
+    { name: 'firefox', testIgnore: touchOnlySpecs, use: { ...devices['Desktop Firefox'], viewport } },
+    { name: 'webkit', testIgnore: touchOnlySpecs, use: { ...devices['Desktop Safari'], viewport } },
+    // iOS Safari: WebKit supports isMobile/hasTouch emulation (Firefox does not, so there
+    // is no mobile-firefox project).
+    { name: 'mobile-webkit', testMatch: touchOnlySpecs, use: { ...devices['iPhone 14'] } },
+  ],
 });

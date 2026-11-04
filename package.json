@@ -45,7 +45,7 @@
     "vscode.css-custom-data.json"
   ],
   "scripts": {
-    "dev": "vite --port 12200",
+    "dev": "vite",
     "check:vars": "node scripts/check-variable-manifest.mjs",
     "check:vars:strict": "node scripts/check-variable-manifest.mjs --strict",
     "check:contract": "base-contract-check src",
@@ -94,6 +94,7 @@
   "devDependencies": {
     "@custom-elements-manifest/analyzer": "^0.11.0",
     "@keenmate/base-css-variables": "^2.0.0-rc08",
+    "@keenmate/web-components-devkit": "^1.0.0-rc09",
     "@playwright/test": "^1.60.0",
     "custom-element-jet-brains-integration": "^1.7.0",
     "custom-element-vs-code-integration": "^1.5.0",
@@ -101,11 +102,49 @@
     "happy-dom": "^15.11.7",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3",
-    "vite": "^5.0.8",
+    "vite": "^7.3.7",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^2.1.9"
   },
   "dependencies": {
     "@keenmate/web-components-core": "^1.0.0-rc17"
+  },
+  "kmwc": {
+    "title": "Web MultiSelect",
+    "tagline": "Feature-rich multiselect web component with typeahead search, virtual scrolling, and extensive customization",
+    "tag": "web-multiselect",
+    "prefix": "ms",
+    "library": {
+      "globalName": "MultiSelect",
+      "fileName": "multiselect",
+      "cssFileName": "style"
+    },
+    "ports": {
+      "dev": 12100,
+      "image": 12110
+    },
+    "theme": {
+      "accentColor": "#667eea",
+      "accentEndColor": "#764ba2"
+    },
+    "examples": {
+      "canonicalOrigin": "https://examples.web-multiselect.keenmate.dev",
+      "staticPaths": [
+        "examples-data",
+        "docs"
+      ]
+    },
+    "analytics": {
+      "plausibleSiteId": "pa-5vUESDVyztHMyzN5gs5A4"
+    },
+    "image": {
+      "name": "registry.km8.es/web-multiselect-examples:prod",
+      "runner": "podman"
+    },
+    "cssVariables": {
+      "internalVariables": [
+        "ms-input-current-width"
+      ]
+    }
   }
 }
