@@ -224,6 +224,12 @@ multiselect.setSelected(['js', 'ts']);
 | `virtual-scroll-overscan` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
 | `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set |
 
+**Number attributes are strict.** A `number` attribute must be the whole integer: `badge-height="24px"`,
+`virtual-scroll-item-height="1.5"` or `badge-tooltip-offset="1e1"` is rejected — a console warning plus an
+`input-rejected` event — and the previous value is kept. The pixel inputs (`badge-height`,
+`virtual-scroll-item-height`, `badge-tooltip-offset`, `option-tooltip-offset`) take a bare number of pixels,
+because the component computes with them.
+
 ## Properties
 
 ```typescript
