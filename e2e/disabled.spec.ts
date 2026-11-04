@@ -31,17 +31,17 @@ test('clicking a disabled option does not select it', async ({ page }) => {
     expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
 });
 
-test('Enter on disabled focused option does not select', async ({ page }) => {
+test('the keyboard skips the disabled option, so Enter can never select it', async ({ page }) => {
     const p = picker(page, 'dm');
     await openDropdown(p);
 
-    // Down twice → focus banana (index 1)
+    // Down twice → apple, then cherry: banana (index 1) is disabled and skipped (core A-21).
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
+    await expect(p.locator('.ms__option--focused')).toHaveAttribute('data-value', 'cherry');
     await page.keyboard.press('Enter');
 
-    // Banana is disabled — nothing selected.
-    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
+    expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['cherry']);
 });
 
 test('a disabled CHECKED option keeps the accent fill (the tick stays visible)', async ({ page }) => {
