@@ -27,15 +27,26 @@
         <web-multiselect id="beta-1" overlay-group="beta" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <p>Nested: <code>nested</code> sits inside <code>#parent-panel</code>, an open overlay registered
+    with core (<code>window.parentOverlay</code>). Opening it must not dismiss the parent; closing the
+    parent closes it.</p>
+    <div id="parent-panel" class="fixture">
+        <web-multiselect id="nested" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
+        import { registerOverlay } from '@keenmate/web-components-core';
+        const panel = document.getElementById('parent-panel');
+        window.parentDismissed = 0;
+        window.parentOverlay = registerOverlay(() => { window.parentDismissed++; }, undefined, { getElement: () => panel });
         const items = [
             { value: 'apple',  label: 'Apple' },
             { value: 'banana', label: 'Banana' },
             { value: 'cherry', label: 'Cherry' }
         ];
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['ms-a', 'ms-b', 'alpha-1', 'alpha-2', 'beta-1'])
+            for (const id of ['ms-a', 'ms-b', 'alpha-1', 'alpha-2', 'beta-1', 'nested'])
                 document.getElementById(id).options = items;
         });
     </script>

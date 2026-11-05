@@ -2321,8 +2321,12 @@ export class MultiSelectEngine<T = any> {
 
         // Join the single-active-overlay group (scoped by `overlay-group`, default ungrouped):
         // when another KM overlay in the same group (or an external popover) opens, close this
-        // dropdown. open() broadcasts the reverse.
-        this.overlayCoord = registerOverlay(() => this.close(), this.options.overlayGroup || undefined);
+        // dropdown. open() broadcasts the reverse. The panel makes this a node of core's overlay
+        // tree: opening inside a modal / another dropdown never dismisses that ancestor, and
+        // closing the dropdown closes overlays opened from inside it.
+        this.overlayCoord = registerOverlay(() => this.close(), this.options.overlayGroup || undefined, {
+            getElement: () => this.dropdown,
+        });
 
         // Document-level Escape handler for closing popover when input doesn't have focus
         this.documentKeydownHandler = (e: KeyboardEvent) => {
@@ -4103,8 +4107,9 @@ export class MultiSelectEngine<T = any> {
         }
 
         // We're now open — dismiss every other participating overlay (other multiselects,
-        // datepickers, external popovers). Our own onDismiss is skipped (we're the source).
-        this.overlayCoord?.activate();
+        // datepickers, external popovers) except the ones we sit inside (the trigger's
+        // open ancestors). Our own onDismiss is skipped (we're the source).
+        this.overlayCoord?.activate({ trigger: this.input });
 
         this.options.onOpen?.(this.ctx({}));
     }

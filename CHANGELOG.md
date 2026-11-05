@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Previously the highlight stopped on a disabled row and its focus ring vanished under the disabled
   style. An option disabled in place (then `refresh()`) loses the highlight to its nearest enabled
   neighbour. A disabled row that matches the search no longer lights up on hover.
+- **The dropdown is a node of core's overlay tree** (core rc18, SPEC §12.9). Opening a multiselect
+  inside an open modal / popover / dropdown that is registered with core no longer dismisses that
+  container, and closing the container closes the dropdown. Overlays the multiselect is not inside
+  are still dismissed, as before.
 
 ### Fixed
 - **Disabled / readonly badges no longer show a remove ✕:** a `disabled` or `readonly` control

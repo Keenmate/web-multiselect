@@ -105,3 +105,24 @@ test('closing the active one leaves the other closed (no accidental reopen)', as
     await expect(dropdown(a)).toBeHidden();
     await expect(dropdown(b)).toBeHidden();
 });
+
+// Core overlay tree (core rc18, SPEC §12.9): the dropdown is a node with its panel, so it knows
+// which open overlay it was opened inside.
+test('opening inside an open overlay keeps that ancestor; closing the ancestor closes the dropdown', async ({ page }) => {
+    const nested = page.locator('#nested');
+    await page.evaluate(() => (window as unknown as { parentOverlay: { activate(): void } }).parentOverlay.activate());
+
+    await nested.locator('.ms__input').click();
+    await expect(dropdown(nested)).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { parentDismissed: number }).parentDismissed)).toBe(0);
+
+    await page.evaluate(() => (window as unknown as { parentOverlay: { deactivate(): void } }).parentOverlay.deactivate());
+    await expect(dropdown(nested)).toBeHidden();
+});
+
+test('an overlay the dropdown is NOT inside is still dismissed', async ({ page }) => {
+    await page.evaluate(() => (window as unknown as { parentOverlay: { activate(): void } }).parentOverlay.activate());
+    await page.locator('#ms-a .ms__input').click();
+    await expect(dropdown(page.locator('#ms-a'))).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { parentDismissed: number }).parentDismissed)).toBe(1);
+});
