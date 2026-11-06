@@ -138,6 +138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   element's `motion` > the nearest `data-motion` section > the page's `<html data-motion>`).
 
 ### Internal
+- **Tests (core rc18 review):** `e2e/badges.spec.ts` "escaping" — values with `"` `<` `'` `&`
+  select, badge and remove (default ✕ and a `renderBadgeCallback` wrapper); an HTML display value
+  renders as HTML. `e2e/search.spec.ts` "highlighting HTML labels" — `amp` on `Tom &amp; Jerry`,
+  `b` on `<b>Bold</b>`. `test/unit/logger.test.ts` — `setCategoryLevel(cat, null)`, `resetLogging()`.
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
   re-enabled); readonly badges and the readonly popover have no ✕.
 - **Examples:** BU01–BU03 have disabled rows (`disabled: true` on the option object); BU04
