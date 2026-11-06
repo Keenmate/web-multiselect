@@ -386,9 +386,12 @@ Font sizes and weights read the shared scale directly — `--base-font-size-*` (
 | `--ms-disabled-input-opacity` | `var(--ms-disabled-opacity)` | Opacity of a disabled input / checkbox |
 
 **Motion level** (web-components-core): `motion="none | snappy | smooth"` on the element
-(`el.motion = 'none'`), `data-motion="…"` on any ancestor (a section, `<html>`), or
-`window.components.motion = 'none'` for every component left on `auto`. A level sets the
-`--base-duration-*` speeds and `--base-scroll-behavior`; the `--ms-*` motion variables read them.
+(`el.motion = 'none'`), `data-motion="…"` on any ancestor (a section), or
+`window.components.motion = 'none'` for the page (core writes it to `<html data-motion>`). A level
+sets the `--base-duration-*` speeds and `--base-scroll-behavior`; the `--ms-*` motion variables read
+them. The closest level wins: OS reduced motion > the element's own `motion` > the nearest
+`data-motion` ancestor (a section) > the page level (`<html data-motion>` from
+`window.components.motion`).
 
 | Level | `--base-duration-normal` (→ `--ms-transition-normal`) | Scrolling |
 |---|---|---|

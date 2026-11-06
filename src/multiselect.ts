@@ -3427,8 +3427,8 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Bring `el` into view by scrolling the list around it, never the page (core
-     * `scrollIntoContainer`; with no scroller inside the dropdown it falls back to the page's
-     * `scrollIntoView`), with the fullscreen-safe default. In the fullscreen sheet the soft keyboard
+     * `scrollIntoContainer` with `stopAt` = the dropdown's parent: no scroller inside the
+     * dropdown → nothing scrolls), with the fullscreen-safe default. In the fullscreen sheet the soft keyboard
      * covers the lower viewport, so `block:'nearest'` can bottom-align a match BEHIND the keyboard;
      * centre it instead and scroll INSTANTLY (a smooth animation kicked off per-keystroke is torn
      * down by the next re-render and never settles — the "list jumps every letter" bug). Floating
