@@ -360,8 +360,8 @@
 }
 
 /* Inline clear pinned to the trailing edge of the search field. Small, round,
-   mask-icon glyph — a distinct Lucide search-x (see --ms-icon-search-clear), NOT the
-   overlay's bare ✕. JS toggles display so it appears only while the field has text. */
+   mask-icon glyph (--ms-icon-search-clear → the field-clear ✕). JS toggles display so it
+   appears only while the field has text. */
 .ms__fullscreen-search-clear {
   position: absolute;
   inset-inline-end: var(--ms-fullscreen-search-clear-inset);
@@ -390,7 +390,6 @@
   width: var(--ms-fullscreen-search-clear-icon-size);
   height: var(--ms-fullscreen-search-clear-icon-size);
   background-color: currentColor;
-  /* Lucide search-x (magnifier + x), not the bare ✕ — see --ms-icon-search-clear. */
   -webkit-mask: var(--ms-icon-search-clear) center / contain no-repeat;
           mask: var(--ms-icon-search-clear) center / contain no-repeat;
 }

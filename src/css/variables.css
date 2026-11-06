@@ -727,12 +727,10 @@
      re-skinning its close/remove glyph re-skins these too; the inline Lucide `x` is the standalone
      fallback (no base layer loaded). Override --ms-icon-remove to diverge from the base contract. */
   --ms-icon-remove: var(--base-icon-remove, var(--base-icon-close, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6 6 18'/><path d='m6 6 12 12'/></svg>")));
-  /* SVG "clear search" glyph (Lucide `search-x`: a magnifier with an x) used by the
-     fullscreen search field's clear button. Deliberately NOT the bare X of
-     --ms-icon-remove so it doesn't read as a second close button beside the overlay
-     ✕. Rendered via mask, so it inherits its color via currentColor; override with any
-     mask-friendly SVG url(). */
-  --ms-icon-search-clear: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m13.5 8.5-5 5'/><path d='m8.5 8.5 5 5'/><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>");
+  /* Fullscreen search field's clear button. Clearing a field's value is the --base-icon-clear
+     job, so it follows --ms-icon-clear (same glyph as the field-clear ✕); its place inside the
+     search box tells it apart from the sheet's close ✕. Override to give it its own glyph. */
+  --ms-icon-search-clear: var(--ms-icon-clear);
   /* Mode-toggle glyphs for the fullscreen search-mode switch. The button shows the
      CURRENT mode: a plain magnifier (Lucide `search`) for navigate, a funnel (Lucide
      `filter`) for filter. Rendered via mask (inherit color via currentColor); override
