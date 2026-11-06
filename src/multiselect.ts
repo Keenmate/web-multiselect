@@ -5813,9 +5813,11 @@ export class MultiSelectEngine<T = any> {
         // and display siblings stay in sync with how the badge itself was rendered.
         const badgeCtx = this.badgeRenderContext(isPopover);
         const targetContainer = container || this.badgesContainer;
-        // Prefix popover tooltips so they don't collide with the main badges container's tooltips
-        // (which are keyed by raw option value).
-        const idPrefix = isPopover ? 'popover-' : '';
+        // Every tooltip owner has its own fixed id prefix (badge- / popover- / option- / action-),
+        // and an option value only ever follows a `text:` / `remove:` marker — so no value
+        // (`option-3`, `more`, …) can collide with another tooltip's id, and each owner's cleanup
+        // destroys only its own tooltips.
+        const idPrefix = isPopover ? 'popover-' : 'badge-';
         const badges = targetContainer.querySelectorAll('.ms__badge:not(.ms__badge--more)');
 
         badges.forEach((badge: Element) => {
@@ -5825,8 +5827,8 @@ export class MultiSelectEngine<T = any> {
             const option = this.selectedByValue.get(value);
             if (!option) return;
 
-            const textId = `${idPrefix}${value}`;
-            const removeId = `${idPrefix}${value}-remove`;
+            const textId = `${idPrefix}text:${value}`;
+            const removeId = `${idPrefix}remove:${value}`;
 
             const badgeText = badge.querySelector('.ms__badge-text') as HTMLElement;
             if (badgeText) {
@@ -5855,9 +5857,10 @@ export class MultiSelectEngine<T = any> {
                 const maxVisible = this.options.maxVisibleBadgeCount || 3;
                 const hiddenCount = this.selectedByValue.size - maxVisible;
                 this.spawnTooltip({
-                    id: 'more-badge-remove',
+                    id: 'badge-more-remove',
                     trigger: removeBtn,
-                    content: this.buildRemoveButtonTooltipText(`${hiddenCount} hidden items`)
+                    // Same label as the button's aria-label (localizable via `labels`).
+                    content: this.resolveLabel('removeHiddenItems', { count: hiddenCount })
                 });
             }
         }
@@ -6159,13 +6162,13 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Destroy main-badges-container tooltips. Called before re-rendering the badges container.
-     * Popover tooltips (prefixed `popover-`) survive — they're owned by the popover lifecycle and
-     * cleaned up in `hideSelectedPopover`. Action-button tooltips (prefixed `action-`) survive too.
+     * Destroy main-badges-container tooltips (prefixed `badge-`). Called before re-rendering the
+     * badges container — on every selection, while the dropdown may be open — so it must leave the
+     * option (`option-`), action-button (`action-`) and popover (`popover-`) tooltips alone.
      */
     private destroyAllBadgeTooltips(): void {
         for (const id of Array.from(this.tooltips.keys())) {
-            if (!id.startsWith('action-') && !id.startsWith('popover-')) {
+            if (id.startsWith('badge-')) {
                 this.tooltips.get(id)?.destroy();
                 this.tooltips.delete(id);
             }

@@ -85,6 +85,68 @@ test('option tooltip becomes visible on hover (default content)', async ({ page 
     await expect(tooltip).toContainText(/Apple/);
 });
 
+test('option tooltips survive a selection made with the dropdown open', async ({ page }) => {
+    // Multi-select keeps the dropdown open; every pick re-renders the badges, whose tooltip
+    // cleanup used to destroy the option tooltips too (none showed again until a reopen).
+    const p = picker(page, 'option-tt');
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="banana"]').click();
+    await expect(p.locator('.ms__dropdown')).toBeVisible();
+
+    await p.locator('.ms__option[data-value="apple"]').hover();
+    // (the clicked row's tooltip is still fading out — its hide delay — so match by text)
+    const visible = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(visible.filter({ hasText: 'Apple' })).toBeVisible({ timeout: 2000 });
+    await expect(visible).toHaveCount(1);
+});
+
+/** Append a picker with option + badge tooltips on (no show delay). */
+async function makeTooltipPicker(page: Page, attrs: Record<string, string>, options: unknown[], labels?: object): Promise<Locator> {
+    await page.evaluate(({ attrs, options, labels }) => {
+        const el = document.createElement('web-multiselect') as any;
+        el.id = 'tt-dyn';
+        for (const [k, v] of Object.entries({
+            'value-member': 'value', 'display-value-member': 'label',
+            'enable-option-tooltips': 'true', 'option-tooltip-delay': '0',
+            'enable-badge-tooltips': 'true', 'badge-tooltip-delay': '0', ...attrs,
+        })) el.setAttribute(k, v as string);
+        if (labels) el.labels = labels;
+        document.body.prepend(el);
+        el.options = options;
+    }, { attrs, options, labels });
+    const p = page.locator('#tt-dyn');
+    await p.evaluate(async (el: any) => el.whenReady());
+    return p;
+}
+
+test('a value that looks like another tooltip id (`option-0`) does not take over its tooltip', async ({ page }) => {
+    // Badge tooltip ids used to be the raw value: selecting `option-0` spawned a badge tooltip
+    // under the first row's id and destroyed the row's tooltip.
+    const p = await makeTooltipPicker(page, {}, [
+        { value: 'first', label: 'First row' },
+        { value: 'option-0', label: 'Tricky value' },
+    ]);
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="option-0"]').click();
+
+    await p.locator('.ms__option[data-value="first"]').hover();
+    const visible = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(visible.filter({ hasText: 'First row' })).toBeVisible({ timeout: 2000 });
+});
+
+test('the "+N more" remove tooltip uses labels.removeHiddenItems', async ({ page }) => {
+    const p = await makeTooltipPicker(page,
+        { 'badges-display-mode': 'partial', 'max-visible-badge-count': '1' },
+        [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }],
+        { removeHiddenItems: 'Odebrat {count} skryté' });
+    await p.evaluate((el: any) => el.setSelected(['a', 'b', 'c']));
+
+    await p.locator('.ms__badge--more .ms__badge-remove').hover();
+    const tooltip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
+    await expect(tooltip).toBeVisible({ timeout: 2000 });
+    await expect(tooltip).toHaveText('Odebrat 2 skryté');
+});
+
 test('getOptionTooltipCallback overrides option tooltip content', async ({ page }) => {
     const p = picker(page, 'option-custom-tt');
     await openDropdown(p);
