@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-rc02] - 2026-11-04
+## [3.0.0-rc02] - 2026-11-04 [PUBLISHED]
 
 ### Changed — BREAKING (core rc18)
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc18`.** What that changes on `<web-multiselect>`
@@ -42,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   padding). `.ms__loading-text` is unchanged. Page CSS or `custom-styles` that targeted the old
   container class must rename it.
 
+### Removed — BREAKING
+- **`search-input-mode` / `searchInputMode` and the `SearchInputMode` type are gone.** `readonly`
+  only repeated `enable-search="false"` (plus an untypeable search box in the fullscreen header),
+  and `hidden` was the same with an invisible input — which in single-select also hid the selected
+  label. Use **`enable-search="false"`**; add `labels='{"selectPlaceholder":""}'` for an empty field.
+  The `.ms__input--hidden` class is removed; the attribute is now ignored.
+
 ### Changed
 - **Arrow keys skip disabled options** (core review A-21, the same rule as core's menus and the
   MUI / Radix / React Aria defaults). ↑ / ↓, Home / End, Page Up / Page Down and Ctrl + ↑ / ↓ (navigate
@@ -74,6 +81,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   devkit normalizes it the same way for every component.
 
 ### Fixed
+- **`enable-search="false"` makes the input natively read-only.** It used to be editable with a
+  keydown filter that only ran while open: the caret was live and movable, Ctrl+C / Ctrl+A were
+  swallowed (no copying the selected value), and while closed you could type over a single-select's
+  shown label. Now there's no caret and no soft keyboard on phones, the shown value can be selected and
+  copied, and Home / End always move through the list.
+- **Escape with search off closes in one press.** Single-select shows the selected label in the
+  input while open; Escape took it for a search term and erased it, and only a second press closed.
+- **Fullscreen with search off: the close (✕) sat at the leading edge.** The search field was what
+  pushed it to the end; with no field the ✕ now takes `margin-inline-start: auto`. It also sat
+  ~1rem above centre (the top-anchored row was only as tall as the ✕); the header gets
+  `.ms__fullscreen-header--no-search`, which centres the row.
+- **Option tooltips stopped showing after the first pick with the dropdown open** (multi-select /
+  `close-on-select="false"`) until a reopen. Every selection re-renders the badges, and their
+  tooltip cleanup destroyed every tooltip that wasn't an action or popover one, option tooltips
+  included. Main badge tooltips were keyed by the raw value, so the cleanup had to work by exclusion
+  — and a value such as `option-0` or `action-1` took over that tooltip's id. Each tooltip owner now
+  has its own prefix (`badge-`, `popover-`, `option-`, `action-`; a value follows a `text:` /
+  `remove:` marker), and the badge cleanup removes only `badge-` tooltips.
+- **The "+N more" remove tooltip follows `labels.removeHiddenItems`** (as its `aria-label` already
+  did); it was hardcoded English ("Remove 2 hidden items").
+- **`checkbox-align="top"` puts the checkbox on the first text line.** It aligned to the row's top
+  edge plus a fixed 0.2 × `--ms-rem` nudge sized for a plain label, so a custom-rendered first row
+  (bigger title, icon, pill) left the checkbox above the text. It now uses `align-items: first
+  baseline` — the checkbox sits on the first line's baseline whatever that line holds. Plain labels
+  move by under 1px. A host-level `--ms-checkbox-margin-top` is no longer overridden for top rows.
+- **The fullscreen search clear uses the field-clear ✕.** `--ms-icon-search-clear` was a fixed
+  magnifier-with-x that no theme could reach and that differed from the desktop clear; it now follows
+  `--ms-icon-clear` (`--base-icon-clear` → `--base-icon-close`). Override `--ms-icon-search-clear` to
+  give it its own glyph.
 - **Example pages follow dark mode:** page CSS reads the kit's `--kmwc-*` tokens (incl. the option
   markup drawn by render callbacks); native controls are kit-styled. The theming page's theme
   gallery keeps its fixed colours on purpose.
@@ -138,6 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   element's `motion` > the nearest `data-motion` section > the page's `<html data-motion>`).
 
 ### Internal
+- **`@keenmate/base-css-variables` dev dependency `^2.0.0-rc08` → `^2.0.0`** (final; same contract as
+  rc08, no token changes).
 - **Tests (core rc18 review):** `e2e/badges.spec.ts` "escaping" — values with `"` `<` `'` `&`
   select, badge and remove (default ✕ and a `renderBadgeCallback` wrapper); an HTML display value
   renders as HTML. `e2e/search.spec.ts` "highlighting HTML labels" — `amp` on `Tom &amp; Jerry`,

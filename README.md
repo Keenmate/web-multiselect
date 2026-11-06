@@ -31,6 +31,20 @@ Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.np
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
+## What's New in v3.0.0-rc02
+
+Upgrade guide: the [3.0.0-rc02 release notes](release-notes/3.0.0-rc02.md); full list: the
+[CHANGELOG 3.0.0-rc02 section](CHANGELOG.md).
+
+- **Inputs — strict values (core rc18)** — Attribute and property writes are validated strictly by `@keenmate/web-components-core` 1.0.0-rc18. A number with a unit or a fraction (`badge-height="24px"`, `virtual-scroll-item-height="1.5"`) used to be silently truncated; it is now refused with a warning and a new `input-rejected` event, and the previous value is kept. Enum values match case-insensitively, and `el.x = undefined` resets an input to its default instead of being rejected. Pixel attributes take a bare integer.
+- **Search — `search-input-mode` removed, `enable-search="false"` is a real picker** — `search-input-mode` (`readonly` / `hidden`) only repeated `enable-search="false"` with a stranger fullscreen header and, for `hidden`, an invisible single-select label, so it is gone. The search-off picker itself was fixed: the input is natively read-only (no caret, no soft keyboard on phones), the shown value can be selected and copied, Escape closes in one press instead of erasing the label first, and the fullscreen sheet's ✕ sits at the trailing edge, centred.
+- **Loader — classes renamed** — The default spinner is `.ms__loader` (was `.ms-loader`) and the dropdown's loading-state container is `.ms__loading` (was `.ms__loader`), following core rc18's shared loader. Page CSS or `custom-styles` that targeted the old classes must be renamed; the `--ms-loader-*` tokens keep their names.
+- **Keyboard — arrow keys skip disabled options** — Arrow keys, Home / End, Page Up / Down and navigate-mode Ctrl + arrows never land on a disabled option, nor does the auto-focus of the first search result or the selected option on open. Before, the highlight stopped on a disabled row and its focus ring disappeared under the disabled styling. This matches core's menus and the MUI / Radix / React Aria defaults.
+- **Overlays — dropdowns inside modals and popovers** — The dropdown joins core's overlay tree, so opening a multiselect inside an open modal, popover or dropdown no longer dismisses that container, and closing the container closes the dropdown. The standalone engine mounts its panels in the nearest open modal `<dialog>` or `:popover-open` element instead of `<body>`, where they were inert behind the modal.
+- **Tooltips and layout — visible fixes** — Option tooltips no longer stop showing after the first pick with the dropdown open; each tooltip owner now has its own id prefix, so a value like `option-0` can't take over another tooltip. `checkbox-align="top"` puts the checkbox on the first text line (first baseline), so tall custom-rendered rows line up. Disabled and readonly controls no longer draw a remove ✕ on badges, and the fullscreen search clear uses the themeable field-clear ✕.
+- **Data — quotes in values, corrected security notice** — An option value containing a quote (`say "hi"`) cut its `data-value` attribute short, so the wrong value was selected and the badge couldn't be removed; option values and tree paths are now escaped. The README's XSS notice is corrected: display values, full titles, subtitles and icons are HTML by design and must be sanitized when untrusted.
+- **Logging — closest level wins** — Log levels coalesce element → type → page → `warn`, every warning now goes through the loggers (so `disableLogging()` silences them all), and a new `resetLogging()` clears an element's or type's own level.
+
 ## What's New in v3.0.0-rc01
 
 **A major release — breaking, no aliases.** The callbacks, events and inputs follow the shared
