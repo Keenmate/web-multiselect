@@ -65,6 +65,7 @@ import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import {
     NO_SEARCH_TERM,
     createRegexCompiler,
+    escapeHtml,
     highlightHtml,
     matchesSearchTerm,
     normalizeSearchText,
@@ -1317,7 +1318,7 @@ export class MultiSelectEngine<T = any> {
     private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
         const label = this.formatCountLabel(selectedCount, total, groupName);
-        return `<span class="ms__group-count" aria-label="${this.escapeHtml(this.resolveLabel('groupSelected', { count: selectedCount }))}">${this.escapeHtml(label)}</span>`;
+        return `<span class="ms__group-count" aria-label="${escapeHtml(this.resolveLabel('groupSelected', { count: selectedCount }))}">${escapeHtml(label)}</span>`;
     }
 
     /**
@@ -1420,7 +1421,7 @@ export class MultiSelectEngine<T = any> {
                     html += '<div class="ms__group">';
                     if (groupName !== '__ungrouped__') {
                         // `data-group` anchors the label for scrollToGroup() (public API).
-                        const groupAttr = ` data-group="${this.escapeHtml(groupName)}"`;
+                        const groupAttr = ` data-group="${escapeHtml(groupName)}"`;
                         const selectAttr = groupCascade ? ' data-group-select="cascade"' : '';
                         // One roll-up per header powers the tristate checkbox (cascade only), the
                         // per-group selected-count chip (ANY grouped list), AND the callback context —
@@ -1461,7 +1462,7 @@ export class MultiSelectEngine<T = any> {
                             // members are currently selected (any grouped list, cascade or not).
                             const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount, groupName);
                             const labelClass = countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
-                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${this.escapeHtml(groupName)}${countHtml}</div>`;
+                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${escapeHtml(groupName)}${countHtml}</div>`;
                         }
                     }
                     groups[groupName].forEach(option => {
@@ -1722,16 +1723,16 @@ export class MultiSelectEngine<T = any> {
             if (resolved.isToggled) classes.push('ms__action-btn--toggled');
             if (resolved.cssClass) classes.push(resolved.cssClass);
 
-            let attrs = ` class="${this.escapeHtml(classes.join(' '))}" data-action="${this.escapeHtml(resolved.action)}" data-ms-item-index="${itemIndex}"`;
-            if (resolved.id) attrs += ` data-id="${this.escapeHtml(resolved.id)}"`;
+            let attrs = ` class="${escapeHtml(classes.join(' '))}" data-action="${escapeHtml(resolved.action)}" data-ms-item-index="${itemIndex}"`;
+            if (resolved.id) attrs += ` data-id="${escapeHtml(resolved.id)}"`;
             if (resolved.isDisabled) attrs += ' disabled';
             if (resolved.isToggled) attrs += ' aria-pressed="true"';
-            if (!resolved.text && resolved.tooltip) attrs += ` aria-label="${this.escapeHtml(resolved.tooltip)}"`;
+            if (!resolved.text && resolved.tooltip) attrs += ` aria-label="${escapeHtml(resolved.tooltip)}"`;
 
             // Icon + label are text, never HTML.
             let inner = '';
-            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${this.escapeHtml(resolved.icon)}</span>`;
-            if (resolved.text) inner += `<span class="ms__action-btn-label">${this.escapeHtml(resolved.text)}</span>`;
+            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${escapeHtml(resolved.icon)}</span>`;
+            if (resolved.text) inner += `<span class="ms__action-btn-label">${escapeHtml(resolved.text)}</span>`;
 
             const rowNum = Math.max(1, Math.floor(item.row ?? 1));
             if (!rows.has(rowNum)) rows.set(rowNum, []);
@@ -1828,7 +1829,7 @@ export class MultiSelectEngine<T = any> {
      */
     private renderOptionInfoButton(): string {
         if (this.presentationMode !== 'fullscreen') return '';
-        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${this.escapeHtml(this.resolveLabel('showFullLabel'))}"></button>`;
+        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${escapeHtml(this.resolveLabel('showFullLabel'))}"></button>`;
     }
 
     /**
@@ -1979,9 +1980,9 @@ export class MultiSelectEngine<T = any> {
      */
     private getAddNewText(value: string): string {
         if (this.options.getAddNewTextCallback) {
-            return this.escapeHtml(this.options.getAddNewTextCallback(this.ctx({ value })));
+            return escapeHtml(String(this.options.getAddNewTextCallback(this.ctx({ value }))));
         }
-        return this.resolveLabel('addNew', { value: this.escapeHtml(value) });
+        return this.resolveLabel('addNew', { value: escapeHtml(value) });
     }
 
     /**
@@ -2021,17 +2022,7 @@ export class MultiSelectEngine<T = any> {
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
-        return this.resolveLabel('addNewPending', { value: this.escapeHtml(value) });
-    }
-
-    /** Minimal HTML entity escape for untrusted text spliced into an innerHTML string. */
-    private escapeHtml(value: string): string {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return this.resolveLabel('addNewPending', { value: escapeHtml(value) });
     }
 
     /**
@@ -2213,7 +2204,7 @@ export class MultiSelectEngine<T = any> {
                 moreBadgeHtml = `
                     <div class="ms__badge ms__badge--counter ms__badge--more" data-ms-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${this.escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
                     </div>
                 `;
             }
@@ -2237,7 +2228,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge" data-ms-action="show-selected">
                         <span class="ms__badge-text">${compactText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -2251,7 +2242,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge ms__badge--counter" data-ms-action="show-selected">
                         <span class="ms__badge-text">${countText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${this.escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -5138,8 +5129,8 @@ export class MultiSelectEngine<T = any> {
         // Standard rendering for small selections
         this.selectedPopover.innerHTML = `
             <div class="ms__selected-popover-header">
-                <span>${this.escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                <button type="button" class="ms__selected-popover-close" aria-label="${this.escapeHtml(this.resolveLabel('close'))}"></button>
+                <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
+                <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.resolveLabel('close'))}"></button>
             </div>
             <div class="ms__selected-popover-body">
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
@@ -5186,8 +5177,8 @@ export class MultiSelectEngine<T = any> {
                 : 'height: 18rem;';
             const html = `
                 <div class="ms__selected-popover-header">
-                    <span>${this.escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                    <button type="button" class="ms__selected-popover-close" aria-label="${this.escapeHtml(this.resolveLabel('close'))}"></button>
+                    <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
+                    <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.resolveLabel('close'))}"></button>
                 </div>
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
@@ -5332,7 +5323,7 @@ export class MultiSelectEngine<T = any> {
         return `
             <div class="${badgeClasses}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${value}" aria-label="${this.escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${value}" aria-label="${escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
             </div>
         `;
     }
