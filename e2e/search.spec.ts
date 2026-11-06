@@ -879,3 +879,29 @@ test.describe('getSearchTermCallback', () => {
         expect(warnings.some(w => w.includes('getSearchValueCallback returned an object'))).toBe(true);
     });
 });
+
+// Display values are trusted HTML; core highlightHtml marks text runs only.
+test.describe('highlighting HTML labels', () => {
+    test('a term inside an entity (`amp` on `Tom &amp; Jerry`) leaves the entity intact', async ({ page }) => {
+        const p = picker(page, 'hl-html');
+        await openDropdown(p);
+
+        await input(p).fill('amp');
+        const option = p.locator('.ms__option[data-value="tj"]');
+        await expect(option).toBeVisible();
+        await expect(option.locator('.ms__option-title')).toHaveText('Tom & Jerry');
+        await expect(option.locator('mark')).toHaveCount(0);
+    });
+
+    test('a term matching a tag name (`b` on `<b>Bold</b>`) keeps the markup', async ({ page }) => {
+        const p = picker(page, 'hl-html');
+        await openDropdown(p);
+
+        await input(p).fill('b');
+        const option = p.locator('.ms__option[data-value="bold"]');
+        await expect(option).toBeVisible();
+        await expect(option.locator('.ms__option-title')).toHaveText('Bold');
+        await expect(option.locator('.ms__option-title > b')).toHaveCount(1);
+        await expect(option.locator('b mark')).toHaveText('B');
+    });
+});

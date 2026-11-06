@@ -103,6 +103,11 @@
         <web-multiselect id="sm-object" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">highlighting inside HTML labels (entity / tag)</div>
+        <web-multiselect id="hl-html" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import { normalizeSearchText } from '/src/index.ts';
 
@@ -140,6 +145,12 @@
             window.__searchValueCalls = 0;
             indexed.getSearchValueCallback = ({ option }) => { window.__searchValueCalls++; return option.label; };
             indexed.options = Array.from({ length: 2000 }, (_, i) => ({ value: String(i), label: `Položka ${i}` }));
+
+            // hl-html: HTML labels — the highlight must not split an entity or a tag.
+            document.getElementById('hl-html').options = [
+                { value: 'tj',   label: 'Tom &amp; Jerry' },
+                { value: 'bold', label: '<b>Bold</b>' }
+            ];
 
             // sm: search-match modes.
             document.getElementById('sm').options = [
