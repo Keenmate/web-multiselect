@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `renderLoaderCallback`), the same name as the instance property.
   - New **`input-rejected`** event (twin `onInputRejected`) for every refused attribute / property
     write; `setAttributes()` returns the rejections.
+  - **The fullscreen sheet's body scroll lock pins `<body>`** (core `lockBodyScroll()`:
+    `position: fixed` at minus the scroll offset + `overflow: hidden`, padded by the scrollbar
+    width) instead of only `overflow: hidden`, which iOS Safari ignored for touch scrolling. The
+    page doesn't jump (the scroll position is restored instantly on close) and desktop content
+    doesn't shift sideways. It sits alongside the sheet's own `overflow-x` clamp on `<html>`.
+  - **Assigning a non-function to an `on*` handler** (`el.onChange = 'x'`, an object) warns and
+    keeps the previous handler; it used to clear it silently. `null` / `undefined` still clear it.
 - **The default loader is `<span class="ms__loader">`** (core rc18; was `.ms-loader`). Page CSS that
   styled `.ms-loader` stops matching: rename it to `.ms__loader`. The `--ms-loader-*` tokens and the
   `ms-loader-spin` keyframes keep their names.
@@ -127,6 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   panel and `showMessage()` fell back to `document.body` — underneath (and inert behind) a modal
   `<dialog>` or an open popover the picker sits in. They now use core `findOverlayContainer()`
   (the nearest open modal dialog / `:popover-open` element, else `<body>`).
+- **Docs:** `docs/theming.md` states the motion order (closest wins: OS reduced motion > the
+  element's `motion` > the nearest `data-motion` section > the page's `<html data-motion>`).
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
