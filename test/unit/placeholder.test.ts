@@ -5,7 +5,7 @@ import type { MultiSelectConfig } from '../../src/types';
 /**
  * Unit tests for input placeholder resolution (getPlaceholderText):
  *   - labels.searchPlaceholder  when search is usable
- *   - labels.selectPlaceholder  when search is disabled / readonly / hidden
+ *   - labels.selectPlaceholder  when search is disabled
  *   - labels.noDataPlaceholder             when the option list is empty (opt-in, highest priority)
  *
  * Exercised against the core MultiSelectEngine class on a plain <div> so no dropdown
@@ -56,16 +56,6 @@ describe('placeholder — search usable', () => {
 describe('placeholder — search disabled', () => {
     it('uses the default selectPlaceholder when enableSearch is false', () => {
         const input = make({ options: ITEMS, isSearchEnabled: false });
-        expect(input.placeholder).toBe('Pick an option…');
-    });
-
-    it('uses selectPlaceholder when searchInputMode is "readonly"', () => {
-        const input = make({ options: ITEMS, searchInputMode: 'readonly' });
-        expect(input.placeholder).toBe('Pick an option…');
-    });
-
-    it('uses selectPlaceholder when searchInputMode is "hidden"', () => {
-        const input = make({ options: ITEMS, searchInputMode: 'hidden' });
         expect(input.placeholder).toBe('Pick an option…');
     });
 

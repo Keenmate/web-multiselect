@@ -43,16 +43,6 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">search-input-mode="readonly"</div>
-        <web-multiselect id="readonly" search-input-mode="readonly" value-member="value" display-value-member="label"></web-multiselect>
-    </div>
-
-    <div class="fixture">
-        <div class="fixture-label">search-input-mode="hidden"</div>
-        <web-multiselect id="hidden-input" search-input-mode="hidden" value-member="value" display-value-member="label"></web-multiselect>
-    </div>
-
-    <div class="fixture">
         <div class="fixture-label">enable-search="false"</div>
         <web-multiselect id="no-search" enable-search="false" value-member="value" display-value-member="label"></web-multiselect>
     </div>
@@ -121,7 +111,7 @@
 
         customElements.whenDefined('web-multiselect').then(() => {
             for (const id of [
-                'filter', 'navigate', 'navigate-fs', 'filter-fs', 'readonly', 'hidden-input', 'no-search',
+                'filter', 'navigate', 'navigate-fs', 'filter-fs', 'no-search',
                 'empty-msg', 'min-len', 'keep-options', 'clear-on-close', 'before-search', 'popover-fs'
             ]) {
                 document.getElementById(id).options = fruits;

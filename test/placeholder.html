@@ -23,11 +23,6 @@
     </div>
 
     <div class="fixture">
-        <div class="fixture-label">search-input-mode="readonly" → labels.selectPlaceholder default</div>
-        <web-multiselect id="ph-readonly" search-input-mode="readonly" value-member="value" display-value-member="label"></web-multiselect>
-    </div>
-
-    <div class="fixture">
         <div class="fixture-label">custom labels.selectPlaceholder</div>
         <web-multiselect id="ph-custom-select" enable-search="false" value-member="value" display-value-member="label" labels='{"selectPlaceholder": "Choose a fruit"}'></web-multiselect>
     </div>
@@ -53,7 +48,7 @@
 
         customElements.whenDefined('web-multiselect').then(() => {
             // Everything except the cascade-child example gets data.
-            for (const id of ['ph-search', 'ph-nosearch', 'ph-readonly', 'ph-custom-select', 'ph-nodata-filled']) {
+            for (const id of ['ph-search', 'ph-nosearch', 'ph-custom-select', 'ph-nodata-filled']) {
                 document.getElementById(id).options = items;
             }
             // ph-nodata intentionally stays empty to show the no-data placeholder.

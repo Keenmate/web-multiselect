@@ -139,13 +139,6 @@ describe('a torn-down engine', () => {
 });
 
 describe('interaction state', () => {
-    it('a readonly control stays read-only when search-input-mode changes', () => {
-        const ms = make({ isReadonly: true });
-        expect(ms.input.readOnly).toBe(true);
-        ms.updateOptions({ searchInputMode: 'normal' });
-        expect(ms.input.readOnly).toBe(true);
-    });
-
     it('a disabled control runs no consumer action', async () => {
         const onAction = vi.fn();
         const ms = make({ isDisabled: true, onAction });

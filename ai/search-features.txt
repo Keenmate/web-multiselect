@@ -129,28 +129,15 @@ when a newer search supersedes this one):
 normalizeSearchText(text, behavior = 'normalized') is exported for custom search:
     import { normalizeSearchText } from '@keenmate/web-multiselect';
 
-SEARCH INPUT MODES
-------------------
-Control search input behavior:
+DISABLING SEARCH
+----------------
+Turn the field into a plain picker (no typing, no filtering):
 
-Normal (default):
-<web-multiselect search-input-mode="normal">
+<web-multiselect enable-search="false">
 </web-multiselect>
-- Full search functionality
-- Editable input field
-
-Readonly:
-<web-multiselect search-input-mode="readonly">
-</web-multiselect>
-- Search enabled
-- Input not editable by typing
-- Navigate mode recommended
-
-Hidden:
-<web-multiselect search-input-mode="hidden">
-</web-multiselect>
-- No search input shown
-- Options appear immediately
+- Input shows labels.selectPlaceholder ("Pick an option…"); set it to '' for an empty field
+- Click / keyboard (arrows, Enter) still open and pick
+- No search field in the fullscreen header
 - Use for small lists
 
 MINIMUM SEARCH LENGTH
@@ -569,9 +556,7 @@ select.options = [...popularItems];
 select.searchCallback = async ({ term, signal }) => {...};
 
 Navigate mode:
-<web-multiselect
-  search-mode="navigate"
-  search-input-mode="readonly">
+<web-multiselect search-mode="navigate">
 </web-multiselect>
 
 DEBUGGING

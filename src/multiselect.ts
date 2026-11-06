@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, getFixedPos
 import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchInputMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -667,7 +667,6 @@ export class MultiSelectEngine<T = any> {
             badgesPosition: (element.dataset.badgesPosition as BadgesPosition) || 'bottom',
             badgesThresholdMode: (element.dataset.badgesThresholdMode as any) || 'count',
             maxHeight: element.dataset.maxHeight || '20rem',
-            searchInputMode: (element.dataset.searchInputMode as SearchInputMode) || 'normal',
             searchMode: (element.dataset.searchMode as SearchMode) || 'filter',
             searchBehavior: (element.dataset.searchBehavior as SearchBehavior) || 'normalized',
             searchMatch: (element.dataset.searchMatch as SearchMatch) || 'contains',
@@ -1108,9 +1107,7 @@ export class MultiSelectEngine<T = any> {
         this.input.placeholder = this.getPlaceholderText();
         this.input.autocomplete = 'off';
 
-        // Apply searchInputMode (readonly / hidden: no typing; hidden: also invisible)
         this.input.readOnly = this.isInputReadOnly();
-        this.input.classList.toggle('ms__input--hidden', this.options.searchInputMode === 'hidden');
 
         // Chevron rendered via a CSS mask icon (see .ms__toggle in controls.css) for
         // consistency with the other glyphs — no text character. It's now a real flex
@@ -2056,23 +2053,12 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * The input takes no typing: a readonly control, or `search-input-mode` `readonly` / `hidden`.
-     * `hidden` keeps the input in place, transparent (`.ms__input--hidden`), not `visibility: hidden`:
-     * it still fills the row (the toggle stays at the trailing edge), takes the click that opens the
-     * dropdown, and keeps keyboard focus (Tab, arrows, Enter) — a `visibility: hidden` input gets
-     * neither clicks nor focus, so only the chevron opened it.
+     * The input takes no typing: a readonly control, or search disabled (a plain picker). Native
+     * `readOnly`, not a keydown filter — it still takes focus, arrows / Enter, and lets the shown
+     * value be selected and copied, but shows no caret and raises no soft keyboard.
      */
     private isInputReadOnly(): boolean {
-        return !!this.options.isReadonly
-            || this.options.searchInputMode === 'readonly'
-            || this.options.searchInputMode === 'hidden';
-    }
-
-    /** Whether the input currently functions as a usable search field (drives placeholder wording). */
-    private get isSearchUsable(): boolean {
-        return !!this.options.isSearchEnabled
-            && this.options.searchInputMode !== 'readonly'
-            && this.options.searchInputMode !== 'hidden';
+        return !!this.options.isReadonly || !this.options.isSearchEnabled;
     }
 
     /**
@@ -2085,7 +2071,7 @@ export class MultiSelectEngine<T = any> {
         if (noDataPlaceholder && this.allOptions.length === 0) {
             return noDataPlaceholder;
         }
-        if (!this.isSearchUsable) {
+        if (!this.options.isSearchEnabled) {
             // `''` = deliberately empty (L4) — no fallback to the search placeholder.
             return this.resolveLabel('selectPlaceholder');
         }
@@ -2703,17 +2689,6 @@ export class MultiSelectEngine<T = any> {
             return;
         }
 
-        // If search is disabled, block all printable characters except navigation keys
-        if (!this.options.isSearchEnabled) {
-            const isPrintableChar = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete';
-            const isNavigationKey = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', 'Enter', 'Escape', 'Tab'].includes(e.key);
-
-            if (isPrintableChar && !isNavigationKey) {
-                e.preventDefault();
-                return;
-            }
-        }
-
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
@@ -2762,10 +2737,12 @@ export class MultiSelectEngine<T = any> {
                 break;
             case 'Escape':
                 e.preventDefault();
-                // Priority: 1) Close selected popover, 2) Clear search, 3) Close dropdown
+                // Priority: 1) Close selected popover, 2) Clear search, 3) Close dropdown.
+                // With search off there is no search: single-select keeps the selected label in
+                // the input while open, and Escape must not wipe it.
                 if (this.showSelectedPopover) {
                     this.hideSelectedPopover();
-                } else if (this.input.value) {
+                } else if (this.options.isSearchEnabled && this.input.value) {
                     this.clearSearch();
                 } else {
                     this.close();
@@ -2788,12 +2765,12 @@ export class MultiSelectEngine<T = any> {
             case 'End': {
                 // Caret-aware: in an editable search field, let Home/End move the text caret
                 // first; only navigate the list when the caret is already at that end (or the
-                // box is empty / there's no editable caret). Pressing Home in a search box with
+                // box is empty / read-only / there's no editable caret). Pressing Home in a search box with
                 // text no longer steals the caret to jump to the first option. An active text
                 // selection is left to the browser (native collapse), not treated as a boundary.
                 const inp = e.target instanceof HTMLInputElement ? e.target : null;
                 let atBoundary: boolean;
-                if (!inp) {
+                if (!inp || inp.readOnly) {
                     atBoundary = true;
                 } else if (inp.selectionStart !== inp.selectionEnd) {
                     atBoundary = false;
@@ -4702,17 +4679,16 @@ export class MultiSelectEngine<T = any> {
 
         const header = document.createElement('div');
         header.className = 'ms__fullscreen-header';
+        header.classList.toggle('ms__fullscreen-header--no-search', !this.options.isSearchEnabled);
 
-        if (this.options.isSearchEnabled && this.options.searchInputMode !== 'hidden') {
+        if (this.options.isSearchEnabled) {
             // The input and its inline clear (✕) share a positioned wrapper so the
             // button can sit at the trailing edge of the field (inset-inline-end).
             const searchWrapper = document.createElement('div');
             searchWrapper.className = 'ms__fullscreen-search-wrapper';
 
             // Opt-in leading mode toggle (filter <-> navigate). Built first so it sits at
-            // the field's leading edge: [toggle][input …clear]. Readonly search can still
-            // switch modes (the mode governs how the list reacts, not typing), so it's not
-            // gated on the readonly branch like the clear button is.
+            // the field's leading edge: [toggle][input …clear].
             if (this.options.isSearchModeToggleShown) {
                 const toggle = document.createElement('button');
                 toggle.type = 'button';
@@ -4730,7 +4706,6 @@ export class MultiSelectEngine<T = any> {
             search.className = 'ms__fullscreen-search';
             search.placeholder = this.getPlaceholderText();
             search.autocomplete = 'off';
-            if (this.options.searchInputMode === 'readonly') search.readOnly = true;
 
             // Proxy to the same search path as the main input, keeping the two in sync.
             search.addEventListener('input', (e) => {
@@ -4746,20 +4721,17 @@ export class MultiSelectEngine<T = any> {
             searchWrapper.appendChild(search);
             this.fullscreenSearchInput = search;
 
-            // Clear-search button — readonly search can't be typed into, so it can't be
-            // cleared either; only build it for an editable field.
-            if (this.options.searchInputMode !== 'readonly') {
-                const clear = document.createElement('button');
-                clear.type = 'button';
-                clear.className = 'ms__fullscreen-search-clear';
-                clear.setAttribute('aria-label', this.resolveLabel('clearSearch'));
-                // Use mousedown+preventDefault so the tap doesn't blur/steal focus from
-                // the search field, then run the clear on click and restore focus.
-                clear.addEventListener('mousedown', (e) => e.preventDefault());
-                clear.addEventListener('click', () => this.clearFullscreenSearch());
-                searchWrapper.appendChild(clear);
-                this.fullscreenSearchClear = clear;
-            }
+            // Clear-search button
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'ms__fullscreen-search-clear';
+            clear.setAttribute('aria-label', this.resolveLabel('clearSearch'));
+            // Use mousedown+preventDefault so the tap doesn't blur/steal focus from
+            // the search field, then run the clear on click and restore focus.
+            clear.addEventListener('mousedown', (e) => e.preventDefault());
+            clear.addEventListener('click', () => this.clearFullscreenSearch());
+            searchWrapper.appendChild(clear);
+            this.fullscreenSearchClear = clear;
 
             header.appendChild(searchWrapper);
         }
@@ -4912,7 +4884,7 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Show the fullscreen search's inline clear (✕) only while the field has text.
-     * No-op when the button isn't built (floating panel, readonly/hidden search).
+     * No-op when the button isn't built (floating panel, search disabled).
      */
     private updateFullscreenSearchClear(): void {
         if (!this.fullscreenSearchClear) return;
@@ -5659,13 +5631,6 @@ export class MultiSelectEngine<T = any> {
         // switch), search mode, or the option list emptying/filling for cascades — are reflected.
         if (!this.#isOpen) {
             this.input.placeholder = this.getPlaceholderText();
-        }
-
-        // Search input display mode
-        if ('searchInputMode' in partial) {
-            // Same rule as applyInteractionState(): a readonly control stays read-only.
-            this.input.readOnly = this.isInputReadOnly();
-            this.input.classList.toggle('ms__input--hidden', this.options.searchInputMode === 'hidden');
         }
 
         // An in-place options swap keeps the dropdown open — preserve the scroll offset so the

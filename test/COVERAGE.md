@@ -50,8 +50,6 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | Default filter mode hides non-matching options                | ✓      | `search.spec.ts`             | `search.html`             |
 | `search-mode="navigate"` keeps options visible, jumps to match | ✓     | `search.spec.ts`             | `search.html`             |
-| `search-input-mode="readonly"` disables typing                | ✓      | `search.spec.ts`             | `search.html`             |
-| `search-input-mode="hidden"` hides input entirely             | ✓      | `search.spec.ts`             | `search.html`             |
 | `enable-search="false"` disables search subsystem             | ✓      | `search.spec.ts`             | `search.html`             |
 | Empty result shows `labels.noResults` / no options `labels.noData` | ✓      | `search.spec.ts`             | `search.html`             |
 | `min-search-length` defers search until threshold             | ✓      | `search.spec.ts`             | `search.html`             |

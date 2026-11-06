@@ -476,51 +476,70 @@ test.describe('fullscreen close — corner hit target', () => {
     });
 });
 
-test.describe('search-input-mode', () => {
-    test('readonly prevents typing', async ({ page }) => {
-        const p = picker(page, 'readonly');
-        await openDropdown(p);
-
-        await expect(input(p)).toHaveAttribute('readonly', '');
-    });
-
-    test('hidden: the field is invisible and takes no typing', async ({ page }) => {
-        const p = picker(page, 'hidden-input');
-        await expect(input(p)).toHaveCSS('opacity', '0');
-        await expect(input(p)).toHaveAttribute('readonly', '');
-    });
-
-    test('hidden: a click on the field opens the dropdown (not only the chevron)', async ({ page }) => {
-        const p = picker(page, 'hidden-input');
-        await p.locator('.ms__input-wrapper').click({ position: { x: 20, y: 10 } });
-        await expect(p.locator('.ms__dropdown')).toBeVisible();
-        // a second click on the field closes it again
-        await p.locator('.ms__input-wrapper').click({ position: { x: 20, y: 10 } });
-        await expect(p.locator('.ms__dropdown')).toBeHidden();
-    });
-
-    test('hidden: keyboard focus, arrows and Enter still work; typing does not filter', async ({ page }) => {
-        const p = picker(page, 'hidden-input');
-        await input(p).focus();
-        await expect(input(p)).toBeFocused();
-        await page.keyboard.press('ArrowDown');
-        await expect(p.locator('.ms__dropdown')).toBeVisible();
-        await page.keyboard.type('zzz');
-        await expect(visibleOptions(p)).toHaveCount(5);
-        await page.keyboard.press('ArrowDown');
-        await page.keyboard.press('Enter');
-        await expect.poll(() => p.evaluate((el: any) => el.selectedOptions.length)).toBe(1);
-    });
-});
-
 test.describe('enable-search="false"', () => {
-    test('typing into the input does not filter options', async ({ page }) => {
+    test('the input is read-only: typing neither filters nor edits it', async ({ page }) => {
         const p = picker(page, 'no-search');
+        await expect(input(p)).toHaveAttribute('readonly', '');
         await openDropdown(p);
-
-        // Try to type — the search subsystem is disabled, so filtering is a no-op.
-        await input(p).fill('apple');
+        await page.keyboard.type('apple');
         await expect(visibleOptions(p)).toHaveCount(5);
+        await expect(input(p)).toHaveValue('');
+    });
+
+    test('single-select: one Escape closes (keeps the label); typing while closed does not overwrite it', async ({ page }) => {
+        const p = await makePicker(page, { 'enable-search': 'false', multiple: 'false' },
+            [{ value: 'a', label: 'Apple' }, { value: 'b', label: 'Banana' }]);
+        await p.evaluate(async (el: any) => { await el.whenReady(); el.setSelected(['a']); });
+        await expect(input(p)).toHaveValue('Apple');
+        await input(p).focus();
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(p.locator('.ms__dropdown')).toBeHidden();
+        await expect(input(p)).toHaveValue('Apple');
+        await page.keyboard.type('zz');
+        await page.keyboard.press('Backspace');
+        await expect(input(p)).toHaveValue('Apple');
+    });
+
+    test('single-select: copy shortcuts are not swallowed', async ({ page }) => {
+        const p = await makePicker(page, { 'enable-search': 'false', multiple: 'false' },
+            [{ value: 'a', label: 'Apple' }]);
+        await p.evaluate(async (el: any) => { await el.whenReady(); el.setSelected(['a']); });
+        await openDropdown(p);
+        const prevented = await input(p).evaluate((inp: HTMLInputElement) => {
+            inp.select();
+            const evs = ['a', 'c'].map((key) => new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true, cancelable: true }));
+            evs.forEach((ev) => inp.dispatchEvent(ev));
+            return evs.map((ev) => ev.defaultPrevented);
+        });
+        expect(prevented).toEqual([false, false]);
+    });
+
+    test('fullscreen: no search field, the close (✕) stays at the trailing edge', async ({ page }) => {
+        const p = await makePicker(page, { 'enable-search': 'false', presentation: 'fullscreen' },
+            [{ value: 'a', label: 'Apple' }]);
+        await openDropdown(p);
+        const header = p.locator('.ms__fullscreen-header');
+        await expect(header).toBeVisible();
+        await expect(p.locator('.ms__fullscreen-search')).toHaveCount(0);
+        const [h, c] = await Promise.all([header.boundingBox(), p.locator('.ms__fullscreen-close').boundingBox()]);
+        // trailing edge: the ✕ sits in the end half, not collapsed to the start
+        expect(c!.x).toBeGreaterThan(h!.x + h!.width / 2);
+        // vertically centred in the bar (no search field to stretch the row)
+        expect(Math.abs((c!.y + c!.height / 2) - (h!.y + h!.height / 2))).toBeLessThan(1.5);
+    });
+
+    test('arrows, Home/End and Enter still pick', async ({ page }) => {
+        const p = picker(page, 'no-search');
+        await input(p).focus();
+        await page.keyboard.press('ArrowDown');
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        await page.keyboard.press('End');
+        await page.keyboard.press('Enter');
+        await expect.poll(() => p.evaluate((el: any) => el.selectedOptions.map((o: any) => o.value))).toHaveLength(1);
+        await page.keyboard.press('Home');
+        await page.keyboard.press('Enter');
+        await expect.poll(() => p.evaluate((el: any) => el.selectedOptions.length)).toBe(2);
     });
 });
 

@@ -26,11 +26,6 @@ export type { SearchBehavior, SearchMatch, SearchTermContext, PreparedSearchTerm
 export type BadgesPosition = 'top' | 'bottom' | 'left' | 'right';
 
 /**
- * Search input display mode
- */
-export type SearchInputMode = 'normal' | 'readonly' | 'hidden';
-
-/**
  * Value format for serialization (forms and callbacks)
  */
 export type ValueFormat = 'text' | 'json' | 'array';
@@ -99,7 +94,7 @@ export interface MessageOptions {
  * Named placeholders are interpolated where noted (`{count}`, `{item}`, `{value}`, …).
  */
 export interface MultiSelectLabels {
-    /** Closed-input placeholder when search is not usable (picker mode). Default: `Pick an option…`. */
+    /** Closed-input placeholder when search is disabled (`enable-search="false"`, picker mode). Default: `Pick an option…`. */
     selectPlaceholder?: string;
     /** Search input placeholder. Default: `Search…`. Set it to pin one text in every search mode. */
     searchPlaceholder?: string;
@@ -946,14 +941,6 @@ export interface MultiSelectConfig<T = any> {
     /** ARIA labels / short UI strings for i18n (see {@link MultiSelectLabels}). Partial; unset
      *  keys fall back to their English defaults. */
     labels?: MultiSelectLabels;
-    /**
-     * How the search input behaves. Default: `normal`.
-     *
-     * - `normal` — editable search box
-     * - `readonly` — visible but not editable (acts as a picker; uses `labels.selectPlaceholder`)
-     * - `hidden` — no search box at all
-     */
-    searchInputMode?: SearchInputMode;
     /**
      * Search behavior mode. Default: `filter`.
      *

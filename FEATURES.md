@@ -75,7 +75,6 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Enable / disable search | attr/prop | `enable-search` / `isSearchEnabled` | `bool(true)` | Turns input into a plain picker when off | | |
-| Search input mode | attr/prop | `search-input-mode` / `searchInputMode` | `'normal'` | `normal` \| `readonly` \| `hidden` | | |
 | Search mode | attr/prop | `search-mode` / `searchMode` | `'filter'` | `filter` (hide non-matches) \| `navigate` (jump) | | |
 | Search behavior | attr/prop | `search-behavior` / `searchBehavior` | `'normalized'` | `normalized` (ignore case + diacritics) \| `case-insensitive` \| `exact`; internal search only | | |
 | Search match | attr/prop | `search-match` / `searchMatch` | `'contains'` | `contains` \| `equals` \| `starts-with` \| `word-starts-with` \| `ends-with` \| `word-ends-with` \| `regex` (raw value, no normalization) | | |

@@ -72,7 +72,6 @@ export type {
   ActionsLayout,
   ActionsPosition,
   ActionsAlign,
-  SearchInputMode,
   SearchMode,
   SearchBehavior,
   TabBehavior,

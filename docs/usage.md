@@ -183,7 +183,6 @@ multiselect.setSelected(['js', 'ts']);
 | `actions-align` | `'stretch' \| 'left' \| 'right' \| 'center' \| 'space-between'` | `'stretch'` | Horizontal arrangement of buttons within a row (`stretch` = full-width) |
 | `lock-placement` | `boolean` | `true` | Lock dropdown placement after first open to prevent flipping |
 | `enable-search` | `boolean` | `true` | Enable/disable search functionality |
-| `search-input-mode` | `'normal' \| 'readonly' \| 'hidden'` | `'normal'` | Search input display mode |
 | `search-mode` | `'filter' \| 'navigate'` | `'filter'` | Search behavior: `filter` hides non-matches, `navigate` jumps to matches |
 | `search-behavior` | `'normalized' \| 'case-insensitive' \| 'exact'` | `'normalized'` | How internal search normalizes text. `normalized` ignores case and diacritics (`ces` finds `Český`), `case-insensitive` ignores case only, `exact` matches both. Live: changing it re-runs the current search. Not applied to `searchCallback` or `regex` matching. See [How search works](#how-search-works) |
 | `search-match` | `'contains' \| 'equals' \| 'starts-with' \| 'word-starts-with' \| 'ends-with' \| 'word-ends-with' \| 'regex'` | `'contains'` | Where internal search looks for the term: anywhere, the whole value, at the start/end of the whole value, at the start/end of any word, or as a regular expression. Live. See [How search works](#how-search-works) |

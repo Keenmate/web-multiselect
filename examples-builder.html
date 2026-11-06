@@ -242,7 +242,6 @@
             'max-visible-badge-count': "Max badges shown before the rest go behind +N more (partial mode).",
             'show-badge-full-title': "Use the full-title text on badges instead of the short label.",
             'search-mode': "filter hides non-matches; navigate keeps all options and jumps to matches.",
-            'search-input-mode': "Search field: editable (normal), read-only, or hidden.",
             'min-search-length': "Minimum characters typed before searching / async lookup fires.",
             'search-debounce': "Delay in ms before the async searchCallback runs after typing stops (local filtering is instant).",
             'show-search-mode-toggle': "Show a toggle to switch filter / navigate at runtime.",
@@ -315,7 +314,6 @@
             ]},
             { name: 'Search', props: [
                 { attr: 'search-mode', type: 'enum', opts: ['filter','navigate'], def: 'filter' },
-                { attr: 'search-input-mode', type: 'enum', opts: ['normal','readonly','hidden'], def: 'normal' },
                 { attr: 'min-search-length', type: 'int', def: '0' },
                 { attr: 'search-debounce', type: 'int', def: '0' },
                 { attr: 'show-search-mode-toggle', type: 'bool', def: false },

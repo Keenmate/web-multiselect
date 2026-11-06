@@ -11,8 +11,8 @@
             <h2>BU01 · Selection &amp; Input Mode</h2>
             <p>
                 One picker, many behaviors. Flip between multi- and single-select, add the inline
-                clear (✕) and the count badge, change the search-input mode (a <code>readonly</code>
-                or <code>hidden</code> search gives keyboard-only navigation), toggle
+                clear (✕) and the count badge, turn search off (<code>enable-search="false"</code>
+                makes it a plain picker with keyboard-only navigation), toggle
                 <code>close-on-select</code>, and switch text direction (LTR / RTL). PHP is a disabled
                 row: <code>disabled: true</code> on the option object (the default
                 <code>is-disabled-member</code>) keeps it visible but not pickable. BU02 and BU03 have
@@ -24,12 +24,7 @@
                 <label><input type="checkbox" id="sel-clear"> <code>show-clear</code> (✕)</label>
                 <label><input type="checkbox" id="sel-counter"> <code>show-counter</code></label>
                 <label><input type="checkbox" id="sel-close"> <code>close-on-select</code></label>
-            </div>
-            <div class="controls">
-                <span><code>search-input-mode</code>:</span>
-                <label><input type="radio" name="sel-sim" value="normal" checked> normal</label>
-                <label><input type="radio" name="sel-sim" value="readonly"> readonly</label>
-                <label><input type="radio" name="sel-sim" value="hidden"> hidden</label>
+                <label><input type="checkbox" id="sel-search" checked> <code>enable-search</code></label>
             </div>
             <div class="controls">
                 <span><code>dir</code>:</span>
@@ -695,8 +690,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 boolAttr(exSel, 'show-counter', e.target.checked));
             document.getElementById('sel-close').addEventListener('change', (e) =>
                 e.target.checked ? exSel.setAttribute('close-on-select', 'true') : exSel.removeAttribute('close-on-select'));
-            document.querySelectorAll('input[name="sel-sim"]').forEach((r) =>
-                r.addEventListener('change', (e) => { if (e.target.checked) exSel.setAttribute('search-input-mode', e.target.value); }));
+            document.getElementById('sel-search').addEventListener('change', (e) =>
+                e.target.checked ? exSel.removeAttribute('enable-search') : exSel.setAttribute('enable-search', 'false'));
             document.querySelectorAll('input[name="sel-dir"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) exSel.setAttribute('dir', e.target.value); }));
 

@@ -229,6 +229,12 @@
   align-content: flex-start;
 }
 
+/* No search field (enable-search="false"): the close (✕) is the row's only item and shorter
+   than the bar, so a top-anchored row left it above centre — center it like the popover title row. */
+.ms__fullscreen-header--no-search {
+  align-content: center;
+}
+
 .ms__fullscreen-header > .ms__fullscreen-search-wrapper {
   min-height: var(--ms-fullscreen-header-min-height);
 }
@@ -459,6 +465,7 @@
   justify-content: center;
   width: var(--ms-fullscreen-close-size);
   height: var(--ms-fullscreen-close-size);
+  margin-inline-start: auto;          /* trailing edge even with no search field beside it (search off) */
   margin-inline-end: calc(-1 * var(--ms-fullscreen-close-edge-nudge));  /* slide toward the edge */
   padding: 0;
   color: var(--ms-fullscreen-close-color);

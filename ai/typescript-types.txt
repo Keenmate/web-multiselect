@@ -197,7 +197,6 @@ type MessageType = 'info' | 'warning' | 'error' | 'success';
 type MultiSelectAction = 'select-all' | 'clear-selection';
 type BadgesPosition = 'top' | 'bottom' | 'left' | 'right';
 type BadgesThresholdMode = 'count' | 'partial';
-type SearchInputMode = 'normal' | 'readonly' | 'hidden';
 type CheckboxAlign = 'top' | 'center' | 'bottom';
 type ActionsLayout = 'nowrap' | 'wrap';
 

@@ -22,10 +22,6 @@ test('enable-search="false" shows the default select placeholder', async ({ page
     await expect(picker(page, 'ph-nosearch').locator('.ms__input')).toHaveAttribute('placeholder', 'Pick an option…');
 });
 
-test('search-input-mode="readonly" shows the select placeholder', async ({ page }) => {
-    await expect(picker(page, 'ph-readonly').locator('.ms__input')).toHaveAttribute('placeholder', 'Pick an option…');
-});
-
 test('custom labels.selectPlaceholder is honoured when search is disabled', async ({ page }) => {
     await expect(picker(page, 'ph-custom-select').locator('.ms__input')).toHaveAttribute('placeholder', 'Choose a fruit');
 });
