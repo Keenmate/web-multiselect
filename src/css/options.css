@@ -265,11 +265,11 @@
 
 /* Checkbox alignment variants (center is default, defined in variables.css) */
 .ms__option[data-checkbox-align="top"] {
-  --ms-checkbox-align: flex-start;
-  /* Nudge the top-aligned checkbox down to sit on the label's first text line
-     (line-height leaves the glyph inset from the line-box top). Only meaningful
-     for top alignment — center/bottom keep the 0 default so they stay centered. */
-  --ms-checkbox-margin-top: calc(0.2 * var(--ms-rem));
+  /* "Top" = on the FIRST TEXT LINE, not the row's top edge: the checkbox (no text of its own,
+     so its baseline is its bottom edge) sits on the first line's baseline. A fixed top nudge
+     only matched a plain label; a custom-rendered first row (bigger title, icon, pill) is
+     taller and left the checkbox above it. */
+  --ms-checkbox-align: first baseline;
 }
 
 .ms__option[data-checkbox-align="bottom"] {

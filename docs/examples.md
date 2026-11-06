@@ -932,7 +932,7 @@ Control checkbox appearance and alignment with CSS variables and attributes:
 
   /* Fine-tune checkbox positioning */
   web-multiselect {
-    --ms-checkbox-margin-top: 0.5rem;    /* Vertical alignment (default: 0; 0.2 × --ms-rem when top-aligned) */
+    --ms-checkbox-margin-top: 0.5rem;    /* Top spacing (default: 0) */
     --ms-checkbox-margin-right: 0;       /* Right spacing (default: 0) */
     --ms-checkbox-margin-bottom: 0;      /* Bottom spacing (default: 0) */
     --ms-checkbox-margin-left: 0;        /* Left spacing (default: 0) */
@@ -978,7 +978,7 @@ multiselect.renderOptionContentCallback = ({ option }) => {
 
 - `--ms-checkbox-size` — checkbox width/height (default: `16px`).
 - `--ms-checkbox-scale` — scale multiplier (default: `1`).
-- `--ms-checkbox-margin-top` — top margin for vertical alignment (default: `0`; `calc(0.2 * var(--ms-rem))` when `checkbox-align="top"`).
+- `--ms-checkbox-margin-top` — top margin (default: `0`). `checkbox-align="top"` puts the checkbox on the label's first text line (baseline), so it needs no nudge.
 - `--ms-checkbox-margin-right` — right margin (default: `0`).
 - `--ms-checkbox-margin-bottom` — bottom margin (default: `0`).
 - `--ms-checkbox-margin-left` — left margin (default: `0`).

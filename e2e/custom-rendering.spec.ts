@@ -83,3 +83,30 @@ test('renderSelectedItemContentCallback receives a popover context (isInPopover=
     await expect(item).toHaveText('Apple');
     await expect(item).toHaveAttribute('data-pop', 'true');
 });
+
+test('checkbox-align="top" puts the checkbox on the first text line of a tall custom row', async ({ page }) => {
+    await page.evaluate(() => {
+        const el = document.createElement('web-multiselect') as any;
+        el.id = 'cb-top';
+        el.setAttribute('value-member', 'value');
+        el.setAttribute('display-value-member', 'label');
+        el.setAttribute('checkbox-align', 'top');
+        // first row taller than a plain label: big title + a tall pill, then a second line
+        el.renderOptionContentCallback = ({ option }: any) =>
+            `<div><div style="display:flex;align-items:center;gap:8px"><strong class="js-title" style="font-size:20px">${option.label}</strong>`
+            + `<span style="display:inline-block;padding:8px 10px;font-size:12px">pill</span></div><div>second line</div></div>`;
+        document.body.prepend(el);
+        el.options = [{ value: 'a', label: 'Email Notifications' }];
+    });
+    const p = picker(page, 'cb-top');
+    await openDropdown(p);
+    const offset = await p.evaluate((el: any) => {
+        const opt = el.shadowRoot.querySelector('.ms__option');
+        const cb = opt.querySelector('.ms__checkbox').getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(opt.querySelector('.js-title'));
+        const t = range.getClientRects()[0];
+        return (cb.top + cb.height / 2) - (t.top + t.height / 2);
+    });
+    expect(Math.abs(offset)).toBeLessThan(3);
+});

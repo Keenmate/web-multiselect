@@ -159,7 +159,7 @@ Alignment: use the checkbox-align attribute (top | center (default) | bottom):
 <web-multiselect checkbox-align="top"></web-multiselect>
 
 The attribute marks each row with data-checkbox-align, and options.css overrides
---ms-checkbox-align (and, for top, --ms-checkbox-margin-top) per row - so prefer the
+--ms-checkbox-align per row (top = first baseline: the checkbox sits on the first text line) - so prefer the
 attribute over setting --ms-checkbox-align on the host.
 
 Example:
