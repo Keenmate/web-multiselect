@@ -124,6 +124,7 @@ export {
   setLogLevel,
   enableLogging,
   disableLogging,
+  resetLogging,
   setCategoryLevel,
   LOGGING_CATEGORIES,
   initLogger,

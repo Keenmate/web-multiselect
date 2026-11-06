@@ -169,6 +169,21 @@ changes, callbacks also on every viewport resize; overrides never reflect to att
 pre-rc15 device-keyed shape (`{ mobile: … }`) warns and is ignored. Typed as `MultiSelectResponsiveMap` /
 `MultiSelectResponsiveCallback`. Demo: `examples-responsive.html`, `examples-action-buttons.html`.
 
+## Logging
+
+Errors and warnings print out of the box (the default level is `warn`); info / debug / trace are
+opt-in. Levels coalesce, closest first:
+
+| Scope | API |
+|---|---|
+| Element | `el.enableLogging(level?)` (default `debug`; `'error'` makes it quieter than its type), `el.disableLogging()` silences this element, `el.resetLogging()` — it follows its type / the page again |
+| Type (per category `INIT` / `DATA` / `UI` / `INTERACTION`) | `window.components['web-multiselect'].logging` — `enableLogging`, `disableLogging`, `setLogLevel`, `setCategoryLevel(cat, level \| null)`, `resetLogging`; the same functions are exported from the package |
+| Page | `window.components.logging` — every component on the page |
+| Default | `warn` |
+
+A page call never overwrites a type level, so the order of calls doesn't matter. Instance
+`debug` / `trace` lines print through `console.log`. See `examples-logging.html`.
+
 ## Editor IntelliSense
 
 The package ships editor metadata so you get autocomplete and hover docs for the

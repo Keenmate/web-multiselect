@@ -108,6 +108,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `getCustomStylesCallback` variable lint (the element's own `UI` logger) used `console.warn`
   directly, so `disableLogging()` couldn't silence them. They now carry the logger prefix and the
   instance id instead of `[web-multiselect]` / `[@keenmate/web-multiselect]`.
+- **New `resetLogging()` export** (next to `enableLogging` / `disableLogging`): clears the type's
+  own levels so it follows the page level (`window.components.logging`), else `warn`.
+  `setCategoryLevel(category, null)` clears one category. Both forward to core's bundle.
+- **Logging docs follow core rc18's model:** the README (new "Logging" section),
+  `ai/logging-debugging.txt` and the logging example page said "silence everything (production
+  default)" and described a per-instance override on top of the type. The default is `warn`, and
+  levels coalesce closest first: element (`el.enableLogging(level?)` / `el.disableLogging()` /
+  `el.resetLogging()`) → type (`window.components['web-multiselect'].logging`, per category) →
+  page (`window.components.logging`) → `warn`; a page call never overwrites a type level. The
+  example page starts at the default instead of silencing the type, and has a Reset button.
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when

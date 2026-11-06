@@ -91,6 +91,7 @@
             <div class="controls">
                 <button onclick="reg().logging.enableLogging()">Enable all (debug)</button>
                 <button class="secondary" onclick="reg().logging.disableLogging()">Disable all</button>
+                <button class="secondary" onclick="reg().logging.resetLogging()">Reset (follow the page, else warn)</button>
                 <button class="btn-outline" onclick="reg().logging.setLogLevel('info')">All → info</button>
             </div>
             <div class="controls">
@@ -158,14 +159,24 @@ ms.logging.getCategories();         // ["INIT", "DATA", "UI", "INTERACTION"]
 ms.logging.enableLogging();         // all categories → debug
 ms.logging.setLogLevel('info');     // all → info
 ms.logging.setCategoryLevel('DATA', 'debug');
-ms.logging.disableLogging();        // silence everything (production default)
+ms.logging.setCategoryLevel('DATA', null); // clear one category again
+ms.logging.disableLogging();        // this type → silent (beats the page level)
+ms.logging.resetLogging();          // no type level: follow the page level
 
 // Fan out across instances
 for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
 
-// Advanced: BlissElement also supports a per-instance override —
-// el.enableLogging('debug') makes ONE element verbose for a devtools overlay
-// (targets el.log; the shared category loggers above stay unchanged).
+// Levels coalesce, closest first — nothing is set by default:
+//   element  el.enableLogging(level?)   ONE element (debug by default; 'error' = quieter)
+//            el.disableLogging()        silences this element
+//            el.resetLogging()          it follows its type / the page again
+//   type     ms.logging.*               per category (above)
+//   page     window.components.logging  every component on the page
+//   default  'warn'                     errors and warnings only
+// A page call never overwrites a type level, so call order doesn't matter.
+// Instance debug / trace lines print through console.log (Chrome hides console.debug).
+window.components.logging.enableLogging('info'); // page level
+el.enableLogging('debug');                       // one verbose element
             </div>
         </div>
 
@@ -254,10 +265,11 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
             const r = origReg(); if (!r?.logging) return;
             const l = r.logging;
             const cats = l.getCategories();
-            const _enable = l.enableLogging.bind(l), _disable = l.disableLogging.bind(l), _set = l.setLogLevel.bind(l);
+            const _enable = l.enableLogging.bind(l), _disable = l.disableLogging.bind(l), _set = l.setLogLevel.bind(l), _reset = l.resetLogging.bind(l);
             l.enableLogging = (lvl = 'debug') => { _enable(lvl); cats.forEach((c) => (window.__catLevel[c] = lvl)); refreshRegistry(); };
             l.disableLogging = () => { _disable(); cats.forEach((c) => (window.__catLevel[c] = 'silent')); refreshRegistry(); };
             l.setLogLevel = (lvl) => { _set(lvl); cats.forEach((c) => (window.__catLevel[c] = lvl)); refreshRegistry(); };
+            l.resetLogging = () => { _reset(); window.__catLevel = {}; refreshRegistry(); };
         };
 
         // ── 3. live instances ────────────────────────────────────────────────
@@ -311,8 +323,8 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
                 return colors.filter((c) => c.name.toLowerCase().includes(q) || c.hex.includes(q));
             };
 
-            // Start silent (production default), then paint the panel.
-            reg().logging.disableLogging();
+            // Start at the default (no type level → the page level, else warn), then paint the panel.
+            reg().logging.resetLogging();
             refreshRegistry();
 
             console.log('%c🌐 window.components demo ready', 'color:#3b82f6;font-size:1.3rem;font-weight:bold;');

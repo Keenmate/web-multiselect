@@ -28,6 +28,29 @@ disableLogging();
 Or:
 window.components['web-multiselect'].logging.disableLogging();
 
+Clear the type's own levels again (follow the page level, else warn):
+
+import { resetLogging, setCategoryLevel } from '@keenmate/web-multiselect';
+resetLogging();                      // every category
+setCategoryLevel('DATA', null);      // one category
+
+HOW LEVELS RESOLVE (closest first)
+----------------------------------
+Nothing is set by default; the built-in level is 'warn' (errors + warnings print).
+
+1. Element  el.enableLogging(level?)   one element (default 'debug'; 'error' makes it quieter
+                                       than its type)
+            el.disableLogging()        silences this element
+            el.resetLogging()          the element follows its type / the page again
+2. Type     window.components['web-multiselect'].logging   per category
+            (enableLogging / disableLogging / setLogLevel / setCategoryLevel / resetLogging;
+            the package exports call the same bundle)
+3. Page     window.components.logging  every component on the page (+ core's own CORE bundle)
+4. Default  'warn'
+
+A page call never overwrites a type level, so the order of calls doesn't matter.
+Instance debug / trace lines print through console.log (Chrome hides console.debug).
+
 LOG CATEGORIES
 --------------
 Four logging categories:
@@ -175,18 +198,14 @@ Logs show:
 
 PRODUCTION BUILDS
 -----------------
-Disable logging in production:
+The default level is already 'warn': info / debug / trace are off unless you enable them.
+To silence the warnings as well (e.g. a kiosk build):
 
 // main.js
-if (import.meta.env.PROD) {
-  import { disableLogging } from '@keenmate/web-multiselect';
-  disableLogging();
-}
-
-Or check NODE_ENV:
-if (process.env.NODE_ENV === 'production') {
-  disableLogging();
-}
+import { disableLogging } from '@keenmate/web-multiselect';
+if (import.meta.env.PROD) disableLogging();       // this component type
+// or every component on the page:
+// window.components.logging.disableLogging();
 
 PERFORMANCE IMPACT
 ------------------
@@ -204,8 +223,9 @@ CUSTOM LOGGING
 --------------
 Log from your code:
 
-// Get logger instance (if exposed)
-const logger = window.components['web-multiselect'].logging.getLogger();
+// The category loggers are exported (initLogger, dataLogger, uiLogger, interactionLogger)
+import { dataLogger } from '@keenmate/web-multiselect';
+dataLogger.info('[APP] reloading options');
 
 // Or just use console
 console.log('[APP] Custom log');
@@ -415,7 +435,7 @@ When debugging issues:
 BEST PRACTICES
 --------------
 ✅ Enable logging in development
-✅ Disable logging in production
+✅ Keep the default 'warn' in production (warnings flag real misconfiguration)
 ✅ Use category-specific levels
 ✅ Log important state changes
 ✅ Handle errors gracefully
@@ -423,7 +443,7 @@ BEST PRACTICES
 ✅ Profile performance issues
 ✅ Test with various data sizes
 
-❌ Don't leave logging enabled in production
+❌ Don't leave debug levels enabled in production
 ❌ Don't log sensitive data
 ❌ Don't spam console
 ❌ Don't ignore error logs

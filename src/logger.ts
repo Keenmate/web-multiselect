@@ -18,10 +18,12 @@
  * Enable logging from the console (or the `window.components['web-multiselect'].logging` API):
  *
  * ```js
- * import { enableLogging, setLogLevel, setCategoryLevel } from '@keenmate/web-multiselect';
+ * import { enableLogging, setLogLevel, setCategoryLevel, resetLogging } from '@keenmate/web-multiselect';
  * enableLogging();                          // all categories → debug
  * setLogLevel('info');                      // all categories → info
  * setCategoryLevel('UI', 'debug');          // one category (bare or 'MULTISELECT:UI')
+ * setCategoryLevel('UI', null);             // clear it again
+ * resetLogging();                           // clear every category: follow the page level
  * ```
  */
 import { createLoggers, type Logger, type LogLevelDesc } from '@keenmate/web-components-core';
@@ -61,6 +63,14 @@ export function disableLogging(): void {
   logging.disableLogging();
 }
 
+/**
+ * Clear web-multiselect's own levels (every category, persisted copies too): it follows the
+ * page-wide level (`window.components.logging`) again, else the built-in `warn`.
+ */
+export function resetLogging(): void {
+  logging.resetLogging();
+}
+
 /** Set the same level on every category. */
 export function setLogLevel(level: LogLevelDesc): void {
   logging.setLogLevel(level);
@@ -69,9 +79,10 @@ export function setLogLevel(level: LogLevelDesc): void {
 /**
  * Set the level of one category. Accepts the full prefixed name
  * (`MULTISELECT:UI`) or the bare suffix (`UI`) — both normalize to the category
- * key the core bundle expects.
+ * key the core bundle expects. `null` clears the category's own level (it follows
+ * the page-wide level again).
  */
-export function setCategoryLevel(category: string, level: LogLevelDesc): void {
+export function setCategoryLevel(category: string, level: LogLevelDesc | null): void {
   const bare = (category.includes(':') ? category.split(':').pop()! : category) as Category;
   logging.setCategoryLevel(bare, level);
 }
