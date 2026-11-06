@@ -498,13 +498,14 @@ The following callbacks allow **raw HTML injection** and are intentionally **NOT
 | `getSubtitleCallback` | Option subtitles (innerHTML) | HTML injection |
 | `getDisplayValueCallback` | Option titles, badges (innerHTML) | HTML injection |
 | `getBadgeDisplayCallback` | Badge text (innerHTML) | HTML injection |
+| `getFullTitleCallback` | Badge text with `isBadgeFullTitleShown` (innerHTML) | HTML injection |
 | `getCounterCallback` | Count badges (innerHTML) | HTML injection |
 | `getBadgeTooltipCallback` | Tooltips (innerHTML if HTMLElement) | HTML injection |
 | `getCustomStylesCallback` | Style tag (textContent) | CSS injection |
 
 **Safe callbacks** (output is escaped or used as data):
 
-- `getValueCallback`, `getSearchValueCallback`, `getGroupCallback`, `getIsDisabledCallback`
+- `getValueCallback` (option values and tree paths are escaped into attributes), `getSearchValueCallback`, `getGroupCallback`, `getIsDisabledCallback`
 - `getBadgeClassCallback`, `getSelectedItemClassCallback` (CSS class names only)
 - `beforeSearchCallback`, `searchCallback`, `beforeAddCallback`
 - `onSelect`, `onDeselect`, `onChange`

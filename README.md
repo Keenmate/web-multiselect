@@ -206,9 +206,16 @@ markup. Sanitize any untrusted text before passing it in:
 | `labels.addNew`, `labels.addNewPending` | "Add new" prompt (innerHTML; the `{value}` typed text is escaped) |
 | `labels.selectedCount`, `labels.moreCount` | Counter badge text (innerHTML) |
 | `renderOptionContentCallback`, `renderGroupLabelContentCallback`, `renderBadgeContentCallback`, `renderBadgeCallback`, `renderSelectedItemContentCallback` (string return) | Option rows, group headers, badges, selected panels (innerHTML) |
+| Display value (`displayValueMember` / `getDisplayValueCallback`) | Option title and badge text (innerHTML; search highlighting marks text runs only) |
+| `getBadgeDisplayCallback` | Badge text (innerHTML) |
+| Full title (`fullTitleMember` / `getFullTitleCallback`) | Badge text when `isBadgeFullTitleShown` (innerHTML) |
+| Subtitle (`subtitleMember` / `getSubtitleCallback`) | Option subtitle (innerHTML) |
+| Icon (`iconMember` / `getIconCallback`) | Option icon (innerHTML) |
 
 All other labels (ARIA labels, tooltips, placeholders, popover title, action-button texts) are
-plain text, as are `showMessage()` strings and `renderSelectedContentCallback` (the closed input's value); option data (values, display values) is escaped.
+plain text, as are `showMessage()` strings and `renderSelectedContentCallback` (the closed input's value).
+Option values and tree paths are escaped (they only ever land in attributes); the display value,
+full title, subtitle and icon are HTML — sanitize untrusted data first.
 
 ## Browser support
 

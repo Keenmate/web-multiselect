@@ -98,6 +98,17 @@
         <web-multiselect id="order-partial-member" badges-display-mode="partial" max-visible-badge-count="1" selected-order="member" selected-order-member="price" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <!-- escaping fixtures: values with " and < (escaped in data-value), display values with HTML (kept raw) -->
+    <div class="fixture">
+        <div class="fixture-label">escaping — quote / angle bracket in values, HTML display value</div>
+        <web-multiselect id="escape-values" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">escaping — renderBadgeCallback wrapper</div>
+        <web-multiselect id="escape-custom-badge" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -133,6 +144,17 @@
             ]) {
                 document.getElementById(id).options = priced;
             }
+            const tricky = [
+                { value: 'say "hi" <now>', label: 'Quoted' },
+                { value: "it's & more",    label: 'Apostrophe' },
+                { value: 'bold',           label: '<b>Bold</b>' }
+            ];
+            document.getElementById('escape-values').options = tricky;
+            const customBadge = document.getElementById('escape-custom-badge');
+            customBadge.options = tricky;
+            customBadge.renderBadgeCallback = ({ option }) =>
+                `<span class="custom-pill">${option.label}<button type="button" data-ms-action="remove">x</button></span>`;
+
             // custom = price DESC
             document.getElementById('order-custom').selectedOrderCompareCallback =
                 ({ a, b }) => b.price - a.price;

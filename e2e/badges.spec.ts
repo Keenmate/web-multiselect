@@ -328,3 +328,52 @@ test.describe('virtual popover rows match the badge height', () => {
         await expect.poll(() => rowHeight(p)).toBe(27);
     });
 });
+
+// Option values are attribute data (escaped into `data-value`); display values are trusted HTML.
+test.describe('escaping', () => {
+    const QUOTED = 'say "hi" <now>';
+    const APOS = "it's & more";
+
+    test('a value with " / < / \' / & selects, renders a badge and is removed by its X', async ({ page }) => {
+        const p = picker(page, 'escape-values');
+        await openDropdown(p);
+        await p.locator('.ms__option', { hasText: 'Quoted' }).click();
+        await p.locator('.ms__option', { hasText: 'Apostrophe' }).click();
+        // dataset reads back the original string
+        expect(await p.locator('.ms__option', { hasText: 'Quoted' }).getAttribute('data-value')).toBe(QUOTED);
+        await closeDropdown(page, p);
+
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([QUOTED, APOS]);
+        const badges = p.locator('.ms__badges > .ms__badge:not([data-ms-action])');
+        await expect(badges).toHaveCount(2);
+        await expect(badges.first()).toContainText('Quoted');
+
+        await badges.first().locator('.ms__badge-remove').click();
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([APOS]);
+        await expect(badges).toHaveCount(1);
+    });
+
+    test('renderBadgeCallback wrapper carries the escaped value; its remove action works', async ({ page }) => {
+        const p = picker(page, 'escape-custom-badge');
+        await openDropdown(p);
+        await p.locator('.ms__option', { hasText: 'Quoted' }).click();
+        await closeDropdown(page, p);
+
+        const badge = p.locator('.ms__badge--custom');
+        await expect(badge).toHaveCount(1);
+        expect(await badge.getAttribute('data-value')).toBe(QUOTED);
+        await badge.locator('[data-ms-action="remove"]').click();
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
+        await expect(badge).toHaveCount(0);
+    });
+
+    test('an HTML display value renders as HTML in the option and the badge', async ({ page }) => {
+        const p = picker(page, 'escape-values');
+        await openDropdown(p);
+        const option = p.locator('.ms__option[data-value="bold"]');
+        await expect(option.locator('b')).toHaveText('Bold');
+        await option.click();
+        await closeDropdown(page, p);
+        await expect(p.locator('.ms__badges > .ms__badge .ms__badge-text b')).toHaveText('Bold');
+    });
+});

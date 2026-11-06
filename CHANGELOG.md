@@ -92,6 +92,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `sizeChanged()` reports, so a `transform: scale()` on the control or an ancestor no longer makes
   the first check and later resizes disagree.
 
+### Fixed / Changed — core rc18 review (2026-11-06)
+- **A quote in an option value broke selection and badge removal:** option values went into
+  `data-value` (option rows, badges, the badge ✕, the `renderBadgeCallback` wrapper) and tree
+  paths into `data-path` unescaped, so a value like `say "hi"` cut the attribute short — the row
+  selected the wrong (truncated) value and its badge couldn't be removed. Both are now escaped
+  (core `escapeHtml`); `dataset` still reads back the original string.
+- **Security docs corrected:** the README claimed "option data (values, display values) is
+  escaped". Only option values and tree paths are (they land in attributes); the display value,
+  full title, `getBadgeDisplayCallback`, subtitle and icon are HTML by design — sanitize untrusted
+  data first. The XSS notice now lists them.
+
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
   re-enabled); readonly badges and the readonly popover have no ✕.

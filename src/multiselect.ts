@@ -1772,7 +1772,7 @@ export class MultiSelectEngine<T = any> {
             ? ` data-checkbox-align="${this.options.checkboxAlign}"`
             : '';
 
-        let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}"${checkboxAlignAttr}>`;
+        let html = `<div class="${classes.join(' ')}" data-value="${escapeHtml(String(value))}" data-index="${index}"${checkboxAlignAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple) {
             html += this.checkboxHtml({ checked: isSelected, disabled });
@@ -1880,7 +1880,7 @@ export class MultiSelectEngine<T = any> {
             : '';
 
         const selectableAttr = selectable ? '' : ' data-selectable="false"';
-        let html = `<div class="${classes.join(' ')}" data-value="${value}" data-index="${index}" data-path="${node.path}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
+        let html = `<div class="${classes.join(' ')}" data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple && selectable) {
             html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
@@ -5294,7 +5294,7 @@ export class MultiSelectEngine<T = any> {
                     const extra = this.classSuffix(classCb(renderCtx));
                     if (extra) wrapperClasses += ' ' + extra;
                 }
-                return `<div class="${wrapperClasses}" data-value="${value}">${customHtml}</div>`;
+                return `<div class="${escapeHtml(wrapperClasses)}" data-value="${escapeHtml(String(value))}">${customHtml}</div>`;
             }
         }
 
@@ -5321,9 +5321,9 @@ export class MultiSelectEngine<T = any> {
 
         const removeLabel = this.getItemBadgeDisplayValue(option, ctx);
         return `
-            <div class="${badgeClasses}">
+            <div class="${escapeHtml(badgeClasses)}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${value}" aria-label="${escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
             </div>
         `;
     }
