@@ -8,7 +8,7 @@
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
-import { anchor, createTooltip, createPopover, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
+import { anchor, createTooltip, createPopover, findOverlayContainer, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
 import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
@@ -1072,8 +1072,9 @@ export class MultiSelectEngine<T = any> {
     }
 
     private buildHTML(): void {
-        // Get container for dropdown/hint/popover (Shadow DOM or body)
-        const container = this.options.container || document.body;
+        // Get container for dropdown/hint/popover (Shadow DOM; standalone: the nearest open
+        // modal <dialog> / popover around the element — core findOverlayContainer — else body)
+        const container = this.options.container || findOverlayContainer(this.element);
 
         // Detect RTL from the host's `dir` (or an RTL ancestor) and derive the
         // direction-mirrored badges position. Extracted so a runtime `dir` change
@@ -4214,7 +4215,7 @@ export class MultiSelectEngine<T = any> {
             // really honour (transform/perspective/filter/backdrop-filter/will-change and, since
             // core rc18, contain: paint|layout|strict|content; container-type is ignored),
             // resolved from the portaled panel — core builds the custom platform for us. The
-            // panel is appended to `container` (default document.body), so its containing block
+            // panel is appended to `container` (the shadow root; standalone: core findOverlayContainer), so its containing block
             // can differ from the input's; measuring from the panel is what the browser does.
             // Anything the heuristic still misses is caught by `onDrift`, which warns, pointing
             // at the likely culprit.
@@ -5797,13 +5798,13 @@ export class MultiSelectEngine<T = any> {
         shouldFollowCursor?: boolean;
     }): void {
         this.tooltips.get(spec.id)?.destroy();
-        // Prefer the shadow root over document.body so portaled tooltips inherit
+        // Prefer the shadow root over the page (findOverlayContainer) so portaled tooltips inherit
         // the host's --ms-tooltip-* variables and data-theme overrides.
         const rootNode = this.element.getRootNode();
         const shadowContainer = rootNode instanceof ShadowRoot ? rootNode : null;
         const tooltip = createTooltip({
             trigger: spec.trigger,
-            container: this.options.container ?? shadowContainer ?? document.body,
+            container: this.options.container ?? shadowContainer ?? findOverlayContainer(spec.trigger),
             content: spec.content,
             placement: spec.placement ?? this.options.badgeTooltipPlacement ?? 'top',
             offset: spec.offsetDistance ?? this.options.badgeTooltipOffset ?? 8,
@@ -6026,7 +6027,7 @@ export class MultiSelectEngine<T = any> {
 
         const rootNode = this.element.getRootNode();
         const shadowContainer = rootNode instanceof ShadowRoot ? rootNode : null;
-        const container = (this.options.container ?? shadowContainer ?? document.body) as HTMLElement;
+        const container = (this.options.container ?? shadowContainer ?? findOverlayContainer(infoBtn)) as HTMLElement;
 
         this.labelRevealTrigger = infoBtn;
         this.labelRevealPanel = panel;
@@ -6093,7 +6094,7 @@ export class MultiSelectEngine<T = any> {
 
         const rootNode = this.element.getRootNode();
         const shadowContainer = rootNode instanceof ShadowRoot ? rootNode : null;
-        const container = (this.options.container ?? shadowContainer ?? document.body) as HTMLElement;
+        const container = (this.options.container ?? shadowContainer ?? findOverlayContainer(this.input)) as HTMLElement;
         container.appendChild(el);
         this.messageEl = el;
 

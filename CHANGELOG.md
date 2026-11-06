@@ -122,6 +122,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `configKey`, `attribute?`, `value`, `reason?`, `kept`, `source`) and the core element API
   (`whenReady()`, `whenSettled()`, `flush()`, `batch()`, `enableLogging()` / `disableLogging()` /
   `resetLogging()`); `setAttributes()` is documented as returning the rejections.
+- **Standalone engine panels mount in the top layer:** without a `container` (the element always
+  passes its shadow root), the dropdown, hint, selected-items popover, tooltips, the full-label
+  panel and `showMessage()` fell back to `document.body` — underneath (and inert behind) a modal
+  `<dialog>` or an open popover the picker sits in. They now use core `findOverlayContainer()`
+  (the nearest open modal dialog / `:popover-open` element, else `<body>`).
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when
