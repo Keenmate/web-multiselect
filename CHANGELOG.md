@@ -118,6 +118,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `el.resetLogging()`) → type (`window.components['web-multiselect'].logging`, per category) →
   page (`window.components.logging`) → `warn`; a page call never overwrites a type level. The
   example page starts at the default instead of silencing the type, and has a Reset button.
+- **`docs/api-reference.html`** lists the `input-rejected` event (detail `InputRejection`:
+  `configKey`, `attribute?`, `value`, `reason?`, `kept`, `source`) and the core element API
+  (`whenReady()`, `whenSettled()`, `flush()`, `batch()`, `enableLogging()` / `disableLogging()` /
+  `resetLogging()`); `setAttributes()` is documented as returning the rejections.
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when

@@ -401,6 +401,11 @@
                     <td>Fired once, on the microtask after the first build (a listener added right after <code>createElement</code> still catches it) — at upgrade for a normal element, or when a <code>defer</code> render gate is released for a deferred one. Detail: <code>controller</code>, <code>element</code>, presentation flags.</td>
                 </tr>
                 <tr>
+                    <td><code>input-rejected</code></td>
+                    <td class="type">InputRejection</td>
+                    <td>Fired synchronously (core <code>BlissElement</code>) whenever an attribute or property write is refused — an invalid value, or a <code>setAttributes()</code> key that names no input. The input keeps its previous value (a reflected input writes it back). Detail: <code>configKey</code>, <code>attribute?</code>, <code>value</code> (the raw string on the attribute path), <code>reason?</code>, <code>kept</code> (the value the input kept), <code>source</code> (<code>'attribute'</code> | <code>'property'</code>). Twin: <code>onInputRejected</code>.</td>
+                </tr>
+                <tr>
                     <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
                         All events bubble and are not composed (<code>composed: false</code>). Every detail carries <code>controller</code> (= <code>el.controller</code>) and <code>element</code> as non-enumerable properties, so <code>JSON.stringify(e.detail)</code> sees only the data.
                     </td>
@@ -442,8 +447,8 @@
                 </tr>
                 <tr>
                     <td><code>setAttributes</code></td>
-                    <td class="type">(values: Record&lt;string, unknown&gt;) => void</td>
-                    <td>Apply several inputs as one in-place update (one re-render instead of one per property). Keys are property names (<code>configKey</code>, e.g. <code>maxHeight</code>) or their kebab attribute (<code>max-height</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
+                    <td class="type">(values: Record&lt;string, unknown&gt;) => InputRejection[]</td>
+                    <td>Apply several inputs as one in-place update (one re-render instead of one per property). Returns the refused writes (<code>[]</code> when everything applied); each also fires <code>input-rejected</code>. Keys are property names (<code>configKey</code>, e.g. <code>maxHeight</code>) or their kebab attribute (<code>max-height</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
                 </tr>
                 <tr>
                     <td><code>release</code></td>
@@ -458,7 +463,42 @@
                 <tr>
                     <td><code>destroy</code></td>
                     <td class="type">() => void</td>
-                    <td>Final teardown (core <code>BlissElement</code>): the picker is torn down for good and the element stays inert.</td>
+                    <td>Final teardown (core <code>BlissElement</code>): the picker is torn down for good and the element stays inert (re-inserting it warns and builds nothing — create a new element). Idempotent; <code>isDestroyed</code> turns <code>true</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>whenReady</code></td>
+                    <td class="type">() => Promise&lt;void&gt;</td>
+                    <td>Resolves once the first build is live (right after the <code>ready</code> event); at once when it already is. Never rejects; <code>destroy()</code> settles it too.</td>
+                </tr>
+                <tr>
+                    <td><code>whenSettled</code></td>
+                    <td class="type">() => Promise&lt;void&gt;</td>
+                    <td>Resolves once every pending input write has been applied (the re-render has run) — read rendered state right after it. Immediately when nothing is pending; on the next connect while detached; only after <code>release()</code> while deferred (release first).</td>
+                </tr>
+                <tr>
+                    <td><code>flush</code></td>
+                    <td class="type">() => void</td>
+                    <td>Apply pending input writes synchronously, now. Loose property assignments otherwise coalesce on a microtask; the picker's own imperative methods already flush first.</td>
+                </tr>
+                <tr>
+                    <td><code>batch</code></td>
+                    <td class="type">(fn: () => void) => void</td>
+                    <td>Run <code>fn</code> and coalesce every input change it makes (attributes or properties) into a single re-render, applied synchronously.</td>
+                </tr>
+                <tr>
+                    <td><code>enableLogging</code></td>
+                    <td class="type">(level?: LogLevelDesc) => void</td>
+                    <td>Set THIS element's own log level (default <code>'debug'</code>; <code>'error'</code> makes it quieter than its type). Levels coalesce closest first: element → <code>window.components['web-multiselect'].logging</code> (per category) → <code>window.components.logging</code> → <code>warn</code>. Instance debug / trace print through <code>console.log</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>disableLogging</code></td>
+                    <td class="type">() => void</td>
+                    <td>Silence this element (its own level becomes <code>silent</code>).</td>
+                </tr>
+                <tr>
+                    <td><code>resetLogging</code></td>
+                    <td class="type">() => void</td>
+                    <td>Clear this element's own level: it follows its type / the page again. <code>isLoggingEnabled</code> (get) says whether an own level that prints is set.</td>
                 </tr>
             </tbody>
         </table>
