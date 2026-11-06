@@ -765,12 +765,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     const consumed = consumedMsVars();
     if (consumed.size === 0) return; // stylesheet not inlined (e.g. vitest) — no ground truth
     // Pure lint lives in core (lintCssVars); the element owns only the dev gate
-    // (see the call site), per-instance de-dup, and the console message.
+    // (see the call site), per-instance de-dup, and the (instance-logger) message.
     for (const { name, suggestions } of lintCssVars(css, { prefix: '--ms-', consumed })) {
       if (this.#warnedCssVars.has(name)) continue;
       this.#warnedCssVars.add(name);
-      console.warn(
-        `[web-multiselect] getCustomStylesCallback sets "${name}", which no ` +
+      this.log.UI.warn(
+        `getCustomStylesCallback sets "${name}", which no ` +
           `web-multiselect style consumes — it will have no effect.` +
           (suggestions.length ? ` Did you mean: ${suggestions.join(', ')}?` : '') +
           ` (If it's for your own custom-rendered content, ignore this.)`

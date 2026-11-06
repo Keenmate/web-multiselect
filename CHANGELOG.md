@@ -102,6 +102,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   escaped". Only option values and tree paths are (they land in attributes); the display value,
   full title, `getBadgeDisplayCallback`, subtitle and icon are HTML by design — sanitize untrusted
   data first. The XSS notice now lists them.
+- **Every warning goes through the loggers** (core SPEC §12.1): the object search value / object
+  search term warnings (`MULTISELECT:DATA`), the positioning drift and fullscreen containing-block
+  warnings (`MULTISELECT:UI`), the tree's invalid-path warning (`MULTISELECT:DATA`) and the dev-only
+  `getCustomStylesCallback` variable lint (the element's own `UI` logger) used `console.warn`
+  directly, so `disableLogging()` couldn't silence them. They now carry the logger prefix and the
+  instance id instead of `[web-multiselect]` / `[@keenmate/web-multiselect]`.
 
 ### Internal
 - **Tests:** `e2e/control-state.spec.ts` — disabled badges dim and lose the ✕ (back when

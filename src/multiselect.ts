@@ -424,7 +424,7 @@ export class MultiSelectEngine<T = any> {
         if (raw !== null && typeof raw === 'object') {
             if (!this.hasWarnedObjectSearchValue) {
                 this.hasWarnedObjectSearchValue = true;
-                console.warn('[web-multiselect] getSearchValueCallback returned an object: internal search needs a string, so it falls back to the display value. Object search values are for a custom searchCallback (context.entries).');
+                dataLogger.warn(`[${this.instanceId}] getSearchValueCallback returned an object: internal search needs a string, so it falls back to the display value. Object search values are for a custom searchCallback (context.entries).`);
             }
             return this.getItemDisplayValue(item);
         }
@@ -487,7 +487,7 @@ export class MultiSelectEngine<T = any> {
             onObjectTerm: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
-                console.warn('[web-multiselect] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.');
+                dataLogger.warn(`[${this.instanceId}] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.`);
             },
         });
     }
@@ -4271,8 +4271,8 @@ export class MultiSelectEngine<T = any> {
     private warnDrift(drift: DriftReport): void {
         if (this.positioningDriftWarned) return;
         this.positioningDriftWarned = true;
-        console.warn(
-            `[@keenmate/web-multiselect] Dropdown panel rendered ${drift.driftX.toFixed(0)}px / ${drift.driftY.toFixed(0)}px ` +
+        uiLogger.warn(
+            `[${this.instanceId}] Dropdown panel rendered ${drift.driftX.toFixed(0)}px / ${drift.driftY.toFixed(0)}px ` +
             `away from where the library positioned it. Most likely culprit: ${drift.culpritDescription}` +
             (drift.culpritCss ? ` (has ${drift.culpritCss})` : '') + `.\n` +
             `An ancestor of <web-multiselect> establishes a fixed-positioning containing block that the library's ` +
@@ -4308,8 +4308,8 @@ export class MultiSelectEngine<T = any> {
         const cls = culprit.classList.length ? `.${Array.from(culprit.classList).join('.')}` : '';
         const desc = `<${culprit.tagName.toLowerCase()}${id}${cls}>`;
         const css = describeContainingBlockProps(culprit);
-        console.warn(
-            `[@keenmate/web-multiselect] Fullscreen overlay is anchored to an ancestor ${desc}` +
+        uiLogger.warn(
+            `[${this.instanceId}] Fullscreen overlay is anchored to an ancestor ${desc}` +
             (css ? ` (has ${css})` : '') + ` instead of the viewport, so it may not cover the ` +
             `screen (offset, clipped, or mis-sized).\n` +
             `An ancestor of <web-multiselect> establishes a fixed-positioning containing block ` +

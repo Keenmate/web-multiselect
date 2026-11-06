@@ -15,6 +15,7 @@
  */
 
 import { type LTreeNode, createLTreeNode } from './ltree-node';
+import { dataLogger } from '../logger';
 import {
 	isEmptyString,
 	getLevel,
@@ -224,7 +225,7 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 			}
 
 			if (invalidPaths.length > 0) {
-				console.warn(
+				dataLogger.warn(
 					`[ltree ${_treeId}] ${invalidPaths.length} option(s) had an invalid path and were skipped ` +
 						`(pathMember="${_pathMember}"). Offending: ${invalidPaths.slice(0, 5).join(', ')}` +
 						(invalidPaths.length > 5 ? ', …' : '')

@@ -17,7 +17,7 @@ import { test, expect, Page, Locator } from './fixtures';
  */
 
 const PAGE = '/test/fullscreen-containing-block.html';
-const WARN_TAG = '[@keenmate/web-multiselect] Fullscreen overlay is anchored to an ancestor';
+const WARN_TAG = 'Fullscreen overlay is anchored to an ancestor';
 
 function picker(page: Page, id: string): Locator {
     return page.locator(`#${id}`);
