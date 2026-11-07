@@ -13,7 +13,9 @@
                 Enable hover tooltips on the dropdown rows with <code>enable-option-tooltips</code>. With no
                 callback the tooltip shows the option's display value (plus its subtitle on a second line when
                 present); turn on <strong>custom content</strong> to drive it from
-                <code>getOptionTooltipCallback</code> instead. On a <strong>wide</strong> control a row-centered
+                <code>getOptionTooltipCallback</code> instead: it returns a string or an element, and gets the
+                row's state, so here the tooltip shows a bold name, the description and whether the row is
+                selected (select a row and hover it again). On a <strong>wide</strong> control a row-centered
                 tooltip lands mid-screen, so option tooltips default to <code>top-start</code> (anchored to the
                 row's start edge) — or set <code>follow-cursor</code> to track the pointer. On a
                 <strong>narrow</strong> control, place the tooltip to the <code>right</code> / <code>left</code>
@@ -24,7 +26,7 @@
             <div class="controls">
                 <label title="Turn hover tooltips on the dropdown rows on/off (the enable-option-tooltips attribute)."><input type="checkbox" id="opt-enable" checked> <code>enable-option-tooltips</code></label>
                 <label title="Anchor the tooltip to the mouse pointer and track it as it moves along the row, instead of anchoring to the row edge."><input type="checkbox" id="opt-follow"> <code>option-tooltip-follow-cursor</code></label>
-                <label title="Drive the tooltip content from getOptionTooltipCallback (here 'label — description') instead of the default display value + subtitle."><input type="checkbox" id="opt-custom"> custom content (<code>getOptionTooltipCallback</code>)</label>
+                <label title="Drive the tooltip content from getOptionTooltipCallback: here an element (bold name, description, and the row's selected state) instead of the default display value + subtitle text."><input type="checkbox" id="opt-custom"> custom content (<code>getOptionTooltipCallback</code>)</label>
             </div>
             <div class="controls">
                 <span><code>option-tooltip-placement</code>:</span>
@@ -197,7 +199,25 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
             optTt.displayValueMember = 'label';
             optTt.subtitleMember = 'description';
             optTt.options = fruitOptions;
-            const optCustomCb = ({ option }) => `${option.label} — ${option.description}`;
+            // Custom content: an element instead of the default "label + subtitle" text. The tooltip
+            // lives in the component's shadow root, so the content carries its own inline styles.
+            // The callback also gets the row's state (isSelected, isFocused, isDisabled, …).
+            const optCustomCb = ({ option, isSelected }) => {
+                const box = document.createElement('div');
+                box.style.cssText = 'display: grid; gap: .25rem; max-width: 16rem; white-space: normal;';
+                const name = document.createElement('strong');
+                name.style.cssText = 'font-size: 1.05em; letter-spacing: .02em; text-transform: uppercase;';
+                name.textContent = option.label;
+                const about = document.createElement('span');
+                about.style.cssText = 'opacity: .8; font-style: italic;';
+                about.textContent = option.description;
+                const state = document.createElement('span');
+                state.style.cssText = 'justify-self: start; margin-top: .15rem; padding: 0 .45rem; border-radius: 999px; font-size: .85em;'
+                    + (isSelected ? ' background: #16a34a; color: #fff;' : ' border: 1px solid currentColor; opacity: .75;');
+                state.textContent = isSelected ? '✓ selected' : 'click to select';
+                box.append(name, about, state);
+                return box;
+            };
 
             document.getElementById('opt-enable').addEventListener('change', (e) =>
                 boolAttr(optTt, 'enable-option-tooltips', e.target.checked));
