@@ -14,7 +14,7 @@
  * the originals so ordering matches web-treeview.
  */
 
-import { type LTreeNode, createLTreeNode } from './ltree-node';
+import { type LTreeNode, createLTreeNode } from '../utils/ltree-node';
 import { dataLogger } from '../logger';
 import {
 	isEmptyString,
@@ -22,7 +22,7 @@ import {
 	getParentPath,
 	getPathSegments,
 	getRelativePath
-} from './helpers';
+} from '../utils/tree-helpers';
 
 /** Safely read a string-named member off a generic data item. */
 function getField(item: unknown, member: string): any {
@@ -44,6 +44,12 @@ export interface LTreeOptions<T> {
 	levelMember?: string | null;
 	/** Member holding a precomputed hasChildren flag (otherwise derived). */
 	hasChildrenMember?: string | null;
+	/** Callback returning the parent path (takes precedence over parentPathMember). */
+	getParentPathCallback?: ((item: T) => string) | null;
+	/** Callback returning the depth/level (takes precedence over levelMember). */
+	getLevelCallback?: ((item: T) => number) | null;
+	/** Callback returning a precomputed hasChildren flag (takes precedence over hasChildrenMember). */
+	getHasChildrenCallback?: ((item: T) => boolean) | null;
 
 	/** Member holding a per-node `isSelectable` flag (otherwise every node is selectable). */
 	isSelectableMember?: string | null;
@@ -85,15 +91,18 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 	const _parentPathMember = options.parentPathMember;
 	const _levelMember = options.levelMember;
 	const _hasChildrenMember = options.hasChildrenMember;
+	const _getParentPathCallback = options.getParentPathCallback;
+	const _getLevelCallback = options.getLevelCallback;
+	const _getHasChildrenCallback = options.getHasChildrenCallback;
 	const _isSelectableMember = options.isSelectableMember;
 	const _getIsSelectableCallback = options.getIsSelectableCallback;
 	const _treeId = options.treeId || 'multiselect-tree';
 	const _orderMember = options.orderMember;
 	const _getDisplayValueCallback = options.getDisplayValueCallback;
 
-	const shouldCalculateParentPath = isEmptyString(_parentPathMember);
-	const shouldCalculateLevel = isEmptyString(_levelMember);
-	const shouldCalculateHasChildren = isEmptyString(_hasChildrenMember);
+	const shouldCalculateParentPath = !_getParentPathCallback && isEmptyString(_parentPathMember);
+	const shouldCalculateLevel = !_getLevelCallback && isEmptyString(_levelMember);
+	const shouldCalculateHasChildren = !_getHasChildrenCallback && isEmptyString(_hasChildrenMember);
 	const shouldCalculateIsSelectable = isEmptyString(_isSelectableMember);
 
 	// Crucial for keeping the order of numeric segments: object keys that are
@@ -180,7 +189,7 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 					if (shouldCalculateParentPath) {
 						node.parentPath = getParentPath(node.path, treePathSeparator);
 					} else {
-						node.parentPath = getField(row, _parentPathMember!);
+						node.parentPath = _getParentPathCallback ? _getParentPathCallback(row) : getField(row, _parentPathMember!);
 					}
 
 					node.pathSegment = getPathSegments(
@@ -190,10 +199,12 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 						treePathSeparator
 					);
 
-					if (!shouldCalculateLevel) node.level = getField(row, _levelMember!);
+					if (!shouldCalculateLevel) node.level = _getLevelCallback ? _getLevelCallback(row) : getField(row, _levelMember!);
 					else node.level = getLevel(node.path, treePathSeparator);
 
-					if (!shouldCalculateHasChildren) node.hasChildren = getField(row, _hasChildrenMember!);
+					if (!shouldCalculateHasChildren) {
+						node.hasChildren = _getHasChildrenCallback ? _getHasChildrenCallback(row) : getField(row, _hasChildrenMember!);
+					}
 
 					node.data = row;
 					return node;

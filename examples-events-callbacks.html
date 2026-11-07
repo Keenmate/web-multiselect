@@ -89,7 +89,7 @@ el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
   const conflict = EXCLUSIVE.includes(option.value)
     &amp;&amp; selectedOptions.find(o =&gt; EXCLUSIVE.includes(o.value) &amp;&amp; o.value !== option.value);
   if (conflict) {
-    controller.showMessage(`Blocked: can't pick ${option.label} while ${conflict.label} is selected`, { type: 'warning' });
+    controller.showMessage(`Blocked: can't pick ${option.label} while ${conflict.label} is selected`, { variant: 'warning' });
     return false;            // ← veto
   }
   // return undefined ⇒ allow
@@ -126,7 +126,7 @@ el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
 <pre><code>el.beforeDeselectCallback = ({ option, controller }) =&gt; {
   if (option.value === 'lead') {
     // in-component message — visible even in the fullscreen overlay
-    controller.showMessage('Team Lead is required — cannot be removed', { type: 'warning' });
+    controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
     return false;            // ← veto removal
   }
 };
@@ -146,8 +146,8 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
                 both presentations — anchored under the control when floating, pinned over the overlay when
                 fullscreen. It's also how a <code>before*Callback</code> explains a veto
                 (<code>ctx.controller.showMessage(…)</code>, then <code>return false</code> — demo 3). Content can be
-                text <em>or</em> an element; options are <code>type</code> (<code>info</code> / <code>warning</code> /
-                <code>error</code> / <code>success</code>), <code>autoHideMs</code> and <code>placement</code>.
+                text <em>or</em> an element; options are <code>variant</code> (<code>info</code> / <code>warning</code> /
+                <code>danger</code> / <code>success</code>), <code>autoHideMs</code> and <code>placement</code>.
                 Available as <code>el.showMessage()</code> and on <code>el.controller</code> / every <code>ctx.controller</code>.
                 (For the fullscreen overlay itself, see the <a href="examples-responsive.html">Responsive &amp; Mobile</a> page.)
             </p>
@@ -163,7 +163,7 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
             <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; align-items:center;">
                 <button type="button" data-msg="info">info</button>
                 <button type="button" data-msg="warning">warning</button>
-                <button type="button" data-msg="error">error</button>
+                <button type="button" data-msg="danger">danger</button>
                 <button type="button" data-msg="success">success</button>
                 <button type="button" id="msg-html">custom HTML</button>
                 <button type="button" id="msg-sticky">sticky (tap to close)</button>
@@ -183,7 +183,7 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
             <details class="mt-1">
                 <summary>Show code</summary>
 <pre><code>// imperative — text + type + auto-dismiss (ms; 0 = sticky until tapped/replaced)
-el.showMessage('Saved!', { type: 'success', autoHideMs: 2000 });
+el.showMessage('Saved!', { variant: 'success', autoHideMs: 2000 });
 
 // placement (floating case): a floating-ui Placement, default 'bottom'
 el.showMessage('Over here', { placement: 'top-start' });
@@ -191,15 +191,15 @@ el.showMessage('Over here', { placement: 'top-start' });
 // rich content
 const box = document.createElement('span');
 box.innerHTML = '&lt;strong&gt;Heads up&lt;/strong&gt; — 3 items hidden';
-el.showMessage(box, { type: 'warning', autoHideMs: 0 });
+el.showMessage(box, { variant: 'warning', autoHideMs: 0 });
 
 el.hideMessage();               // dismiss programmatically
 
 // from a veto interceptor — same toasts, driven by the selection
 el.beforeSelectCallback = ({ option, controller }) =&gt; {
-  if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { type: 'warning' }); return false; } // veto + warning
-  if (option.value === 'err')  { controller.showMessage('Not allowed', { type: 'error' }); return false; }                          // veto + error
-  if (option.value === 'ok')   { controller.showMessage('Nice choice!', { type: 'success' }); }                                     // allow + success
+  if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { variant: 'warning' }); return false; } // veto + warning
+  if (option.value === 'err')  { controller.showMessage('Not allowed', { variant: 'danger' }); return false; }                          // veto + danger
+  if (option.value === 'ok')   { controller.showMessage('Nice choice!', { variant: 'success' }); }                                     // allow + success
 };</code></pre>
             </details>
         </div>
@@ -240,7 +240,7 @@ el.beforeSelectCallback = ({ option, controller }) =&gt; {
 // or nothing → only the `add` event fires (create the option yourself).
 el.beforeAddCallback = async ({ value, controller }) =&gt; {
   if (await api.exists(value)) {
-    controller.showMessage(`"${value}" already exists`, { type: 'warning' });
+    controller.showMessage(`"${value}" already exists`, { variant: 'warning' });
     return false;                                  // ← cancel
   }
   return await api.create(value);                  // ← rich option → create + select
@@ -413,7 +413,7 @@ el.beforeAddCallback = async ({ value }) =&gt; {
                     requiredLog('tag-block', '[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`);
                     // Explain the veto with an in-component message — visible even in the
                     // fullscreen overlay, where this page log would be hidden.
-                    controller.showMessage('Team Lead is required — cannot be removed', { type: 'warning' });
+                    controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
                     return false;
                 }
             };
@@ -435,7 +435,7 @@ el.beforeAddCallback = async ({ value }) =&gt; {
                 const key = value.trim().toLowerCase();
                 const exists = createSelect.options.some(o => o.value === key);
                 if (exists) {
-                    controller.showMessage(`"${value}" already exists`, { type: 'warning' });
+                    controller.showMessage(`"${value}" already exists`, { variant: 'warning' });
                     return false;                         // ← cancel
                 }
                 // (a real app might `await api.create(value)` here)
@@ -482,24 +482,24 @@ el.beforeAddCallback = async ({ value }) =&gt; {
             // Drive the same toasts from the selection itself: showMessage() + return false
             // vetoes with an explanation; 'ok' allows the selection AND shows a success message.
             msgSelect.beforeSelectCallback = ({ option, controller }) => {
-                if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { type: 'warning' }); return false; }
-                if (option.value === 'err') { controller.showMessage('Not allowed', { type: 'error' }); return false; }
-                if (option.value === 'ok') { controller.showMessage('Nice choice!', { type: 'success' }); }
+                if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { variant: 'warning' }); return false; }
+                if (option.value === 'err') { controller.showMessage('Not allowed', { variant: 'danger' }); return false; }
+                if (option.value === 'ok') { controller.showMessage('Nice choice!', { variant: 'success' }); }
             };
             const msgPlacement = document.getElementById('msg-placement');
             document.querySelectorAll('[data-msg]').forEach((btn) => {
                 btn.addEventListener('click', () => {
-                    const type = btn.dataset.msg;
-                    msgSelect.showMessage(`This is a ${type} message`, { type, placement: msgPlacement.value });
+                    const variant = btn.dataset.msg;
+                    msgSelect.showMessage(`This is a ${variant} message`, { variant, placement: msgPlacement.value });
                 });
             });
             document.getElementById('msg-html').addEventListener('click', () => {
                 const span = document.createElement('span');
                 span.innerHTML = '<strong>Custom</strong> HTML content ✨';
-                msgSelect.showMessage(span, { type: 'info', autoHideMs: 4000, placement: msgPlacement.value });
+                msgSelect.showMessage(span, { variant: 'info', autoHideMs: 4000, placement: msgPlacement.value });
             });
             document.getElementById('msg-sticky').addEventListener('click', () => {
-                msgSelect.showMessage('Sticky — tap me to dismiss', { type: 'warning', autoHideMs: 0, placement: msgPlacement.value });
+                msgSelect.showMessage('Sticky — tap me to dismiss', { variant: 'warning', autoHideMs: 0, placement: msgPlacement.value });
             });
             document.getElementById('msg-fs').addEventListener('click', () => {
                 const isFs = msgSelect.getAttribute('presentation') === 'fullscreen';

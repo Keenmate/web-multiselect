@@ -610,7 +610,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                     <label for="grouped-select" style="display:block; margin-bottom:.4rem; font-weight:600;">Select technologies</label>
                     <web-multiselect id="grouped-select" multiple="true" show-checkboxes="true"
                         group-member="group" search-mode="navigate" show-search-mode-toggle
-                        badges-display-mode="partial" max-visible-badge-count="3"></web-multiselect>
+                        badges-display-mode="partial" max-visible-badge-count="3" theme-source="closest"></web-multiselect>
                     <span class="form-text">Grouped by Frontend / Runtimes / Languages. In the fullscreen sheet, tap the leading search icon to switch filter ↔ navigate.</span>
                 </div>
             </div>
@@ -1834,8 +1834,16 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
         `;
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Initialize all multiselects with font injection
+            // Initialize this section's multiselects (TH11 onwards) with font injection. Only the
+            // pickers after the TH11 card: the gallery / color-scheme demos above set their own
+            // grouped data in commonInit, and overwriting it here dropped their group headers.
+            // TH11's own four pickers are set up by its typography script (their own data, groups and
+            // font callback), so they're skipped too.
+            const mergedStart = document.getElementById('resetBtn').closest('.card');
+            const ownSetup = new Set(['singleSelect', 'multiBadges', 'multiCount', 'grouped']);
             document.querySelectorAll('web-multiselect').forEach(el => {
+                if (!(mergedStart.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+                if (ownSetup.has(el.id)) return;
                 el.options = options;
                 el.valueMember = 'value';
                 el.displayValueMember = 'label';

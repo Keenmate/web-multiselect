@@ -125,3 +125,28 @@ describe('ltree — build + flatten', () => {
         expect(byPath.get('2')).toBe(true);
     });
 });
+
+describe('ltree — parent path / level / hasChildren from callbacks', () => {
+    it('callbacks win over the members and over derivation', () => {
+        type Row = Item & { parent: string; depth: number; folder: boolean };
+        const rows: Row[] = [
+            { id: 'a', path: '1', label: 'Fruit', parent: '', depth: 7, folder: true },
+            { id: 'b', path: '1.1', label: 'Apple', parent: '1', depth: 8, folder: false },
+        ];
+        const tree = createLTree<Row>({
+            idMember: 'id',
+            pathMember: 'path',
+            levelMember: 'label', // ignored: the callback wins
+            getParentPathCallback: (row) => row.parent,
+            getLevelCallback: (row) => row.depth,
+            getHasChildrenCallback: (row) => row.folder,
+        });
+        tree.insertArray(rows);
+        const byId = new Map(tree.flatNodes.map((n) => [n.id, n]));
+        expect(byId.get('b')!.parentPath).toBe('1');
+        expect(byId.get('a')!.level).toBe(7);
+        expect(byId.get('b')!.level).toBe(8);
+        expect(byId.get('a')!.hasChildren).toBe(true);
+        expect(byId.get('b')!.hasChildren).toBe(false);
+    });
+});

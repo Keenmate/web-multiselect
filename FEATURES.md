@@ -174,6 +174,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Feature | Surface | Identifier | Default | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|---|
 | Close on select | attr/prop | `close-on-select` / `shouldCloseOnSelect` | `bool(false)` | | | |
+| Close on scroll | attr/prop | `close-on-scroll` / `shouldCloseOnScroll` | `bool(true)` | Floating only; page or ancestor scroller (like a native select) | | ✓ |
 | Auto-positioning (Floating UI) | behavior | dropdown / popover / tooltip placement | — | Auto-flip + overflow-escape (e2e: `positioning.spec.ts`, `floating-panels.spec.ts`) | | |
 | Lock placement | attr/prop | `lock-placement` / `shouldLockPlacement` | `bool(true)` | Prevent flip after first open | | |
 | Keep search on close | attr/prop | `keep-search-on-close` / `shouldKeepSearchOnClose` | `bool(tristate)` | Preserve text + filtered results. Unset: kept in multi, cleared in single | | ✓ |
@@ -211,7 +212,7 @@ their return value *is* consumed: `false` cancels, nothing continues.
 | Deselect handler (event prop) | prop | `onDeselect(detail)` | — | Property twin of the `deselect` event | | |
 | Change handler (event prop) | prop | `onChange(detail)` | — | Property twin of the `change` event | | |
 | Add / action / ready handlers (event props) | prop | `onAdd(detail)`, `onAction(detail)`, `onReady(detail)`, `onOpen(detail)`, `onClose(detail)` | — | Property twins of `add` / `action` / `ready` | | |
-| Block a selection (interceptor) | callback | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` | returns `false` \| `void` (may be async) | `false` vetoes, silently — explain with `ctx.controller.showMessage(…, { type: 'warning' })`. Applies per option to bulk gestures (Select-All, group checkbox); bypassed by `setSelected`. (e2e: `before-select` unit) | | |
+| Block a selection (interceptor) | callback | `beforeSelectCallback({ option, selectedOptions, selectedValues, source })` | returns `false` \| `void` (may be async) | `false` vetoes, silently — explain with `ctx.controller.showMessage(…, { variant: 'warning' })`. Applies per option to bulk gestures (Select-All, group checkbox); bypassed by `setSelected`. (e2e: `before-select` unit) | | |
 | Block a deselection (interceptor) | callback | `beforeDeselectCallback(ctx)` | returns `false` \| `void` (may be async) | `false` vetoes; covers dropdown toggle + badge × + popover × + remove-hidden + Clear-All (per option). Bypassed by `setSelected` | | |
 | Intercept a key (interceptor) | callback | `beforeKeydownCallback(ctx)` | returns `false` \| `void` (sync) | `false` suppresses the built-in handling of the key | | |
 

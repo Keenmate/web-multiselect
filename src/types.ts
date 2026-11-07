@@ -5,7 +5,7 @@
 import type { Placement } from '@keenmate/web-components-core/positioning';
 import type { PresentationContext, ComponentContext, RenderLoaderCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
-import type { LTreeNode } from './tree/ltree-node';
+import type { LTreeNode } from './utils/ltree-node';
 import type {
     SearchBehavior,
     SearchMatch,
@@ -62,10 +62,10 @@ export type SearchMode = 'filter' | 'navigate';
 export type TabBehavior = 'select-focused' | 'select-navigated' | 'close';
 
 /**
- * Visual tone of a transient message shown via `controller.showMessage()`. Each maps to a
- * `.ms__message--{type}` theming hook.
+ * Visual variant of a transient message shown via `controller.showMessage()`. Each maps to a
+ * `.ms__message--{variant}` theming hook.
  */
-export type MessageType = 'info' | 'warning' | 'error' | 'success';
+export type MessageVariant = 'info' | 'warning' | 'danger' | 'success';
 
 /**
  * Options for `showMessage()` — the transient toast the component can surface on top of
@@ -73,8 +73,8 @@ export type MessageType = 'info' | 'warning' | 'error' | 'success';
  * fullscreen overlay, where page-level UI is covered by the sheet.
  */
 export interface MessageOptions {
-    /** Visual tone. Default `'info'`. */
-    type?: MessageType;
+    /** Visual variant. Default `'info'`. */
+    variant?: MessageVariant;
     /** Auto-dismiss after this many ms. `0` keeps it until replaced, tapped, or the panel closes. Default `3000`. */
     autoHideMs?: number;
     /**
@@ -637,6 +637,12 @@ export interface MultiSelectConfig<T = any> {
     levelMember?: string;
     /** Member holding a precomputed hasChildren flag (otherwise derived from the tree). */
     hasChildrenMember?: string;
+    /** Callback returning an option's parent path (takes precedence over parentPathMember). */
+    getParentPathCallback?: (ctx: ItemContext<T>) => string;
+    /** Callback returning an option's depth/level (takes precedence over levelMember). */
+    getLevelCallback?: (ctx: ItemContext<T>) => number;
+    /** Callback returning an option's precomputed hasChildren flag (takes precedence over hasChildrenMember). */
+    getHasChildrenCallback?: (ctx: ItemContext<T>) => boolean;
     /** Path separator for tree paths. Default: "." */
     treePathSeparator?: string;
     /**
@@ -819,6 +825,11 @@ export interface MultiSelectConfig<T = any> {
     isActionsSticky?: boolean;
     /** Close dropdown after selecting an option (internal: shouldCloseOnSelect) */
     shouldCloseOnSelect?: boolean;
+    /**
+     * Close the floating dropdown when the page (or a scroll container around the control) scrolls,
+     * like a native select on desktop. Default true (internal: shouldCloseOnScroll)
+     */
+    shouldCloseOnScroll?: boolean;
     /**
      * When the option set is replaced (assigning `options` / `data-options`), drop any selected
      * value whose option is no longer present. Default `false` — selections are KEPT even if
@@ -1272,8 +1283,27 @@ export type ReadyEventDetail<T = any> = MultiSelectContext<T>;
 /** `open` event detail: the context only (`controller`, `element`, presentation flags). */
 export type OpenEventDetail<T = any> = MultiSelectContext<T>;
 
-/** `close` event detail: the context only (`controller`, `element`, presentation flags). */
-export type CloseEventDetail<T = any> = MultiSelectContext<T>;
+/**
+ * Why the dropdown closed:
+ * - `'api'` — `close()`, `toggle()`, `isOpen = false`, the controller;
+ * - `'toggle'` — a click / tap on the control while open;
+ * - `'escape'` / `'tab'` — the key;
+ * - `'select'` — a selection closed it (single-select, `close-on-select`);
+ * - `'outside-click'` — a click outside the control and the dropdown;
+ * - `'scroll'` — the page (or a scroller around the control) scrolled (`close-on-scroll`);
+ * - `'overlay'` — another overlay opened (another picker, the selected-items popover);
+ * - `'parent'` — the overlay it was opened from closed;
+ * - `'back'` — the Back gesture closed the fullscreen sheet;
+ * - `'close-button'` — the fullscreen sheet's ✕;
+ * - `'disabled'` — the control became disabled / readonly;
+ * - `'destroy'` — torn down while open (reinit, DOM move, `destroy()`).
+ */
+export type DropdownCloseReason =
+    | 'api' | 'toggle' | 'escape' | 'tab' | 'select' | 'outside-click' | 'scroll' | 'resize'
+    | 'overlay' | 'parent' | 'back' | 'close-button' | 'disabled' | 'destroy';
+
+/** `close` event detail: the context (`controller`, `element`, presentation flags) + why it closed. */
+export type CloseEventDetail<T = any> = MultiSelectContext<T> & { reason: DropdownCloseReason };
 
 /**
  * Legacy interface for backward reference

@@ -18,7 +18,7 @@
  */
 
 import type { LTree } from './ltree';
-import type { LTreeNode } from './ltree-node';
+import type { LTreeNode } from '../utils/ltree-node';
 
 export type CheckboxMode = 'independent' | 'cascade';
 export type CascadeSelectPolicy = 'rolled-up' | 'leaves' | 'all';

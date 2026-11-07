@@ -8,13 +8,13 @@
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
-import { anchor, createTooltip, createPopover, findOverlayContainer, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport } from '@keenmate/web-components-core/positioning';
+import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, registerOverlay, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type OverlayHandle, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -74,7 +74,7 @@ import {
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
 import { createLTree, type LTree } from './tree/ltree';
-import type { LTreeNode } from './tree/ltree-node';
+import type { LTreeNode } from './utils/ltree-node';
 import {
     buildCascadeIndex,
     nodeCheckState,
@@ -228,7 +228,8 @@ export class MultiSelectEngine<T = any> {
     private readonly onOverlayPopstate = (): void => this.handleOverlayPopstate();
 
     // Floating UI cleanup functions
-    private dropdownCleanup: (() => void) | null = null;
+    /** The open dropdown as a core popover (kept mounted; anchored only while floating). Created per open. */
+    private dropdownPopover: PopoverHandle | null = null;
     private hintCleanup: (() => void) | null = null;
     private selectedPopoverCleanup: (() => void) | null = null;
 
@@ -288,7 +289,6 @@ export class MultiSelectEngine<T = any> {
     // Cross-component "one overlay open at a time" coordination (core). activate() on
     // open() dismisses every OTHER participating overlay (multiselects, datepickers, …);
     // our onDismiss closes this dropdown when another opens. Torn down in destroy().
-    private overlayCoord: OverlayHandle | null = null;
 
     // ========================================================================
     // DATA EXTRACTION METHODS (following svelte-treeview pattern)
@@ -682,6 +682,7 @@ export class MultiSelectEngine<T = any> {
             isCheckboxesShown: element.dataset.showCheckboxes !== 'false',
             isActionsSticky: element.dataset.actionsSticky !== 'false',
             shouldCloseOnSelect: element.dataset.closeOnSelect === 'true',
+            shouldCloseOnScroll: element.dataset.closeOnScroll !== 'false',
             shouldLockPlacement: element.dataset.lockPlacement !== 'false',
             isSearchEnabled: element.dataset.enableSearch !== 'false',
             isAddNewAllowed: element.dataset.allowAddNew === 'true',
@@ -769,6 +770,15 @@ export class MultiSelectEngine<T = any> {
             parentPathMember: this.options.parentPathMember,
             levelMember: this.options.levelMember,
             hasChildrenMember: this.options.hasChildrenMember,
+            getParentPathCallback: this.options.getParentPathCallback
+                ? (item: T) => this.options.getParentPathCallback!(this.itemCtx(item))
+                : undefined,
+            getLevelCallback: this.options.getLevelCallback
+                ? (item: T) => this.options.getLevelCallback!(this.itemCtx(item))
+                : undefined,
+            getHasChildrenCallback: this.options.getHasChildrenCallback
+                ? (item: T) => this.options.getHasChildrenCallback!(this.itemCtx(item))
+                : undefined,
             isSelectableMember: this.options.isSelectableMember,
             getIsSelectableCallback: this.options.getIsSelectableCallback
                 ? (node: LTreeNode<T>) => this.options.getIsSelectableCallback!(Object.assign(this.itemCtx(node.data as T), { node }))
@@ -1120,7 +1130,7 @@ export class MultiSelectEngine<T = any> {
             e.stopPropagation();
             if (this.#isOpen) {
                 this.justClosedViaClick = true;
-                this.close();
+                this.closeWith('toggle');
                 setTimeout(() => { this.justClosedViaClick = false; }, 0);
             } else {
                 this.open();
@@ -2249,7 +2259,7 @@ export class MultiSelectEngine<T = any> {
             if (this.#isOpen) {
                 // Close if already open and prevent focus from reopening
                 this.justClosedViaClick = true;
-                this.close();
+                this.closeWith('toggle');
                 setTimeout(() => {
                     this.justClosedViaClick = false;
                 }, 0);
@@ -2297,14 +2307,8 @@ export class MultiSelectEngine<T = any> {
             document.addEventListener('click', this.documentClickHandler!);
         }, 0);
 
-        // Join the single-active-overlay group (scoped by `overlay-group`, default ungrouped):
-        // when another KM overlay in the same group (or an external popover) opens, close this
-        // dropdown. open() broadcasts the reverse. The panel makes this a node of core's overlay
-        // tree: opening inside a modal / another dropdown never dismisses that ancestor, and
-        // closing the dropdown closes overlays opened from inside it.
-        this.overlayCoord = registerOverlay(() => this.close(), this.options.overlayGroup || undefined, {
-            getElement: () => this.dropdown,
-        });
+        // The dropdown's node in core's overlay tree (single-active group, nesting, outside click)
+        // is its popover's, registered on open: see createDropdownPopover().
 
         // Document-level Escape handler for closing popover when input doesn't have focus
         this.documentKeydownHandler = (e: KeyboardEvent) => {
@@ -2745,13 +2749,13 @@ export class MultiSelectEngine<T = any> {
                 } else if (this.options.isSearchEnabled && this.input.value) {
                     this.clearSearch();
                 } else {
-                    this.close();
+                    this.closeWith('escape');
                 }
                 break;
             case 'Tab':
                 // No preventDefault: focus moves on to the next / previous field as usual.
                 this.commitOnTab();
-                this.close();
+                this.closeWith('tab');
                 break;
             case 'PageUp':
                 e.preventDefault();
@@ -2970,41 +2974,7 @@ export class MultiSelectEngine<T = any> {
             }
         }
 
-        if (!this.#isOpen) return;
-
-        // Swallow the click that came from the opening gesture — a fullscreen overlay
-        // that just appeared over the pointer makes it look like an outside-click.
-        if (this.isOpeningGestureClickPending) {
-            this.isOpeningGestureClickPending = false;
-            return;
-        }
-        if (this.justOpenedViaClick) return;
-
-        // Check if any element in the event path is inside our elements
-        // Filter to only Nodes since composedPath() can include Window and other objects
-        const clickedInside = path.some(el =>
-            el instanceof Node && (
-                this.element.contains(el) ||
-                this.dropdown.contains(el) ||
-                (this.hint && this.hint.contains(el))
-            )
-        );
-
-        interactionLogger.debug(`[${this.instanceId}] handleClickOutside`, {
-            target: (e.target as HTMLElement).className,
-            targetTag: (e.target as HTMLElement).tagName,
-            clickedInside,
-            pathLength: path.length,
-            firstInPath: path[0]?.tagName,
-            elementContains: path.some(el => el instanceof Node && this.element.contains(el)),
-            dropdownContains: path.some(el => el instanceof Node && this.dropdown.contains(el)),
-            isConnected: this.dropdown.isConnected
-        });
-
-        if (!clickedInside) {
-            interactionLogger.warn(`[${this.instanceId}] Closing dropdown due to click outside`);
-            this.close();
-        }
+        // The dropdown's outside click is core's overlay tree (createDropdownPopover).
     }
 
     /**
@@ -3177,7 +3147,7 @@ export class MultiSelectEngine<T = any> {
                 if (this.focusedIndex >= 0) this.toggleOption(this.filteredOptions[this.focusedIndex]);
             },
             open: () => this.open(),
-            close: () => this.close(),
+            close: () => this.closeWith('api'),
             toggle: () => this.toggle(),
             search: (term) => this.search(term),
             clearSearch: () => this.clearSearch(),
@@ -3585,7 +3555,7 @@ export class MultiSelectEngine<T = any> {
                     const isCheckedNow = nodeCheckState(index, node, new Set(expandToAtoms(index, this.selectedValues))) === 'checked';
                     if (isCheckedNow !== isChecked) return;
                     this.toggleTreeCascade(node);
-                    if (this.options.shouldCloseOnSelect) this.close();
+                    if (this.options.shouldCloseOnSelect) this.closeWith('select');
                 });
                 return;
             }
@@ -3600,7 +3570,7 @@ export class MultiSelectEngine<T = any> {
         // confuses users (the row gives no "you'd be un-picking this" cue in single
         // mode — there's no checkbox). Just close on the confirming click.
         if (wasSelected && !this.options.isMultiple) {
-            this.close();
+            this.closeWith('select');
             return;
         }
 
@@ -3613,9 +3583,9 @@ export class MultiSelectEngine<T = any> {
             // can pick something else (single-select otherwise closes on every pick).
             if (!changed) return;
             if (!this.options.isMultiple) {
-                this.close();
+                this.closeWith('select');
             } else if (this.options.shouldCloseOnSelect) {
-                this.close();
+                this.closeWith('select');
             }
         });
     }
@@ -3765,7 +3735,7 @@ export class MultiSelectEngine<T = any> {
             }));
 
             if (newOption !== undefined && this.options.shouldCloseOnSelect) {
-                this.close();
+                this.closeWith('select');
             }
         } catch (error) {
             this.addNewPending = false;
@@ -3985,6 +3955,8 @@ export class MultiSelectEngine<T = any> {
      * before it clears.
      */
     private armClickGuard(): void {
+        // A page button calling an API method: this click is ours, not an outside click.
+        this.dropdownPopover?.claimCurrentClick();
         this.justOpenedViaClick = true;
         setTimeout(() => { this.justOpenedViaClick = false; }, 0);
     }
@@ -4024,7 +3996,10 @@ export class MultiSelectEngine<T = any> {
 
         this.#isOpen = true;
         this.element.classList.add('ms--open');
-        this.dropdown.classList.add('ms__dropdown--visible');
+        // Open unanchored (the panel shows, so the first render measures it); positionDropdown()
+        // anchors it after the render.
+        this.dropdownPopover = this.createDropdownPopover();
+        this.dropdownPopover.open();
         uiLogger.info(`[${this.instanceId}] Dropdown opened`);
 
         this.input.placeholder = this.getPlaceholderText();
@@ -4078,19 +4053,26 @@ export class MultiSelectEngine<T = any> {
         // We're now open — dismiss every other participating overlay (other multiselects,
         // datepickers, external popovers) except the ones we sit inside (the trigger's
         // open ancestors). Our own onDismiss is skipped (we're the source).
-        this.overlayCoord?.activate({ trigger: this.input });
 
         this.options.onOpen?.(this.ctx({}));
     }
 
     /** Close the dropdown (no-op if already closed). */
     close(): void {
-        uiLogger.debug(`[${this.instanceId}] close() called`, { isOpen: this.#isOpen });
+        this.closeWith('api');
+    }
+
+    /** Close the dropdown for `reason` (carried by the `close` event as `detail.reason`). */
+    private closeWith(reason: DropdownCloseReason): void {
+        uiLogger.debug(`[${this.instanceId}] close() called`, { isOpen: this.#isOpen, reason });
         if (!this.#isOpen) return;
 
         this.#isOpen = false;
         this.element.classList.remove('ms--open');
-        this.dropdown.classList.remove('ms__dropdown--visible');
+        // Hides the panel, stops positioning, leaves the overlay tree.
+        const popover = this.dropdownPopover;
+        this.dropdownPopover = null;
+        popover?.destroy();
         if (this.hint) {
             this.hint.classList.remove('ms__hint--visible');
         }
@@ -4118,10 +4100,6 @@ export class MultiSelectEngine<T = any> {
 
         this.renderBadges();
 
-        if (this.dropdownCleanup) {
-            this.dropdownCleanup();
-            this.dropdownCleanup = null;
-        }
         if (this.hintCleanup) {
             this.hintCleanup();
             this.hintCleanup = null;
@@ -4134,17 +4112,15 @@ export class MultiSelectEngine<T = any> {
         // Reset placement tracking
         this.dropdownPlacement = null;
 
-        // Release the active-overlay marker for this instance (no broadcast on close).
-        this.overlayCoord?.deactivate();
 
-        uiLogger.debug(`[${this.instanceId}] Dropdown closed`);
-        this.options.onClose?.(this.ctx({}));
+        uiLogger.debug(`[${this.instanceId}] Dropdown closed`, { reason });
+        this.options.onClose?.(this.ctx({ reason }));
     }
 
     /** Toggle the dropdown open/closed. */
     toggle(): void {
         if (this.#isOpen) {
-            this.close();
+            this.closeWith('api');
         } else {
             this.open();
         }
@@ -4159,7 +4135,7 @@ export class MultiSelectEngine<T = any> {
         if (value) {
             this.open();
         } else {
-            this.close();
+            this.closeWith('api');
         }
     }
 
@@ -4178,9 +4154,21 @@ export class MultiSelectEngine<T = any> {
         applyMaxWidth?: boolean;
         afterPosition?: () => void;
     }): () => void {
+        const handle = anchor(panel, this.inputWrapper, this.floatingPanelAnchorOptions(panel, opts));
+        return () => handle.destroy();
+    }
+
+    /** The anchor options both floating panels share (see {@link anchorFloatingPanel}). */
+    private floatingPanelAnchorOptions(panel: HTMLElement, opts: {
+        getPlacement: () => Placement | null;
+        setPlacement: (p: Placement) => void;
+        isLocked?: () => boolean;
+        applyMaxWidth?: boolean;
+        afterPosition?: () => void;
+    }): AnchorOptions {
         const locked = opts.isLocked?.() ?? true;
 
-        const handle = anchor(panel, this.inputWrapper, {
+        return {
             strategy: 'fixed',
             placement: 'bottom-start',
             offset: 4,
@@ -4233,9 +4221,7 @@ export class MultiSelectEngine<T = any> {
                 }
                 opts.afterPosition?.();
             }
-        });
-
-        return () => handle.destroy();
+        };
     }
 
     /**
@@ -4307,31 +4293,64 @@ export class MultiSelectEngine<T = any> {
      * default `lock-placement`) freezes to `bottom`. When results arrive the panel
      * grows to full height, but the frozen placement pins it below the input, so it
      * overflows the viewport bottom instead of flipping above into the free space.
-     * `renderDropdown()` only rewrites the inner HTML; it never re-anchors. Tearing
-     * down and recreating the anchor re-runs core's flip-on-first-compute against the
-     * new height (picking the side that fits), then re-freezes — so `lock-placement`
+     * `renderDropdown()` only rewrites the inner HTML; it never re-anchors. The popover's
+     * `reanchor()` re-runs core's flip-on-first-compute against the new height (picking the
+     * side that fits), then re-freezes — so `lock-placement`
      * still holds for the common case (panels that open already-populated, e.g. local
      * filtering, never hit this path). No-op unless a floating dropdown is open.
      */
     private repositionDropdown(): void {
         if (!this.#isOpen || this.presentationMode === 'fullscreen') return;
-        if (this.dropdownCleanup) { this.dropdownCleanup(); this.dropdownCleanup = null; }
         this.dropdownPlacement = null;
-        this.positionDropdown();
+        this.dropdownPopover?.reanchor();
     }
 
     private positionDropdown(): void {
         // The fullscreen overlay is CSS-positioned (fixed, inset:0) — never anchored.
         if (this.presentationMode === 'fullscreen') return;
-        this.dropdownCleanup = this.anchorFloatingPanel(this.dropdown, {
-            getPlacement: () => this.dropdownPlacement,
-            setPlacement: (p) => {
-                this.dropdownPlacement = p;
-                uiLogger.debug(`[${this.instanceId}] Locked dropdown placement:`, p);
+        this.dropdownPopover?.setAnchored(true);
+    }
+
+    /**
+     * The dropdown as a core popover. Created per open (its options — lock placement,
+     * overlay group — are read once, like the anchor was), opened unanchored; positionDropdown()
+     * anchors it after the first render.
+     */
+    private createDropdownPopover(): PopoverHandle {
+        const locked = !!this.options.shouldLockPlacement;
+        return createPopover({
+            reference: this.inputWrapper,
+            panel: this.dropdown,
+            shouldKeepMounted: true,
+            visibleClass: 'ms__dropdown--visible',
+            isAnchored: false,
+            inheritThemeFrom: false, // the panel lives in our shadow root (standalone: no copy before either)
+            overlayGroup: this.options.overlayGroup || undefined,
+            returnFocusTo: this.input,
+            // Core's overlay tree closes it on a click outside the panel, the host and the hint,
+            // decided once the click has ended (a page button driving the API claims its click
+            // through armClickGuard()).
+            shouldCloseOnOutsideClick: true,
+            getInsideElements: () => [this.options.hostElement ?? this.element, this.element, this.hint],
+            // Like a native select: a page scroll (or a scroller around the control) closes the
+            // floating dropdown; asked per scroll, so `close-on-scroll` and the presentation are
+            // read live. The fullscreen sheet locks the page and is never closed this way.
+            shouldCloseOnScroll: () => this.presentationMode === 'floating' && this.options.shouldCloseOnScroll !== false,
+            onClose: (reason: PopoverCloseReason) => {
+                // The overlay tree closed it (another overlay opened, its parent closed): close
+                // the component too. 'api' is our own close() — already running.
+                if (reason !== 'api') this.closeWith(reason);
             },
-            isLocked: () => !!this.options.shouldLockPlacement,
-            applyMaxWidth: true,
-            afterPosition: () => { if (this.hint && this.#isOpen) this.positionHint(); }
+            ...this.floatingPanelAnchorOptions(this.dropdown, {
+                getPlacement: () => this.dropdownPlacement,
+                setPlacement: (p) => {
+                    this.dropdownPlacement = p;
+                    uiLogger.debug(`[${this.instanceId}] Locked dropdown placement:`, p);
+                },
+                isLocked: () => locked,
+                applyMaxWidth: true,
+                afterPosition: () => { if (this.hint && this.#isOpen) this.positionHint(); }
+            }),
         });
     }
 
@@ -4354,7 +4373,7 @@ export class MultiSelectEngine<T = any> {
                 // Drop the floating anchor + hint, stand up the overlay chrome. Re-render
                 // so the list rebuilds at fullscreen sizing (e.g. virtual rows switch from
                 // a fixed maxHeight to flex-fill) and measures the full-height container.
-                if (this.dropdownCleanup) { this.dropdownCleanup(); this.dropdownCleanup = null; }
+                this.dropdownPopover?.setAnchored(false); // still open, now CSS-placed
                 if (this.hintCleanup) { this.hintCleanup(); this.hintCleanup = null; }
                 if (this.hint) this.hint.classList.remove('ms__hint--visible');
                 this.dropdownPlacement = null;
@@ -4652,7 +4671,7 @@ export class MultiSelectEngine<T = any> {
         window.removeEventListener('popstate', this.onOverlayPopstate);
         // Close whichever fullscreen sheet pushed the entry — the options dropdown or the
         // selected-items popover (mutually exclusive; showPopover() closes the dropdown first).
-        if (this.#isOpen) this.close();
+        if (this.#isOpen) this.closeWith('back');
         else if (this.showSelectedPopover) this.hideSelectedPopover();
     }
 
@@ -4742,7 +4761,7 @@ export class MultiSelectEngine<T = any> {
         close.setAttribute('aria-label', this.resolveLabel('close'));
         // The ✕ glyph is drawn via CSS (::before mask icon), shared with the popover
         // close so both overlays have the same close button.
-        close.addEventListener('click', () => this.close());
+        close.addEventListener('click', () => this.closeWith('close-button'));
         header.appendChild(close);
 
         // Navigate mode keeps the whole list visible and jumps focus between matches.
@@ -5020,7 +5039,7 @@ export class MultiSelectEngine<T = any> {
         }
 
         if (this.#isOpen) {
-            this.close();
+            this.closeWith('overlay');
         }
 
         // Drop any lingering message — opening the popover changes the on-screen state
@@ -5521,7 +5540,7 @@ export class MultiSelectEngine<T = any> {
         }
         for (const input of this.hiddenInputs) input.disabled = isDisabled;
         if (isDisabled || isReadonly) {
-            if (this.#isOpen) this.close();
+            if (this.#isOpen) this.closeWith('disabled');
             if (isDisabled && this.showSelectedPopover) this.hideSelectedPopover();
         }
         this.updateClearButton();
@@ -5555,6 +5574,8 @@ export class MultiSelectEngine<T = any> {
         const treeConfigChanged = 'pathMember' in partial || 'getPathCallback' in partial
             || 'parentPathMember' in partial || 'levelMember' in partial
             || 'hasChildrenMember' in partial || 'treePathSeparator' in partial
+            || 'getParentPathCallback' in partial || 'getLevelCallback' in partial
+            || 'getHasChildrenCallback' in partial
             || 'isTreeEnabled' in partial || 'isSelectableMember' in partial
             || 'getIsSelectableCallback' in partial;
 
@@ -6034,7 +6055,7 @@ export class MultiSelectEngine<T = any> {
      * panel in BOTH presentations — anchored under the control when floating, pinned to the
      * bottom of the viewport (over the overlay) when fullscreen.
      *
-     * Content is a string (plain text) or an HTMLElement (rich markup). `opts.type`
+     * Content is a string (plain text) or an HTMLElement (rich markup). `opts.variant`
      * (info | warning | error | success) picks the tone; `opts.autoHideMs` sets auto-dismiss
      * (0 = sticky). Tapping the message dismisses it; a `[data-action]` element inside fires the
      * `action` event first (`source: 'message'`). Only one shows at a time — a new call replaces
@@ -6043,12 +6064,12 @@ export class MultiSelectEngine<T = any> {
     public showMessage(content: string | HTMLElement, opts?: MessageOptions): void {
         this.hideMessage();
 
-        const type = opts?.type ?? 'info';
+        const variant = opts?.variant ?? 'info';
         const duration = opts?.autoHideMs ?? 3000;
-        const urgent = type === 'error' || type === 'warning';
+        const urgent = variant === 'danger' || variant === 'warning';
 
         const el = document.createElement('div');
-        el.className = `ms__message ms__message--${type}`;
+        el.className = `ms__message ms__message--${variant}`;
         // Announce to assistive tech; urgent tones interrupt, others are polite.
         el.setAttribute('role', urgent ? 'alert' : 'status');
         el.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
@@ -6191,7 +6212,8 @@ export class MultiSelectEngine<T = any> {
 
         this.abortInFlightSearch();
 
-        if (this.dropdownCleanup) this.dropdownCleanup();
+        this.dropdownPopover?.destroy();
+        this.dropdownPopover = null;
         if (this.hintCleanup) this.hintCleanup();
         if (this.selectedPopoverCleanup) this.selectedPopoverCleanup();
 
@@ -6217,9 +6239,6 @@ export class MultiSelectEngine<T = any> {
             this.documentKeydownHandler = null;
         }
 
-        // Leave the single-active-overlay group.
-        this.overlayCoord?.destroy();
-        this.overlayCoord = null;
 
         // Clean up virtual scroll
         if (this.virtualScroll) {
@@ -6241,7 +6260,7 @@ export class MultiSelectEngine<T = any> {
         this.element.classList.remove('ms', 'ms--open', 'ms--no-checkboxes');
 
         // Torn down while open (reinit / DOM move / destroy()): pair the `open` with a `close`.
-        if (wasOpen) this.options.onClose?.(this.ctx({}));
+        if (wasOpen) this.options.onClose?.(this.ctx({ reason: 'destroy' as const }));
 
         initLogger.info(`[${this.instanceId}] Component destroyed`);
     }

@@ -13,7 +13,9 @@
                 One picker, many behaviors. Flip between multi- and single-select, add the inline
                 clear (✕) and the count badge, turn search off (<code>enable-search="false"</code>
                 makes it a plain picker with keyboard-only navigation), toggle
-                <code>close-on-select</code>, and switch text direction (LTR / RTL). PHP is a disabled
+                <code>close-on-select</code> or <code>close-on-scroll</code> (on by default: like a native
+                select, scrolling the page closes the open dropdown; untick it and the dropdown stays open and
+                follows the field), and switch text direction (LTR / RTL). PHP is a disabled
                 row: <code>disabled: true</code> on the option object (the default
                 <code>is-disabled-member</code>) keeps it visible but not pickable. BU02 and BU03 have
                 disabled rows too.
@@ -24,6 +26,7 @@
                 <label><input type="checkbox" id="sel-clear"> <code>show-clear</code> (✕)</label>
                 <label><input type="checkbox" id="sel-counter"> <code>show-counter</code></label>
                 <label><input type="checkbox" id="sel-close"> <code>close-on-select</code></label>
+                <label title="Scrolling the page (or a scroll container around the picker) closes the open dropdown, like a native select. A scroll inside the dropdown never does."><input type="checkbox" id="sel-close-scroll" checked> <code>close-on-scroll</code></label>
                 <label><input type="checkbox" id="sel-search" checked> <code>enable-search</code></label>
             </div>
             <div class="controls">
@@ -690,6 +693,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 boolAttr(exSel, 'show-counter', e.target.checked));
             document.getElementById('sel-close').addEventListener('change', (e) =>
                 e.target.checked ? exSel.setAttribute('close-on-select', 'true') : exSel.removeAttribute('close-on-select'));
+            document.getElementById('sel-close-scroll').addEventListener('change', (e) =>
+                e.target.checked ? exSel.removeAttribute('close-on-scroll') : exSel.setAttribute('close-on-scroll', 'false'));
             document.getElementById('sel-search').addEventListener('change', (e) =>
                 e.target.checked ? exSel.removeAttribute('enable-search') : exSel.setAttribute('enable-search', 'false'));
             document.querySelectorAll('input[name="sel-dir"]').forEach((r) =>

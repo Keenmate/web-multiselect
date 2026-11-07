@@ -145,6 +145,7 @@ multiselect.setSelected(['js', 'ts']);
 | `checkbox-align` | `'top' \| 'center' \| 'bottom'` | `'center'` | Vertical alignment of an option's checkbox |
 | `reserve-icon-slot` | `boolean` | `false` | Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows) |
 | `close-on-select` | `boolean` | `false` | Close dropdown after selecting |
+| `close-on-scroll` | `boolean` | `true` | Close the floating dropdown when the page (or a scroll container around the control) scrolls, like a native select; a scroll inside the dropdown never closes it |
 | `dropdown-min-width` | `string` | - | Min width for dropdown (e.g., `'20rem'`) |
 | `dropdown-max-width` | `string` | - | Max width for dropdown (any CSS length) |
 | `dropdown-width` | `string` | - | Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable |
@@ -201,9 +202,9 @@ multiselect.setSelected(['js', 'ts']);
 | `is-disabled-member` | `string` | `'disabled'` | Property name for disabled state extraction. `getIsDisabledCallback` overrides it |
 | `full-title-member` | `string` | - | Property name for a full/long title (shown on badges with `show-badge-full-title`) |
 | `path-member` | `string` | - | Tree mode: property holding a node's materialized path (e.g. `1.1.2`). Setting a path source enables tree mode |
-| `parent-path-member` | `string` | - | Tree mode: property holding a node's parent path |
-| `level-member` | `string` | - | Tree mode: property holding a node's depth level |
-| `has-children-member` | `string` | - | Tree mode: property flagging that a node has children |
+| `parent-path-member` | `string` | - | Tree mode: property holding a node's parent path. `getParentPathCallback` overrides it |
+| `level-member` | `string` | - | Tree mode: property holding a node's depth level. `getLevelCallback` overrides it |
+| `has-children-member` | `string` | - | Tree mode: property flagging that a node has children. `getHasChildrenCallback` overrides it |
 | `is-selectable-member` | `string` | - | Tree mode: property marking whether a node can be selected |
 | `tree-path-separator` | `string` | `'.'` | Tree mode: separator between segments of a materialized path |
 | `checkbox-mode` | `'independent' \| 'cascade'` | `'cascade'` | Tree checkbox interaction. `cascade`: checks a node's whole subtree, tristate boxes on branches. `independent`: toggles only the clicked node. Tree + multiple only |
@@ -349,7 +350,7 @@ multiselect.beforeSelectCallback = ({ option, selectedOptions }) => {
 multiselect.beforeDeselectCallback = ({ option, controller }) => {
   // Example: "item1" is required â€” can't be removed once chosen
   if (option.value === 'item1') {
-    controller.showMessage('Item 1 is required', { type: 'warning' });
+    controller.showMessage('Item 1 is required', { variant: 'warning' });
     return false; // blocked + message shown
   }
 };
@@ -497,6 +498,9 @@ multiselect.getFullTitleCallback = ({ option }) => `${option.name} (${option.ema
 
 // Tree of options (alternative to path-member etc.)
 multiselect.getPathCallback = ({ option }) => option.path;            // e.g. "1.2.3"; enables tree mode
+multiselect.getParentPathCallback = ({ option }) => option.parent;    // otherwise derived from the path
+multiselect.getLevelCallback = ({ option }) => option.depth;          // otherwise derived from the path
+multiselect.getHasChildrenCallback = ({ option }) => option.isFolder; // otherwise derived from the tree
 multiselect.getIsSelectableCallback = ({ option, node }) => !option.isFolder; // node: the built tree node
 multiselect.isTreeEnabled = true; // tristate: true / false force tree mode; null (default) = auto when a path source is set
 
@@ -675,7 +679,7 @@ You do **not** need to await between a property write and an imperative method â
 | `scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition })` | Scroll the open dropdown to an index in the filtered list. Returns `Promise<boolean>` (`true` once scrolled, `false` if closed or out of range). `el.open(); el.scrollToIndex(i)` works |
 | `scrollToValue(value: string \| number, opts?: { block?: ScrollLogicalPosition })` | Scroll to the option with this value. Resolves `false` if it's not in the visible list (filtered out, or under a collapsed tree branch) â€” call `clearSearch()` first |
 | `scrollToGroup(name: string, opts?: { block?: ScrollLogicalPosition })` | Scroll to a group header (or the group's first option under virtual scroll). Resolves `false` in tree mode or if the group is empty |
-| `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `type` (`'info' \| 'warning' \| 'error' \| 'success'`, default `'info'`), `autoHideMs` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
+| `showMessage(content: string \| HTMLElement, opts?: MessageOptions)` | Show a transient message ("toast") on top of the component, visible even in the fullscreen overlay. `opts`: `variant` (`'info' \| 'warning' \| 'danger' \| 'success'`, default `'info'`), `autoHideMs` (ms, default `3000`, `0` = sticky), `placement` (floating-ui placement, default `'bottom'`; ignored in fullscreen) |
 | `hideMessage()` | Dismiss the message shown by `showMessage()` |
 | `isMessageShown` | Property (read-only): whether a `showMessage()` message is shown (also on the controller) |
 | `whenSettled()` | Returns a `Promise<void>` that resolves once pending (coalesced) property writes have re-rendered â€” see below |
@@ -696,7 +700,7 @@ You do **not** need to await between a property write and an imperative method â
 | Selection | `setSelected(values, { notify })`, `selectAll()`, `clearSelection()`, `toggleValue(v)`, `selectValue(v)`, `deselectValue(v)`, `toggleFocused()` |
 | Dropdown | `open()`, `close()`, `toggle()`, `search(term)`, `clearSearch()`, `scrollToValue(v)`, `scrollToGroup(g)`, `scrollToIndex(i)` (return `Promise<boolean>`), `refresh()` |
 | Keyboard focus | `focusNext()`, `focusPrevious()`, `focusFirst()`, `focusLast()`, `focusPageUp()`, `focusPageDown()`, `focusNextMatch()`, `focusPreviousMatch()`, `focusIndex(i)` |
-| Feedback | `showMessage(content, { type, autoHideMs, placement })`, `hideMessage()`, `isMessageShown` |
+| Feedback | `showMessage(content, { variant, autoHideMs, placement })`, `hideMessage()`, `isMessageShown` |
 
 ```javascript
 document.querySelector('web-multiselect').controller.selectAll();
