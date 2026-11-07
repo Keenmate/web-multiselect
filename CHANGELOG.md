@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc03] - 2026-11-07
+
+### Internal
+- `@keenmate/web-components-devkit` ^1.0.0-rc10 → ^1.0.0-rc11: every example page now ends with the devkit
+  footer (Keenmate | GitHub | devkit version), as the index did. No generated file changes.
+
 ## [3.0.0-rc02] - 2026-11-04 [PUBLISHED]
 
 ### Changed — BREAKING (core rc18)
