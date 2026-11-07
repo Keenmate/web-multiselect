@@ -101,7 +101,7 @@ test('open / close events (+ onOpen / onClose twins) fire once per transition', 
 test('showMessage / hideMessage / isMessageShown (element + controller)', async ({ page }) => {
     const ms = page.locator('#ms');
     expect(await ms.evaluate((el: any) => el.isMessageShown)).toBe(false);
-    await ms.evaluate((el: any) => el.showMessage('Heads up', { type: 'warning', autoHideMs: 0 }));
+    await ms.evaluate((el: any) => el.showMessage('Heads up', { variant: 'warning', autoHideMs: 0 }));
     expect(await ms.evaluate((el: any) => [el.isMessageShown, el.controller.isMessageShown])).toEqual([true, true]);
     await ms.evaluate((el: any) => el.controller.hideMessage());
     expect(await ms.evaluate((el: any) => el.isMessageShown)).toBe(false);

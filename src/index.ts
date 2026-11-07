@@ -81,7 +81,7 @@ export type {
   SearchEntry,
   SearchCallbackContext,
   ValueFormat,
-  MessageType,
+  MessageVariant,
   MessageOptions,
   MultiSelectContext,
   ItemContext,
@@ -116,6 +116,7 @@ export type {
   ReadyEventDetail,
   OpenEventDetail,
   CloseEventDetail,
+  DropdownCloseReason,
 } from './types';
 
 // Export logging utilities for runtime control

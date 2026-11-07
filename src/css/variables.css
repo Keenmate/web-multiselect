@@ -53,6 +53,13 @@
      Custom: Set --base-rem (or --ms-rem for this component only) to scale all sizes */
   --ms-rem: var(--base-rem, 10px);
 
+  /* Unitless font / indent steps from the base scale (× a rem). Rules outside this file read
+     these, never --base-* directly (C-BV-9), so the base layer has one entry point. */
+  --ms-font-scale-xs: var(--base-font-size-xs, 1.2);
+  --ms-font-scale-sm: var(--base-font-size-sm, 1.4);
+  --ms-font-scale-base: var(--base-font-size-base, 1.6);
+  --ms-tree-indent-scale: var(--base-tree-indent, 1.6);
+
   /* ==========================================================================
      FONT FAMILY (set at :host so all shadow DOM content inherits)
      ========================================================================== */
@@ -836,8 +843,8 @@
   --ms-message-info-color: var(--ms-tooltip-text-color);
   --ms-message-warning-bg: var(--base-warning-color, #f59e0b);
   --ms-message-warning-color: var(--base-on-warning-text-color, color(from color(from var(--ms-message-warning-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
-  --ms-message-error-bg: var(--base-danger-color, #dc2626);
-  --ms-message-error-color: var(--base-on-danger-text-color, color(from color(from var(--ms-message-error-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
+  --ms-message-danger-bg: var(--base-danger-color, #dc2626);
+  --ms-message-danger-color: var(--base-on-danger-text-color, color(from color(from var(--ms-message-danger-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
   --ms-message-success-bg: var(--base-success-color, #10b981);
   --ms-message-success-color: var(--base-on-success-text-color, color(from color(from var(--ms-message-success-bg) srgb calc(0.21 * r * r * (0.4 + r * (0.82 - 0.22 * r)) + 0.72 * g * g * (0.4 + g * (0.82 - 0.22 * g)) + 0.07 * b * b * (0.4 + b * (0.82 - 0.22 * b))) 0 0) srgb clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1) clamp(0, (0.34 - r) * 1e9, 1)));
 

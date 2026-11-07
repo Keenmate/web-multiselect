@@ -184,6 +184,12 @@
                     <td>Close dropdown after selecting an option.</td>
                 </tr>
                 <tr>
+                    <td><code>close-on-scroll</code></td>
+                    <td class="type">boolean</td>
+                    <td class="default">true</td>
+                    <td>Close the floating dropdown when the page (or a scroll container around the control) scrolls, like a native select. A scroll inside the dropdown never closes it; the fullscreen sheet is not affected.</td>
+                </tr>
+                <tr>
                     <td><code>lock-placement</code></td>
                     <td class="type">boolean</td>
                     <td class="default">true</td>
@@ -297,7 +303,7 @@
                 <tr>
                     <td><code>beforeSelectCallback</code></td>
                     <td class="type">(ctx: { option, selectedOptions, selectedValues, source }) =&gt; false | void | Promise&lt;false | void&gt;</td>
-                    <td>Interceptor: runs before an interactive selection. Return <code>false</code> to veto; nothing to allow. No event fires on a veto; to explain it call <code>ctx.controller.showMessage(text, { type: 'warning' })</code> (a returned string no longer vetoes). Bulk gestures (Select-All, group checkbox, …) run it per option (<code>ctx.source</code>); <code>setSelected</code> and form reset bypass it.</td>
+                    <td>Interceptor: runs before an interactive selection. Return <code>false</code> to veto; nothing to allow. No event fires on a veto; to explain it call <code>ctx.controller.showMessage(text, { variant: 'warning' })</code> (a returned string no longer vetoes). Bulk gestures (Select-All, group checkbox, …) run it per option (<code>ctx.source</code>); <code>setSelected</code> and form reset bypass it.</td>
                 </tr>
                 <tr>
                     <td><code>beforeDeselectCallback</code></td>

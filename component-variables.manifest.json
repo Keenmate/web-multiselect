@@ -441,6 +441,26 @@
   ],
   "componentVariables": [
     {
+      "name": "ms-font-scale-xs",
+      "category": "sizing",
+      "usage": "Unitless xs font step (default var(--base-font-size-xs, 1.2)); × a rem"
+    },
+    {
+      "name": "ms-font-scale-sm",
+      "category": "sizing",
+      "usage": "Unitless sm font step (default var(--base-font-size-sm, 1.4)); × a rem"
+    },
+    {
+      "name": "ms-font-scale-base",
+      "category": "sizing",
+      "usage": "Unitless base font step (default var(--base-font-size-base, 1.6)); × a rem"
+    },
+    {
+      "name": "ms-tree-indent-scale",
+      "category": "sizing",
+      "usage": "Unitless per-level tree indent step (default var(--base-tree-indent, 1.6)); × a rem"
+    },
+    {
       "name": "ms-rem",
       "category": "sizing",
       "usage": "Base sizing unit (default var(--base-rem, 10px))"
@@ -2251,14 +2271,14 @@
       "usage": "Message toast text color (defaults to the info variant)"
     },
     {
-      "name": "ms-message-error-bg",
+      "name": "ms-message-danger-bg",
       "category": "message",
-      "usage": "Error message toast background"
+      "usage": "Danger message toast background"
     },
     {
-      "name": "ms-message-error-color",
+      "name": "ms-message-danger-color",
       "category": "message",
-      "usage": "Error message toast text color"
+      "usage": "Danger message toast text color"
     },
     {
       "name": "ms-message-font-size",

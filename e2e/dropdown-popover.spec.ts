@@ -55,3 +55,86 @@ test('fullscreen ↔ floating while open: un-anchoring hands the panel back to C
     expect(Math.abs(panel.y - (input.y + input.height)) < 12 || panel.y + panel.height <= input.y + 1).toBe(true);
     expect((await inline()).visibility).toBe('');
 });
+
+test.describe('close-on-scroll (default true, like a native select)', () => {
+    async function openTallPage(page: import('@playwright/test').Page, attrs = '') {
+        await page.setViewportSize({ width: 1200, height: 700 });
+        await page.evaluate((extra) => {
+            document.body.style.paddingBottom = '2000px';
+            const box = document.createElement('div');
+            box.innerHTML = `<web-multiselect id="scroll-picker" ${extra}></web-multiselect>
+                <div id="other-scroller" style="height: 80px; overflow: auto"><div style="height: 400px">unrelated</div></div>`;
+            document.body.prepend(box);
+            const ms = box.querySelector('web-multiselect') as any;
+            ms.options = Array.from({ length: 40 }, (_, i) => ({ value: `v${i}`, label: `Option ${i}` }));
+        }, attrs);
+        const ms = page.locator('#scroll-picker');
+        await ms.locator('.ms__input').click();
+        await page.waitForTimeout(200);
+        return ms;
+    }
+    const isOpen = (ms: import('@playwright/test').Locator) => ms.evaluate((h: any) => h.isOpen);
+
+    test('a page scroll closes the floating dropdown', async ({ page }) => {
+        const ms = await openTallPage(page);
+        expect(await isOpen(ms)).toBe(true);
+        await page.evaluate(() => window.scrollBy(0, 200));
+        await expect.poll(() => isOpen(ms)).toBe(false);
+    });
+
+    test('close-on-scroll="false" keeps it open and following the field', async ({ page }) => {
+        const ms = await openTallPage(page, 'close-on-scroll="false"');
+        await page.evaluate(() => window.scrollBy(0, 200));
+        await page.waitForTimeout(300);
+        expect(await isOpen(ms)).toBe(true);
+    });
+
+    test('scrolling the list inside the dropdown, or an unrelated scroller, does not close it', async ({ page }) => {
+        const ms = await openTallPage(page);
+        // The element in the dropdown that really scrolls (it must move, or the test proves nothing).
+        const listScrolled = await ms.evaluate((h: any) => {
+            const all = [h.shadowRoot.querySelector('.ms__dropdown'), ...h.shadowRoot.querySelectorAll('.ms__dropdown *')];
+            const list = all.find((el: Element) => el.scrollHeight > el.clientHeight + 10 && getComputedStyle(el).overflowY !== 'visible');
+            list.scrollTop = 120;
+            return list.scrollTop;
+        });
+        expect(listScrolled).toBeGreaterThan(0);
+        const otherScrolled = await page.locator('#other-scroller').evaluate((el) => { el.scrollTop = 100; return el.scrollTop; });
+        expect(otherScrolled).toBeGreaterThan(0);
+        await page.waitForTimeout(300);
+        expect(await isOpen(ms)).toBe(true);
+    });
+});
+
+test('the close event says why: detail.reason', async ({ page }) => {
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await page.evaluate(() => {
+        document.body.style.paddingBottom = '2000px';
+        const box = document.createElement('div');
+        box.innerHTML = '<web-multiselect id="reason-picker" multiple="false"></web-multiselect>';
+        document.body.prepend(box);
+        const ms = box.querySelector('web-multiselect') as any;
+        ms.options = Array.from({ length: 10 }, (_, i) => ({ value: `v${i}`, label: `Option ${i}` }));
+        const reasons: string[] = ((window as any).__reasons = []);
+        ms.addEventListener('close', (e: CustomEvent) => reasons.push(e.detail.reason));
+    });
+    const ms = page.locator('#reason-picker');
+    const reasons = () => page.evaluate(() => (window as any).__reasons);
+
+    await ms.locator('.ms__input').click();
+    await page.keyboard.press('Escape');
+    await expect.poll(reasons).toEqual(['escape']);
+
+    await ms.locator('.ms__input').click();
+    await ms.locator('.ms__option').nth(2).click(); // single-select: a pick closes it
+    await expect.poll(reasons).toEqual(['escape', 'select']);
+
+    await ms.locator('.ms__input').click();
+    await page.waitForTimeout(150);
+    await page.evaluate(() => window.scrollBy(0, 200));
+    await expect.poll(reasons).toEqual(['escape', 'select', 'scroll']);
+
+    await page.evaluate(() => { window.scrollTo(0, 0); (document.getElementById('reason-picker') as any).open(); });
+    await page.evaluate(() => (document.getElementById('reason-picker') as any).close());
+    await expect.poll(reasons).toEqual(['escape', 'select', 'scroll', 'api']);
+});
