@@ -50,7 +50,7 @@ export type {
   EnvironmentSnapshot,
   DeviceClass,
   Orientation,
-  PointerType,
+  PointerAccuracy,
   OS,
   BreakpointMap,
   Presentation,
