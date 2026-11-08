@@ -680,7 +680,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     cfg.onClose = (detail: CloseEventDetail<T>) => this.emit('close', detail);
     cfg.onValueFormatError = (detail: ValueFormatErrorEventDetail<T>) => this.emit('value-format-error', detail);
     // A throwing getValueFormatCallback → customError validity (core SPEC §6.6); null clears it.
-    cfg.formatValidityCallback = (failure, message) => this.setFormatError(failure ? failure.error ?? message : null, message);
+    cfg.onFormatValidity = (failure, message) => this.setFormatError(failure ? failure.error ?? message : null, message);
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.

@@ -782,7 +782,7 @@ export interface MultiSelectConfig<T = any> {
      * (`null` = formatted fine; boxed so a thrown `null` still counts) and the `valueFormatError`
      * label; the element maps it onto its form validity (core `setFormatError`).
      */
-    formatValidityCallback?: ((failure: { error: unknown } | null, message?: string) => void) | null;
+    onFormatValidity?: ((failure: { error: unknown } | null, message?: string) => void) | null;
 
     // ========================================================================
     // BOOLEAN OPTIONS (internal names with 'is' prefix)

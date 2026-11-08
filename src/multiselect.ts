@@ -5377,7 +5377,7 @@ export class MultiSelectEngine<T = any> {
         this.hiddenInputs = [];
 
         if (!this.options.name) {
-            this.options.formatValidityCallback?.(null);
+            this.options.onFormatValidity?.(null);
             return;
         }
 
@@ -5413,10 +5413,10 @@ export class MultiSelectEngine<T = any> {
             // A throwing getValueFormatCallback: '' was written, the host turns invalid (the form
             // won't submit unless `novalidate`), and `value-format-error` reports it.
             dataLogger.error(`[${this.instanceId}] getValueFormatCallback threw — submitting '':`, failure.error);
-            this.options.formatValidityCallback?.(failure, this.resolveLabel('valueFormatError'));
+            this.options.onFormatValidity?.(failure, this.resolveLabel('valueFormatError'));
             this.options.onValueFormatError?.(this.ctx({ error: failure.error, value: failure.values }));
         } else {
-            this.options.formatValidityCallback?.(null);
+            this.options.onFormatValidity?.(null);
         }
     }
 
