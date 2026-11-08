@@ -155,13 +155,13 @@
                     const values = (options) => options.map(([value]) => value);
                     languages.actionButtons = [
                         { id: 'popular', text: 'Select Popular', tooltip: 'Select JS, Python, and TypeScript',
-                          onClick: ({ controller }) => controller.setSelected(['js', 'py', 'ts']) },
+                          onClick: ({ controller }) => controller.setSelected(['js', 'py', 'ts'], { notify: true }) },
                         { id: 'invert', text: 'Invert Selection', tooltip: 'Invert current selection',
                           onClick: ({ controller, options, selectedValues }) =>
-                              controller.setSelected(values(options).filter((v) => !selectedValues.includes(v))) },
+                              controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)), { notify: true }) },
                         { id: 'random', text: 'Select Random', tooltip: 'Select 2 random languages',
                           onClick: ({ controller, options }) =>
-                              controller.setSelected(values([...options].sort(() => Math.random() - 0.5).slice(0, 2))) },
+                              controller.setSelected(values([...options].sort(() => Math.random() - 0.5).slice(0, 2)), { notify: true }) },
                         { action: 'clear-selection', text: 'Clear All' }
                     ];
 
@@ -294,11 +294,11 @@
                     document.getElementById('ab-adaptive').options = items;
 
                     const values = (options) => options.map(([value]) => value);
-                    const pick = (options) => ({ controller }) => controller.setSelected(values(options));
+                    const pick = (options) => ({ controller }) => controller.setSelected(values(options), { notify: true });
                     const pickRandom = (n) => ({ controller }) =>
-                        controller.setSelected(values([...items].sort(() => Math.random() - 0.5).slice(0, n)));
+                        controller.setSelected(values([...items].sort(() => Math.random() - 0.5).slice(0, n)), { notify: true });
                     const invert = ({ controller, options, selectedValues }) =>
-                        controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)));
+                        controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)), { notify: true });
                     const half = Math.ceil(items.length / 2);
 
                     const desktopActions = [
@@ -438,9 +438,9 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             // Shared helpers — `ctx` is the action-item selection snapshot.
             const values = (opts) => opts.map((o) => o[0]);
             const invert = ({ controller, options, selectedValues }) =>
-                controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)));
+                controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)), { notify: true });
             const pickRandom = (controller, opts, n) =>
-                controller.setSelected(values([...opts].sort(() => Math.random() - 0.5).slice(0, n)));
+                controller.setSelected(values([...opts].sort(() => Math.random() - 0.5).slice(0, n)), { notify: true });
 
             // ── AB02 · Dynamic callbacks ─────────────────────────────────
             const abDyn = document.getElementById('ab-dynamic');
@@ -464,7 +464,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                       getIsDisabledCallback: ({ selectedCount }) => selectedCount === 0 },
                     { id: 'first-3', text: 'Select First 3',
                       getIsDisabledCallback: ({ optionCount }) => optionCount < 3,
-                      onClick: ({ controller, options }) => controller.setSelected(values(options.slice(0, 3))) }
+                      onClick: ({ controller, options }) => controller.setSelected(values(options.slice(0, 3)), { notify: true }) }
                 ],
                 text: () => [
                     { action: 'select-all', text: 'Select All',
@@ -473,7 +473,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                       getTextCallback: ({ selectedCount: c }) => c > 0 ? `Clear ${c} Selected` : 'Clear All' },
                     { id: 'toggle', text: 'Toggle',
                       getTextCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount ? 'Deselect All' : 'Select All',
-                      onClick: ({ controller, selectedCount, optionCount }) => selectedCount === optionCount ? controller.setSelected([]) : controller.selectAll() }
+                      onClick: ({ controller, selectedCount, optionCount }) => selectedCount === optionCount ? controller.setSelected([], { notify: true }) : controller.selectAll() }
                 ],
                 class: () => [
                     { action: 'select-all', text: 'Select All', cssClass: 'default-class',
@@ -526,7 +526,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                   getTextCallback: ({ selectedCount, optionCount }) => `${selectedCount}/${optionCount}`,
                   getIsToggledCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount,
                   getTooltipCallback: ({ selectedCount, optionCount }) => selectedCount === optionCount ? 'Deselect all' : 'Select all',
-                  onClick: ({ controller, selectedCount, optionCount }) => selectedCount === optionCount ? controller.setSelected([]) : controller.selectAll() }
+                  onClick: ({ controller, selectedCount, optionCount }) => selectedCount === optionCount ? controller.setSelected([], { notify: true }) : controller.selectAll() }
             ];
             const glyphIcons = { check: '✔', x: '✕', shuffle: '🔀', refresh: '⇄', toggleOn: '◉', toggleOff: '○' };
             // Font Awesome 6 Free (solid) code points: check-double, xmark, shuffle, rotate, toggle-on, toggle-off.
@@ -554,7 +554,7 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             const twoRowButtons = [
                 { action: 'select-all', text: 'Select All', row: 1 },
                 { action: 'clear-selection', text: 'Clear All', row: 1 },
-                { id: 'first-3', text: 'First 3', row: 2, onClick: ({ controller }) => controller.setSelected(values(itemOptions.slice(0, 3))) },
+                { id: 'first-3', text: 'First 3', row: 2, onClick: ({ controller }) => controller.setSelected(values(itemOptions.slice(0, 3)), { notify: true }) },
                 { id: 'invert', text: 'Invert', row: 2, onClick: invert }
             ];
             const oneRowButtons = ['select-all', 'clear-selection'];   // string shorthand (text from labels)

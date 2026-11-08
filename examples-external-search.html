@@ -26,8 +26,8 @@
                 <code>Charset.Normalize</code> folds accents and <code>tokenize: "full"</code> matches partial tokens
                 anywhere, with results in relevance order. Try <code>zurich</code> → <em>Zürich</em>,
                 <code>sao</code> → <em>São Paulo</em>, <code>krak</code> → <em>Kraków</em>,
-                <code>muenchen</code>/<code>munch</code> → <em>München</em>. The built-in search finds the first
-                three too, but not <code>muenchen</code>, and it doesn't rank results.
+                <code>munch</code> → <em>München</em> (accents fold to the bare letter — <code>muenchen</code> is a
+                transliteration and doesn't match). The built-in search finds these too, but it doesn't rank results.
             </p>
             <kmwc-demo>
                 <label class="demo-label">Search accent-free — it still matches:</label>
