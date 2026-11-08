@@ -120,7 +120,8 @@
                 it shows the list first, so you can browse long lists and reach the bottom action
                 buttons without the keyboard covering half the screen. The keyboard appears only when
                 you tap the search field. Set <code>fullscreen-autofocus="true"</code> to focus the
-                search on open instead (type-to-filter immediately, like a native picker).
+                search on open instead (type-to-filter immediately, like a native picker) — or set the
+                <code>shouldFullscreenAutofocus</code> property.
             </p>
             <p>
                 Both pickers use <code>presentation="auto"</code>: a normal floating dropdown
@@ -130,33 +131,23 @@
             <label class="toggle-label">
                 <input type="checkbox" id="kb-fs-preview"> Preview as fullscreen (desktop)
             </label>
-            <div style="display:flex; flex-wrap:wrap; gap:1.5rem;">
-                <div class="form-group" style="flex:1; min-width:220px;">
-                    <label>Default — keyboard off (tap search to type)</label>
-                    <web-multiselect id="kb-off-select" multiple="true" value-member="value"
-                        display-value-member="label" labels='{"searchPlaceholder": "Tap here to search…"}'></web-multiselect>
-                    <small class="form-text">On a phone: the list shows, search is <em>not</em> focused.</small>
+            <kmwc-demo>
+                <div style="display:flex; flex-wrap:wrap; gap:1.5rem;">
+                    <div class="form-group" style="flex:1; min-width:220px;">
+                        <label>Default — keyboard off (tap search to type)</label>
+                        <web-multiselect id="kb-off-select" multiple="true" value-member="value"
+                            display-value-member="label" labels='{"searchPlaceholder": "Tap here to search…"}'></web-multiselect>
+                        <small class="form-text">On a phone: the list shows, search is <em>not</em> focused.</small>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:220px;">
+                        <label>Opt-in — <code>fullscreen-autofocus="true"</code></label>
+                        <web-multiselect id="kb-on-select" multiple="true" value-member="value"
+                            display-value-member="label"
+                            fullscreen-autofocus="true" labels='{"searchPlaceholder": "Search…"}'></web-multiselect>
+                        <small class="form-text">On a phone: search is focused, keyboard pops on open.</small>
+                    </div>
                 </div>
-                <div class="form-group" style="flex:1; min-width:220px;">
-                    <label>Opt-in — <code>fullscreen-autofocus="true"</code></label>
-                    <web-multiselect id="kb-on-select" multiple="true" value-member="value"
-                        display-value-member="label"
-                        fullscreen-autofocus="true" labels='{"searchPlaceholder": "Search…"}'></web-multiselect>
-                    <small class="form-text">On a phone: search is focused, keyboard pops on open.</small>
-                </div>
-            </div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;!-- default: keyboard stays closed until the user taps the search field --&gt;
-&lt;web-multiselect&gt;&lt;/web-multiselect&gt;
-
-&lt;!-- opt in to auto-focus + soft keyboard on open --&gt;
-&lt;web-multiselect fullscreen-autofocus="true"&gt;&lt;/web-multiselect&gt;
-
-// or via property
-el.shouldFullscreenAutofocus = true;</code></pre>
-            </details>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -183,37 +174,35 @@ el.shouldFullscreenAutofocus = true;</code></pre>
                 The picker uses <code>presentation="auto"</code>, so on desktop it's a normal floating
                 dropdown — tick <em>Preview as fullscreen</em> to force the overlay and reveal the built-in toggle.
             </p>
-            <div class="controls">
-                <span>Search mode:</span>
-                <label><input type="radio" name="nav-fs-mode" value="filter"> <code>filter</code></label>
-                <label><input type="radio" name="nav-fs-mode" value="navigate" checked> <code>navigate</code></label>
-            </div>
             <label class="toggle-label">
                 <input type="checkbox" id="nav-fs-preview"> Preview as fullscreen (desktop)
             </label>
-            <div class="form-group" style="max-width:320px;">
-                <label>live <code>search-mode</code> switch</label>
-                <web-multiselect id="nav-fs-select" multiple="true" search-mode="navigate" show-search-mode-toggle
-                    badges-display-mode="partial" max-visible-badge-count="2"
-                    value-member="value" display-value-member="label" group-member="group"></web-multiselect>
-                <small class="form-text">Fullscreen: tap the leading icon in the search bar to switch. navigate: type, then use the ↑/↓ next to the count to jump. filter: the list narrows to matches.</small>
-            </div>
+            <kmwc-demo>
+                <div class="controls">
+                    <span>Search mode:</span>
+                    <label><input type="radio" name="nav-fs-mode" value="filter"> <code>filter</code></label>
+                    <label><input type="radio" name="nav-fs-mode" value="navigate" checked> <code>navigate</code></label>
+                </div>
+                <div class="form-group" style="max-width:320px;">
+                    <label>live <code>search-mode</code> switch</label>
+                    <web-multiselect id="nav-fs-select" multiple="true" search-mode="navigate" show-search-mode-toggle
+                        badges-display-mode="partial" max-visible-badge-count="2"
+                        value-member="value" display-value-member="label" group-member="group"></web-multiselect>
+                    <small class="form-text">Fullscreen: tap the leading icon in the search bar to switch. navigate: type, then use the ↑/↓ next to the count to jump. filter: the list narrows to matches.</small>
+                </div>
+                <script type="module" data-kmwc-show>
+                    // show-search-mode-toggle adds an in-overlay icon that flips filter/navigate in place.
+                    // From the host page it's just the search-mode attribute — an open overlay
+                    // re-renders in the new mode.
+                    const picker = document.getElementById('nav-fs-select');
+                    document.querySelectorAll('input[name="nav-fs-mode"]').forEach((radio) => {
+                        radio.addEventListener('change', () => {
+                            if (radio.checked) picker.setAttribute('search-mode', radio.value);
+                        });
+                    });
+                </script>
+            </kmwc-demo>
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;!-- navigate mode + a built-in in-overlay mode toggle (fullscreen only) --&gt;
-&lt;web-multiselect search-mode="navigate" show-search-mode-toggle&gt;&lt;/web-multiselect&gt;
-
-&lt;!-- show-search-mode-toggle adds a clickable icon at the search field's leading
-     edge in the fullscreen sheet; tapping it flips filter&lt;-&gt;navigate in place. --&gt;
-
-&lt;!-- Or switch from the host page — it's just an attribute --&gt;
-picker.setAttribute('search-mode', 'filter');   // or 'navigate'
-
-&lt;!-- On phones (fullscreen overlay) navigate mode adds a count + prev/next
-     navigator under the search box automatically. Desktop uses
-     Ctrl+ArrowUp / Ctrl+ArrowDown for the same jumps. --&gt;</code></pre>
-            </details>
         </div>
 
         <!-- ============================================================ -->
@@ -233,22 +222,40 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
             <label class="toggle-label">
                 <input type="checkbox" id="responsive-fs-preview"> Preview as fullscreen (desktop)
             </label>
-            <div class="form-group" style="max-width:340px;">
-                <label>Pick a plan</label>
-                <web-multiselect id="responsive-select" multiple="true" value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Search plans…"}'></web-multiselect>
-                <small class="form-text">Open it, then toggle fullscreen: the desktop rows show price · ⭐ popularity · chip; the phone rows drop to just the name + price.</small>
-            </div>
+            <kmwc-demo>
+                <div class="form-group" style="max-width:340px;">
+                    <label>Pick a plan</label>
+                    <web-multiselect id="responsive-select" multiple="true" value-member="value"
+                        display-value-member="label" labels='{"searchPlaceholder": "Search plans…"}'></web-multiselect>
+                    <small class="form-text">Open it, then toggle fullscreen: the desktop rows show price · ⭐ popularity · chip; the phone rows drop to just the name + price.</small>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const picker = document.getElementById('responsive-select');
+                    picker.options = [
+                        { value: 'starter',    label: 'Starter',    price: '$9/mo',   popularity: '4.2', tier: 'Basic' },
+                        { value: 'pro',        label: 'Pro',        price: '$29/mo',  popularity: '4.8', tier: 'Popular' },
+                        { value: 'team',       label: 'Team',       price: '$79/mo',  popularity: '4.6', tier: 'Growth' },
+                        { value: 'business',   label: 'Business',   price: '$149/mo', popularity: '4.5', tier: 'Scale' },
+                        { value: 'enterprise', label: 'Enterprise', price: 'Custom',  popularity: '4.9', tier: 'Premium' }
+                    ];
+                    // Content HTML is injected into the shadow DOM, so styling is inline here (page
+                    // CSS classes wouldn't reach it). isFullscreen picks the layout.
+                    picker.renderOptionContentCallback = ({ option, isFullscreen }) => isFullscreen
+                        // lean on the phone sheet
+                        ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;width:100%;">
+                               <strong>${option.label}</strong>
+                               <span style="color:var(--kmwc-accent-color);">${option.price}</span>
+                           </div>`
+                        // rich on desktop
+                        : `<div style="display:flex;align-items:center;gap:.6rem;width:100%;">
+                               <strong>${option.label}</strong>
+                               <small style="color:var(--kmwc-text-color-3);">${option.price} · ⭐${option.popularity}</small>
+                               <span style="margin-inline-start:auto;background:var(--kmwc-accent-light-bg);color:var(--kmwc-inline-code-color);padding:.1rem .45rem;border-radius:.3rem;font-size:.72rem;">${option.tier}</span>
+                           </div>`;
+                    picker.setSelected(['pro']);
+                </script>
+            </kmwc-demo>
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>picker.renderOptionContentCallback = ({ option, isFullscreen }) =&gt;
-  isFullscreen
-    ? `&lt;div class="row-lean"&gt;&lt;strong&gt;${option.label}&lt;/strong&gt;
-         &lt;span&gt;${option.price}&lt;/span&gt;&lt;/div&gt;`                       // lean on the phone sheet
-    : `&lt;div class="row-rich"&gt;&lt;strong&gt;${option.label}&lt;/strong&gt;
-         &lt;small&gt;${option.price} · ⭐${option.popularity} · ${option.tier}&lt;/small&gt;&lt;/div&gt;`; // rich on desktop</code></pre>
-            </details>
         </div>
 
         <!-- ============================================================ -->
@@ -272,23 +279,15 @@ picker.setAttribute('search-mode', 'filter');   // or 'navigate'
             <label class="toggle-label">
                 <input type="checkbox" id="rtl-fs-preview"> Preview as fullscreen (desktop)
             </label>
-            <div class="form-group" style="max-width:320px;">
-                <label>الأقسام — Departments</label>
-                <web-multiselect id="rtl-select" dir="rtl" multiple="true" search-mode="navigate"
-                    value-member="value" display-value-member="label" group-member="group" labels='{"searchPlaceholder": "ابحث… (search)"}'></web-multiselect>
-                <small class="form-text">Checkbox on the right, toggle on the left, navigator mirrored.</small>
-            </div>
+            <kmwc-demo>
+                <div class="form-group" style="max-width:320px;">
+                    <label>الأقسام — Departments</label>
+                    <web-multiselect id="rtl-select" dir="rtl" multiple="true" search-mode="navigate"
+                        value-member="value" display-value-member="label" group-member="group" labels='{"searchPlaceholder": "ابحث… (search)"}'></web-multiselect>
+                    <small class="form-text">Checkbox on the right, toggle on the left, navigator mirrored.</small>
+                </div>
+            </kmwc-demo>
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;!-- on the element… --&gt;
-&lt;web-multiselect dir="rtl"&gt;&lt;/web-multiselect&gt;
-
-&lt;!-- …or inherited from any ancestor --&gt;
-&lt;div dir="rtl"&gt;
-  &lt;web-multiselect&gt;&lt;/web-multiselect&gt;
-&lt;/div&gt;</code></pre>
-            </details>
         </div>
 
         <!-- ============================================================ -->
@@ -455,56 +454,57 @@ el.collapseBadgesBelow = null;</code></pre>
                 map → per-tag callback → <strong>the element's own attributes / properties</strong> → instance
                 map → instance callback.
             </p>
-            <div class="grid-2" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
-                <div class="form-group">
-                    <label>A · follows the page rule</label>
-                    <web-multiselect id="rs10-page" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
-                    <small class="form-text">effective: <code data-rs-readout="rs10-page">…</code></small>
+            <kmwc-demo>
+                <div class="grid-2" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
+                    <div class="form-group">
+                        <label>A · follows the page rule</label>
+                        <web-multiselect id="rs10-page" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
+                        <small class="form-text">effective: <code data-rs-readout="rs10-page">…</code></small>
+                    </div>
+                    <div class="form-group">
+                        <label>B · own attribute beats it</label>
+                        <web-multiselect id="rs10-attr" data-rs-demo multiple="true" badges-display-mode="partial" max-visible-badge-count="2"
+                            value-member="value" display-value-member="label"></web-multiselect>
+                        <small class="form-text"><code>badges-display-mode="partial"</code> → effective: <code data-rs-readout="rs10-attr">…</code></small>
+                    </div>
+                    <div class="form-group">
+                        <label>C · instance map beats both</label>
+                        <web-multiselect id="rs10-map" data-rs-demo multiple="true" badges-display-mode="partial"
+                            responsive='{"breakpoint":{"desktop":{"badgesDisplayMode":"compact"},"tablet":{"badgesDisplayMode":"compact"}}}'
+                            value-member="value" display-value-member="label"></web-multiselect>
+                        <small class="form-text"><code>responsive='{"breakpoint":{"desktop":{…"compact"}}}'</code> → effective: <code data-rs-readout="rs10-map">…</code></small>
+                    </div>
+                    <div class="form-group">
+                        <label>D · instance callback opts out (<code>null</code>)</label>
+                        <web-multiselect id="rs10-null" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
+                        <small class="form-text"><code>el.responsiveCallback = () =&gt; null</code> → effective: <code data-rs-readout="rs10-null">…</code></small>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>B · own attribute beats it</label>
-                    <web-multiselect id="rs10-attr" data-rs-demo multiple="true" badges-display-mode="partial" max-visible-badge-count="2"
-                        value-member="value" display-value-member="label"></web-multiselect>
-                    <small class="form-text"><code>badges-display-mode="partial"</code> → effective: <code data-rs-readout="rs10-attr">…</code></small>
-                </div>
-                <div class="form-group">
-                    <label>C · instance map beats both</label>
-                    <web-multiselect id="rs10-map" data-rs-demo multiple="true" badges-display-mode="partial"
-                        responsive='{"breakpoint":{"desktop":{"badgesDisplayMode":"compact"},"tablet":{"badgesDisplayMode":"compact"}}}'
-                        value-member="value" display-value-member="label"></web-multiselect>
-                    <small class="form-text"><code>responsive='{"breakpoint":{"desktop":{…"compact"}}}'</code> → effective: <code data-rs-readout="rs10-map">…</code></small>
-                </div>
-                <div class="form-group">
-                    <label>D · instance callback opts out (<code>null</code>)</label>
-                    <web-multiselect id="rs10-null" data-rs-demo multiple="true" value-member="value" display-value-member="label"></web-multiselect>
-                    <small class="form-text"><code>el.responsiveCallback = () =&gt; null</code> → effective: <code data-rs-readout="rs10-null">…</code></small>
-                </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const options = ['Kubernetes', 'Object Storage', 'DNS', 'Key Vault', 'Data Lake', 'Message Queue']
+                        .map((label, i) => ({ value: `rs-${i}`, label }));
+                    for (const id of ['rs10-page', 'rs10-attr', 'rs10-map', 'rs10-null']) {
+                        const el = document.getElementById(id);
+                        el.options = options;
+                        el.value = options.slice(0, 4).map((o) => o.value);
+                    }
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>// page-wide, per tag — may be set BEFORE the component script loads
-// (window.components = { 'web-multiselect': { responsive: {…} } } is adopted on registration)
-window.components['web-multiselect'].responsive = {                                      // map
-  device: { mobile: { presentation: 'fullscreen' } },        // a phone (touch capability)
-};
-window.components['web-multiselect'].responsiveCallback = (ctx) =&gt;                          // callback
-  ctx.element.hasAttribute('data-rs-demo') &amp;&amp; ctx.breakpoint !== 'desktop'
-    ? { badgesDisplayMode: 'count' }
-    : undefined;                                   // undefined = nothing to add
+                    // D: null from the instance callback = ignore every page rule.
+                    document.getElementById('rs10-null').responsiveCallback = () => null;
 
-&lt;!-- B: an attribute on the element always beats a page rule --&gt;
-&lt;web-multiselect badges-display-mode="partial"&gt;&lt;/web-multiselect&gt;
+                    // Page-wide, per tag — may also be set BEFORE the component script loads
+                    // (window.components = { 'web-multiselect': { responsive: {…} } } is adopted on registration).
+                    // Map: on a phone (touch capability) every multiselect on the page opens fullscreen.
+                    window.components['web-multiselect'].responsive = { device: { mobile: { presentation: 'fullscreen' } } };
+                    // Callback: scoped to this demo by the data-rs-demo marker; undefined = nothing to add.
+                    window.components['web-multiselect'].responsiveCallback = (ctx) =>
+                        ctx.element.hasAttribute('data-rs-demo') && ctx.breakpoint !== 'desktop'
+                            ? { badgesDisplayMode: 'count' }
+                            : undefined;
 
-&lt;!-- C: the instance's own map beats its attributes and the page rules --&gt;
-&lt;web-multiselect responsive='{"breakpoint":{"desktop":{"badgesDisplayMode":"compact"}}}'&gt;&lt;/web-multiselect&gt;
-
-// D: null from the instance callback = ignore every page rule
-el.responsiveCallback = () =&gt; null;
-
-// typed
-import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</code></pre>
-            </details>
+                    // Typed: import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';
+                </script>
+            </kmwc-demo>
         </div>
 
     <!-- Mobile / fullscreen demos (own module scope) -->
@@ -539,16 +539,6 @@ import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@k
                 });
             };
 
-            // A radio group that flips search-mode ('filter' | 'navigate') at runtime —
-            // it's just an attribute, so the same open overlay re-renders in the new mode.
-            const wireSearchMode = (radioName, el) => {
-                document.querySelectorAll(`input[name="${radioName}"]`).forEach((r) => {
-                    r.addEventListener('change', () => {
-                        if (r.checked) el.setAttribute('search-mode', r.value);
-                    });
-                });
-            };
-
             // --- 1. presentation intro ------------------------
             const intro = document.getElementById('intro-select');
             intro.options = options;
@@ -567,31 +557,10 @@ import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@k
             // Preselect 4 so partial mode shows 2 badges + a "+2 more" counter badge.
             navFs.setSelected(['0-0', '0-1', '1-0', '2-0']);
             wirePreview('nav-fs-preview', navFs);
-            wireSearchMode('nav-fs-mode', navFs);
 
             // --- 4. Responsive rendering (rich desktop / lean phone) ---
-            const plans = [
-                { value: 'starter',    label: 'Starter',      price: '$9/mo',   popularity: '4.2', tier: 'Basic' },
-                { value: 'pro',        label: 'Pro',          price: '$29/mo',  popularity: '4.8', tier: 'Popular' },
-                { value: 'team',       label: 'Team',         price: '$79/mo',  popularity: '4.6', tier: 'Growth' },
-                { value: 'business',   label: 'Business',     price: '$149/mo', popularity: '4.5', tier: 'Scale' },
-                { value: 'enterprise', label: 'Enterprise',   price: 'Custom',  popularity: '4.9', tier: 'Premium' }
-            ];
+            // Options + render callback: the RS04 demo's shown script.
             const responsive = document.getElementById('responsive-select');
-            responsive.options = plans;
-            // Content HTML is injected into the shadow DOM, so styling is inline here (page
-            // CSS classes wouldn't reach it). isFullscreen picks the layout.
-            responsive.renderOptionContentCallback = ({ option, isFullscreen }) => isFullscreen
-                ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;width:100%;">
-                       <strong>${option.label}</strong>
-                       <span style="color:var(--kmwc-accent-color);">${option.price}</span>
-                   </div>`
-                : `<div style="display:flex;align-items:center;gap:.6rem;width:100%;">
-                       <strong>${option.label}</strong>
-                       <small style="color:var(--kmwc-text-color-3);">${option.price} · ⭐${option.popularity}</small>
-                       <span style="margin-inline-start:auto;background:var(--kmwc-accent-light-bg);color:var(--kmwc-inline-code-color);padding:.1rem .45rem;border-radius:.3rem;font-size:.72rem;">${option.tier}</span>
-                   </div>`;
-            responsive.setSelected(['pro']);
             wirePreview('responsive-fs-preview', responsive);
 
             // --- 5. RTL ---------------------------------------------
@@ -659,25 +628,10 @@ import type { MultiSelectResponsiveMap, MultiSelectResponsiveCallback } from '@k
     <!-- Responsive rules demo (RS10) -->
     <script type="module">
         import '/src/index.ts';
-        const pickOptions = ['Kubernetes', 'Object Storage', 'DNS', 'Key Vault', 'Data Lake', 'Message Queue']
-            .map((label, i) => ({ value: `rs-${i}`, label }));
+        // Options + rules come from the RS10 demo's shown script (it runs before this one);
+        // this is only the "effective:" read-out harness.
         const ids = ['rs10-page', 'rs10-attr', 'rs10-map', 'rs10-null'];
         const els = ids.map((id) => document.getElementById(id));
-        els.forEach((el) => {
-            el.options = pickOptions;
-            el.value = pickOptions.slice(0, 4).map((o) => o.value);
-        });
-        // D: an instance callback returning null ignores every page rule.
-        document.getElementById('rs10-null').responsiveCallback = () => null;
-
-        // Per-tag map: on a phone every multiselect on this page opens fullscreen (what `auto`
-        // does anyway — a map entry is just a partial config for that device class).
-        window.components['web-multiselect'].responsive = { device: { mobile: { presentation: 'fullscreen' } } };
-        // The per-tag page rule — scoped to this demo by the data-rs-demo marker.
-        window.components['web-multiselect'].responsiveCallback = (ctx) =>
-            ctx.element.hasAttribute('data-rs-demo') && ctx.breakpoint !== 'desktop'
-                ? { badgesDisplayMode: 'count' }
-                : undefined;
 
         // Readouts: the property getter returns the EFFECTIVE value (rules applied).
         const refresh = async () => {
