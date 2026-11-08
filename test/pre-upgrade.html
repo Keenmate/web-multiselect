@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — properties set before the element is defined</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>pre-upgrade properties</h1>
+    <p>Targeted by <code>e2e/pre-upgrade.spec.ts</code>. A classic script assigns <code>value</code> and
+       <code>options</code> while <code>&lt;web-multiselect&gt;</code> is still undefined; the module that
+       defines it runs afterwards. Core (rc20) replays the early <code>value</code> through the
+       component's setter.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">el.value = '["banana","cherry"]' before define (JSON value format)</div>
+        <web-multiselect id="early-json" name="early-json"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">el.value = ['apple'] before define, value-format="text"</div>
+        <web-multiselect id="early-text" name="early-text" value-format="text"></web-multiselect>
+    </div>
+
+    <script>
+        // Runs while the tag is still undefined: plain own properties on HTMLElement instances.
+        window.__definedBeforeScript = !!customElements.get('web-multiselect');
+        const items = [
+            { value: 'apple',  label: 'Apple' },
+            { value: 'banana', label: 'Banana' },
+            { value: 'cherry', label: 'Cherry' }
+        ];
+        for (const id of ['early-json', 'early-text']) document.getElementById(id).options = items;
+        document.getElementById('early-json').value = '["banana","cherry"]';
+        document.getElementById('early-text').value = ['apple'];
+    </script>
+    <script type="module">
+        import '/src/index.ts';
+    </script>
+</body>
+</html>

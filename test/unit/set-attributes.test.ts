@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 import { MultiSelectEngine } from '../../src/multiselect';
 
 /**

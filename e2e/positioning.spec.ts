@@ -230,3 +230,50 @@ test.describe('outside-click behavior', () => {
         await expect(dropdown).not.toBeVisible();
     });
 });
+
+// The five length inputs are core `toCssLength()` rows: a number (property) or a bare number
+// (attribute) means pixels, an invalid length is refused through core (`input-rejected`, the
+// previous value kept), and `null` is refused (no nullable length; `undefined` / removing the
+// attribute resets).
+test.describe('CSS-length inputs (toCssLength)', () => {
+    test('a number means px on both paths', async ({ page }) => {
+        const p = picker(page, 'panel-widths');
+        const r = await p.evaluate((el: any) => {
+            el.dropdownWidth = 420;
+            el.setAttribute('selected-popover-width', '250');
+            el.maxHeight = 200;
+            return { dw: el.dropdownWidth, spw: el.selectedPopoverWidth, mh: el.maxHeight };
+        });
+        expect(r).toEqual({ dw: '420px', spw: '250px', mh: '200px' });
+        await expect.poll(() => p.evaluate((el: HTMLElement) => el.style.getPropertyValue('--ms-dropdown-width'))).toBe('420px');
+        const dropdown = await openDropdown(p);
+        expect(Math.round((await dropdown.boundingBox())!.width)).toBeGreaterThanOrEqual(418);
+    });
+
+    test('an invalid length and null are refused (input-rejected), the previous value kept', async ({ page }) => {
+        const p = picker(page, 'panel-widths');
+        const r = await p.evaluate((el: any) => {
+            const rejected: string[] = [];
+            el.addEventListener('input-rejected', (e: CustomEvent) => rejected.push(e.detail.configKey));
+            el.setAttribute('dropdown-min-width', 'wide');
+            el.maxHeight = 'tall';
+            el.dropdownWidth = null;
+            return { rejected, dw: el.dropdownWidth, mh: el.maxHeight, minW: el.dropdownMinWidth };
+        });
+        expect(r.rejected).toEqual(['dropdownMinWidth', 'maxHeight', 'dropdownWidth']);
+        expect(r.dw).toBe('600px');
+        expect(r.mh).toBe('20rem');
+        expect(r.minW).toBeUndefined();
+    });
+
+    test('undefined resets to the default', async ({ page }) => {
+        const p = picker(page, 'panel-widths');
+        const r = await p.evaluate((el: any) => {
+            el.maxHeight = '10rem';
+            const set = el.maxHeight;
+            el.maxHeight = undefined;
+            return { set, reset: el.maxHeight };
+        });
+        expect(r).toEqual({ set: '10rem', reset: '20rem' });
+    });
+});

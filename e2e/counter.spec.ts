@@ -50,3 +50,45 @@ test('getCounterCallback formats the count-mode badge text', async ({ page }) =>
     const countBadge = p.locator('.ms__badges .ms__badge[data-ms-action="show-selected"]');
     await expect(countBadge).toContainText('2 items');
 });
+
+// The selected-items popover is a node of core's overlay tree (createPopover), like the dropdown.
+test.describe('selected-items popover dismissal (core overlay tree)', () => {
+    async function openPopover(page: Page): Promise<Locator> {
+        const p = picker(page, 'counter-on');
+        await select(p, 'apple', 'cherry');
+        await page.mouse.click(0, 0); // close the dropdown
+        await p.locator('.ms__counter').click();
+        await expect(p.locator('.ms__selected-popover')).toBeVisible();
+        return p;
+    }
+
+    test('a click outside closes it; a click inside it does not', async ({ page }) => {
+        const p = await openPopover(page);
+        await p.locator('.ms__selected-popover-header').click();
+        await expect(p.locator('.ms__selected-popover')).toBeVisible();
+        await page.mouse.click(0, 0);
+        await expect(p.locator('.ms__selected-popover')).toBeHidden();
+    });
+
+    test('the counter toggles it closed again', async ({ page }) => {
+        const p = await openPopover(page);
+        await p.locator('.ms__counter').click();
+        await expect(p.locator('.ms__selected-popover')).toBeHidden();
+    });
+
+    test('Escape closes it wherever focus is, and only it', async ({ page }) => {
+        const p = await openPopover(page);
+        await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+        await page.keyboard.press('Escape');
+        await expect(p.locator('.ms__selected-popover')).toBeHidden();
+        await expect(p.locator('.ms__dropdown')).toBeHidden();
+    });
+
+    test('opening another picker closes it (one overlay open at a time)', async ({ page }) => {
+        const p = await openPopover(page);
+        const other = picker(page, 'counter-cb');
+        await other.evaluate((el: any) => el.open()); // the popover may cover its input
+        await expect(other.locator('.ms__dropdown')).toBeVisible();
+        await expect(p.locator('.ms__selected-popover')).toBeHidden();
+    });
+});

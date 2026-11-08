@@ -167,23 +167,6 @@ export class MultiSelectEngine<T = any> {
     private isRTL = false;
     private effectiveBadgesPosition: BadgesPosition = 'bottom';
     private justClosedViaClick = false;
-    // Set for one tick when the dropdown is opened by a pointer gesture, or when a
-    // consumer drives the already-open panel from their own click handler (a repeat
-    // open()/toggle(), or a scrollTo* command). A fullscreen overlay (position:fixed,
-    // inset:0) appears over the pointer between mousedown and the follow-up click, so
-    // that click can target a common ancestor above the portaled panel and be misread
-    // as an outside-click; and an EXTERNAL control clicked to re-drive the open panel
-    // sends its click bubbling to our document-level outside-click listener, which
-    // would otherwise close the very panel the command just re-scrolled. This guard
-    // swallows exactly that one click. See armClickGuard(), attachEvents() (mousedown)
-    // and handleClickOutside().
-    private justOpenedViaClick = false;
-    // Set when the input's own mousedown opens the dropdown, and held until that
-    // gesture's click arrives (consumed in handleClickOutside) or the next pointerdown
-    // starts a new gesture. The one-tick justOpenedViaClick can't cover this case: the
-    // click follows mouseup, and Firefox/WebKit (and any real press held longer than a
-    // tick) run the clearing timer first, so a fullscreen sheet closed itself on open.
-    private isOpeningGestureClickPending = false;
     private positioningDriftWarned = false;
     // Fullscreen counterpart of positioningDriftWarned: warn once per instance when an
     // ancestor establishes a fixed-positioning containing block, so the full-viewport
@@ -215,9 +198,6 @@ export class MultiSelectEngine<T = any> {
     // Releases this instance's page-scroll lock (null when not locked). The core
     // helper is ref-counted; we hold at most one lock per instance. See lockBodyScroll().
     private bodyScrollUnlock: (() => void) | null = null;
-    // Saved inline `overflow-x` of <html> while a fullscreen sheet clamps the host
-    // document's horizontal overflow (null when not clamped). See clampDocumentOverflowX().
-    private overflowXClamp: { html: string } | null = null;
     // Detaches the visualViewport listener that shrinks the fullscreen sheet to sit
     // above the soft keyboard (null when not attached). See observeKeyboardInset().
     private keyboardInsetCleanup: (() => void) | null = null;
@@ -231,7 +211,8 @@ export class MultiSelectEngine<T = any> {
     /** The open dropdown as a core popover (kept mounted; anchored only while floating). Created per open. */
     private dropdownPopover: PopoverHandle | null = null;
     private hintCleanup: (() => void) | null = null;
-    private selectedPopoverCleanup: (() => void) | null = null;
+    /** The open selected-items popover as a core popover (kept mounted; anchored only while floating). Created per open. */
+    private selectedPopoverHandle: PopoverHandle | null = null;
 
     // All hover tooltips (badge text, badge-remove buttons, action buttons), keyed by id.
     private tooltips = new Map<string, TooltipHandle>();
@@ -283,8 +264,6 @@ export class MultiSelectEngine<T = any> {
     private selectedPopover!: HTMLDivElement;
 
     // Document-level event handlers (stored for cleanup)
-    private documentKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
-    private documentClickHandler: ((e: MouseEvent) => void) | null = null;
 
     // Cross-component "one overlay open at a time" coordination (core). activate() on
     // open() dismisses every OTHER participating overlay (multiselects, datepickers, …);
@@ -1021,28 +1000,20 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * (Re)compute `isRTL` from the host's `dir` (or an RTL ancestor) and derive the
-     * direction-mirrored badges position. Pure state — callers apply the DOM effects
-     * (class toggle, panel `dir`, badge re-render). In Shadow DOM the `dir` lives on
-     * the host element, not the shadow content, so we resolve the host first.
+     * (Re)compute `isRTL` and derive the direction-mirrored badges position. Pure state — callers
+     * apply the DOM effects (class toggle, panel `dir`, badge re-render). The element passes core's
+     * `isRtl` (the effective CSS `direction`, so a nested `dir="ltr"` inside an RTL page and a CSS
+     * `direction` rule count); a standalone engine reads the computed direction of its host.
      */
     private detectRTL(): void {
-        const rootNode = this.element.getRootNode();
-        const hostElement = rootNode instanceof ShadowRoot
-            ? (rootNode as ShadowRoot).host as HTMLElement
-            : this.element;
-
-        const hasElementDir = hostElement.getAttribute('dir') === 'rtl';
-        const hasAncestorDir = hostElement.closest('[dir="rtl"]') !== null;
-        this.isRTL = hasElementDir || hasAncestorDir;
-
-        initLogger.debug(`[${this.instanceId}] RTL Debug:`, {
-            isShadowRoot: rootNode instanceof ShadowRoot,
-            elementDir: hostElement.getAttribute('dir'),
-            hasElementDir,
-            hasAncestorDir,
-            isRTL: this.isRTL
-        });
+        if (this.options.isRtl) {
+            this.isRTL = this.options.isRtl();
+        } else {
+            const rootNode = this.element.getRootNode();
+            const hostElement = rootNode instanceof ShadowRoot ? (rootNode.host as HTMLElement) : this.element;
+            this.isRTL = typeof getComputedStyle === 'function' && getComputedStyle(hostElement).direction === 'rtl';
+        }
+        initLogger.debug(`[${this.instanceId}] RTL:`, this.isRTL);
 
         // Mirror badgesPosition (left<->right) in RTL — a logical placement choice.
         this.effectiveBadgesPosition = this.options.badgesPosition || 'bottom';
@@ -2275,9 +2246,8 @@ export class MultiSelectEngine<T = any> {
                     e.preventDefault();
                 }
                 // Open if closed (don't rely on focus event as input might already be
-                // focused). The click that follows this mousedown must not be misread as
-                // an outside-click, so hold the guard for the whole gesture.
-                this.armOpeningGestureGuard();
+                // focused). The click that follows is inside (the host), so core's overlay
+                // tree never reads it as an outside click.
                 this.open();
             }
         });
@@ -2301,23 +2271,9 @@ export class MultiSelectEngine<T = any> {
         });
         this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
 
-        // Delay click-outside handler to avoid immediate close
-        this.documentClickHandler = (e: MouseEvent) => this.handleClickOutside(e);
-        setTimeout(() => {
-            document.addEventListener('click', this.documentClickHandler!);
-        }, 0);
-
-        // The dropdown's node in core's overlay tree (single-active group, nesting, outside click)
-        // is its popover's, registered on open: see createDropdownPopover().
-
-        // Document-level Escape handler for closing popover when input doesn't have focus
-        this.documentKeydownHandler = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && this.showSelectedPopover) {
-                e.preventDefault();
-                this.hideSelectedPopover();
-            }
-        };
-        document.addEventListener('keydown', this.documentKeydownHandler);
+        // Both panels are nodes in core's overlay tree (single-active group, nesting, outside
+        // click, and Escape for the selected-items popover), registered on open: see
+        // createDropdownPopover() / createSelectedPopover().
 
         // A press on an option must not move focus. Each row holds a focusable checkbox:
         // letting the press focus it blurs the search input. Floating: the wrapper's
@@ -2747,12 +2703,11 @@ export class MultiSelectEngine<T = any> {
                 break;
             case 'Escape':
                 e.preventDefault();
-                // Priority: 1) Close selected popover, 2) Clear search, 3) Close dropdown.
-                // With search off there is no search: single-select keeps the selected label in
-                // the input while open, and Escape must not wipe it.
-                if (this.showSelectedPopover) {
-                    this.hideSelectedPopover();
-                } else if (this.options.isSearchEnabled && this.input.value) {
+                // An open selected-items popover takes Escape first (core's overlay tree, which
+                // stops the key before it gets here). Then: 1) clear the search, 2) close the
+                // dropdown. With search off there is no search: single-select keeps the selected
+                // label in the input while open, and Escape must not wipe it.
+                if (this.options.isSearchEnabled && this.input.value) {
                     this.clearSearch();
                 } else {
                     this.closeWith('escape');
@@ -2958,29 +2913,6 @@ export class MultiSelectEngine<T = any> {
             this.toggleSelectedPopover();
             return;
         }
-    }
-
-    private handleClickOutside(e: MouseEvent): void {
-        // Use composedPath() to see through Shadow DOM boundaries
-        const path = e.composedPath() as HTMLElement[];
-
-        if (this.showSelectedPopover) {
-            const clickedInsidePopover = path.some(el =>
-                el instanceof Node && (
-                    this.selectedPopover.contains(el) ||
-                    this.counter.contains(el) ||
-                    (el.closest && el.closest('[data-ms-action="show-selected"]'))
-                )
-            );
-
-            if (!clickedInsidePopover) {
-                uiLogger.debug(`[${this.instanceId}] Closing selected popover due to click outside`);
-                this.hideSelectedPopover();
-                return;
-            }
-        }
-
-        // The dropdown's outside click is core's overlay tree (createDropdownPopover).
     }
 
     /**
@@ -3950,35 +3882,14 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Shield the trailing document `click` for one tick. A consumer that drives the
-     * dropdown from their OWN button's click handler (`el.open()` / `el.toggle()`, or a
-     * scrollTo* command re-driving the already-open panel) would otherwise have that
-     * same click bubble to our document-level outside-click listener and immediately
-     * close it. Centralizing it here means every entry point — open(), the internal
-     * pointer path, and the public scrollTo* API — is covered. Cleared next tick, so a
-     * genuine later outside-click still closes as normal. Harmless for non-click
-     * callers (typing, programmatic-on-load, server-driven): no trailing click arrives
-     * before it clears.
+     * A consumer that drives the open dropdown from their OWN button's click handler (a
+     * repeat `el.open()`, or a scrollTo* command re-driving the already-open panel) claims
+     * that click (core `claimCurrentClick()`), so core's overlay tree doesn't read it as an
+     * outside click and close the panel. A click that opens it needs nothing: an overlay
+     * activated during a click stays open. Harmless for non-click callers.
      */
     private armClickGuard(): void {
-        // A page button calling an API method: this click is ours, not an outside click.
         this.dropdownPopover?.claimCurrentClick();
-        this.justOpenedViaClick = true;
-        setTimeout(() => { this.justOpenedViaClick = false; }, 0);
-    }
-
-    /**
-     * Guard the click of the mousedown gesture that is opening the dropdown, however
-     * long the press lasts. Consumed by that click in handleClickOutside(); if the
-     * gesture produces no click, the next pointerdown (registered now, after this
-     * gesture's pointerdown has already fired) clears it so it can't swallow a later
-     * genuine outside-click.
-     */
-    private armOpeningGestureGuard(): void {
-        this.isOpeningGestureClickPending = true;
-        document.addEventListener('pointerdown', () => {
-            this.isOpeningGestureClickPending = false;
-        }, { capture: true, once: true });
     }
 
     /** Open the dropdown (no-op if already open, or if there is nothing to show). */
@@ -4146,25 +4057,10 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Anchor a floating panel (dropdown or selected-items popover) below/above the input with
-     * placement-locking and width-syncing. Returns the `autoUpdate` cleanup.
-     *
-     * Both panels share: anchor on input, sync width, default to 'bottom-start', flip on first
-     * compute then lock the resulting placement, optionally clamp by dropdownMin/MaxWidth.
+     * The anchor options both floating panels (dropdown, selected-items popover) share: anchor on
+     * the input, sync width, default to 'bottom-start', flip on first compute then lock the
+     * resulting placement, optionally clamp by dropdownMin/MaxWidth.
      */
-    private anchorFloatingPanel(panel: HTMLElement, opts: {
-        getPlacement: () => Placement | null;
-        setPlacement: (p: Placement) => void;
-        /** When false, never locks (re-flips on every update). Defaults to true. */
-        isLocked?: () => boolean;
-        applyMaxWidth?: boolean;
-        afterPosition?: () => void;
-    }): () => void {
-        const handle = anchor(panel, this.inputWrapper, this.floatingPanelAnchorOptions(panel, opts));
-        return () => handle.destroy();
-    }
-
-    /** The anchor options both floating panels share (see {@link anchorFloatingPanel}). */
     private floatingPanelAnchorOptions(panel: HTMLElement, opts: {
         getPlacement: () => Placement | null;
         setPlacement: (p: Placement) => void;
@@ -4394,7 +4290,7 @@ export class MultiSelectEngine<T = any> {
             }
         } else if (this.showSelectedPopover) {
             if (mode === 'fullscreen') {
-                if (this.selectedPopoverCleanup) { this.selectedPopoverCleanup(); this.selectedPopoverCleanup = null; }
+                this.selectedPopoverHandle?.setAnchored(false); // still open, now CSS-placed
                 this.selectedPopoverPlacement = null;
                 this.clearFloatingInlineGeometry(this.selectedPopover);
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
@@ -4435,37 +4331,6 @@ export class MultiSelectEngine<T = any> {
     /** Restore page scroll (no-op if it wasn't locked). */
     private unlockBodyScroll(): void {
         if (this.bodyScrollUnlock) { this.bodyScrollUnlock(); this.bodyScrollUnlock = null; }
-    }
-
-    /**
-     * Clip the host document's horizontal overflow while a fullscreen sheet is open.
-     *
-     * A page that overflows horizontally (e.g. an unbreakable-wide token in a heading)
-     * makes the mobile browser SHRINK-TO-FIT: it zooms the page out so the overflow fits,
-     * which desyncs the visual viewport from the layout viewport. Our fullscreen sheet is
-     * `position: fixed` — anchored to the LAYOUT viewport — so under that zoom it no longer
-     * lands flush against the physical screen edges, and the top slips under the system bar
-     * (looks like "the bar covers the sheet"). This is NOT a safe-area problem; safe-area
-     * insets are 0 in that state. Clamping `overflow-x: hidden` on <html>/<body> removes the
-     * overflow, so the browser drops the zoom and the sheet sits flush. Complements
-     * lockBodyScroll() (vertical axis); the saved inline value is restored on close.
-     *
-     * Only <html> is touched (not <body>): clipping the root's horizontal overflow is
-     * enough to collapse the scrollWidth and cancel the shrink-to-fit, and it avoids
-     * conflicting with core's lockBodyScroll(), which owns <body>'s `overflow`. Idempotent.
-     */
-    private clampDocumentOverflowX(): void {
-        if (this.overflowXClamp || typeof document === 'undefined') return;
-        const html = document.documentElement;
-        this.overflowXClamp = { html: html.style.overflowX };
-        html.style.overflowX = 'hidden';
-    }
-
-    /** Restore the <html> `overflow-x` clamped by clampDocumentOverflowX() (no-op if unset). */
-    private releaseDocumentOverflowX(): void {
-        if (!this.overflowXClamp || typeof document === 'undefined') return;
-        document.documentElement.style.overflowX = this.overflowXClamp.html;
-        this.overflowXClamp = null;
     }
 
     /**
@@ -4607,9 +4472,6 @@ export class MultiSelectEngine<T = any> {
         this.warnFullscreenContainingBlock();
         this.buildFullscreenHeader();
         this.lockBodyScroll();
-        // Drop any host-page horizontal overflow so the browser's shrink-to-fit zoom can't
-        // desync the fixed sheet from the screen (top slipping under the system bar).
-        this.clampDocumentOverflowX();
         // Trap the phone Back gesture/button so it closes the sheet instead of navigating.
         this.pushOverlayHistory();
         // Track the soft keyboard so the sheet shrinks to sit above it (see method doc).
@@ -4651,7 +4513,6 @@ export class MultiSelectEngine<T = any> {
             this.fullscreenNavNext = null;
         }
         this.unlockBodyScroll();
-        this.releaseDocumentOverflowX();
     }
 
     /**
@@ -5057,7 +4918,11 @@ export class MultiSelectEngine<T = any> {
         // the sheet, and the virtual list measures its row height from that variable.
         this.selectedPopover.classList.toggle('ms__selected-popover--fullscreen', this.presentationMode === 'fullscreen');
         this.renderSelectedPopover();
-        this.selectedPopover.classList.add('ms__selected-popover--visible');
+        // Core shows it (visibleClass) and makes it a node of the overlay tree: a click outside or
+        // Escape closes it, and opening another overlay of the group (this dropdown, another
+        // picker) closes it. Opened unanchored; positionSelectedPopover() anchors it when floating.
+        this.selectedPopoverHandle = this.createSelectedPopover();
+        this.selectedPopoverHandle.open();
 
         // Add virtual class if using virtual scroll (matches dropdown pattern)
         const threshold = this.options.virtualScrollThreshold ?? 100;
@@ -5071,7 +4936,6 @@ export class MultiSelectEngine<T = any> {
             // Push a history entry too, so the phone Back gesture closes the sheet instead
             // of navigating the page away (same guard the options dropdown uses).
             this.lockBodyScroll();
-            this.clampDocumentOverflowX();
             this.pushOverlayHistory();
         } else {
             this.positionSelectedPopover();
@@ -5081,11 +4945,14 @@ export class MultiSelectEngine<T = any> {
     private hideSelectedPopover(): void {
         uiLogger.debug(`[${this.instanceId}] hideSelectedPopover() called`);
         this.showSelectedPopover = false;
+        // Hides the panel, stops positioning, leaves the overlay tree (its onClose('api') is a no-op).
+        const handle = this.selectedPopoverHandle;
+        this.selectedPopoverHandle = null;
+        handle?.destroy();
         this.selectedPopover.classList.remove('ms__selected-popover--visible');
         this.selectedPopover.classList.remove('ms__selected-popover--virtual');
         this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
         this.unlockBodyScroll();
-        this.releaseDocumentOverflowX();
         // Consume the history entry we pushed on fullscreen open (no-op if a Back gesture
         // already popped it, or if we were never fullscreen).
         this.popOverlayHistory();
@@ -5097,11 +4964,6 @@ export class MultiSelectEngine<T = any> {
             this.selectedPopoverVirtualScroll.destroy();
             this.selectedPopoverVirtualScroll = null;
             this.selectedPopoverContainer = null;
-        }
-
-        if (this.selectedPopoverCleanup) {
-            this.selectedPopoverCleanup();
-            this.selectedPopoverCleanup = null;
         }
 
         // Tear down popover-only tooltips so they don't leak Floating UI cleanups.
@@ -5364,12 +5226,41 @@ export class MultiSelectEngine<T = any> {
     private positionSelectedPopover(): void {
         // The fullscreen overlay is CSS-positioned (fixed, inset:0) — never anchored.
         if (this.presentationMode === 'fullscreen') return;
-        this.selectedPopoverCleanup = this.anchorFloatingPanel(this.selectedPopover, {
-            getPlacement: () => this.selectedPopoverPlacement,
-            setPlacement: (p) => {
-                this.selectedPopoverPlacement = p;
-                uiLogger.debug(`[${this.instanceId}] Locked popover placement:`, p);
-            }
+        this.selectedPopoverHandle?.setAnchored(true);
+    }
+
+    /**
+     * The selected-items popover as a core popover, like the dropdown (createDropdownPopover):
+     * kept mounted in our shadow root, opened unanchored, a node of core's overlay tree. A press
+     * on the counter or a "show selected" badge is inside (they toggle it themselves). Escape
+     * closes it wherever focus is; focus stays where it is (focusing the input would open the
+     * dropdown).
+     */
+    private createSelectedPopover(): PopoverHandle {
+        return createPopover({
+            reference: this.inputWrapper,
+            panel: this.selectedPopover,
+            shouldKeepMounted: true,
+            visibleClass: 'ms__selected-popover--visible',
+            isAnchored: false,
+            inheritThemeFrom: false, // the panel lives in our shadow root
+            overlayGroup: this.options.overlayGroup || undefined,
+            shouldCloseOnOutsideClick: true,
+            shouldCloseOnEscape: true,
+            returnFocusTo: null,
+            getInsideElements: () => [this.counter, ...Array.from(this.badgesContainer.querySelectorAll('[data-ms-action="show-selected"]'))],
+            onClose: (reason: PopoverCloseReason) => {
+                // The overlay tree closed it (outside click, Escape, another overlay opened).
+                // 'api' is our own hideSelectedPopover() — already running.
+                if (reason !== 'api') this.hideSelectedPopover();
+            },
+            ...this.floatingPanelAnchorOptions(this.selectedPopover, {
+                getPlacement: () => this.selectedPopoverPlacement,
+                setPlacement: (p) => {
+                    this.selectedPopoverPlacement = p;
+                    uiLogger.debug(`[${this.instanceId}] Locked popover placement:`, p);
+                }
+            }),
         });
     }
 
@@ -6221,7 +6112,8 @@ export class MultiSelectEngine<T = any> {
         this.dropdownPopover?.destroy();
         this.dropdownPopover = null;
         if (this.hintCleanup) this.hintCleanup();
-        if (this.selectedPopoverCleanup) this.selectedPopoverCleanup();
+        this.selectedPopoverHandle?.destroy();
+        this.selectedPopoverHandle = null;
 
         // Detach Back-gesture handling WITHOUT popping history — a teardown (e.g. a DOM
         // move) must not trigger navigation. Any entry we pushed is harmless (same URL).
@@ -6234,16 +6126,6 @@ export class MultiSelectEngine<T = any> {
         // Restore page scroll if we're torn down while a fullscreen overlay is open
         // (e.g. a DOM move destroys the picker mid-open).
         this.exitFullscreen();
-
-        // Clean up document-level event listeners
-        if (this.documentClickHandler) {
-            document.removeEventListener('click', this.documentClickHandler);
-            this.documentClickHandler = null;
-        }
-        if (this.documentKeydownHandler) {
-            document.removeEventListener('keydown', this.documentKeydownHandler);
-            this.documentKeydownHandler = null;
-        }
 
 
         // Clean up virtual scroll

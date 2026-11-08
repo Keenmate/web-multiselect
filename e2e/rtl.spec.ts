@@ -26,6 +26,18 @@ test('ancestor dir="rtl" propagates to the picker', async ({ page }) => {
     expect(hasRtl).toBe(true);
 });
 
+// The direction is the effective CSS `direction` (core `isRtl`), not a search for a `dir="rtl"`
+// ancestor: a nearer dir="ltr" wins, and a CSS `direction` rule counts.
+test('a nested dir="ltr" inside an RTL section stays LTR', async ({ page }) => {
+    const hasRtl = await picker(page, 'ltr-nested').evaluate((el: any) => !!el.shadowRoot?.querySelector('.ms--rtl'));
+    expect(hasRtl).toBe(false);
+});
+
+test('a CSS direction: rtl on an ancestor makes the picker RTL', async ({ page }) => {
+    const hasRtl = await picker(page, 'rtl-css').evaluate((el: any) => !!el.shadowRoot?.querySelector('.ms--rtl'));
+    expect(hasRtl).toBe(true);
+});
+
 test('LTR control does not have ms--rtl class', async ({ page }) => {
     const hasRtl = await picker(page, 'ltr-control').evaluate((el: any) =>
         !!el.shadowRoot?.querySelector('.ms--rtl')

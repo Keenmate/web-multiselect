@@ -26,6 +26,22 @@
     </div>
 
     <div class="fixture">
+        <div class="fixture-label">nested dir="ltr" inside dir="rtl" (the nearest dir wins)</div>
+        <div dir="rtl">
+            <div dir="ltr">
+                <web-multiselect id="ltr-nested" value-member="value" display-value-member="label"></web-multiselect>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">CSS direction: rtl (no dir attribute)</div>
+        <div style="direction: rtl">
+            <web-multiselect id="rtl-css" value-member="value" display-value-member="label"></web-multiselect>
+        </div>
+    </div>
+
+    <div class="fixture">
         <div class="fixture-label">LTR control (multi + search)</div>
         <web-multiselect id="ltr-control" multiple="true" enable-search="true"
             value-member="value" display-value-member="label"></web-multiselect>
@@ -48,7 +64,7 @@
         ];
 
         customElements.whenDefined('web-multiselect').then(() => {
-            for (const id of ['rtl-explicit', 'rtl-ancestor', 'ltr-control', 'rtl-fs']) {
+            for (const id of ['rtl-explicit', 'rtl-ancestor', 'ltr-nested', 'rtl-css', 'ltr-control', 'rtl-fs']) {
                 document.getElementById(id).options = items;
             }
             // Pre-select one so a badge renders (for badge-side assertions).

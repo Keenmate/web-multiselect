@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 
 /**
  * Unit tests for `full-title-member` + `show-badge-full-title`.

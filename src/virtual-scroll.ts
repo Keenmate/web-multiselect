@@ -16,6 +16,8 @@
  * ```
  */
 
+import { observeElementSize } from '@keenmate/web-components-core';
+
 export interface VirtualScrollConfig<T> {
     /** Container element with overflow-y: auto */
     container: HTMLElement;
@@ -56,7 +58,7 @@ export class VirtualScroll<T> {
     private visibleEnd = 0;
 
     private scrollHandler: () => void;
-    private resizeObserver?: ResizeObserver;
+    private stopObservingSize?: () => void;
 
     constructor(config: VirtualScrollConfig<T>) {
         this.container = config.container;
@@ -110,14 +112,12 @@ export class VirtualScroll<T> {
         // Setup event listeners
         this.container.addEventListener('scroll', this.scrollHandler);
 
-        // Watch for container size changes
-        if (typeof ResizeObserver !== 'undefined') {
-            this.resizeObserver = new ResizeObserver(() => {
-                this.updateViewportHeight();
-                this.render();
-            });
-            this.resizeObserver.observe(this.container);
-        }
+        // Watch for container size changes (core's shared, throttled element-size observer;
+        // the initial measure is the explicit call below).
+        this.stopObservingSize = observeElementSize(this.container, () => {
+            this.updateViewportHeight();
+            this.render();
+        }, { shouldFireImmediately: false });
 
         // Initial render
         this.updateViewportHeight();
@@ -325,9 +325,8 @@ export class VirtualScroll<T> {
     public destroy(): void {
         this.container.removeEventListener('scroll', this.scrollHandler);
 
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-        }
+        this.stopObservingSize?.();
+        this.stopObservingSize = undefined;
 
         // Clear container
         this.container.innerHTML = '';

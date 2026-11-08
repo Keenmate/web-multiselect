@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 
 /**
  * Render gate (`defer`): with the attribute present the element builds NO shadow

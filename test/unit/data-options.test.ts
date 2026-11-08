@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 
 /**
  * Element-level wiring for the `data-options` / `data-options-format` inputs.

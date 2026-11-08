@@ -283,8 +283,9 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
 test.describe('fullscreen — host-page overflow clamp', () => {
     // A host page that overflows horizontally makes the mobile browser shrink-to-fit
     // (zoom out), which desyncs the `position: fixed` sheet from the physical screen so
-    // its top slips under the system bar. Opening a fullscreen sheet clamps <html>'s
-    // overflow-x to remove that zoom; closing restores the prior inline value.
+    // its top slips under the system bar. Opening a fullscreen sheet takes core's
+    // lockBodyScroll(), which (core rc20) also clamps <html>'s overflow-x to remove that
+    // zoom; closing releases the lock and restores the prior inline value.
     const htmlOverflowX = (page: Page) =>
         page.evaluate(() => document.documentElement.style.overflowX);
 

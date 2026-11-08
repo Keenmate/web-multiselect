@@ -6,6 +6,7 @@ import type { Placement } from '@keenmate/web-components-core/positioning';
 import type { PresentationContext, ComponentContext, RenderLoaderCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './utils/ltree-node';
+import type { OptionsFormat } from './option-formats';
 import type {
     SearchBehavior,
     SearchMatch,
@@ -1203,6 +1204,13 @@ export interface MultiSelectConfig<T = any> {
     container?: HTMLElement | null;
 
     /**
+     * Whether the control is right-to-left. The element passes core's `isRtl` (the effective CSS
+     * `direction`: `dir` on the host or any ancestor, or a CSS `direction` rule). Unset (standalone
+     * engine): the computed `direction` of the host.
+     */
+    isRtl?: () => boolean;
+
+    /**
      * Host element: hidden form inputs are appended to it, and it is `element` on every callback
      * `ctx` / event detail.
      */
@@ -1211,20 +1219,50 @@ export interface MultiSelectConfig<T = any> {
     controller?: MultiSelectController<T>;
 }
 
+/** {@link MultiSelectConfig} members that are engine wiring, not `<web-multiselect>` inputs. */
+type MultiSelectEngineOnlyKey = `on${string}` | 'container' | 'hostElement' | 'controller' | 'isRtl';
+
+/** Engine members the element types differently (a CSS length takes a number = px; no `null`). */
+type MultiSelectElementRetypedKey = 'dropdownMinWidth' | 'dropdownMaxWidth' | 'maxHeight' | 'badgesThreshold' | 'maxVisibleBadgeCount';
+
 /**
- * Every configKey a `<web-multiselect>` element accepts: the picker options
- * ({@link MultiSelectConfig}) plus the element-only inputs (`presentation`, the widths,
- * `collapseBadgesBelow`). The config type a responsive rule targets.
+ * Every configKey a `<web-multiselect>` element accepts, exactly its input-table rows (core
+ * `docs/usage.md` → "Typing the properties", rulebook C-CA-16): the picker options
+ * ({@link MultiSelectConfig}) minus the engine wiring, plus the element-only inputs
+ * (`presentation`, the widths, `collapseBadgesBelow`, the `value` default and the `data-options`
+ * source). Merged into `MultiSelectElement`, so `el.maxHeight = 300` is typed; also the config
+ * type a responsive rule targets. A CSS length takes a number (pixels); `undefined` (or removing
+ * the attribute) resets an input, `null` only clears a nullable one.
  */
-export interface MultiSelectElementConfig<T = any> extends MultiSelectConfig<T> {
+export interface MultiSelectElementConfig<T = any> extends Omit<MultiSelectConfig<T>, MultiSelectEngineOnlyKey | MultiSelectElementRetypedKey> {
+    /** Minimum dropdown width, a CSS length (a number = px). Attribute `dropdown-min-width`. */
+    dropdownMinWidth?: string | number;
+    /** Maximum dropdown width, a CSS length (a number = px). Attribute `dropdown-max-width`. */
+    dropdownMaxWidth?: string | number;
+    /** Maximum dropdown list height, a CSS length (a number = px). Default `20rem`. Attribute `max-height`. */
+    maxHeight?: string | number;
+    /** Threshold at which the badges collapse (see `badgesThresholdMode`). Attribute `badges-threshold`. */
+    badgesThreshold?: number;
+    /** Maximum number of badges in `partial` mode. Attribute `max-visible-badge-count`. */
+    maxVisibleBadgeCount?: number;
     /** How the open dropdown is presented: `auto` (fullscreen on phones, floating elsewhere), `floating`, `fullscreen`. Attribute `presentation`. */
     presentation?: 'auto' | 'floating' | 'fullscreen';
-    /** Fixed dropdown width (CSS length). Attribute `dropdown-width`. */
-    dropdownWidth?: string | null;
-    /** Selected-items popover width (CSS length). Attribute `selected-popover-width`. */
-    selectedPopoverWidth?: string | null;
+    /** Fixed dropdown width, a CSS length (a number = px). Attribute `dropdown-width`. */
+    dropdownWidth?: string | number;
+    /** Selected-items popover width, a CSS length (a number = px). Attribute `selected-popover-width`. */
+    selectedPopoverWidth?: string | number;
     /** Collapse the badges to the count view below this host width (px). Attribute `collapse-badges-below`. */
-    collapseBadgesBelow?: number | null;
+    collapseBadgesBelow?: number;
+    /** The initial selection (native `defaultValue`, the form-reset target). Attribute `value` (parsed per `value-format`). */
+    defaultValue?: ReadonlyArray<string | number> | string;
+    /** HTML-authoring option source, parsed per `optionsFormat`. Attribute `data-options`. */
+    optionsSource?: string | null;
+    /** How `data-options` is parsed. Default `json`. Attribute `data-options-format`. */
+    optionsFormat?: OptionsFormat;
+    /** Cell delimiter of the `csv` / `plain` `data-options` formats. Default `,`. Attribute `data-options-splitter`. */
+    optionsSplitter?: string;
+    /** Row delimiter of the `csv` / `plain` `data-options` formats. Default newline. Attribute `data-options-row-splitter`. */
+    optionsRowSplitter?: string;
 }
 
 /**
@@ -1291,6 +1329,7 @@ export type OpenEventDetail<T = any> = MultiSelectContext<T>;
  * - `'select'` — a selection closed it (single-select, `close-on-select`);
  * - `'outside-click'` — a click outside the control and the dropdown;
  * - `'scroll'` — the page (or a scroller around the control) scrolled (`close-on-scroll`);
+ * - `'reference-removed'` — the control left the page while the dropdown was open (core rc20);
  * - `'overlay'` — another overlay opened (another picker, the selected-items popover);
  * - `'parent'` — the overlay it was opened from closed;
  * - `'back'` — the Back gesture closed the fullscreen sheet;
@@ -1300,7 +1339,7 @@ export type OpenEventDetail<T = any> = MultiSelectContext<T>;
  */
 export type DropdownCloseReason =
     | 'api' | 'toggle' | 'escape' | 'tab' | 'select' | 'outside-click' | 'scroll' | 'resize'
-    | 'overlay' | 'parent' | 'back' | 'close-button' | 'disabled' | 'destroy';
+    | 'reference-removed' | 'overlay' | 'parent' | 'back' | 'close-button' | 'disabled' | 'destroy';
 
 /** `close` event detail: the context (`controller`, `element`, presentation flags) + why it closed. */
 export type CloseEventDetail<T = any> = MultiSelectContext<T> & { reason: DropdownCloseReason };

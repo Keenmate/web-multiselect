@@ -6,7 +6,7 @@ function picker(page: Page, id: string): Locator {
     return page.locator(`#${id}`);
 }
 
-// The custom-styles CSS lands in the replaceable slot at the top of the shadow root.
+// The custom-styles CSS lands in the replaceable instance slot of the shadow root.
 function slotText(p: Locator): Promise<string> {
     return p.evaluate((el) => el.shadowRoot!.querySelector('.ms-custom-styles')?.textContent?.trim() ?? '');
 }
@@ -70,4 +70,20 @@ test('page-wide customStyles styles every instance; an instance\'s own CSS overr
     // cs-precedence still has its red custom-styles attribute, cs-attr too: the instance layer wins.
     await expect.poll(() => borderColor(second)).toBe('rgb(255, 0, 0)');
     await expect.poll(() => borderColor(picker(page, 'cs-attr'))).toBe('rgb(255, 0, 0)');
+});
+
+test('an @import is applied in the shadow root and linked once in <head> (fonts register), released when cleared', async ({ page }) => {
+    const headLinks = () => page.evaluate(() =>
+        Array.from(document.head.querySelectorAll('link[data-km-custom-styles]')).map((l) => new URL((l as HTMLLinkElement).href).pathname));
+    expect(await headLinks()).toEqual([]);
+
+    await page.evaluate(() => {
+        (window as any).components['web-multiselect'].customStyles = "@import url('/test/custom-styles-import.css');";
+    });
+    // Every instance imports it; the head gets ONE shared link (core rc20 hoist).
+    await expect.poll(headLinks).toEqual(['/test/custom-styles-import.css']);
+    await expect.poll(() => borderColor(picker(page, 'cs-reactive'))).toBe('rgb(1, 2, 3)');
+
+    await page.evaluate(() => { (window as any).components['web-multiselect'].customStyles = null; });
+    await expect.poll(headLinks).toEqual([]);
 });

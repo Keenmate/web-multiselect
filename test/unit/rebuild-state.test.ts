@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 
 /**
  * The live state across a picker rebuild (a reinit-key change such as `labels`), a DOM move,

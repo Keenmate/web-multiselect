@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import '../../src/web-component'; // registers <web-multiselect>
+import '../../src/index'; // registers <web-multiselect> (core registerComponent)
 
 /** L6 lookup: `getOptionByValue(value) → option | null` on the element and the controller. */
 describe('getOptionByValue', () => {

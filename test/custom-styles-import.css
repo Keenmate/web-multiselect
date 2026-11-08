@@ -1,0 +1,2 @@
+/* Imported by e2e/custom-styles.spec.ts through a page-wide `@import` (core links it in <head> too). */
+:host { --ms-input-border-color: rgb(1, 2, 3); }

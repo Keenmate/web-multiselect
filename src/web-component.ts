@@ -24,6 +24,7 @@ import {
   toEnum,
   toInt,
   toText,
+  toCssLength,
   toFunction,
   toObjectArray,
   toObject,
@@ -43,6 +44,7 @@ import {
 import { MultiSelectEngine } from './multiselect';
 import type {
   MultiSelectConfig,
+  MultiSelectElementConfig,
   MultiSelectContext,
   MultiSelectController,
   MessageOptions,
@@ -81,15 +83,15 @@ const cb = (): ReturnType<typeof toFunction> => toFunction();
 // ============================================================================
 const INPUTS: readonly InputDef[] = [
   // ── Strings (cosmetic → update). Optional ones are nullable: absent → null ─
-  { configKey: 'dropdownMinWidth',        attribute: 'dropdown-min-width',          converter: toText({ isNullable: true }),            on: 'update', description: 'Minimum width of the dropdown panel (any CSS length).' },
-  { configKey: 'dropdownMaxWidth',        attribute: 'dropdown-max-width',          converter: toText({ isNullable: true }),            on: 'update', description: 'Maximum width of the dropdown panel (any CSS length).' },
-  { configKey: 'maxHeight',               attribute: 'max-height',                  converter: toText({ default: '20rem' }),          on: 'update', description: 'Maximum height of the dropdown list before it scrolls.' },
+  { configKey: 'dropdownMinWidth',        attribute: 'dropdown-min-width',          converter: toCssLength(),                         on: 'update', type: 'string | number', description: 'Minimum width of the dropdown panel, a CSS length (`20rem`, `300px`); a bare number means pixels (`dropdown-min-width="300"` → `300px`). Unset: no minimum beyond the control width.' },
+  { configKey: 'dropdownMaxWidth',        attribute: 'dropdown-max-width',          converter: toCssLength(),                         on: 'update', type: 'string | number', description: 'Maximum width of the dropdown panel, a CSS length; a bare number means pixels. Unset: no maximum.' },
+  { configKey: 'maxHeight',               attribute: 'max-height',                  converter: toCssLength({ default: '20rem' }),     on: 'update', type: 'string | number', description: 'Maximum height of the dropdown list before it scrolls, a CSS length; a bare number means pixels. Default `20rem`.' },
   { configKey: 'name',             attribute: 'name',                        converter: toText({ isNullable: true }),            on: 'reinit', description: 'HTML form field name/id used for the hidden input(s).' },
-  { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `getCustomStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot at the top of the shadow root. `getCustomStylesCallback` takes precedence when both are set.' },
+  { configKey: 'customStyles',            attribute: 'custom-styles',               converter: toText({ isNullable: true }),            on: 'update', description: 'Raw CSS injected into the Shadow DOM — the declarative alternative to `getCustomStylesCallback`. The value is a full stylesheet (selectors and all), dropped verbatim into a replaceable style slot after the page-wide layer (`window.components["web-multiselect"].customStyles`), so it overrides it. An `@import`ed font works too (core also links the import in the document head). `getCustomStylesCallback` takes precedence when both are set.' },
 
   // ── CSS-var sugar (mirrored to a host style prop in reinit()/update()) ────
-  { configKey: 'dropdownWidth',           attribute: 'dropdown-width',              converter: toText({ isNullable: true }),            on: 'update', description: 'Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable.' },
-  { configKey: 'selectedPopoverWidth',    attribute: 'selected-popover-width',      converter: toText({ isNullable: true }),            on: 'update', description: 'Selected-items popover width; mirrored to `--ms-selected-popover-width`.' },
+  { configKey: 'dropdownWidth',           attribute: 'dropdown-width',              converter: toCssLength(),                         on: 'update', type: 'string | number', description: 'Fixed dropdown width, a CSS length (a bare number means pixels); mirrored to the `--ms-dropdown-width` CSS variable.' },
+  { configKey: 'selectedPopoverWidth',    attribute: 'selected-popover-width',      converter: toCssLength(),                         on: 'update', type: 'string | number', description: 'Selected-items popover width, a CSS length (a bare number means pixels); mirrored to `--ms-selected-popover-width`.' },
 
   // ── Member properties (structural → reinit; optional → nullable) ─────────
   { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true, default: 'value' }), shouldReflect: true, on: 'reinit', description: 'Property name on an option object that holds its value. Default: `value`.' },
@@ -246,7 +248,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   { configKey: 'renderGroupLabelContentCallback', converter: cb(), on: 'update', type: '(ctx: GroupLabelRenderContext) => string | HTMLElement', description: 'Customize a group label; may return an HTML string or element. `ctx` carries `groupName` plus the group members + selection (e.g. `ctx.selectedCount`) so a custom header can show a per-group count.' },
   { configKey: 'renderSelectedContentCallback',  converter: cb(), on: 'update', type: '(ctx: SelectedContentRenderContext) => string', description: 'Custom render for the single-select selected value (`ctx.option`).' },
   { configKey: 'renderSelectedItemContentCallback', converter: cb(), on: 'update', type: '(ctx: BadgeContentRenderContext) => string | HTMLElement', description: 'Custom render for one selected item in the popover (`ctx.isInPopover` is true).' },
-  { configKey: 'getCustomStylesCallback',        converter: cb(), on: 'update', type: '(ctx: MultiSelectContext) => string | null', description: 'Return a CSS string injected into the component via a replaceable style slot (§12.8). Takes precedence over the `custom-styles` attribute when both are set.' },
+  { configKey: 'getCustomStylesCallback',        converter: cb(), on: 'update', type: '(ctx: MultiSelectContext) => string | null', description: 'Return a CSS string injected into the component via a replaceable style slot, after the page-wide layer (core §12.8). Takes precedence over the `custom-styles` attribute when both are set.' },
 
   // ── Callbacks: before-hooks (`false` cancels; a value replaces) ──────────
   { configKey: 'beforeSearchCallback',    converter: cb(), on: 'update', type: '(ctx: BeforeSearchContext) => string | false | void | Promise<string | false | void>', description: 'Runs before a search with `ctx.term`: return a rewritten term, `false` to skip the search (the full list shows), or nothing to continue.' },
@@ -281,7 +283,7 @@ const EVENTS = [
   { name: 'action', description: 'An action button or a `data-action` trigger (in option / badge content or a `showMessage` element) was activated. `detail`: `action` (`select-all` | `clear-selection` | `custom`), `id`, `item`, `source` (`action-buttons` | `option` | `badge` | `message`), `option` (for option / badge triggers), `sourceEvent`, `triggerElement`, `dataset`, plus the selection snapshot. Fires after the item’s `onClick` and the built-in behaviour (the selection snapshot is the state after it). Twin: `onAction(detail)`.' },
   { name: 'ready', description: 'The picker was built for the first time (once per element lifetime; core `BlissElement`). Fires right after the first build — during upgrade for a normal element, or when the `defer` gate is released (`el.release()` / removing `defer`). The host then also has the `ready` attribute and matches `:state(ready)`; `el.whenReady()` resolves. `detail`: `controller` / `element`. Twin: `onReady(detail)`.' },
   { name: 'open', description: 'The dropdown opened (floating panel or the phone fullscreen overlay) — by the user or `open()`. `detail`: `controller` / `element` + the presentation flags. Twin: `onOpen(detail)`.' },
-  { name: 'close', description: 'The dropdown closed — any reason; `detail.reason` says which (`api`, `toggle`, `escape`, `tab`, `select`, `outside-click`, `scroll`, `resize`, `overlay`, `parent`, `back`, `close-button`, `disabled`, `destroy`). `detail`: `reason`, `controller` / `element` + the presentation flags. Twin: `onClose(detail)`.' },
+  { name: 'close', description: 'The dropdown closed — any reason; `detail.reason` says which (`api`, `toggle`, `escape`, `tab`, `select`, `outside-click`, `scroll`, `resize`, `reference-removed`, `overlay`, `parent`, `back`, `close-button`, `disabled`, `destroy`). `detail`: `reason`, `controller` / `element` + the presentation flags. Twin: `onClose(detail)`.' },
   { name: 'value-format-error', description: '`getValueFormatCallback` threw: an empty string was written into the hidden input, the host is marked invalid (`customError`, message = `labels.valueFormatError`) so the form will not submit (unless `novalidate`), and the error is logged. The next successful format clears it. `detail.error` = what was thrown, `detail.value` = the selected values the callback got. Twin: `onValueFormatError(detail)`.' },
 ] as const;
 
@@ -435,7 +437,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   /** Cosmetic change: mirror CSS vars / custom styles, patch the picker in place. */
   protected override update(partial: Record<string, unknown>): void {
     this.#mirrorCssVars(partial);
-    if ('getCustomStylesCallback' in partial || 'customStyles' in partial) this.#applyCustomStyles();
+    if ('getCustomStylesCallback' in partial || 'customStyles' in partial) this.#customStyles?.refresh();
 
     // Everything else goes to the live picker as an in-place patch. Forward `null`
     // verbatim — it's the clear signal under core's null-clear contract, and the
@@ -683,6 +685,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.
     // Effective disabled state: the `disabled` input OR a disabled ancestor <fieldset> (core).
     cfg.isDisabled = this.isEffectivelyDisabled;
+    // Writing direction: core's effective-direction read (the host's computed `direction`).
+    cfg.isRtl = () => this.isRtl;
     cfg.container = this.#shadow as unknown as HTMLElement;
     cfg.hostElement = this;
     cfg.controller = this.controller;
@@ -729,16 +733,18 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   // ── §12.8 custom styles ───────────────────────────────────────────────────
 
+  /**
+   * Custom CSS, the canonical core adoption (core `docs/usage.md` → "Style injection", rulebook
+   * C-CA-15). Core owns both layers: the page one (`window.components['web-multiselect'].customStyles`
+   * / `.getCustomStylesCallback`) and this instance's, which comes after it and overrides; the
+   * callback wins over `custom-styles` within a layer. Core also links an `@import` in the document
+   * head, so an imported icon font's `@font-face` registers. Called once per build (#buildPicker)
+   * and when either input changes (update()); destroyed in destroyCallback().
+   */
   #applyCustomStyles(): void {
-    // Before the first build there is nothing to style; #rebuildPicker() applies it.
-    if (!this.#container) return;
-    // Core owns both layers: the page one (`window.components['web-multiselect'].customStyles` /
-    // `.getCustomStylesCallback`) and this instance's, which comes after it and overrides. Kept at
-    // the top of the root so consumer @import / @font-face rules work. The callback wins over the
-    // `custom-styles` attribute within a layer.
-    this.#customStyles ??= createCustomStyles<MultiSelectContext<T>>(this, this.#shadow, {
+    if (this.#customStyles) return this.#customStyles.refresh();
+    this.#customStyles = createCustomStyles<MultiSelectContext<T>>(this, this.#shadow, { // writes both layers now
       cssClass: 'ms-custom-styles',
-      position: 'first',
       getContext: () => this.withContext({}) as unknown as MultiSelectContext<T>,
       getInstanceStyles: () => ({
         css: this.config.customStyles as string | null | undefined,
@@ -746,7 +752,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       }),
       onApply: (css) => { if (import.meta.env?.DEV) this.#checkCustomStyleVars(css); },
     });
-    this.#customStyles.refresh();
   }
 
   /**
@@ -1101,9 +1106,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   }
 }
 
-// Importing this module registers the element (back-compat contract). The full
-// global-API publish + logger-bundle wiring happens in index.ts via
-// registerComponent(); both defines are idempotent, so importing either works.
-if (typeof customElements !== 'undefined' && !customElements.get('web-multiselect')) {
-  customElements.define('web-multiselect', MultiSelectElement);
-}
+/** Every input as a typed property (`el.maxHeight`, `el.isDisabled`, …): core `docs/usage.md` →
+ *  "Typing the properties", rulebook C-CA-16. Core installs the accessors from the input table. */
+export interface MultiSelectElement<T = any> extends MultiSelectElementConfig<T> {}
+
+// The tag is defined by core's registerComponent() in the package entry (index.ts), which also
+// publishes window.components['web-multiselect'] (logging, the page-wide responsive / customStyles
+// layers). Always import the package entry.
