@@ -15,12 +15,13 @@ import { test, expect } from './fixtures';
  *
  * The whole failure surfaced only as an uncaught page error: the existing e2e
  * suite stayed green because nothing asserted on `pageerror`. This spec closes
- * that gap two ways — a page-level "no uncaught errors" guard on the real demo
- * (the API06 section drives the partial/compact pickers via the exact
- * options-then-setSelected pattern), and a direct reproduction of it.
+ * that gap two ways — a page-level "no uncaught errors" guard on a fixture
+ * (test/sync-imperative.html) that drives partial/compact pickers through the exact
+ * options-then-setSelected pattern of the examples-data-api API06 demo, and a direct
+ * reproduction of it.
  */
 
-const PAGE = '/examples-data-api.html';
+const PAGE = '/test/sync-imperative.html';
 
 test.describe('synchronous el.options = data; el.setSelected(sel)', () => {
     test('data-api init runs to completion with no uncaught page errors', async ({ page }) => {

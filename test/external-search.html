@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — external search (FlexSearch)</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 420px; }
+    </style>
+</head>
+<body>
+    <h1>external search</h1>
+    <p>Targeted by <code>e2e/external-search.spec.ts</code>. The whole search is delegated to a FlexSearch
+       index (<code>/examples-flex-indexer.js</code>) via <code>searchCallback</code>: a flat list of
+       accented city names and the ISCO-08 tree (<code>/examples-data/isco08.json</code>), the same setup
+       as examples-external-search ES01 / ES02.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">flat: cities, FlexSearch over the label</div>
+        <web-multiselect id="cities" multiple="true" enable-search="true"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">tree: ISCO-08, FlexSearch over code + title + breadcrumb</div>
+        <web-multiselect id="isco-flex" multiple="true"
+            enable-virtual-scroll="true" virtual-scroll-item-height="32"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+        import { FlexIndexer } from '/examples-flex-indexer.js';
+
+        const cities = [
+            'Zürich', 'São Paulo', 'Kraków', 'München', 'Málaga', 'Düsseldorf', 'Reykjavík',
+            'Bogotá', 'Medellín', 'Łódź', 'Gdańsk', 'Tromsø', 'Skopje', 'Chișinău', 'Timișoara',
+            'Košice', 'Plzeň', 'Brno', 'Genève', 'Montréal', 'Québec', 'Đà Nẵng', 'Hạ Long',
+            'Nürnberg', 'Örebro', 'Aarhus', 'Bratislava', 'Ljubljana', 'Zagreb', 'Poznań'
+        ].map((name, i) => ({ value: String(i), label: name }));
+        const cityIndex = new FlexIndexer((c) => c.label);
+        cityIndex.build(cities);
+        const citiesEl = document.getElementById('cities');
+        citiesEl.valueMember = 'value';
+        citiesEl.displayValueMember = 'label';
+        citiesEl.options = cities;
+        citiesEl.searchCallback = ({ term }) => cityIndex.search(term, 20);
+
+        const isco = await (await fetch('/examples-data/isco08.json')).json();
+        // Exact/prefix on the ISCO code (ranked first), plus fuzzy text over title + code + breadcrumb.
+        const iscoIx = new FlexIndexer([
+            { getText: (o) => o.value, exact: true, numeric: true, boost: 2 },
+            { getText: (o) => `${o.label} ${o.value} ${o.fullTitle}`, boost: 1 }
+        ]);
+        iscoIx.build(isco);
+        const iscoEl = document.getElementById('isco-flex');
+        iscoEl.valueMember = 'value';
+        iscoEl.displayValueMember = 'label';
+        iscoEl.pathMember = 'path';
+        iscoEl.isSelectableMember = 'selectable';
+        iscoEl.options = isco;
+        iscoEl.searchCallback = ({ term }) => iscoIx.search(term, 80);
+    </script>
+</body>
+</html>

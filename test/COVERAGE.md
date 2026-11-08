@@ -186,6 +186,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | `show-counter` displays count next to toggle                  | ✓      | `counter.spec.ts`            | `counter.html`            |
 | Counter click opens selected-items popover                    | ✓      | `counter.spec.ts`            | `counter.html`            |
+| Selected-items popover closes on an outside click / Escape / another overlay opening (core overlay tree); the counter toggles it | ✓ | `counter.spec.ts` | `counter.html` |
 | `getCounterCallback` formats count text (i18n)                | ✓      | `counter.spec.ts`            | `counter.html`            |
 | `show-clear` ✕ appears only while something is selected       | ✓      | `clear-button.spec.ts`       | `clear-button.html`       |
 | Clicking ✕ wipes the selection and fires one `change`         | ✓      | `clear-button.spec.ts`       | `clear-button.html`       |
@@ -216,12 +217,15 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `--base-*` theme variables flow through                       | ✓      | `theming.spec.ts`            | `theming.html`            |
 | `--base-hover-bg` drives `--ms-primary-bg` (option hover)     | ✓      | `theming.spec.ts`            | `theming.html`            |
 | `customStylesCallback` injects valid Shadow-DOM styles        | ✓      | `custom-rendering.spec.ts`   | `custom-rendering.html`   |
+| `custom-styles` / `customStyles` / `getCustomStylesCallback` + page-wide `window.components['web-multiselect'].customStyles` | ✓ | `custom-styles.spec.ts` | `custom-styles.html` |
+| An `@import` in custom CSS applies and is linked once in `<head>` (fonts), released when cleared (core rc20) | ✓ | `custom-styles.spec.ts` | `custom-styles.html` + `custom-styles-import.css` |
 
 ## 17. RTL
 
 | Feature                                                       | Status | Spec | Fixture |
 | ------------------------------------------------------------- | :----: | ---- | ------- |
 | `dir="rtl"` flips layout                                      | ✓      | `rtl.spec.ts`                | `rtl.html`                |
+| Direction is the effective CSS `direction` (core `isRtl`): nested `dir="ltr"` stays LTR, CSS `direction: rtl` counts | ✓ | `rtl.spec.ts` | `rtl.html` |
 | Badge X position correct in RTL                               | ✗      |      |         |
 | Dropdown alignment correct in RTL                             | ✗      |      |         |
 
@@ -233,3 +237,13 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `setCategoryLevel('UI', ...)` normalizes bare names           | ✓      | `logging.spec.ts`            | `logging.html`            |
 | Default level is silent; persisted level survives reload      | △      | `logging.spec.ts`            | `logging.html`            |
 | `show-debug-info` removed (not observed, no debug panel)      | ✓      | `logging.spec.ts`            | `logging.html`            |
+
+## 19. Upgrade, real data, example site
+
+| Feature                                                       | Status | Spec | Fixture |
+| ------------------------------------------------------------- | :----: | ---- | ------- |
+| `value` / `options` assigned before the element is defined are applied (core rc20 replay) | ✓ | `pre-upgrade.spec.ts` | `pre-upgrade.html` |
+| `el.options = …; el.setSelected(…)` synchronously (no init throw) | ✓ | `sync-imperative.spec.ts` | `sync-imperative.html` |
+| Full ISCO-08 tree (619 groups): virtual scroll, leaves-only, breadcrumb badges | ✓ | `tree-isco.spec.ts` | `tree-isco.html` |
+| External FlexSearch `searchCallback` (flat + tree)             | ✓      | `external-search.spec.ts`    | `external-search.html`    |
+| Every example page loads cleanly; Builder playground wiring    | ✓      | `examples.spec.ts` (the only spec on `examples-*.html`) | — |

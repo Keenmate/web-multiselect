@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — synchronous options + setSelected</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>synchronous el.options = data; el.setSelected(sel)</h1>
+    <p>Targeted by <code>e2e/sync-imperative.spec.ts</code>. The init script writes <code>options</code> and calls
+       <code>setSelected()</code> on the next line (no await) for a partial and a compact picker, the pattern
+       that once threw during init (examples-data-api API06).</p>
+
+    <div class="fixture">
+        <div class="fixture-label">badges-display-mode="partial", max-visible-badge-count="2"</div>
+        <web-multiselect id="partial-mode" badges-display-mode="partial" max-visible-badge-count="2"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">badges-display-mode="compact"</div>
+        <web-multiselect id="compact-mode" badges-display-mode="compact"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const languages = [
+            { value: 'js', label: 'JavaScript' },
+            { value: 'ts', label: 'TypeScript' },
+            { value: 'py', label: 'Python' },
+            { value: 'go', label: 'Go' },
+            { value: 'rust', label: 'Rust' }
+        ];
+
+        for (const id of ['partial-mode', 'compact-mode']) {
+            const el = document.getElementById(id);
+            el.options = languages;              // reactive write (coalesces on a microtask)
+            el.setSelected(['js', 'ts', 'py']);  // imperative call flushes it synchronously
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — ISCO-08 tree (real data)</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 420px; }
+    </style>
+</head>
+<body>
+    <h1>ISCO-08 tree</h1>
+    <p>Targeted by <code>e2e/tree-isco.spec.ts</code>. The full ISCO-08 classification (619 groups,
+       <code>/examples-data/isco08.json</code>) through tree mode + virtual scroll + leaves-only
+       selectability + breadcrumb badges (the same setup as the examples-tree ISCO demo).</p>
+
+    <div class="fixture">
+        <div class="fixture-label">path-member + is-selectable-member + virtual scroll + partial badges</div>
+        <web-multiselect id="tree-isco" multiple="true" path-member="path" is-selectable-member="selectable"
+            enable-virtual-scroll="true" virtual-scroll-item-height="32" enable-badge-tooltips="true" enable-option-tooltips="true"
+            badges-display-mode="partial" max-visible-badge-count="3"
+            style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        // path "2.22.221.2211"; selectable = only the 4-digit unit groups (leaves)
+        const isco = await (await fetch('/examples-data/isco08.json')).json();
+        const el = document.getElementById('tree-isco');
+        el.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
+        el.getBadgeDisplayCallback = ({ option }) => {
+            const segs = String(option.fullTitle || option.label).split(' / ');
+            const last = segs[segs.length - 1];
+            return segs.length > 1 ? `.. / ${last}` : last;
+        };
+        el.getBadgeTooltipCallback = ({ option }) => option.fullTitle || option.label;
+        el.options = isco;
+    </script>
+</body>
+</html>

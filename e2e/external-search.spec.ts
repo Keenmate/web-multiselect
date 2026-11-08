@@ -1,13 +1,14 @@
 import { test, expect, Page, Locator } from './fixtures';
 
 /**
- * External search demo: the whole search is delegated to a FlexSearch index via
+ * External search (fixture test/external-search.html, the examples-external-search ES01 / ES02
+ * setup): the whole search is delegated to a FlexSearch index via
  * `searchCallback`. Verifies (1) accent-insensitive / partial matching on a flat
  * list, and (2) external search on the ISCO tree — matches keep their ancestors,
  * and the index covers code + breadcrumb, not just the label.
  */
 
-const PAGE = '/examples-external-search.html';
+const PAGE = '/test/external-search.html';
 
 function picker(page: Page, id: string): Locator {
     return page.locator(`#${id}`);

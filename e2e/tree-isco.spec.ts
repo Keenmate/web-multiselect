@@ -1,13 +1,13 @@
 import { test, expect, Page, Locator } from './fixtures';
 
 /**
- * E2E for the "real data" demo on examples-tree.html: the full ISCO-08
+ * E2E for the "real data" setup of the examples-tree ISCO demo (fixture test/tree-isco.html): the full ISCO-08
  * occupation classification (619 groups) fetched as JSON and driven through tree
  * mode + virtual scroll + leaves-only selectability + breadcrumb badges. Proves
  * the tree features hold up on a real, large, deep hierarchy in a browser.
  */
 
-const PAGE = '/examples-tree.html';
+const PAGE = '/test/tree-isco.html';
 
 function isco(page: Page): Locator {
     return page.locator('#tree-isco');
