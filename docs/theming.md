@@ -408,6 +408,25 @@ no reduced-motion block of its own. The shared loader (async search, add-new pen
 Motion off in CSS: `--ms-transition-normal: 0s` on the `<web-multiselect>` element itself (not a
 parent — the shadow root's `:host` re-declares it), or `--base-duration-normal: 0s` page-wide.
 
+## Custom CSS in the shadow root
+
+Rules the variables don't cover go into the shadow root as CSS, in two layers:
+
+```js
+// Page-wide — every <web-multiselect> on the page (an @import url(…) works too: one server file)
+window.components['web-multiselect'].customStyles = '.ms__badge { border-radius: 0; }';
+// …or per instance from a callback: (ctx) => css
+window.components['web-multiselect'].getCustomStylesCallback = (ctx) => '…';
+
+// One instance — comes after the page layer and overrides it
+el.customStyles = '.ms__badge { border-radius: 999px; }';   // or the custom-styles attribute
+el.getCustomStylesCallback = (ctx) => '…';                   // wins over customStyles
+```
+
+Each layer is its own `<style>` at the top of the shadow root (`.ms-custom-styles--page`, then
+`.ms-custom-styles`); changing a value replaces it. The component CSS is in `@layer component`, so
+this unlayered CSS beats it without `!important`.
+
 ## Cascade layers / override contract
 
 Since v1.12.0, the component's internal CSS is organized into named `@layer`s:

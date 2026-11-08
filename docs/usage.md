@@ -222,7 +222,7 @@ multiselect.setSelected(['js', 'ts']);
 | `virtual-scroll-threshold` | `number` | `100` | Minimum items before virtual scroll activates |
 | `virtual-scroll-item-height` | `number` | `50` | Fixed height for each option in pixels (required for virtual scroll) |
 | `virtual-scroll-overscan` | `number` | `10` | Buffer size — extra items rendered above/below viewport |
-| `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set |
+| `custom-styles` | `string` | - | Raw CSS injected into the Shadow DOM (a full stylesheet, selectors and all) — the declarative alternative to `getCustomStylesCallback`, which wins when both are set. Overrides the page-wide `window.components['web-multiselect'].customStyles` — see [theming.md → Custom CSS in the shadow root](./theming.md#custom-css-in-the-shadow-root) |
 
 **Number attributes are strict.** A `number` attribute must be the whole integer: `badge-height="24px"`,
 `virtual-scroll-item-height="1.5"` or `badge-tooltip-offset="1e1"` is rejected — a console warning plus an

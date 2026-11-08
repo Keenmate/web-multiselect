@@ -29,13 +29,13 @@ import {
   toObject,
   toValue,
   adoptStyles,
-  createStyleSlot,
+  createCustomStyles,
   extractConsumedCssVars,
   lintCssVars,
   getEnvironment,
   resolvePresentation,
   type InputDef,
-  type StyleSlot,
+  type CustomStylesHandle,
   type EnvironmentSnapshot,
   type ElementSize,
   type Presentation,
@@ -356,7 +356,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   // `value` (defaultValue) change (honour the new default) apart from a cosmetic/structural
   // reinit or a re-attach (keep the live selection). See #buildPicker.
   #lastDefaultValueJSON?: string;
-  #customStyles: StyleSlot | null = null;
+  #customStyles: CustomStylesHandle | null = null;
   // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
   #warnedCssVars = new Set<string>();
 
@@ -648,9 +648,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     container.setAttribute('data-multiselect', '');
     if (this.className) container.className = this.className;
     this.#shadow.appendChild(container);
-    // Per-instance slot for getCustomStylesCallback CSS, kept at the top of the
-    // root so consumer @import/@font-face rules work; re-setting replaces it.
-    this.#customStyles = createStyleSlot(this.#shadow, { position: 'first', cssClass: 'ms-custom-styles' });
     this.#container = container;
   }
 
@@ -733,26 +730,23 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   // ── §12.8 custom styles ───────────────────────────────────────────────────
 
   #applyCustomStyles(): void {
-    const slot = this.#customStyles;
-    if (!slot) return;
-    // The JS callback wins when both are set; the `custom-styles` attribute is the
-    // static fallback (raw CSS string). Neither → clear the slot.
-    const callback = this.config.getCustomStylesCallback as ((ctx: MultiSelectContext<T>) => string | null | undefined) | null | undefined;
-    const staticCss = (this.config.customStyles as string | null | undefined) ?? null;
-    if (typeof callback !== 'function') {
-      slot.set(staticCss);
-      if (import.meta.env?.DEV && staticCss) this.#checkCustomStyleVars(staticCss);
-      return;
-    }
-    try {
-      const css = callback(this.withContext({}) as unknown as MultiSelectContext<T>);
-      slot.set(css);
-      if (import.meta.env?.DEV && css) this.#checkCustomStyleVars(css);
-    } catch (e) {
-      dataLogger.warn('[MultiSelectElement] getCustomStylesCallback threw', e);
-      // Callback blew up — fall back to the static attribute CSS if present.
-      slot.set(staticCss);
-    }
+    // Before the first build there is nothing to style; #rebuildPicker() applies it.
+    if (!this.#container) return;
+    // Core owns both layers: the page one (`window.components['web-multiselect'].customStyles` /
+    // `.getCustomStylesCallback`) and this instance's, which comes after it and overrides. Kept at
+    // the top of the root so consumer @import / @font-face rules work. The callback wins over the
+    // `custom-styles` attribute within a layer.
+    this.#customStyles ??= createCustomStyles<MultiSelectContext<T>>(this, this.#shadow, {
+      cssClass: 'ms-custom-styles',
+      position: 'first',
+      getContext: () => this.withContext({}) as unknown as MultiSelectContext<T>,
+      getInstanceStyles: () => ({
+        css: this.config.customStyles as string | null | undefined,
+        callback: this.config.getCustomStylesCallback as ((ctx: MultiSelectContext<T>) => string | null | undefined) | null | undefined,
+      }),
+      onApply: (css) => { if (import.meta.env?.DEV) this.#checkCustomStyleVars(css); },
+    });
+    this.#customStyles.refresh();
   }
 
   /**
@@ -1044,6 +1038,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker?.destroy();
     this.#picker = undefined;
     this.#heldState = undefined;
+    this.#customStyles?.destroy();
+    this.#customStyles = null;
     // ElementInternals outlive the element's teardown (core): drop a format-error validity.
     this.setFormatError(null);
   }

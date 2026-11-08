@@ -55,3 +55,19 @@ test('the customStyles property reflects and drives the slot', async ({ page }) 
     await expect.poll(() => borderColor(p)).toBe('rgb(0, 0, 255)');
     expect(await p.evaluate(el => (el as any).customStyles)).toBe(':host { --ms-input-border-color: rgb(0, 0, 255); }');
 });
+
+test('page-wide customStyles styles every instance; an instance\'s own CSS overrides it', async ({ page }) => {
+    await page.evaluate(() => {
+        (window as any).components['web-multiselect'].customStyles = ':host { --ms-input-border-color: rgb(0, 0, 255); }';
+    });
+    const plain = picker(page, 'cs-reactive');
+    // A second instance with no own CSS gets the page layer too.
+    await page.evaluate(() => { (document.getElementById('cs-precedence') as any).getCustomStylesCallback = null; });
+    const second = picker(page, 'cs-precedence');
+    await expect.poll(() => borderColor(plain)).toBe('rgb(0, 0, 255)');
+    expect(await plain.evaluate((el) => el.shadowRoot!.querySelector('.ms-custom-styles--page')?.textContent?.trim()))
+        .toContain('rgb(0, 0, 255)');
+    // cs-precedence still has its red custom-styles attribute, cs-attr too: the instance layer wins.
+    await expect.poll(() => borderColor(second)).toBe('rgb(255, 0, 0)');
+    await expect.poll(() => borderColor(picker(page, 'cs-attr'))).toBe('rgb(255, 0, 0)');
+});
