@@ -183,7 +183,8 @@
                 a glyph: a <strong>Unicode symbol / emoji</strong> works with zero setup, and a
                 <strong>Font Awesome</strong> icon works as its code-point character, provided the
                 <code>@font-face</code> lives at document level (a <code>&lt;link&gt;</code> in the page
-                <code>&lt;head&gt;</code>) <em>and</em> the icon span gets the font via
+                <code>&lt;head&gt;</code>, or an <code>@import</code> in the custom CSS, which core links there for
+                you) <em>and</em> the icon span gets the font via
                 <code>getCustomStylesCallback</code>. Inline SVG / <code>&lt;i class="fa-…"&gt;</code> markup is no
                 longer possible. Flip the switch to compare.
             </p>

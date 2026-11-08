@@ -146,9 +146,9 @@ multiselect.setSelected(['js', 'ts']);
 | `reserve-icon-slot` | `boolean` | `false` | Reserve a fixed-width icon gutter on every option row, including icon-less rows, so all labels share one start column (useful when a list mixes icon and icon-less rows) |
 | `close-on-select` | `boolean` | `false` | Close dropdown after selecting |
 | `close-on-scroll` | `boolean` | `true` | Close the floating dropdown when the page (or a scroll container around the control) scrolls, like a native select; a scroll inside the dropdown never closes it |
-| `dropdown-min-width` | `string` | - | Min width for dropdown (e.g., `'20rem'`) |
-| `dropdown-max-width` | `string` | - | Max width for dropdown (any CSS length) |
-| `dropdown-width` | `string` | - | Fixed dropdown width; mirrored to the `--ms-dropdown-width` CSS variable |
+| `dropdown-min-width` | `string \| number` | - | Min width for dropdown, a CSS length (`'20rem'`); a bare number means px (`300` → `'300px'`) |
+| `dropdown-max-width` | `string \| number` | - | Max width for dropdown, a CSS length; a bare number means px |
+| `dropdown-width` | `string \| number` | - | Fixed dropdown width, a CSS length (a bare number means px); mirrored to the `--ms-dropdown-width` CSS variable |
 | `badges-display-mode` | `'badges' \| 'count' \| 'compact' \| 'partial' \| 'none'` | `'badges'` | How to display selected items. `badges`: one pill per item. `compact`: first item + count. `none`: no display |
 | `badges-threshold` | `number` | - | Auto-switch mode when exceeded (see `badges-threshold-mode`) |
 | `badges-threshold-mode` | `'count' \| 'partial'` | `'count'` | Mode after threshold: `count` shows badge, `partial` shows limited badges + more badge |
@@ -160,7 +160,7 @@ multiselect.setSelected(['js', 'ts']);
 | `selected-order` | `'as-selected' \| 'label-asc' \| 'label-desc' \| 'member' \| 'custom'` | `'as-selected'` | Display order of the **selected** items (badges, partial mode, selected-items popover). `as-selected`: pick order. `label-asc`/`label-desc`: by badge label (locale-aware). `member`: by `selected-order-member` (or `getSelectedOrderCallback`). `custom`: `selectedOrderCompareCallback`. Display only — `selectedValue`, `selectedOptions` and form output keep pick order; the dropdown is never reordered |
 | `selected-order-member` | `string` | - | Property used as the sort key when `selected-order="member"`. Numeric keys sort numerically. Overridden by `getSelectedOrderCallback` |
 | `enable-selected-popover` | `boolean` | `true` | Allow the selected-items popover to open (from the count/compact/"+N more" badge or the in-input counter). Turn off when you render your own selection UI |
-| `selected-popover-width` | `string` | - | Selected-items popover width; mirrored to the `--ms-selected-popover-width` CSS variable |
+| `selected-popover-width` | `string \| number` | - | Selected-items popover width, a CSS length (a bare number means px); mirrored to the `--ms-selected-popover-width` CSS variable |
 | `show-counter` | `boolean` | `false` | Show `[3]` badge next to toggle icon |
 | `show-clear` | `boolean` | `false` | Show an inline clear (✕) button inside the input that wipes the whole selection. Appears only while something is selected and the control is enabled; clicking it clears the selection and any search text, fires `change`, and refocuses |
 | `enable-badge-tooltips` | `boolean` | `false` | Enable tooltips on selected badges |
@@ -172,7 +172,7 @@ multiselect.setSelected(['js', 'ts']);
 | `option-tooltip-delay` | `number` | inherits `badge-tooltip-delay`, then `100` | Delay in ms before showing an option tooltip |
 | `option-tooltip-offset` | `number` | inherits `badge-tooltip-offset`, then `8` | Distance in pixels between row and option tooltip |
 | `option-tooltip-follow-cursor` | `boolean` | `false` | Anchor the option tooltip to the mouse pointer and follow it across the row (best for full-width rows) |
-| `max-height` | `string` | `'20rem'` | Maximum height of dropdown |
+| `max-height` | `string \| number` | `'20rem'` | Maximum height of dropdown, a CSS length; a bare number means px. An invalid length is refused (`input-rejected`) |
 | `min-search-length` | `number` | `0` | Minimum characters before searching starts (local filter/navigate and async `searchCallback`), counted as typed — whitespace included (`" b"` is 2); shorter terms show all options. For a stricter rule, return `''` from `getSearchTermCallback` or `false` from `beforeSearchCallback` |
 | `search-debounce` | `number` | `0` | Debounce (ms) before the async `searchCallback` fires; coalesces keystroke bursts into one request. Resets on each keystroke. Async callback only — local filtering stays instant. `0` = no debounce |
 | `keep-options-on-search` | `boolean` | `true` | Keep initial options visible when `searchCallback` is active (hybrid search) |
@@ -717,7 +717,7 @@ document.querySelector('web-multiselect').controller.selectAll();
 | `action` | `{ action, id, item, source, option?, sourceEvent, triggerElement, dataset, selectedValues, selectedOptions, options, selectedCount, optionCount, isOpen, searchTerm }` | Fired for every action-button activation (built-in or custom) and every `data-action` element inside rendered option content (`source: 'option'`, `detail.option`), badge content (`source: 'badge'`) or a `showMessage` element (`source: 'message'`). Order: `beforeActionCallback` (→ `false` cancels) → the item's `onClick` → the built-in → `action` (a notification after the fact: the selection snapshot is re-read, so `select-all` reports the new selection). Twin: `onAction(detail)` |
 | `ready` | `{ controller, element, presentation, … }` | Fired once, on the microtask after the first build (a listener added right after `createElement` still catches it) — at upgrade for a normal element, or when the `defer` gate is released for a deferred one. Twin: `onReady(detail)` |
 | `open` | `{ controller, element, presentation, … }` | The dropdown opened (user or `open()`). Twin: `onOpen(detail)` |
-| `close` | `{ controller, element, presentation, … }` | The dropdown closed — any reason (Escape, outside click, `close-on-select`, Tab, another overlay, `close()`). Twin: `onClose(detail)` |
+| `close` | `{ reason, controller, element, presentation, … }` | The dropdown closed — any reason; `detail.reason` says which (`api`, `toggle`, `escape`, `tab`, `select`, `outside-click`, `scroll`, `reference-removed`, `overlay`, `parent`, `back`, `close-button`, `disabled`, `destroy`). Twin: `onClose(detail)` |
 | `value-format-error` | `{ error, value }` | `getValueFormatCallback` threw: the error is logged, `''` is written into the hidden input, and the host is marked invalid (`customError`, `validationMessage` = `labels.valueFormatError`) so the form won't submit (`<form novalidate>` submits `''`). `error` = what was thrown, `value` = the selected values the callback got. The next successful format clears it. Twin: `onValueFormatError(detail)` |
 | `input-rejected` | `{ configKey, attribute?, value, reason?, kept, source }` | (Core, every KeenMate component.) An attribute or property write was refused — an invalid value (`badge-height="24px"`, an unknown enum value, …) warns and keeps the previous value (`kept`). Fired synchronously, so it has fired when the write returns; `setAttributes()` also returns the list. Twin: `onInputRejected(detail)` |
 

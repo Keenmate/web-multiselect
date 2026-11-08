@@ -64,16 +64,17 @@ The component renders in **Shadow DOM**, which changes how icons reach it. This 
 
 **Font icons need two things, because they're font-based:**
 
-1. **Register the `@font-face` at the document level** — a normal `<link>` (or `@font-face`) in the page `<head>`. A browser will **not** apply a `@font-face` declared *inside* a shadow root, so a shadow-only setup renders the glyphs as empty `□` boxes.
-2. **Inject the icon *class rules* into the Shadow DOM** via `getCustomStylesCallback` — page CSS doesn't cross the shadow boundary, so `.fas` / `.fa-*::before` must be added inside the component.
+1. **The `@font-face` must reach the document.** Chromium does **not** apply a `@font-face` declared *inside* a shadow root, so a shadow-only setup renders the glyphs as empty `□` boxes. An `@import` in the custom CSS (below) takes care of it: core also links each imported stylesheet once in the page `<head>` (shared by every instance, removed when the last one stops importing it). A page that already links the stylesheet itself keeps its own `<link>`; to turn the head link off, set `window.components.shouldHoistImports = false` (or per component type, `window.components['web-multiselect'].shouldHoistImports`).
+2. **Inject the icon *class rules* into the Shadow DOM** via `customStyles` / `getCustomStylesCallback` — page CSS doesn't cross the shadow boundary, so `.fas` / `.fa-*::before` must be added inside the component.
 
 ```javascript
-// 1) In the page <head> (once): <link rel="stylesheet" href="…/font-awesome/6.5.1/css/all.min.css">
-
-// 2) Inject the class rules into the shadow:
+// The class rules inside the shadow root; core links the same stylesheet in <head> for the @font-face:
 select.getCustomStylesCallback = () => `
   @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
 `;
+// Every picker on the page at once (the page-wide layer):
+window.components['web-multiselect'].customStyles =
+  "@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');";
 // (Or, to avoid the async @import, inject only the few rules you use:
 //   .fa-solid { font-family: "Font Awesome 6 Free"; font-weight: 900; }
 //   .fa-check::before { content: "\f00c"; } … )

@@ -423,9 +423,15 @@ el.customStyles = '.ms__badge { border-radius: 999px; }';   // or the custom-sty
 el.getCustomStylesCallback = (ctx) => '…';                   // wins over customStyles
 ```
 
-Each layer is its own `<style>` at the top of the shadow root (`.ms-custom-styles--page`, then
+Each layer is its own `<style>` in the shadow root (`.ms-custom-styles--page`, then
 `.ms-custom-styles`); changing a value replaces it. The component CSS is in `@layer component`, so
 this unlayered CSS beats it without `!important`.
+
+An `@import` in either layer is also linked once in the page `<head>`, because Chromium ignores a
+`@font-face` inside a shadow root (an imported icon font would draw boxes). The link is shared by
+every instance and removed when the last one stops importing it; a stylesheet the page links itself
+is reused, never removed. A page that loads those fonts itself turns it off with
+`window.components.shouldHoistImports = false` (or `window.components['web-multiselect'].shouldHoistImports`).
 
 ## Cascade layers / override contract
 
