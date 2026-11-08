@@ -37,29 +37,44 @@
                 <label title="Add a custom button with isDisabled:true — rendered but greyed out and non-clickable."><input type="checkbox" id="st-disabled"> add a disabled button (<code>isDisabled:true</code>)</label>
             </div>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Select Colors:</label>
                 <web-multiselect id="ab-static" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
                     <pre id="out-static">[]</pre>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const colors = document.getElementById('ab-static');
+                    colors.options = [
+                        ['red', 'Red'], ['blue', 'Blue'], ['green', 'Green'], ['yellow', 'Yellow'], ['purple', 'Purple']
+                    ];
+                    // cssClass lands inside the Shadow DOM — page CSS can't reach it, so inject the rule:
+                    colors.getCustomStylesCallback = () =>
+                        `.custom-select-btn { background:#667eea !important; color:#fff !important; font-weight:600; }`;
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>multiselect.actionButtons = [
-  { action: 'select-all', text: 'Select All',
-    tooltip: 'Select all available colors',   // static tooltip
-    cssClass: 'custom-select-btn' },          // needs getCustomStylesCallback (Shadow DOM)
-  { action: 'clear-selection', text: 'Clear All' },
-  { id: 'hidden',   text: 'Hidden Button',   isVisible: false,  onClick: () =&gt; {} },
-  { id: 'disabled', text: 'Disabled Button', isDisabled: true,  onClick: () =&gt; {} },
-];
+                    // Rebuild the actionButtons array from the switches above.
+                    const isOn = (id) => document.getElementById(id).checked;
+                    const buildButtons = () => {
+                        colors.actionButtons = [
+                            isOn('st-selall') && { action: 'select-all', text: 'Select All',
+                                ...(isOn('st-tooltips') && { tooltip: 'Select all available colors' }),   // static tooltip
+                                ...(isOn('st-style') && { cssClass: 'custom-select-btn' }) },             // needs getCustomStylesCallback
+                            isOn('st-clrall') && { action: 'clear-selection', text: 'Clear All',
+                                ...(isOn('st-tooltips') && { tooltip: 'Remove all selections' }) },
+                            isOn('st-hidden') && { id: 'hidden', text: 'Hidden Button', isVisible: false, onClick: () => {} },
+                            isOn('st-disabled') && { id: 'disabled', text: 'Disabled Button', tooltip: 'This button is always disabled',
+                                isDisabled: true, onClick: () => {} },
+                        ].filter(Boolean);
+                    };
+                    ['st-selall', 'st-clrall', 'st-tooltips', 'st-style', 'st-hidden', 'st-disabled'].forEach((id) =>
+                        document.getElementById(id).addEventListener('change', buildButtons));
+                    buildButtons();
 
-// Built-ins only? The string shorthand takes the default text from labels.selectAll / labels.clearSelection:
-multiselect.actionButtons = ['select-all', 'clear-selection'];</code></pre>
-            </details>
+                    // Built-ins only? The string shorthand takes the default text from labels.selectAll / labels.clearSelection:
+                    // colors.actionButtons = ['select-all', 'clear-selection'];
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================= -->
@@ -124,36 +139,36 @@ multiselect.actionButtons = ['select-all', 'clear-selection'];</code></pre>
                 <code>beforeActionCallback(detail)</code> can cancel it by returning <code>false</code>.
             </p>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Select Programming Languages:</label>
                 <web-multiselect id="ab-custom" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
                     <pre id="out-custom">[]</pre>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const languages = document.getElementById('ab-custom');
+                    languages.options = [
+                        ['js', 'JavaScript'], ['ts', 'TypeScript'], ['py', 'Python'], ['java', 'Java'],
+                        ['go', 'Go'], ['rust', 'Rust'], ['cpp', 'C++'], ['ruby', 'Ruby']
+                    ];
+                    const values = (options) => options.map(([value]) => value);
+                    languages.actionButtons = [
+                        { id: 'popular', text: 'Select Popular', tooltip: 'Select JS, Python, and TypeScript',
+                          onClick: ({ controller }) => controller.setSelected(['js', 'py', 'ts']) },
+                        { id: 'invert', text: 'Invert Selection', tooltip: 'Invert current selection',
+                          onClick: ({ controller, options, selectedValues }) =>
+                              controller.setSelected(values(options).filter((v) => !selectedValues.includes(v))) },
+                        { id: 'random', text: 'Select Random', tooltip: 'Select 2 random languages',
+                          onClick: ({ controller, options }) =>
+                              controller.setSelected(values([...options].sort(() => Math.random() - 0.5).slice(0, 2))) },
+                        { action: 'clear-selection', text: 'Clear All' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>multiselect.actionButtons = [
-  { id: 'popular', text: 'Select Popular',
-    onClick: ({ controller }) =&gt; controller.setSelected(['js', 'py', 'ts']) },
-  { id: 'invert', text: 'Invert Selection',
-    onClick: ({ controller, options, selectedValues }) =&gt; {
-      const all = options.map(o =&gt; o[0]);
-      controller.setSelected(all.filter(v =&gt; !selectedValues.includes(v)));
-    } },
-  { id: 'random', text: 'Select Random',
-    onClick: ({ controller, options }) =&gt; {
-      const shuffled = [...options].sort(() =&gt; Math.random() - 0.5);
-      controller.setSelected(shuffled.slice(0, 2).map(o =&gt; o[0]));
-    } },
-  { action: 'clear-selection', text: 'Clear All' },
-];
-
-// Every activation (built-in or custom) also fires the `action` event:
-multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, source);</code></pre>
-            </details>
+                    // Every activation (built-in or custom) also fires the `action` event:
+                    // languages.onAction = ({ action, id, source }) => console.log(action, id, source);
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================= -->
@@ -261,7 +276,7 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
                 <li><strong>Phone:</strong> the three essentials only, wrapped.</li>
             </ul>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">
                     <code id="adaptive-device">…</code>
                     <span class="form-text" style="display:inline;">— resize the window (cross 600px) or toggle the device toolbar (DevTools) to see the toolbar re-shape.</span>
@@ -271,23 +286,62 @@ multiselect.onAction = ({ action, id, source }) =&gt; console.log(action, id, so
                     <div class="output-label">Selected:</div>
                     <pre id="out-adaptive">[]</pre>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const items = [
+                        ['item1', 'Item 1'], ['item2', 'Item 2'], ['item3', 'Item 3'], ['item4', 'Item 4'],
+                        ['item5', 'Item 5'], ['item6', 'Item 6'], ['item7', 'Item 7'], ['item8', 'Item 8']
+                    ];
+                    document.getElementById('ab-adaptive').options = items;
 
-            <div class="code-block"><pre><span class="comment">// A per-tag responsive rule (core SPEC §6.7). It may be set before the component
-// script loads: window.components = { 'web-multiselect': { responsiveCallback } }.</span>
-window.components['web-multiselect'].responsiveCallback = (ctx) =&gt; {
-  if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;  <span class="comment">// opt-in marker</span>
-  if (ctx.deviceClass === 'mobile') {            <span class="comment">// phone: essentials, wrapped</span>
-    return { actionButtons: mobileActions, actionsLayout: 'wrap' };
-  }
-  if (ctx.deviceClass === 'tablet') {            <span class="comment">// tablet: full set, wrapped</span>
-    return { actionButtons: desktopActions, actionsLayout: 'wrap' };
-  }
-  <span class="comment">// desktop (a mouse device at any width): two rows once the window is 600px or narrower</span>
-  return { actionButtons: desktopActions, actionsLayout: ctx.env.viewportWidth &lt;= 600 ? 'wrap' : 'nowrap' };
-};
+                    const values = (options) => options.map(([value]) => value);
+                    const pick = (options) => ({ controller }) => controller.setSelected(values(options));
+                    const pickRandom = (n) => ({ controller }) =>
+                        controller.setSelected(values([...items].sort(() => Math.random() - 0.5).slice(0, n)));
+                    const invert = ({ controller, options, selectedValues }) =>
+                        controller.setSelected(values(options).filter((v) => !selectedValues.includes(v)));
+                    const half = Math.ceil(items.length / 2);
 
-<span class="comment">// Typed: import type { MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';</span></pre></div>
+                    const desktopActions = [
+                        { action: 'select-all', text: 'Select All Items' },
+                        { action: 'clear-selection', text: 'Clear Selection' },
+                        { id: 'first-3', text: 'First 3 Items', onClick: pick(items.slice(0, 3)) },
+                        { id: 'last-3', text: 'Last 3 Items', onClick: pick(items.slice(-3)) },
+                        { id: 'even', text: 'Even Positions', onClick: pick(items.filter((o, i) => i % 2 === 0)) },
+                        { id: 'odd', text: 'Odd Positions', onClick: pick(items.filter((o, i) => i % 2 === 1)) },
+                        { id: 'random', text: 'Random Selection', onClick: pickRandom(3) },
+                        { id: 'first-half', text: 'First Half', onClick: pick(items.slice(0, half)) },
+                        { id: 'second-half', text: 'Second Half', onClick: pick(items.slice(half)) },
+                        { id: 'invert', text: 'Invert', onClick: invert },
+                        { id: 'every-third', text: 'Every Third', onClick: pick(items.filter((o, i) => i % 3 === 0)) },
+                        { id: 'shuffle', text: 'Shuffle All', onClick: pickRandom(5) }
+                    ];
+                    const mobileActions = [
+                        { action: 'select-all', text: 'All' },
+                        { action: 'clear-selection', text: 'Clear' },
+                        { id: 'invert', text: 'Invert', onClick: invert }
+                    ];
+
+                    // A per-tag responsive rule (core SPEC §6.7), re-run by the component on every device-class
+                    // flip and (callbacks only) every viewport-width change; only changed keys apply. It may be set
+                    // before the component script loads: window.components = { 'web-multiselect': { responsiveCallback } }.
+                    // Typed: import type { MultiSelectResponsiveCallback } from '@keenmate/web-multiselect';
+                    const readout = document.getElementById('adaptive-device');
+                    window.components['web-multiselect'].responsiveCallback = (ctx) => {
+                        if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;   // opt-in marker
+                        let partial;
+                        if (ctx.deviceClass === 'mobile') {             // phone: essentials, wrapped
+                            partial = { actionButtons: mobileActions, actionsLayout: 'wrap' };
+                        } else if (ctx.deviceClass === 'tablet') {      // tablet: full set, wrapped
+                            partial = { actionButtons: desktopActions, actionsLayout: 'wrap' };
+                        } else {                                         // desktop (mouse, any width): two rows at <= 600px
+                            partial = { actionButtons: desktopActions, actionsLayout: ctx.env.viewportWidth <= 600 ? 'wrap' : 'nowrap' };
+                        }
+                        const rows = partial.actionsLayout === 'wrap' ? 'wrapped' : 'one row';
+                        readout.textContent = `${ctx.deviceClass} · ${ctx.env.viewportWidth}px · ${partial.actionButtons.length} buttons · ${rows}`;
+                        return partial;
+                    };
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================= -->
@@ -350,13 +404,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
         import '/src/index.ts';
 
         // ── Datasets (tuple [value, label]) ──────────────────────────────
-        const languageOptions = [
-            ['js', 'JavaScript'], ['ts', 'TypeScript'], ['py', 'Python'], ['java', 'Java'],
-            ['go', 'Go'], ['rust', 'Rust'], ['cpp', 'C++'], ['ruby', 'Ruby']
-        ];
-        const colorOptions = [
-            ['red', 'Red'], ['blue', 'Blue'], ['green', 'Green'], ['yellow', 'Yellow'], ['purple', 'Purple']
-        ];
         const itemOptions = [
             ['item1', 'Item 1'], ['item2', 'Item 2'], ['item3', 'Item 3'], ['item4', 'Item 4'],
             ['item5', 'Item 5'], ['item6', 'Item 6'], ['item7', 'Item 7'], ['item8', 'Item 8']
@@ -368,7 +415,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
 
         // Custom-button CSS lives in Shadow DOM — page CSS can't cross the boundary.
         const BTN_STYLES = `
-            .custom-select-btn { background:#667eea !important; color:#fff !important; font-weight:600; }
             .success-btn  { background:#48bb78 !important; color:#fff !important; }
             .warning-btn  { background:#ed8936 !important; color:#fff !important; }
             .danger-btn   { background:#f56565 !important; color:#fff !important; }
@@ -383,36 +429,11 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            // ── AB01 · Built-in & static properties ──────────────────────
-            const abStatic = document.getElementById('ab-static');
-            abStatic.options = colorOptions;
-            abStatic.getCustomStylesCallback = () => BTN_STYLES;
-            const st = {
-                selall: document.getElementById('st-selall'),
-                clrall: document.getElementById('st-clrall'),
-                tooltips: document.getElementById('st-tooltips'),
-                style: document.getElementById('st-style'),
-                hidden: document.getElementById('st-hidden'),
-                disabled: document.getElementById('st-disabled')
-            };
-            const buildStatic = () => {
-                const btns = [];
-                if (st.selall.checked) btns.push({
-                    action: 'select-all', text: 'Select All',
-                    ...(st.tooltips.checked ? { tooltip: 'Select all available colors' } : {}),
-                    ...(st.style.checked ? { cssClass: 'custom-select-btn' } : {})
-                });
-                if (st.clrall.checked) btns.push({
-                    action: 'clear-selection', text: 'Clear All',
-                    ...(st.tooltips.checked ? { tooltip: 'Remove all selections' } : {})
-                });
-                if (st.hidden.checked) btns.push({ id: 'hidden', text: 'Hidden Button', isVisible: false, onClick: () => {} });
-                if (st.disabled.checked) btns.push({ id: 'disabled', text: 'Disabled Button', tooltip: 'This button is always disabled', isDisabled: true, onClick: () => {} });
-                abStatic.actionButtons = btns;
-            };
-            Object.values(st).forEach((c) => c.addEventListener('change', buildStatic));
-            buildStatic();
-            wireOutput(abStatic, document.getElementById('out-static'));
+            // AB01 / AB03 / AB06 configure their pickers in their own (shown) demo scripts;
+            // the page only wires the "Selected:" read-outs.
+            wireOutput(document.getElementById('ab-static'), document.getElementById('out-static'));
+            wireOutput(document.getElementById('ab-custom'), document.getElementById('out-custom'));
+            wireOutput(document.getElementById('ab-adaptive'), document.getElementById('out-adaptive'));
 
             // Shared helpers — `ctx` is the action-item selection snapshot.
             const values = (opts) => opts.map((o) => o[0]);
@@ -489,20 +510,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             abDyn.actionButtons = dynSets.none();
             wireOutput(abDyn, document.getElementById('out-dynamic'));
 
-            // ── AB03 · Custom actions ────────────────────────────────────
-            const abCustom = document.getElementById('ab-custom');
-            abCustom.options = languageOptions;
-            abCustom.actionButtons = [
-                { id: 'popular', text: 'Select Popular', tooltip: 'Select JS, Python, and TypeScript',
-                  onClick: ({ controller }) => controller.setSelected(['js', 'py', 'ts']) },
-                { id: 'invert', text: 'Invert Selection', tooltip: 'Invert current selection',
-                  onClick: invert },
-                { id: 'random', text: 'Select Random', tooltip: 'Select 2 random languages',
-                  onClick: ({ controller, options }) => pickRandom(controller, options, 2) },
-                { action: 'clear-selection', text: 'Clear All' }
-            ];
-            wireOutput(abCustom, document.getElementById('out-custom'));
-
             // ── AB04 · Icon buttons (Unicode glyphs vs Font Awesome) ─────
             const abIcons = document.getElementById('ab-icons');
             abIcons.options = techOptions;
@@ -561,48 +568,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
                 r.addEventListener('change', (e) => { if (e.target.checked) abLayout.setAttribute('actions-align', e.target.value); }));
             layRows.addEventListener('change', applyLayout);
             applyLayout();
-
-            // ── AB06 · Device-adaptive actions ───────────────────────────
-            const pick = (opts) => ({ controller }) => controller.setSelected(values(opts));
-            const manyButtons = [
-                { action: 'select-all', text: 'Select All Items' },
-                { action: 'clear-selection', text: 'Clear Selection' },
-                { id: 'first-3', text: 'First 3 Items', onClick: pick(itemOptions.slice(0, 3)) },
-                { id: 'last-3', text: 'Last 3 Items', onClick: pick(itemOptions.slice(-3)) },
-                { id: 'even', text: 'Even Positions', onClick: pick(itemOptions.filter((o, i) => i % 2 === 0)) },
-                { id: 'odd', text: 'Odd Positions', onClick: pick(itemOptions.filter((o, i) => i % 2 === 1)) },
-                { id: 'random', text: 'Random Selection', onClick: ({ controller }) => pickRandom(controller, itemOptions, 3) },
-                { id: 'first-half', text: 'First Half', onClick: pick(itemOptions.slice(0, Math.ceil(itemOptions.length / 2))) },
-                { id: 'second-half', text: 'Second Half', onClick: pick(itemOptions.slice(Math.ceil(itemOptions.length / 2))) },
-                { id: 'invert', text: 'Invert', onClick: invert },
-                { id: 'every-third', text: 'Every Third', onClick: pick(itemOptions.filter((o, i) => i % 3 === 0)) },
-                { id: 'shuffle', text: 'Shuffle All', onClick: ({ controller }) => pickRandom(controller, itemOptions, 5) }
-            ];
-            const desktopActions = manyButtons;
-            const mobileActions = [
-                { action: 'select-all', text: 'All' },
-                { action: 'clear-selection', text: 'Clear' },
-                { id: 'invert', text: 'Invert', onClick: invert }
-            ];
-            const abAdaptive = document.getElementById('ab-adaptive');
-            abAdaptive.options = itemOptions;
-            wireOutput(abAdaptive, document.getElementById('out-adaptive'));
-
-            // Per-tag responsive rule: re-run by the component on a device-class / breakpoint /
-            // orientation change and (callbacks) every viewport-width change; only changed keys apply.
-            const deviceReadout = document.getElementById('adaptive-device');
-            window.components['web-multiselect'].responsiveCallback = (ctx) => {
-                if (!ctx.element.hasAttribute('data-adaptive-actions')) return undefined;
-                let partial;
-                if (ctx.deviceClass === 'mobile') partial = { actionButtons: mobileActions, actionsLayout: 'wrap' };
-                else if (ctx.deviceClass === 'tablet') partial = { actionButtons: desktopActions, actionsLayout: 'wrap' };
-                else partial = { actionButtons: desktopActions, actionsLayout: ctx.env.viewportWidth <= 600 ? 'wrap' : 'nowrap' };
-                if (deviceReadout) {
-                    const rows = partial.actionsLayout === 'wrap' ? 'wrapped' : 'one row';
-                    deviceReadout.textContent = `${ctx.deviceClass} · ${ctx.env.viewportWidth}px · ${partial.actionButtons.length} buttons · ${rows}`;
-                }
-                return partial;
-            };
 
             // Persist all control switches to localStorage and restore them on reload —
             // re-applies to every picker via the listeners wired above.
