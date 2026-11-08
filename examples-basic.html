@@ -177,104 +177,83 @@
                 declarative twin of <code>getCustomStylesCallback</code>).
             </p>
 
-            <div class="grid">
-                <div class="form-group">
-                    <label>Simple choice (single-select)</label>
-                    <web-multiselect id="decl-single" multiple="false" labels='{"searchPlaceholder": "Select your answer…"}'>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                        <option value="maybe" selected>Maybe / I don't know</option>
-                    </web-multiselect>
-                    <small class="form-text">No JavaScript — pure HTML. <code>selected</code> pre-picks an option.</small>
+            <kmwc-demo>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Simple choice (single-select)</label>
+                        <web-multiselect id="decl-single" multiple="false" labels='{"searchPlaceholder": "Select your answer…"}'>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="maybe" selected>Maybe / I don't know</option>
+                        </web-multiselect>
+                        <small class="form-text">No JavaScript — pure HTML. <code>selected</code> pre-picks an option.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Multiple fruits (icons + <code>custom-styles</code>)</label>
+                        <web-multiselect id="decl-fruits"
+                            custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"searchPlaceholder": "Select fruits…"}'>
+                            <option value="apple" data-icon="🍎">Apple</option>
+                            <option value="banana" data-icon="🍌" selected>Banana</option>
+                            <option value="orange" data-icon="🍊" disabled>Orange</option>
+                            <option value="grape" data-icon="🍇" selected>Grape</option>
+                            <option value="strawberry" data-icon="🍓">Strawberry</option>
+                        </web-multiselect>
+                        <small class="form-text">Row icons from <code>data-icon</code>; the pill-shaped badges are pure <code>custom-styles</code> — no JS. Orange is <code>&lt;option disabled&gt;</code>.</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Multiple fruits (icons + <code>custom-styles</code>)</label>
-                    <web-multiselect id="decl-fruits"
-                        custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"searchPlaceholder": "Select fruits…"}'>
-                        <option value="apple" data-icon="🍎">Apple</option>
-                        <option value="banana" data-icon="🍌" selected>Banana</option>
-                        <option value="orange" data-icon="🍊" disabled>Orange</option>
-                        <option value="grape" data-icon="🍇" selected>Grape</option>
-                        <option value="strawberry" data-icon="🍓">Strawberry</option>
-                    </web-multiselect>
-                    <small class="form-text">Row icons from <code>data-icon</code>; the pill-shaped badges are pure <code>custom-styles</code> — no JS. Orange is <code>&lt;option disabled&gt;</code>.</small>
-                </div>
-            </div>
+                <div class="grid mt-1">
+                    <div class="form-group">
+                        <label>Grouped options (<code>&lt;optgroup&gt;</code>)</label>
+                        <web-multiselect id="decl-grouped" labels='{"searchPlaceholder": "Select languages…"}'>
+                            <optgroup label="Frontend">
+                                <option value="js" data-icon="🟨">JavaScript</option>
+                                <option value="ts" data-icon="🔷">TypeScript</option>
+                                <option value="html" data-icon="📄" disabled>HTML</option>
+                            </optgroup>
+                            <optgroup label="Backend">
+                                <option value="python" data-icon="🐍" selected>Python</option>
+                                <option value="java" data-icon="☕">Java</option>
+                                <option value="go" data-icon="🐹">Go</option>
+                            </optgroup>
+                        </web-multiselect>
+                        <small class="form-text">The <code>&lt;optgroup&gt;</code> <code>label</code> becomes the group header. HTML is disabled.</small>
+                    </div>
 
-            <div class="grid mt-1">
-                <div class="form-group">
-                    <label>Grouped options (<code>&lt;optgroup&gt;</code>)</label>
-                    <web-multiselect id="decl-grouped" labels='{"searchPlaceholder": "Select languages…"}'>
-                        <optgroup label="Frontend">
-                            <option value="js" data-icon="🟨">JavaScript</option>
-                            <option value="ts" data-icon="🔷">TypeScript</option>
-                            <option value="html" data-icon="📄" disabled>HTML</option>
-                        </optgroup>
-                        <optgroup label="Backend">
-                            <option value="python" data-icon="🐍" selected>Python</option>
-                            <option value="java" data-icon="☕">Java</option>
-                            <option value="go" data-icon="🐹">Go</option>
-                        </optgroup>
-                    </web-multiselect>
-                    <small class="form-text">The <code>&lt;optgroup&gt;</code> <code>label</code> becomes the group header. HTML is disabled.</small>
+                    <div class="form-group">
+                        <label>With subtitles (<code>data-subtitle</code>)</label>
+                        <web-multiselect id="decl-subtitles" labels='{"searchPlaceholder": "Select framework…"}'>
+                            <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
+                            <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
+                            <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
+                        </web-multiselect>
+                        <small class="form-text">Second-line descriptions come from <code>data-subtitle</code>.</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>With subtitles (<code>data-subtitle</code>)</label>
-                    <web-multiselect id="decl-subtitles" labels='{"searchPlaceholder": "Select framework…"}'>
-                        <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
-                        <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
-                        <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
-                    </web-multiselect>
-                    <small class="form-text">Second-line descriptions come from <code>data-subtitle</code>.</small>
+                <div class="grid mt-1">
+                    <div class="form-group">
+                        <label>Whole control <code>disabled</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                        <web-multiselect id="decl-disabled" disabled show-counter show-clear>
+                            <option value="red" selected>Red</option>
+                            <option value="green" selected>Green</option>
+                            <option value="blue">Blue</option>
+                        </web-multiselect>
+                        <small class="form-text">No interaction, not focusable, and the value is <strong>not</strong> submitted with a form — like a native <code>disabled</code> control. A disabled <code>&lt;fieldset&gt;</code> does the same. The counter still shows the tally (dimmed); the inline clear (✕) and the badge ✕ are hidden.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Whole control <code>readonly</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                        <web-multiselect id="decl-readonly" readonly show-counter show-clear>
+                            <option value="red" selected>Red</option>
+                            <option value="green" selected>Green</option>
+                            <option value="blue">Blue</option>
+                        </web-multiselect>
+                        <small class="form-text">The selection can't be changed and the dropdown doesn't open, but the control stays focusable and its value <strong>is</strong> submitted. The counter shows the tally; the inline clear (✕) and the badge ✕ are hidden.</small>
+                    </div>
                 </div>
-            </div>
-
-            <div class="grid mt-1">
-                <div class="form-group">
-                    <label>Whole control <code>disabled</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
-                    <web-multiselect id="decl-disabled" disabled show-counter show-clear>
-                        <option value="red" selected>Red</option>
-                        <option value="green" selected>Green</option>
-                        <option value="blue">Blue</option>
-                    </web-multiselect>
-                    <small class="form-text">No interaction, not focusable, and the value is <strong>not</strong> submitted with a form — like a native <code>disabled</code> control. A disabled <code>&lt;fieldset&gt;</code> does the same. The counter still shows the tally (dimmed); the inline clear (✕) and the badge ✕ are hidden.</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Whole control <code>readonly</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
-                    <web-multiselect id="decl-readonly" readonly show-counter show-clear>
-                        <option value="red" selected>Red</option>
-                        <option value="green" selected>Green</option>
-                        <option value="blue">Blue</option>
-                    </web-multiselect>
-                    <small class="form-text">The selection can't be changed and the dropdown doesn't open, but the control stays focusable and its value <strong>is</strong> submitted. The counter shows the tally; the inline clear (✕) and the badge ✕ are hidden.</small>
-                </div>
-            </div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;!-- Single-select, one option pre-picked --&gt;
-&lt;web-multiselect multiple="false"&gt;
-  &lt;option value="yes"&gt;Yes&lt;/option&gt;
-  &lt;option value="maybe" selected&gt;Maybe&lt;/option&gt;
-&lt;/web-multiselect&gt;
-
-&lt;!-- Grouped, with icons + subtitles + no-JS styling --&gt;
-&lt;web-multiselect custom-styles=".ms__badge { border-radius: 999px; }"&gt;
-  &lt;optgroup label="Frontend"&gt;
-    &lt;option value="js" data-icon="🟨"&gt;JavaScript&lt;/option&gt;
-    &lt;option value="react" data-icon="⚛️"
-            data-subtitle="A JS library for building UIs"&gt;React&lt;/option&gt;
-    &lt;option value="html" disabled&gt;HTML&lt;/option&gt;  &lt;!-- visible, not pickable --&gt;
-  &lt;/optgroup&gt;
-&lt;/web-multiselect&gt;
-
-&lt;!-- The whole control: disabled (not submitted) vs readonly (submitted) --&gt;
-&lt;web-multiselect disabled&gt;…&lt;/web-multiselect&gt;
-&lt;web-multiselect readonly&gt;…&lt;/web-multiselect&gt;</code></pre>
-            </details>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================= -->
@@ -407,21 +386,32 @@ el.scrollToValue('jp');</code></pre>
                 separate "filter" method: <code>search-mode</code> decides what the query does. Handy for
                 deep-links ("open with a query pre-filled"), syncing an external field or restoring saved state.
             </p>
-            <div class="controls">
-                <input type="text" id="srch-api-term" value="an" placeholder="query, e.g. an" style="padding:0.3rem 0.5rem; width:10rem">
-                <button type="button" id="srch-api-apply"><code>search(term)</code> + <code>open()</code></button>
-                <button type="button" id="srch-api-clear"><code>clearSearch()</code></button>
-                <span><code>searchTerm</code> = <code id="srch-api-out">""</code></span>
-            </div>
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>const el = document.querySelector('web-multiselect');
-el.searchMode = 'filter';   // or 'navigate' — what the query does
-el.search('an');            // apply as if typed (does not open)
-el.open();                  // …open to see it
-el.searchTerm;              // → "an"
-el.clearSearch();           // → ""</code></pre>
-            </details>
+            <kmwc-demo markup-hidden>
+                <div class="controls">
+                    <input type="text" id="srch-api-term" value="an" placeholder="query, e.g. an" style="padding:0.3rem 0.5rem; width:10rem">
+                    <button type="button" id="srch-api-apply"><code>search(term)</code> + <code>open()</code></button>
+                    <button type="button" id="srch-api-clear"><code>clearSearch()</code></button>
+                    <span><code>searchTerm</code> = <code id="srch-api-out">""</code></span>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('ex-search');   // search-mode decides what the query does
+                    const termInput = document.getElementById('srch-api-term');
+                    const out = document.getElementById('srch-api-out');
+                    // searchTerm reads the current query (typing too — the search box's `input` event is composed)
+                    const showSearchTerm = () => { out.textContent = JSON.stringify(el.searchTerm); };
+                    el.addEventListener('input', showSearchTerm);
+
+                    document.getElementById('srch-api-apply').addEventListener('click', () => {
+                        el.search(termInput.value);   // apply as if typed (does not open)
+                        el.open();                    // …open to see it
+                        showSearchTerm();             // → "an"
+                    });
+                    document.getElementById('srch-api-clear').addEventListener('click', () => {
+                        el.clearSearch();             // → ""
+                        showSearchTerm();
+                    });
+                </script>
+            </kmwc-demo>
 
             <div class="note">
                 <p><strong>When to use each mode:</strong></p>
@@ -466,13 +456,30 @@ el.clearSearch();           // → ""</code></pre>
                 </label>
             </div>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <web-multiselect
                     id="ex-search-match"
                     value-member="value"
                     display-value-member="label" labels='{"searchPlaceholder": "Try zurich, PARIS, de, io, ^(San|Santa) …"}'>
                 </web-multiselect>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('ex-search-match');
+                    // Mostly plain Latin; the accented ones (Zürich, São Paulo, …) are there to be found by
+                    // typing WITHOUT the accent — nothing in "Things to try" needs a special keyboard.
+                    el.options = [
+                        'Paris', 'Lyon', 'Bordeaux', 'Marseille', 'New York', 'New Orleans', 'New Delhi',
+                        'San Francisco', 'San Diego', 'Santa Monica', 'Santa Cruz', 'Los Angeles', 'Las Vegas',
+                        'Rio de Janeiro', 'Buenos Aires', 'Cape Town', 'São Paulo', 'Zürich', 'München', 'Kraków',
+                        'Málaga', 'Montréal', 'Reykjavík'
+                    ].map((label, i) => ({ value: String(i), label }));
+
+                    // Both are live — flip them from the switches above and the list re-filters in place
+                    // (same as the search-behavior / search-match attributes).
+                    document.querySelectorAll('input[name="sm-behavior"]').forEach((radio) =>
+                        radio.addEventListener('change', (e) => { if (e.target.checked) el.searchBehavior = e.target.value; }));
+                    document.getElementById('sm-match').addEventListener('change', (e) => { el.searchMatch = e.target.value; });
+                </script>
+            </kmwc-demo>
             <div class="note">
                 <p><strong>Things to try</strong> (all typeable on any keyboard):</p>
                 <ul>
@@ -488,15 +495,8 @@ el.clearSearch();           // → ""</code></pre>
             </div>
 
             <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;web-multiselect search-behavior="normalized" search-match="word-starts-with"&gt;&lt;/web-multiselect&gt;
-
-// live, e.g. from a page-level switch
-el.searchBehavior = 'case-insensitive';
-el.searchMatch = 'regex';
-
-// the same normalization, for your own code
-import { normalizeSearchText } from '@keenmate/web-multiselect';
+                <summary>The same normalization for your own code — <code>normalizeSearchText()</code></summary>
+<pre><code>import { normalizeSearchText } from '@keenmate/web-multiselect';
 normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             </details>
         </div>
@@ -518,24 +518,34 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 <label><input type="checkbox" id="pn-term-cb" checked> <code>getSearchTermCallback</code> (separator-agnostic regex)</label>
             </div>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <web-multiselect
                     id="ex-part-numbers"
                     value-member="value"
                     display-value-member="label"
                     subtitle-member="subtitle" labels='{"searchPlaceholder": "Try ha-324/56, xk 100 2, ha32…"}'>
                 </web-multiselect>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('ex-part-numbers');
+                    el.options = [
+                        ['HA 324-56', 'Hydraulic adapter'], ['HA32456', 'Hydraulic adapter (old label)'],
+                        ['HA-324/56', 'Hydraulic adapter (supplier B)'], ['HA 324-57', 'Hydraulic adapter, long'],
+                        ['HB 324-56', 'Hose bracket'], ['XK 100/20', 'Coupling'], ['XK-100-21', 'Coupling, reinforced']
+                    ].map(([label, subtitle], i) => ({ value: String(i), label, subtitle }));
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>el.getSearchTermCallback = ({ term }) =&gt;
-    new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
-// "ha-324/56" → /ha[^a-z0-9]*324[^a-z0-9]*56/i
+                    // "ha-324/56" → /ha[^a-z0-9]*324[^a-z0-9]*56/i
+                    // A returned RegExp is tested against the raw search value. A returned string is used
+                    // as-is, so normalize it yourself (normalizeSearchText) to match the prepared values.
+                    const separatorAgnostic = ({ term }) =>
+                        new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
+                    el.getSearchTermCallback = separatorAgnostic;
 
-// A returned RegExp is tested against the raw search value. A returned string is used
-// as-is, so normalize it yourself (normalizeSearchText) to match the prepared values.</code></pre>
-            </details>
+                    // the checkbox above compares with plain search
+                    document.getElementById('pn-term-cb').addEventListener('change', (e) => {
+                        el.getSearchTermCallback = e.target.checked ? separatorAgnostic : null;
+                    });
+                </script>
+            </kmwc-demo>
         </div>
 
     <script type="module">
@@ -848,50 +858,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 }));
             srchHint.addEventListener('change', applySearchHint);
 
-            // Drive it from code: search(term) / clearSearch(), searchTerm read live (typing too —
-            // the search box's `input` event is composed, so it reaches the host).
-            const srchApiOut = document.getElementById('srch-api-out');
-            const showSearchTerm = () => { srchApiOut.textContent = JSON.stringify(exSearch.searchTerm); };
-            exSearch.addEventListener('input', showSearchTerm);
-            document.getElementById('srch-api-apply').addEventListener('click', () => {
-                exSearch.search(document.getElementById('srch-api-term').value);
-                exSearch.open();
-                showSearchTerm();
-            });
-            document.getElementById('srch-api-clear').addEventListener('click', () => {
-                exSearch.clearSearch();
-                showSearchTerm();
-            });
             document.getElementById('srch-min').addEventListener('change', (e) =>
                 exSearch.setAttribute('min-search-length', e.target.value));
-
-            // ── BU07 · Search matching ───────────────────────────────────
-            const exMatch = document.getElementById('ex-search-match');
-            // Mostly plain Latin; the accented ones (Zürich, São Paulo, …) are there to be found by
-            // typing WITHOUT the accent — nothing in "Things to try" needs a special keyboard.
-            exMatch.options = [
-                'Paris', 'Lyon', 'Bordeaux', 'Marseille', 'New York', 'New Orleans', 'New Delhi',
-                'San Francisco', 'San Diego', 'Santa Monica', 'Santa Cruz', 'Los Angeles', 'Las Vegas',
-                'Rio de Janeiro', 'Buenos Aires', 'Cape Town', 'São Paulo', 'Zürich', 'München', 'Kraków',
-                'Málaga', 'Montréal', 'Reykjavík'
-            ].map((label, i) => ({ value: String(i), label }));
-            document.querySelectorAll('input[name="sm-behavior"]').forEach((r) =>
-                r.addEventListener('change', (e) => { if (e.target.checked) exMatch.setAttribute('search-behavior', e.target.value); }));
-            document.getElementById('sm-match').addEventListener('change', (e) =>
-                exMatch.setAttribute('search-match', e.target.value));
-
-            // ── BU08 · Preparing the term ────────────────────────────────
-            const exParts = document.getElementById('ex-part-numbers');
-            exParts.options = [
-                ['HA 324-56', 'Hydraulic adapter'], ['HA32456', 'Hydraulic adapter (old label)'],
-                ['HA-324/56', 'Hydraulic adapter (supplier B)'], ['HA 324-57', 'Hydraulic adapter, long'],
-                ['HB 324-56', 'Hose bracket'], ['XK 100/20', 'Coupling'], ['XK-100-21', 'Coupling, reinforced']
-            ].map(([label, subtitle], i) => ({ value: String(i), label, subtitle }));
-            const separatorAgnostic = ({ term }) =>
-                new RegExp(term.split(/[^a-z0-9]+/i).filter(Boolean).join('[^a-z0-9]*'), 'i');
-            const applyTermCb = (on) => { exParts.getSearchTermCallback = on ? separatorAgnostic : null; };
-            applyTermCb(true);
-            document.getElementById('pn-term-cb').addEventListener('change', (e) => applyTermCb(e.target.checked));
 
             // Persist all control switches to localStorage and restore them on
             // reload — re-applies to every picker via the listeners wired above.
