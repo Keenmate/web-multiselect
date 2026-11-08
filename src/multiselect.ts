@@ -2685,6 +2685,12 @@ export class MultiSelectEngine<T = any> {
             if (gate.isRejected) return;
         }
 
+        // WebKit treats Backspace on a non-editable field as history Back. Only these two keys —
+        // Ctrl+C / Ctrl+A on the shown value must keep working.
+        if ((e.key === 'Backspace' || e.key === 'Delete') && e.currentTarget === this.input && this.input.readOnly) {
+            e.preventDefault();
+        }
+
         if (!this.#isOpen) {
             if (e.key === 'Enter' || e.key === 'ArrowDown') {
                 e.preventDefault();

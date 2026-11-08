@@ -38,6 +38,7 @@ async function prop(page: Page, id: string, key: string): Promise<unknown> {
 const { defaultBrowserType: _ignored, ...PHONE } = devices['Pixel 7'];
 
 test.describe('phone viewport', () => {
+    test.skip(({ browserName }) => browserName === 'firefox', 'isMobile unsupported');
     test.use(PHONE);
 
     test('a per-tag page rule applies to a picker with no own value', async ({ page }) => {
