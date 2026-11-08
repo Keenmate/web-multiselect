@@ -24,27 +24,32 @@
                 different separator (e.g. <code>1/1/2</code>), set <code>tree-path-separator</code>.
             </p>
 
-            <div class="card-grid" style="--grid-min: 240px; --grid-gap: 1.5rem;">
-                <div>
-                    <label class="demo-label">Dot-path (<code>path-member="path"</code>) — every node expanded:</label>
-                    <web-multiselect id="tree-basic" multiple="true"></web-multiselect>
+            <kmwc-demo>
+                <div class="card-grid" style="--grid-min: 240px; --grid-gap: 1.5rem;">
+                    <div>
+                        <label class="demo-label">Dot-path (<code>path-member="path"</code>) — every node expanded:</label>
+                        <web-multiselect id="tree-basic" multiple="true" path-member="path"></web-multiselect>
+                    </div>
+                    <div>
+                        <label class="demo-label">Slash-path (<code>tree-path-separator="/"</code>):</label>
+                        <web-multiselect id="tree-slash" multiple="true" path-member="path" tree-path-separator="/"></web-multiselect>
+                    </div>
                 </div>
-                <div>
-                    <label class="demo-label">Slash-path (<code>tree-path-separator="/"</code>):</label>
-                    <web-multiselect id="tree-slash" multiple="true" tree-path-separator="/"></web-multiselect>
-                </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    import { categories } from './examples-data/tree-categories.js';
+                    // categories = [
+                    //   { value: 'fruit', label: 'Fruit',      path: '1' },
+                    //   { value: 'pome',  label: 'Pome fruit', path: '1.1' },
+                    //   { value: 'apple', label: 'Apple',      path: '1.1.1' },
+                    //   { value: 'veg',   label: 'Vegetables', path: '2' }, …
+                    // ];
+                    document.getElementById('tree-basic').options = categories;
 
-            <div class="code-block"><pre>el.options = [
-  { value: 'fruit', label: 'Fruit', path: '1' },
-  { value: 'pome',  label: 'Pome fruit', path: '1.1' },
-  { value: 'apple', label: 'Apple', path: '1.1.1' },
-  { value: 'veg',   label: 'Vegetables', path: '2' }
-];
-el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;
-
-// Different separator? Tell the component:
-// &lt;web-multiselect path-member="path" tree-path-separator="/"&gt;</pre></div>
+                    // Same data with "/" paths — the picker sets tree-path-separator="/".
+                    document.getElementById('tree-slash').options =
+                        categories.map(c => ({ ...c, path: c.path.replaceAll('.', '/') }));
+                </script>
+            </kmwc-demo>
 
             <div class="note">
                 <div class="note-title">No collapse:</div>
@@ -85,7 +90,7 @@ el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;
                     <code>@keenmate/web-treeview</code>.</li>
             </ul>
 
-            <div class="demo-area">
+            <kmwc-demo markup-hidden>
                 <div class="controls">
                     <label><input type="checkbox" id="sel-multiple" checked> <code>multiple</code></label>
                     <label><input type="checkbox" id="sel-checks" checked> <code>show-checkboxes</code></label>
@@ -108,18 +113,36 @@ el.pathMember = 'path';   // &lt;web-multiselect path-member="path"&gt;
                 </div>
 
                 <label class="demo-label">Check "Fruit", then remove a badge:</label>
-                <web-multiselect id="tree-select" multiple="true" show-checkboxes="true"></web-multiselect>
+                <web-multiselect id="tree-select" multiple="true" show-checkboxes="true" path-member="path"></web-multiselect>
 
                 <div class="output">
                     <div class="output-label">Emitted <code>selectedValue</code>:</div>
                     <pre id="casc-emitted">[]</pre>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    import { categories } from './examples-data/tree-categories.js';
 
-            <div class="code-block"><pre>const el = document.querySelector('web-multiselect');
-el.checkboxMode = 'cascade';            // independent | cascade
-el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
-// Both are live: flip them any time and the current selection re-projects.</pre></div>
+                    const el = document.getElementById('tree-select');
+                    const emitted = document.getElementById('casc-emitted');
+                    const showEmitted = () => { emitted.textContent = JSON.stringify(el.selectedValue); };
+                    el.options = categories;
+                    el.addEventListener('change', showEmitted);
+
+                    // Both knobs are live: flip them any time and the current selection re-projects.
+                    document.querySelectorAll('input[name="cb-mode"]').forEach((radio) => {
+                        radio.addEventListener('change', () => {
+                            if (radio.checked) el.checkboxMode = radio.value;          // independent | cascade
+                            showEmitted();
+                        });
+                    });
+                    document.querySelectorAll('input[name="cb-policy"]').forEach((radio) => {
+                        radio.addEventListener('change', () => {
+                            if (radio.checked) el.cascadeSelectPolicy = radio.value;   // rolled-up | leaves | all
+                            showEmitted();
+                        });
+                    });
+                </script>
+            </kmwc-demo>
 
             <h3 class="subsection">Selectable leaves only</h3>
             <p class="description">
@@ -132,15 +155,21 @@ el.cascadeSelectPolicy = 'rolled-up';   // rolled-up | leaves | all
                 arrows, and can't be toggled or picked by Select&nbsp;All. The classic use is a
                 tree where only the leaves are real choices and the branches are pure structure.
             </p>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Branches are labels only — try clicking one, then a leaf:</label>
-                <web-multiselect id="tree-leaves" multiple="true" show-checkboxes="true"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>// Only leaves are selectable — the callback sees the derived hasChildren.
-el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
+                <web-multiselect id="tree-leaves" multiple="true" show-checkboxes="true" path-member="path"></web-multiselect>
+                <script type="module" data-kmwc-show>
+                    import { categories } from './examples-data/tree-categories.js';
 
-// …or drive it from the data:
-// &lt;web-multiselect path-member="path" is-selectable-member="selectable"&gt;</pre></div>
+                    const el = document.getElementById('tree-leaves');
+                    // Only leaves are selectable — the callback sees the derived hasChildren.
+                    el.getIsSelectableCallback = ({ node }) => !node.hasChildren;
+                    el.options = categories;
+
+                    // …or drive it from the data:
+                    // <web-multiselect path-member="path" is-selectable-member="selectable">
+                </script>
+            </kmwc-demo>
 
             <h3 class="subsection">Action buttons</h3>
             <p class="description">
@@ -151,18 +180,24 @@ el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
                 (<em>Fruit</em>, <em>Vegetables</em>), not one badge per node. Add custom actions with an
                 <code>id</code> and an <code>onClick(detail)</code> — <code>detail.controller</code> drives the picker.
             </p>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Cascade tree — Select All / Clear All + a custom "All fruit" action:</label>
-                <web-multiselect id="tree-actions" multiple="true" show-checkboxes="true"
+                <web-multiselect id="tree-actions" multiple="true" show-checkboxes="true" path-member="path"
                     checkbox-mode="cascade" actions-position="top"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>el.actionButtons = [
-  { action: 'select-all', text: 'Select All' },
-  { action: 'clear-selection',  text: 'Clear All' },
-  // custom action — identified by `id`; detail.controller drives the picker. setSelected is
-  // silent by default; { notify: true } announces the result as a single `change` (so the server hears it).
-  { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) =&gt; controller.setSelected(['fruit'], { notify: true }) }
-];</pre></div>
+                <script type="module" data-kmwc-show>
+                    import { categories } from './examples-data/tree-categories.js';
+
+                    const el = document.getElementById('tree-actions');
+                    el.options = categories;
+                    el.actionButtons = [
+                        { action: 'select-all', text: 'Select All' },
+                        { action: 'clear-selection', text: 'Clear All' },
+                        // custom action — identified by `id`; detail.controller drives the picker. setSelected is
+                        // silent by default; { notify: true } announces the result as a single `change` (so the server hears it).
+                        { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) => controller.setSelected(['fruit'], { notify: true }) }
+                    ];
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- ============================================================= -->
@@ -295,11 +330,31 @@ el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
                 <li><code>isSelectable</code> — <code>false</code> for structure-only branches.</li>
                 <li><code>isIndeterminate</code> — cascade tristate (a partially-checked branch).</li>
             </ul>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Branches are tinted and bold with a child count; leaves sit on white — the whole picker scaled compact via <code>--ms-rem</code>:</label>
                 <web-multiselect id="tree-render" multiple="true" show-checkboxes="true" checkbox-mode="cascade"
-                    style="--ms-rem: 8px; --ms-tree-indent: 1rem;"></web-multiselect>
-            </div>
+                    path-member="path" style="--ms-rem: 8px; --ms-tree-indent: 1rem;"></web-multiselect>
+                <script type="module" data-kmwc-show>
+                    import { categories } from './examples-data/tree-categories.js';
+
+                    const el = document.getElementById('tree-render');
+                    el.options = categories;
+                    // (Compact: the markup scales the whole picker down with --ms-rem — default 10px → 8px = 80%.)
+
+                    // 1) Content — compact label + child count. Style via a CSS class, not inline styles.
+                    el.renderOptionContentCallback = ({ option, isBranch, childCount }) => isBranch
+                        ? `<span><strong>${option.label}</strong> <small class="node-count">${childCount}</small></span>`
+                        : `<span>${option.label}</span>`;
+
+                    // 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
+                    //    branch/leaf theming hooks, plus the .node-count class used above.
+                    el.getCustomStylesCallback = () => `
+                        .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
+                        .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
+                        .node-count { opacity: .55; font-weight: 400; }
+                    `;
+                </script>
+            </kmwc-demo>
             <p class="description">
                 Two mechanisms working together. The <strong>content</strong> comes from
                 <code>renderOptionContentCallback</code> (here just the label plus a muted
@@ -308,22 +363,6 @@ el.getIsSelectableCallback = ({ node }) =&gt; !node.hasChildren;
                 callback only fills the content area (after the checkbox), so a background belongs on the
                 <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code> row classes.
             </p>
-            <div class="code-block"><pre>// 1) Content — compact label + child count. Style via a CSS class, not inline styles.
-el.renderOptionContentCallback = ({ option, isBranch, childCount }) =&gt; isBranch
-  ? `&lt;span&gt;&lt;strong&gt;${option.label}&lt;/strong&gt; &lt;small class="node-count"&gt;${childCount}&lt;/small&gt;&lt;/span&gt;`
-  : `&lt;span&gt;${option.label}&lt;/span&gt;`;
-
-// 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
-//    branch/leaf theming hooks, plus the .node-count class used above.
-el.getCustomStylesCallback = () =&gt; `
-  .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
-  .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
-  .node-count { opacity: .55; font-weight: 400; }
-`;
-
-// Compact: scale the whole picker down with --ms-rem (default 10px → 8px = 80%):
-// &lt;web-multiselect style="--ms-rem: 8px; --ms-tree-indent: 1rem;"&gt;</pre></div>
-
             <h3 class="subsection">Node icons</h3>
             <p class="description">
                 Set <code>icon-member</code> (or <code>getIconCallback</code>) and each row renders
@@ -335,24 +374,38 @@ el.getCustomStylesCallback = () =&gt; `
                 starts. Flip <code>reserve-icon-slot</code> to keep an empty gutter on every row, and
                 all labels share one start column.
             </p>
-            <label class="toggle-label">
-                <input type="checkbox" id="tree-icons-reserve"> <code>reserve-icon-slot</code> — align labels on icon-less rows
-            </label>
-            <div class="demo-area">
+            <kmwc-demo>
+                <label class="toggle-label">
+                    <input type="checkbox" id="tree-icons-reserve"> <code>reserve-icon-slot</code> — align labels on icon-less rows
+                </label>
                 <label class="demo-label">Folders carry icons, some files don't — toggle the slot and watch the icon-less rows' labels line up:</label>
-                <web-multiselect id="tree-icons" multiple="true" show-checkboxes="true" icon-member="icon"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>el.iconMember = 'icon';   // &lt;web-multiselect icon-member="icon"&gt;
-el.options = [
-  { value: 'src',    label: 'src',      path: '1',   icon: '📁' },
-  { value: 'index',  label: 'index.ts', path: '1.1', icon: '📄' },
-  { value: 'types',  label: 'types.ts', path: '1.2' },  // no icon → bare label
-  …
-];
+                <web-multiselect id="tree-icons" multiple="true" show-checkboxes="true" path-member="path" icon-member="icon"></web-multiselect>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('tree-icons');
+                    el.options = [
+                        { value: 'src',     label: 'src',          path: '1',     icon: '📁' },
+                        { value: 'index',   label: 'index.ts',     path: '1.1',   icon: '📄' },
+                        { value: 'utils',   label: 'utils',        path: '1.2',   icon: '📁' },
+                        { value: 'math',    label: 'math.ts',      path: '1.2.1', icon: '📄' },
+                        { value: 'dom',     label: 'dom.ts',       path: '1.2.2' },   // no icon → bare label
+                        { value: 'types',   label: 'types.ts',     path: '1.3' },     // no icon
+                        { value: 'assets',  label: 'assets',       path: '2',     icon: '📁' },
+                        { value: 'logo',    label: 'logo.svg',     path: '2.1',   icon: '🖼️' },
+                        { value: 'hero',    label: 'hero.png',     path: '2.2',   icon: '🖼️' },
+                        { value: 'fonts',   label: 'fonts',        path: '2.3',   icon: '📁' },
+                        { value: 'inter',   label: 'inter.woff2',  path: '2.3.1' },   // no icon
+                        { value: 'readme',  label: 'README.md',    path: '3' },       // no icon (top level)
+                        { value: 'license', label: 'LICENSE',      path: '4' }        // no icon (top level)
+                    ];
 
-// Mixing icon + icon-less rows? Reserve the gutter so every label lines up:
-// &lt;web-multiselect icon-member="icon" reserve-icon-slot&gt;
-// (works the same on a flat list — it's an option-level knob, not tree-only)</pre></div>
+                    // Mixing icon + icon-less rows? Reserve the gutter so every label lines up
+                    // (<web-multiselect icon-member="icon" reserve-icon-slot> — works on flat lists too).
+                    // The attribute defaults to false when absent, so write the explicit value.
+                    document.getElementById('tree-icons-reserve').addEventListener('change', (e) => {
+                        el.setAttribute('reserve-icon-slot', String(e.target.checked));
+                    });
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- ============================================================= -->
@@ -369,11 +422,19 @@ el.options = [
                 disambiguating leaves that share a name across branches. An explicit
                 <code>getBadgeDisplayCallback</code> still wins.
             </p>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Two items are pre-selected — see the breadcrumb badges:</label>
-                <web-multiselect id="tree-fulltitle" multiple="true" show-badge-full-title="true"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>&lt;web-multiselect path-member="path" full-title-member="fullTitle" show-badge-full-title="true"&gt;</pre></div>
+                <web-multiselect id="tree-fulltitle" multiple="true" path-member="path"
+                    full-title-member="fullTitle" show-badge-full-title="true"></web-multiselect>
+                <script type="module" data-kmwc-show>
+                    import { categoriesWithFullTitles } from './examples-data/tree-categories.js';
+                    // each option ships its breadcrumb: { value: 'apple', label: 'Apple', path: '1.1.1',
+                    //                                     fullTitle: 'Fruit / Pome fruit / Apple' }
+                    const el = document.getElementById('tree-fulltitle');
+                    el.options = categoriesWithFullTitles;
+                    el.setSelected(['apple', 'kale']);
+                </script>
+            </kmwc-demo>
 
             <h3 class="subsection">No badges — selections in a popover</h3>
             <p class="description">
@@ -391,20 +452,25 @@ el.options = [
                 no badges and no “N selected” text — just a compact <code>[N]</code> counter next to the
                 toggle that opens the same popover.
             </div>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Three leaves are pre-selected — click <strong>“N selected”</strong> or the <code>[N]</code> counter chip to open the popover:</label>
-                <web-multiselect id="tree-count" multiple="true" show-checkboxes="true"
+                <web-multiselect id="tree-count" multiple="true" show-checkboxes="true" path-member="path"
                     badges-display-mode="count" show-counter="true" checkbox-mode="cascade"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>&lt;web-multiselect badges-display-mode="count" show-counter="true"&gt;&lt;/web-multiselect&gt;
+                <script type="module" data-kmwc-show>
+                    import { categoriesWithFullTitles } from './examples-data/tree-categories.js';
 
-// Breadcrumb per popover row (popover reuses badge rendering):
-el.fullTitleMember = 'fullTitle';
-el.getBadgeDisplayCallback = ({ option }) =&gt; option.fullTitle || option.label;
+                    const el = document.getElementById('tree-count');
+                    // Breadcrumb per popover row (popover reuses badge rendering):
+                    el.fullTitleMember = 'fullTitle';
+                    el.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
+                    el.options = categoriesWithFullTitles;
+                    el.setSelected(['apple', 'peach', 'kale']);
 
-// show-counter adds a compact [N] chip next to the toggle — independent of the
-// display mode, it opens the same selected-items popover. Drop the "N selected"
-// text entirely with badges-display-mode="none" to leave only the [N] chip.</pre></div>
+                    // show-counter adds a compact [N] chip next to the toggle — independent of the display
+                    // mode, it opens the same selected-items popover. Drop the "N selected" text entirely
+                    // with badges-display-mode="none" to leave only the [N] chip.
+                </script>
+            </kmwc-demo>
 
             <h3 class="subsection">Independent panel widths</h3>
             <p class="description">
@@ -423,21 +489,25 @@ el.getBadgeDisplayCallback = ({ option }) =&gt; option.fullTitle || option.label
                 — and every picker follows; the attributes then override a single instance. Defaults:
                 the dropdown tracks the input width, the popover is an intrinsic 32rem.
             </div>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">15rem input · 60rem tree dropdown · 30rem badges popover — open the dropdown, pick a few, then click <strong>“N selected”</strong>:</label>
-                <web-multiselect id="tree-widths" multiple="true" show-checkboxes="true"
+                <web-multiselect id="tree-widths" multiple="true" show-checkboxes="true" path-member="path"
                     checkbox-mode="cascade" badges-display-mode="count" show-counter="true"
                     dropdown-width="60rem" selected-popover-width="30rem"
                     style="width: 15rem;"></web-multiselect>
-            </div>
-            <div class="code-block"><pre>&lt;!-- Per-instance: attributes set the CSS variables on this element --&gt;
-&lt;web-multiselect
-    style="width: 15rem;"             // the control (input)
-    dropdown-width="60rem"            // → --ms-dropdown-width
-    selected-popover-width="30rem"&gt;  // → --ms-selected-popover-width
-&lt;/web-multiselect&gt;
+                <script type="module" data-kmwc-show>
+                    import { categoriesWithFullTitles } from './examples-data/tree-categories.js';
 
-/* Or theme every picker at once — the same variables, at app level: */
+                    // Widths come from the attributes, per instance: style width = the control (input),
+                    // dropdown-width → --ms-dropdown-width, selected-popover-width → --ms-selected-popover-width.
+                    // The breadcrumb rows just give the wide panels something to show.
+                    const el = document.getElementById('tree-widths');
+                    el.fullTitleMember = 'fullTitle';
+                    el.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
+                    el.options = categoriesWithFullTitles;
+                </script>
+            </kmwc-demo>
+            <div class="code-block"><pre>/* Or theme every picker at once — the same variables, at app level: */
 web-multiselect {
     --ms-dropdown-width: 60rem;
     --ms-selected-popover-width: 30rem;
@@ -465,27 +535,31 @@ web-multiselect {
                 ancestors), so you can search by any of them.
             </p>
 
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Search e.g. <code>welder</code>, <code>2211</code>, or <code>health</code> — then hover a badge:</label>
-                <web-multiselect id="tree-isco" multiple="true"
+                <web-multiselect id="tree-isco" multiple="true" path-member="path" is-selectable-member="selectable"
                     enable-virtual-scroll="true" virtual-scroll-item-height="32" enable-badge-tooltips="true" enable-option-tooltips="true"
                     badges-display-mode="partial" max-visible-badge-count="3"
                     style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
-            </div>
+                <script type="module" data-kmwc-show>
+                    // path "2.22.221.2211"; selectable = only the 4-digit unit groups (leaves)
+                    const isco = await (await fetch('./examples-data/isco08.json')).json();
+                    const el = document.getElementById('tree-isco');
 
-            <div class="code-block"><pre>const isco = await (await fetch('./examples-data/isco08.json')).json();
-el.pathMember = 'path';               // "2.22.221.2211"
-el.isSelectableMember = 'selectable'; // only 4-digit unit groups (leaves)
-el.options = isco;
-
-// Badge shows only the last segment; ".. /" hints at hidden ancestors.
-el.getBadgeDisplayCallback = ({ option }) =&gt; {
-  const segs = String(option.fullTitle || option.label).split(' / ');
-  const last = segs[segs.length - 1];
-  return segs.length &gt; 1 ? `.. / ${last}` : last;
-};
-// Full breadcrumb in the badge tooltip (needs enable-badge-tooltips).
-el.getBadgeTooltipCallback = ({ option }) =&gt; option.fullTitle || option.label;</pre></div>
+                    // Built-in search matches the display value only (the title). Widen it to also
+                    // match the ISCO code and the full breadcrumb (matches keep their ancestors).
+                    el.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
+                    // Badge shows only the last segment; ".. /" hints at hidden ancestors.
+                    el.getBadgeDisplayCallback = ({ option }) => {
+                        const segs = String(option.fullTitle || option.label).split(' / ');
+                        const last = segs[segs.length - 1];
+                        return segs.length > 1 ? `.. / ${last}` : last;
+                    };
+                    // Full breadcrumb in the badge tooltip (needs enable-badge-tooltips).
+                    el.getBadgeTooltipCallback = ({ option }) => option.fullTitle || option.label;
+                    el.options = isco;
+                </script>
+            </kmwc-demo>
 
             <p class="description" style="font-size: 0.85rem; opacity: 0.8;">
                 Source: <em>International Standard Classification of Occupations, ISCO-08</em>
@@ -500,11 +574,11 @@ el.getBadgeTooltipCallback = ({ option }) =&gt; option.fullTitle || option.label
                 returns <code>false</code>. If a <strong>search</strong> has filtered the tree, the node
                 may be hidden — call <code>clearSearch()</code> first to reveal it, then scroll.
             </p>
-            <div class="demo-area">
+            <kmwc-demo markup-hidden>
                 <label class="demo-label">Jump to an ISCO occupation by code:</label>
                 <div style="display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap;">
                     <div style="flex:1 1 260px; min-width:260px;">
-                        <web-multiselect id="tree-scroll" multiple="true"
+                        <web-multiselect id="tree-scroll" multiple="true" path-member="path" is-selectable-member="selectable"
                             enable-virtual-scroll="true" virtual-scroll-item-height="32"
                             style="--ms-option-padding: 0.3rem 0.85rem; --ms-option-title-white-space: nowrap; --ms-option-title-overflow: hidden; --ms-option-title-text-overflow: ellipsis;"></web-multiselect>
                     </div>
@@ -518,405 +592,153 @@ el.getBadgeTooltipCallback = ({ option }) =&gt; option.fullTitle || option.label
                     </div>
                 </div>
                 <div id="tr-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const isco = await (await fetch('./examples-data/isco08.json')).json();
+                    const el = document.getElementById('tree-scroll');
+                    el.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
+                    el.options = isco;
 
-            <div class="code-block"><pre>el.open();
-el.scrollToValue('2211');        // any node by value — tree is always expanded
-el.scrollToIndex(el /* count-1 */); // last visible node
-el.scrollToGroup('x');           // → resolves false in tree mode
+                    const logPanel = document.getElementById('tr-scroll-log');
+                    const log = (msg) => {
+                        logPanel.querySelector('.muted')?.remove();
+                        logPanel.insertAdjacentHTML('beforeend', `<div class="log-line">${msg}</div>`);
+                        logPanel.scrollTop = logPanel.scrollHeight;
+                    };
 
-// If a search filtered the node out, reveal it first:
-el.clearSearch();
-el.scrollToValue('2211');</pre></div>
+                    document.querySelectorAll('[data-tr]').forEach((btn) => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation(); // don't let the page click close the dropdown
+                            el.open();
+                            const [kind, arg] = btn.dataset.tr.split(':');
+                            if (kind === 'value') {
+                                // Any node by value — the tree is always fully expanded.
+                                log(`▶ scrollToValue('${arg}') → ${await el.scrollToValue(arg)}`);
+                            } else if (kind === 'last') {
+                                const last = isco.length - 1;
+                                log(`▶ scrollToIndex(${last}) → ${await el.scrollToIndex(last)}`);
+                            } else if (kind === 'group') {
+                                // Groups don't apply in tree mode — resolves false.
+                                log(`▶ scrollToGroup('${arg}') → ${await el.scrollToGroup(arg)}`);
+                            } else if (kind === 'clear') {
+                                // A search may have filtered the node out — reveal it first, then scroll.
+                                el.clearSearch();
+                                log('clearSearch() — search reset, full tree restored');
+                            }
+                        });
+                    });
+                </script>
+            </kmwc-demo>
         </section>
 
     <script type="module">
-        // Each option carries a materialized dot-path; parent/level are derived from it.
-        const categories = [
-            // Fruit — 4 sub-branches, one going 4 levels deep (Berries › Strawberry › varieties)
-            { value: 'fruit',     label: 'Fruit',       path: '1' },
-            { value: 'pome',      label: 'Pome fruit',  path: '1.1' },
-            { value: 'apple',     label: 'Apple',       path: '1.1.1' },
-            { value: 'pear',      label: 'Pear',        path: '1.1.2' },
-            { value: 'quince',    label: 'Quince',      path: '1.1.3' },
-            { value: 'stone',     label: 'Stone fruit', path: '1.2' },
-            { value: 'peach',     label: 'Peach',       path: '1.2.1' },
-            { value: 'plum',      label: 'Plum',        path: '1.2.2' },
-            { value: 'cherry',    label: 'Cherry',      path: '1.2.3' },
-            { value: 'apricot',   label: 'Apricot',     path: '1.2.4' },
-            { value: 'berries',   label: 'Berries',     path: '1.3' },
-            { value: 'straw',     label: 'Strawberry',  path: '1.3.1' },
-            { value: 'straw-cam', label: 'Camarosa',    path: '1.3.1.1' },
-            { value: 'straw-alb', label: 'Albion',      path: '1.3.1.2' },
-            { value: 'blue',      label: 'Blueberry',   path: '1.3.2' },
-            { value: 'rasp',      label: 'Raspberry',   path: '1.3.3' },
-            { value: 'citrus',    label: 'Citrus',      path: '1.4' },
-            { value: 'orange',    label: 'Orange',      path: '1.4.1' },
-            { value: 'lemon',     label: 'Lemon',       path: '1.4.2' },
-            { value: 'lime',      label: 'Lime',        path: '1.4.3' },
-            // Vegetables — 3 sub-branches of varying size
-            { value: 'veg',       label: 'Vegetables',  path: '2' },
-            { value: 'root',      label: 'Root',        path: '2.1' },
-            { value: 'carrot',    label: 'Carrot',      path: '2.1.1' },
-            { value: 'beet',      label: 'Beetroot',    path: '2.1.2' },
-            { value: 'radish',    label: 'Radish',      path: '2.1.3' },
-            { value: 'leafy',     label: 'Leafy',       path: '2.2' },
-            { value: 'kale',      label: 'Kale',        path: '2.2.1' },
-            { value: 'spinach',   label: 'Spinach',     path: '2.2.2' },
-            { value: 'lettuce',   label: 'Lettuce',     path: '2.2.3' },
-            { value: 'chard',     label: 'Chard',       path: '2.2.4' },
-            { value: 'brassica',  label: 'Brassica',    path: '2.3' },
-            { value: 'broccoli',  label: 'Broccoli',    path: '2.3.1' },
-            { value: 'caulif',    label: 'Cauliflower', path: '2.3.2' },
-            { value: 'cabbage',   label: 'Cabbage',     path: '2.3.3' },
-            // Dairy — a whole extra root
-            { value: 'dairy',     label: 'Dairy',       path: '3' },
-            { value: 'cheese',    label: 'Cheese',      path: '3.1' },
-            { value: 'cheddar',   label: 'Cheddar',     path: '3.1.1' },
-            { value: 'brie',      label: 'Brie',        path: '3.1.2' },
-            { value: 'gouda',     label: 'Gouda',       path: '3.1.3' },
-            { value: 'milk',      label: 'Milk',        path: '3.2' },
-            { value: 'milk-w',    label: 'Whole milk',  path: '3.2.1' },
-            { value: 'milk-s',    label: 'Skim milk',   path: '3.2.2' },
-            { value: 'milk-o',    label: 'Oat milk',    path: '3.2.3' },
-            // Grains — a fourth root
-            { value: 'grains',    label: 'Grains',      path: '4' },
-            { value: 'cereal',    label: 'Cereal',      path: '4.1' },
-            { value: 'wheat',     label: 'Wheat',       path: '4.1.1' },
-            { value: 'rice',      label: 'Rice',        path: '4.1.2' },
-            { value: 'oats',      label: 'Oats',        path: '4.1.3' },
-            { value: 'bakery',    label: 'Bakery',      path: '4.2' },
-            { value: 'sourdough', label: 'Sourdough',   path: '4.2.1' },
-            { value: 'rye',       label: 'Rye bread',   path: '4.2.2' }
-        ];
+        // Page harness — demos without a shown snippet, plus control wiring a user wouldn't write.
+        import { categories } from './examples-data/tree-categories.js';
 
-        // Same data with a "/" separator.
-        const slashCategories = categories.map(c => ({ ...c, path: c.path.replaceAll('.', '/') }));
+        // ---- TR02 · control enablement chain (the shown script wires mode/policy) ----
+        //   show-checkboxes → only multi-select renders checkboxes
+        //   checkbox-mode   → only when checkboxes are shown
+        //   cascade policy  → only in cascade mode
+        const sel = document.querySelector('#tree-select');
+        const emittedOut = document.querySelector('#casc-emitted');
+        const selMultiple = document.querySelector('#sel-multiple');
+        const selChecks = document.querySelector('#sel-checks');
+        const modeGroup = document.querySelector('#mode-group');
+        const policyGroup = document.querySelector('#policy-group');
+        const setGroupEnabled = (group, on) => {
+            group.dataset.disabled = String(!on);
+            group.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
+        };
+        const syncEnablement = () => {
+            const multipleOn = selMultiple.checked;
+            const checksOn = multipleOn && selChecks.checked;
+            const cascadeOn = checksOn && document.querySelector('input[name="cb-mode"][value="cascade"]').checked;
+            selChecks.disabled = !multipleOn;
+            selChecks.closest('label').style.opacity = multipleOn ? '' : '0.45';
+            setGroupEnabled(modeGroup, checksOn);
+            setGroupEnabled(policyGroup, cascadeOn);
+        };
+        // multiple: default on → removeAttribute; off → multiple="false".
+        selMultiple.addEventListener('change', (e) => {
+            e.target.checked ? sel.removeAttribute('multiple') : sel.setAttribute('multiple', 'false');
+            syncEnablement();
+            emittedOut.textContent = JSON.stringify(sel.selectedValue);
+        });
+        // show-checkboxes: write the explicit value — the attribute defaults to true
+        // when ABSENT, so removing it wouldn't hide them.
+        selChecks.addEventListener('change', (e) => {
+            sel.setAttribute('show-checkboxes', String(e.target.checked));
+            syncEnablement();
+        });
+        document.querySelectorAll('input[name="cb-mode"]').forEach((r) => r.addEventListener('change', syncEnablement));
+        // Initial state: multiple + checkboxes on, mode independent → policy disabled.
+        syncEnablement();
 
-        // A "full title" ships WITH the data. Here we build a breadcrumb by joining each
-        // option's ancestor labels — the component never computes it.
-        const labelByPath = new Map(categories.map(c => [c.path, c.label]));
-        const withFullTitles = categories.map(c => {
-            const segs = c.path.split('.');
-            const crumb = segs
-                .map((_, i) => labelByPath.get(segs.slice(0, i + 1).join('.')))
-                .filter(Boolean)
-                .join(' / ');
-            return { ...c, fullTitle: crumb };
+        // ---- TR03 · Search — filter vs navigate ----------------------------
+        // One picker; a radio group flips search-mode live, a checkbox previews the
+        // fullscreen overlay (where the N-of-M match navigator shows) on desktop.
+        const treeSearch = document.querySelector('#tree-search');
+        treeSearch.pathMember = 'path';
+        treeSearch.options = categories;
+        document.querySelectorAll('input[name="tree-nav-mode"]').forEach((r) => {
+            r.addEventListener('change', () => {
+                if (r.checked) treeSearch.setAttribute('search-mode', r.value);
+            });
+        });
+        document.querySelector('#tree-nav-fs-preview').addEventListener('change', (e) => {
+            treeSearch.setAttribute('presentation', e.target.checked ? 'fullscreen' : 'auto');
         });
 
-        customElements.whenDefined('web-multiselect').then(() => {
-            // ---- TR01 · The tree model — dot-path + slash-path -----------------
-            for (const id of ['tree-basic']) {
-                const el = document.querySelector('#' + id);
-                el.valueMember = 'value';
-                el.displayValueMember = 'label';
-                el.pathMember = 'path';
-                el.options = categories;
+        // ---- TR04 · Styling rows -------------------------------------------
+        // Indentation (wide + bold branch labels).
+        for (const id of ['tree-wide', 'tree-bold']) {
+            const el = document.querySelector('#' + id);
+            el.pathMember = 'path';
+            el.options = categories;
+        }
+        document.querySelector('#tree-bold').getCustomStylesCallback = () => `
+            .ms__option--tree-branch .ms__option-title { font-weight: 600; }
+            .ms__option--tree-leaf   .ms__option-title { font-weight: 400; }
+        `;
+        // Row-height + long-label handling — give these deliberately long labels.
+        for (const id of ['tree-truncate', 'tree-tall']) {
+            const el = document.querySelector('#' + id);
+            el.pathMember = 'path';
+            el.options = categories.map(c => ({ ...c, label: `${c.label} — a deliberately long category label that may need truncation or a taller row` }));
+        }
+
+        // ---- TR06 · scroll-to: after each jump, log which rows are actually in view ----
+        const treeScroll = document.querySelector('#tree-scroll');
+        const trLogEl = document.querySelector('#tr-scroll-log');
+        const trLog = (msg) => {
+            const row = document.createElement('div');
+            row.className = 'log-line log-line--muted';
+            row.textContent = msg;
+            trLogEl.appendChild(row);
+            trLogEl.scrollTop = trLogEl.scrollHeight;
+        };
+        const trDescribe = (targetValue) => {
+            const container = treeScroll.shadowRoot && treeScroll.shadowRoot.querySelector('.ms__options');
+            if (!container) { trLog('   ↳ (dropdown not open)'); return; }
+            const crect = container.getBoundingClientRect();
+            const rows = [...container.querySelectorAll('.ms__option')];
+            const visible = rows.filter((o) => {
+                const r = o.getBoundingClientRect();
+                return r.bottom > crect.top + 1 && r.top < crect.bottom - 1;
+            });
+            const lbl = (o) => o ? `"${(o.querySelector('.ms__option-title') || o).textContent.trim()}"` : '—';
+            let note = '';
+            if (targetValue != null) {
+                const hit = visible.some((o) => o.dataset.value === String(targetValue));
+                note = hit ? ` · target ${targetValue} VISIBLE` : ` · target ${targetValue} NOT in view`;
             }
-            const slash = document.querySelector('#tree-slash');
-            slash.valueMember = 'value';
-            slash.displayValueMember = 'label';
-            slash.pathMember = 'path';
-            slash.options = slashCategories;
-
-            // ---- TR02 · Selection, checkboxes & cascade ------------------------
-            // One live picker: multiple / show-checkboxes / checkbox-mode /
-            // cascade-select-policy all flip live, and the current selection re-projects.
-            const sel = document.querySelector('#tree-select');
-            sel.valueMember = 'value';
-            sel.displayValueMember = 'label';
-            sel.pathMember = 'path';
-            sel.options = categories;
-
-            const emittedOut = document.querySelector('#casc-emitted');
-            const selMultiple = document.querySelector('#sel-multiple');
-            const selChecks = document.querySelector('#sel-checks');
-            const modeGroup = document.querySelector('#mode-group');
-            const policyGroup = document.querySelector('#policy-group');
-            const showEmitted = () => { emittedOut.textContent = JSON.stringify(sel.selectedValue); };
-            sel.addEventListener('change', showEmitted);
-
-            // Enable each control only where it has an effect, following the chain:
-            //   show-checkboxes → only multi-select renders checkboxes
-            //   checkbox-mode   → only when checkboxes are shown
-            //   cascade policy  → only in cascade mode
-            const setGroupEnabled = (group, on) => {
-                group.dataset.disabled = String(!on);
-                group.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
-            };
-            const syncEnablement = () => {
-                const multipleOn = selMultiple.checked;
-                const checksOn = multipleOn && selChecks.checked;
-                const cascadeOn = checksOn && document.querySelector('input[name="cb-mode"][value="cascade"]').checked;
-                selChecks.disabled = !multipleOn;
-                selChecks.closest('label').style.opacity = multipleOn ? '' : '0.45';
-                setGroupEnabled(modeGroup, checksOn);
-                setGroupEnabled(policyGroup, cascadeOn);
-            };
-
-            // multiple: default on → removeAttribute; off → multiple="false".
-            selMultiple.addEventListener('change', (e) => {
-                e.target.checked ? sel.removeAttribute('multiple') : sel.setAttribute('multiple', 'false');
-                syncEnablement();
-                showEmitted();
+            trLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows ${lbl(visible[0])} … ${lbl(visible[visible.length - 1])} (${visible.length} rows)${note}`);
+        };
+        document.querySelectorAll('[data-tr]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const [kind, arg] = btn.dataset.tr.split(':');
+                if (kind === 'value') setTimeout(() => trDescribe(arg), 90);
+                else if (kind === 'last') setTimeout(() => trDescribe(null), 90);
             });
-            // show-checkboxes: write the explicit value — the attribute defaults to true
-            // when ABSENT, so removing it wouldn't hide them.
-            selChecks.addEventListener('change', (e) => {
-                sel.setAttribute('show-checkboxes', String(e.target.checked));
-                syncEnablement();
-            });
-            document.querySelectorAll('input[name="cb-mode"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    if (!r.checked) return;
-                    sel.checkboxMode = r.value; // 'independent' | 'cascade'
-                    syncEnablement();
-                    showEmitted();
-                });
-            });
-            document.querySelectorAll('input[name="cb-policy"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    if (r.checked) sel.cascadeSelectPolicy = r.value;
-                    showEmitted();
-                });
-            });
-
-            // Initial state: multiple + checkboxes on, mode independent → policy disabled.
-            syncEnablement();
-
-            // Leaves-only selectability: branches become pure structure (no checkbox,
-            // skipped by focus) while staying visually normal — not greyed out.
-            const leaves = document.querySelector('#tree-leaves');
-            leaves.valueMember = 'value';
-            leaves.displayValueMember = 'label';
-            leaves.pathMember = 'path';
-            leaves.getIsSelectableCallback = ({ node }) => !node.hasChildren;
-            leaves.options = categories;
-
-            // Action buttons + cascade tree. Built-in select-all/clear-selection plus a custom
-            // action; Select All is cascade-aware, so it emits the rolled-up roots.
-            const actions = document.querySelector('#tree-actions');
-            actions.valueMember = 'value';
-            actions.displayValueMember = 'label';
-            actions.pathMember = 'path';
-            actions.options = categories;
-            actions.actionButtons = [
-                { action: 'select-all', text: 'Select All' },
-                { action: 'clear-selection', text: 'Clear All' },
-                // setSelected is silent by default; { notify: true } fires one aggregate
-                // `change` so a deliberate button press reaches the same listeners a pick does.
-                { id: 'all-fruit', text: 'All fruit', onClick: ({ controller }) => controller.setSelected(['fruit'], { notify: true }) }
-            ];
-
-            // ---- TR03 · Search — filter vs navigate ----------------------------
-            // One picker; a radio group flips search-mode live, a checkbox previews the
-            // fullscreen overlay (where the N-of-M match navigator shows) on desktop.
-            const treeSearch = document.querySelector('#tree-search');
-            treeSearch.valueMember = 'value';
-            treeSearch.displayValueMember = 'label';
-            treeSearch.pathMember = 'path';
-            treeSearch.options = categories;
-            document.querySelectorAll('input[name="tree-nav-mode"]').forEach((r) => {
-                r.addEventListener('change', () => {
-                    if (r.checked) treeSearch.setAttribute('search-mode', r.value);
-                });
-            });
-            document.querySelector('#tree-nav-fs-preview').addEventListener('change', (e) => {
-                treeSearch.setAttribute('presentation', e.target.checked ? 'fullscreen' : 'auto');
-            });
-
-            // ---- TR04 · Styling rows -------------------------------------------
-            // Indentation (wide + bold branch labels).
-            for (const id of ['tree-wide', 'tree-bold']) {
-                const el = document.querySelector('#' + id);
-                el.valueMember = 'value';
-                el.displayValueMember = 'label';
-                el.pathMember = 'path';
-                el.options = categories;
-            }
-            const bold = document.querySelector('#tree-bold');
-            bold.getCustomStylesCallback = () => `
-                .ms__option--tree-branch .ms__option-title { font-weight: 600; }
-                .ms__option--tree-leaf   .ms__option-title { font-weight: 400; }
-            `;
-
-            // Row-height + long-label handling — give these deliberately long labels.
-            for (const id of ['tree-truncate', 'tree-tall']) {
-                const el = document.querySelector('#' + id);
-                el.valueMember = 'value';
-                el.displayValueMember = 'label';
-                el.pathMember = 'path';
-                el.options = categories.map(c => ({ ...c, label: `${c.label} — a deliberately long category label that may need truncation or a taller row` }));
-            }
-
-            // Custom node rendering. Content via the render callback (compact: label +
-            // muted child count from ctx); full-row background per node type via the
-            // branch/leaf theming hooks (getCustomStylesCallback), since the render callback
-            // only fills the content area after the checkbox.
-            const render = document.querySelector('#tree-render');
-            render.valueMember = 'value';
-            render.displayValueMember = 'label';
-            render.pathMember = 'path';
-            render.options = categories;
-            render.renderOptionContentCallback = ({ option, isBranch, childCount }) => isBranch
-                ? `<span><strong>${option.label}</strong> <small class="node-count">${childCount}</small></span>`
-                : `<span>${option.label}</span>`;
-            render.getCustomStylesCallback = () => `
-                .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }
-                .ms__option--tree-leaf   { background: #fff; }
-                .node-count { opacity: .55; font-weight: 400; }
-            `;
-
-            // Node icons + reserve-icon-slot. A file-tree where folders (and a couple of
-            // files) carry an emoji icon while the rest don't — so the icon-less rows show
-            // the gutter behavior. The checkbox flips `reserve-icon-slot` live: off, the
-            // bare-label rows pull left; on, every label shares one start column.
-            const icons = document.querySelector('#tree-icons');
-            icons.valueMember = 'value';
-            icons.displayValueMember = 'label';
-            icons.pathMember = 'path';
-            icons.options = [
-                { value: 'src',     label: 'src',          path: '1',     icon: '📁' },
-                { value: 'index',   label: 'index.ts',     path: '1.1',   icon: '📄' },
-                { value: 'utils',   label: 'utils',        path: '1.2',   icon: '📁' },
-                { value: 'math',    label: 'math.ts',      path: '1.2.1', icon: '📄' },
-                { value: 'dom',     label: 'dom.ts',       path: '1.2.2' },   // no icon
-                { value: 'types',   label: 'types.ts',     path: '1.3' },     // no icon
-                { value: 'assets',  label: 'assets',       path: '2',     icon: '📁' },
-                { value: 'logo',    label: 'logo.svg',     path: '2.1',   icon: '🖼️' },
-                { value: 'hero',    label: 'hero.png',     path: '2.2',   icon: '🖼️' },
-                { value: 'fonts',   label: 'fonts',        path: '2.3',   icon: '📁' },
-                { value: 'inter',   label: 'inter.woff2',  path: '2.3.1' },   // no icon
-                { value: 'readme',  label: 'README.md',    path: '3' },       // no icon (top level)
-                { value: 'license', label: 'LICENSE',      path: '4' }        // no icon (top level)
-            ];
-            document.querySelector('#tree-icons-reserve').addEventListener('change', (e) => {
-                // reserve-icon-slot defaults to false when absent, so write the explicit value.
-                icons.setAttribute('reserve-icon-slot', String(e.target.checked));
-            });
-
-            // ---- TR05 · Breadcrumbs & selection display ------------------------
-            // Full breadcrumb on badges (two items pre-selected).
-            const ft = document.querySelector('#tree-fulltitle');
-            ft.valueMember = 'value';
-            ft.displayValueMember = 'label';
-            ft.pathMember = 'path';
-            ft.fullTitleMember = 'fullTitle';
-            ft.options = withFullTitles;
-            ft.setSelected(['apple', 'kale']);
-
-            // No inline badges — count mode + selected-items popover. The popover reuses
-            // badge rendering, so a full-title breadcrumb per row makes the list readable.
-            const count = document.querySelector('#tree-count');
-            count.valueMember = 'value';
-            count.displayValueMember = 'label';
-            count.pathMember = 'path';
-            count.fullTitleMember = 'fullTitle';
-            count.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
-            count.options = withFullTitles;
-            count.setSelected(['apple', 'peach', 'kale']);
-
-            // Three independently-sized panels: narrow input, wide dropdown, medium popover.
-            // Widths come from the attributes on the element; here we just supply data +
-            // breadcrumb rows so the wide dropdown / popover have something rich to show.
-            const widths = document.querySelector('#tree-widths');
-            widths.valueMember = 'value';
-            widths.displayValueMember = 'label';
-            widths.pathMember = 'path';
-            widths.fullTitleMember = 'fullTitle';
-            widths.getBadgeDisplayCallback = ({ option }) => option.fullTitle || option.label;
-            widths.options = withFullTitles;
-
-            // ---- TR06 · Real data (ISCO-08) + scroll-to API --------------------
-            // The full ISCO-08 occupation classification (619 groups), fetched as JSON.
-            // Leaves-only (unit groups) selectable; breadcrumb badges. The scroll-to demo
-            // reuses the same data.
-            fetch('./examples-data/isco08.json')
-                .then(r => r.json())
-                .then(isco => {
-                    const el = document.querySelector('#tree-isco');
-                    el.valueMember = 'value';
-                    el.displayValueMember = 'label';
-                    el.pathMember = 'path';
-                    el.isSelectableMember = 'selectable';
-                    // Built-in search matches the display value only (the title). Widen
-                    // it to also match the ISCO code and the full breadcrumb, so "2211"
-                    // or "health" both find their nodes (matches keep their ancestors).
-                    el.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
-                    // Badge = last segment only, with a ".. /" hint when ancestors exist.
-                    el.getBadgeDisplayCallback = ({ option }) => {
-                        const segs = String(option.fullTitle || option.label).split(' / ');
-                        const last = segs[segs.length - 1];
-                        return segs.length > 1 ? `.. / ${last}` : last;
-                    };
-                    // Full breadcrumb in the badge tooltip.
-                    el.getBadgeTooltipCallback = ({ option }) => option.fullTitle || option.label;
-                    el.options = isco;
-
-                    // --- Scroll-to API in a tree (reuses the ISCO data) ---
-                    const treeScroll = document.querySelector('#tree-scroll');
-                    const trLogEl = document.querySelector('#tr-scroll-log');
-                    if (treeScroll && trLogEl) {
-                        treeScroll.valueMember = 'value';
-                        treeScroll.displayValueMember = 'label';
-                        treeScroll.pathMember = 'path';
-                        treeScroll.isSelectableMember = 'selectable';
-                        treeScroll.getSearchValueCallback = ({ option }) => `${option.label} ${option.value} ${option.fullTitle}`;
-                        treeScroll.options = isco;
-
-                        const trLog = (msg) => {
-                            if (trLogEl.querySelector('.muted')) trLogEl.innerHTML = '';
-                            const row = document.createElement('div');
-                            row.style.marginBottom = '0.4rem';
-                            row.textContent = msg;
-                            trLogEl.appendChild(row);
-                            trLogEl.scrollTop = trLogEl.scrollHeight;
-                        };
-                        const trDescribe = (targetValue) => {
-                            const container = treeScroll.shadowRoot && treeScroll.shadowRoot.querySelector('.ms__options');
-                            if (!container) { trLog('   ↳ (dropdown not open)'); return; }
-                            const crect = container.getBoundingClientRect();
-                            const rows = [...container.querySelectorAll('.ms__option')];
-                            const visible = rows.filter((o) => {
-                                const r = o.getBoundingClientRect();
-                                return r.bottom > crect.top + 1 && r.top < crect.bottom - 1;
-                            });
-                            const lbl = (o) => o ? `"${(o.querySelector('.ms__option-title') || o).textContent.trim()}"` : '—';
-                            let note = '';
-                            if (targetValue != null) {
-                                const hit = visible.some((o) => o.dataset.value === String(targetValue));
-                                note = hit ? ` · target ${targetValue} VISIBLE` : ` · target ${targetValue} NOT in view`;
-                            }
-                            trLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows ${lbl(visible[0])} … ${lbl(visible[visible.length - 1])} (${visible.length} rows)${note}`);
-                        };
-
-                        document.querySelectorAll('[data-tr]').forEach((btn) => {
-                            btn.addEventListener('click', (e) => {
-                                // stopPropagation: keep this outside-the-component click from bubbling to
-                                // the document "click outside → close" handler (which would shut the dropdown).
-                                e.stopPropagation();
-                                treeScroll.open();
-                                const spec = btn.dataset.tr;
-                                if (spec === 'clear') { treeScroll.clearSearch(); trLog('clearSearch() — search reset, full tree restored'); return; }
-                                if (spec === 'last') {
-                                    const lastIndex = isco.length - 1;
-                                    const ok = treeScroll.scrollToIndex(lastIndex);
-                                    ok.then((r) => trLog(`▶ scrollToIndex(${lastIndex}) → ${r}`));
-                                    setTimeout(() => trDescribe(null), 90);
-                                    return;
-                                }
-                                const [kind, arg] = spec.split(':');
-                                let ok, target = null;
-                                if (kind === 'value')      { ok = treeScroll.scrollToValue(arg); target = arg; }
-                                else if (kind === 'group') { ok = treeScroll.scrollToGroup(arg); }
-                                const call = kind === 'group' ? `scrollToGroup('${arg}')` : `scrollToValue('${arg}')`;
-                                ok.then((r) => trLog(`▶ ${call} → ${r}`));
-                                if (kind === 'value') setTimeout(() => trDescribe(target), 90);
-                            });
-                        });
-                    }
-                });
         });
     </script>
     <script type="module">
