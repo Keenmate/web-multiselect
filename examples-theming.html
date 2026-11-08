@@ -95,19 +95,6 @@
 
     <!-- Merged from sizes page: page-specific styles -->
     <style>
-        /* Size examples using --ms-rem */
-        #rem-compact { --ms-rem: 8px; }
-        #rem-default { --ms-rem: 10px; }
-        #rem-large { --ms-rem: 12px; }
-        #rem-xl { --ms-rem: 15px; }
-
-        /* Custom variable override example */
-        #custom-vars {
-            --ms-input-font-size: 18px;
-            --ms-input-padding-h: 16px;
-            --ms-option-title-font-size: 16px;
-        }
-
         /* Narrow input examples */
         .narrow-demo-grid {
             display: flex;
@@ -122,22 +109,9 @@
         }
 
         .narrow-demo-card h4 {
-            margin: 0 0 0.25rem 0;
+            margin: 0 0 0.5rem 0;
             font-size: 0.875rem;
             color: var(--kmwc-text-color-2);
-        }
-
-        .narrow-demo-card p {
-            margin: 0 0 0.75rem 0;
-            font-size: 0.7rem;
-            color: var(--kmwc-text-color-3);
-        }
-
-        .narrow-demo-card code {
-            background: var(--kmwc-inline-code-bg);
-            padding: 0.125rem 0.375rem;
-            border-radius: 3px;
-            font-size: 0.65rem;
         }
 
         /* Font family overrides via --base-font-family */
@@ -605,27 +579,42 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 <input type="checkbox" id="grouped-fs-preview"> Preview as fullscreen (desktop)
             </label>
 
-            <div class="scheme-demo" id="grouped-demo">
-                <div class="form-group" style="max-width: 420px;">
-                    <label for="grouped-select" style="display:block; margin-bottom:.4rem; font-weight:600;">Select technologies</label>
-                    <web-multiselect id="grouped-select" multiple="true" show-checkboxes="true"
-                        group-member="group" search-mode="navigate" show-search-mode-toggle
-                        badges-display-mode="partial" max-visible-badge-count="3" theme-source="closest"></web-multiselect>
-                    <span class="form-text">Grouped by Frontend / Runtimes / Languages. In the fullscreen sheet, tap the leading search icon to switch filter ↔ navigate.</span>
+            <kmwc-demo>
+                <div class="scheme-demo" id="grouped-demo">
+                    <div class="form-group" style="max-width: 420px;">
+                        <label for="grouped-select" style="display:block; margin-bottom:.4rem; font-weight:600;">Select technologies</label>
+                        <web-multiselect id="grouped-select" multiple="true" show-checkboxes="true"
+                            group-member="group" search-mode="navigate" show-search-mode-toggle
+                            badges-display-mode="partial" max-visible-badge-count="3" theme-source="closest"></web-multiselect>
+                        <span class="form-text">Grouped by Frontend / Runtimes / Languages. In the fullscreen sheet, tap the leading search icon to switch filter ↔ navigate.</span>
+                    </div>
                 </div>
-            </div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;web-multiselect
-    group-member="group"          &lt;!-- render options under group headers --&gt;
-    search-mode="navigate"        &lt;!-- start in navigate; typing jumps between matches --&gt;
-    show-search-mode-toggle&gt;      &lt;!-- fullscreen: leading icon flips filter↔navigate live --&gt;
-&lt;/web-multiselect&gt;
-
-&lt;!-- Theme it exactly like everything else: just signal the scheme. --&gt;
-&lt;html data-theme="dark"&gt;   // or data-theme="light", or OS-auto</code></pre>
-            </details>
+                <script type="module" data-kmwc-show>
+                    const picker = document.getElementById('grouped-select');
+                    picker.valueMember = 'value';
+                    picker.displayValueMember = 'label';
+                    picker.options = [
+                        { value: 'react', label: 'React', group: 'Frontend' },
+                        { value: 'vue', label: 'Vue.js', group: 'Frontend' },
+                        { value: 'angular', label: 'Angular', group: 'Frontend' },
+                        { value: 'svelte', label: 'Svelte', group: 'Frontend' },
+                        { value: 'nodejs', label: 'Node.js', group: 'Runtimes' },
+                        { value: 'deno', label: 'Deno', group: 'Runtimes' },
+                        { value: 'typescript', label: 'TypeScript', group: 'Languages' },
+                        { value: 'javascript', label: 'JavaScript', group: 'Languages' },
+                        { value: 'python', label: 'Python', group: 'Languages' },
+                        { value: 'rust', label: 'Rust', group: 'Languages' },
+                        { value: 'go', label: 'Go', group: 'Languages' },
+                        { value: 'java', label: 'Java', group: 'Languages' },
+                        { value: 'csharp', label: 'C#', group: 'Languages' },
+                        { value: 'php', label: 'PHP', group: 'Languages' },
+                        { value: 'ruby', label: 'Ruby', group: 'Languages' }
+                    ];
+                    picker.setSelected(['react', 'vue', 'typescript', 'rust']);
+                    // Theme it like everything else: just signal the scheme
+                    // (data-theme="dark" | "light" on an ancestor, or follow the OS).
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Input Sizes Section -->
@@ -1010,57 +999,30 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             <h2>TH12 · Global Scaling with --ms-rem</h2>
             <p>The <code>--ms-rem</code> CSS variable (default: 10px) controls the base unit for all dimensions. Change it to scale the entire component proportionally.</p>
 
-            <div class="code-block"><pre>&lt;!-- Scale entire component by changing --ms-rem --&gt;
-&lt;web-multiselect style="--ms-rem: 8px;"&gt;&lt;/web-multiselect&gt;  &lt;!-- 80% size --&gt;
-&lt;web-multiselect style="--ms-rem: 12px;"&gt;&lt;/web-multiselect&gt; &lt;!-- 120% size --&gt;
+            <p>Set it inline, as below, or from a class (<code>web-multiselect.compact { --ms-rem: 8px; }</code>).</p>
 
-&lt;!-- Or via CSS class --&gt;
-&lt;style&gt;
-  web-multiselect.compact { --ms-rem: 8px; }
-  web-multiselect.large { --ms-rem: 15px; }
-&lt;/style&gt;</pre></div>
-
-            <div class="card-grid" style="--grid-min: 280px; --grid-gap: 1.5rem;">
-                <div class="demo-card">
-                    <h4>Compact (--ms-rem: 8px)</h4>
-                    <p>80% of default size - great for dense UIs</p>
-                    <web-multiselect
-                        id="rem-compact"
-                        placeholder="Compact scaling..."
-                        multiple="false">
-                    </web-multiselect>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Compact — 80%, great for dense UIs</label>
+                    <web-multiselect id="rem-compact" style="--ms-rem: 8px;"
+                        placeholder="Compact scaling..." multiple="false"></web-multiselect>
                 </div>
-
-                <div class="demo-card">
-                    <h4>Default (--ms-rem: 10px)</h4>
-                    <p>Standard sizing - balanced for most uses</p>
-                    <web-multiselect
-                        id="rem-default"
-                        placeholder="Default scaling..."
-                        multiple="false">
-                    </web-multiselect>
+                <div class="form-group">
+                    <label>Default — <code>--ms-rem: 10px</code></label>
+                    <web-multiselect id="rem-default"
+                        placeholder="Default scaling..." multiple="false"></web-multiselect>
                 </div>
-
-                <div class="demo-card">
-                    <h4>Large (--ms-rem: 12px)</h4>
-                    <p>120% of default - better touch targets</p>
-                    <web-multiselect
-                        id="rem-large"
-                        placeholder="Large scaling..."
-                        multiple="false">
-                    </web-multiselect>
+                <div class="form-group">
+                    <label>Large — 120%, better touch targets</label>
+                    <web-multiselect id="rem-large" style="--ms-rem: 12px;"
+                        placeholder="Large scaling..." multiple="false"></web-multiselect>
                 </div>
-
-                <div class="demo-card">
-                    <h4>Extra Large (--ms-rem: 15px)</h4>
-                    <p>150% of default - accessibility focused</p>
-                    <web-multiselect
-                        id="rem-xl"
-                        placeholder="Extra large scaling..."
-                        multiple="false">
-                    </web-multiselect>
+                <div class="form-group">
+                    <label>Extra large — 150%, accessibility focused</label>
+                    <web-multiselect id="rem-xl" style="--ms-rem: 15px;"
+                        placeholder="Extra large scaling..." multiple="false"></web-multiselect>
                 </div>
-            </div>
+            </kmwc-demo>
         </section>
 
         <!-- Fine-grained Control -->
@@ -1068,35 +1030,23 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             <h2>TH13 · Fine-Grained Control</h2>
             <p>Override individual CSS variables for precise control over specific dimensions.</p>
 
-            <div class="code-block"><pre>&lt;style&gt;
-  #my-multiselect {
-    --ms-input-font-size: 18px;
-    --ms-input-padding-h: 16px;
-    --ms-option-title-font-size: 16px;
-  }
-&lt;/style&gt;</pre></div>
-
-            <div class="card-grid" style="--grid-min: 250px; --grid-gap: 1.5rem;">
-                <div class="demo-card comparison-card">
-                    <h3>Custom Variables Override</h3>
-                    <p>Larger font, more padding</p>
-                    <web-multiselect
-                        id="custom-vars"
-                        placeholder="Custom sizing..."
-                        multiple="false">
-                    </web-multiselect>
+            <kmwc-demo>
+                <style>
+                    #custom-vars {
+                        --ms-input-font-size: 18px;
+                        --ms-input-padding-h: 16px;
+                        --ms-option-title-font-size: 16px;
+                    }
+                </style>
+                <div class="form-group">
+                    <label>Custom variables — larger font, more padding</label>
+                    <web-multiselect id="custom-vars" placeholder="Custom sizing..." multiple="false"></web-multiselect>
                 </div>
-
-                <div class="demo-card comparison-card">
-                    <h3>Default for Comparison</h3>
-                    <p>Standard defaults</p>
-                    <web-multiselect
-                        id="default-compare"
-                        placeholder="Default sizing..."
-                        multiple="false">
-                    </web-multiselect>
+                <div class="form-group">
+                    <label>Default, for comparison</label>
+                    <web-multiselect id="default-compare" placeholder="Default sizing..." multiple="false"></web-multiselect>
                 </div>
-            </div>
+            </kmwc-demo>
         </section>
 
         <!-- Narrow Input, Wide Dropdown -->
@@ -1104,57 +1054,63 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             <h2>TH14 · Narrow Input, Wide Dropdown</h2>
             <p>For dense forms where input space is limited: show just a code in the input, but use <code>dropdown-min-width</code> to ensure the dropdown is comfortable for selection.</p>
 
-            <div class="code-block"><pre>&lt;!-- Narrow input with wide dropdown --&gt;
-&lt;web-multiselect
-  style="width: 4rem;"
-  dropdown-min-width="20rem"
-  multiple="false"&gt;
-&lt;/web-multiselect&gt;
-
-&lt;script&gt;
-  // Show just the code in the closed input
-  select.renderSelectedContentCallback = ({ option }) =&gt; option.code;
-  // Show full label in dropdown
-  select.getDisplayValueCallback = ({ option }) =&gt; `${option.flag} ${option.name}`;
-&lt;/script&gt;</pre></div>
-
-            <div class="narrow-demo-grid">
-                <div class="narrow-demo-card">
-                    <h4>Country Selector</h4>
-                    <p>Input: 6rem, Dropdown: 18rem</p>
-                    <web-multiselect
-                        id="narrow-country"
-                        style="width: 6rem;"
-                        dropdown-min-width="18rem"
-                        multiple="false"
-                        placeholder="--">
-                    </web-multiselect>
+            <kmwc-demo>
+                <div class="narrow-demo-grid">
+                    <div class="narrow-demo-card">
+                        <h4>Country</h4>
+                        <web-multiselect id="narrow-country" style="width: 6rem;"
+                            dropdown-min-width="18rem" multiple="false" placeholder="--"></web-multiselect>
+                    </div>
+                    <div class="narrow-demo-card">
+                        <h4>Currency</h4>
+                        <web-multiselect id="narrow-currency" style="width: 7rem;"
+                            dropdown-min-width="16rem" multiple="false" placeholder="---"></web-multiselect>
+                    </div>
+                    <div class="narrow-demo-card">
+                        <h4>Priority</h4>
+                        <web-multiselect id="narrow-priority" style="width: 5rem;"
+                            dropdown-min-width="14rem" multiple="false" placeholder="-"></web-multiselect>
+                    </div>
                 </div>
+                <script type="module" data-kmwc-show>
+                    // Each picker: full label in the dropdown, just the code in the closed input.
+                    const setup = (id, options, label, value) => {
+                        const select = document.getElementById(id);
+                        select.options = options;
+                        select.valueMember = 'code';
+                        select.displayValueMember = 'name';
+                        select.getDisplayValueCallback = ({ option }) => label(option);
+                        select.renderSelectedContentCallback = ({ option }) => option.code;
+                        select.value = value;
+                    };
 
-                <div class="narrow-demo-card">
-                    <h4>Currency Selector</h4>
-                    <p>Input: 7rem, Dropdown: 16rem</p>
-                    <web-multiselect
-                        id="narrow-currency"
-                        style="width: 7rem;"
-                        dropdown-min-width="16rem"
-                        multiple="false"
-                        placeholder="---">
-                    </web-multiselect>
-                </div>
+                    setup('narrow-country', [
+                        { code: 'US', name: 'United States', flag: '🇺🇸' },
+                        { code: 'CZ', name: 'Czech Republic', flag: '🇨🇿' },
+                        { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+                        { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+                        { code: 'FR', name: 'France', flag: '🇫🇷' },
+                        { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+                        { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+                        { code: 'AU', name: 'Australia', flag: '🇦🇺' }
+                    ], (o) => `${o.flag} ${o.name}`, 'US');
 
-                <div class="narrow-demo-card">
-                    <h4>Priority Selector</h4>
-                    <p>Input: 5rem, Dropdown: 14rem</p>
-                    <web-multiselect
-                        id="narrow-priority"
-                        style="width: 5rem;"
-                        dropdown-min-width="14rem"
-                        multiple="false"
-                        placeholder="-">
-                    </web-multiselect>
-                </div>
-            </div>
+                    setup('narrow-currency', [
+                        { code: 'USD', name: 'US Dollar', symbol: '$' },
+                        { code: 'EUR', name: 'Euro', symbol: '€' },
+                        { code: 'GBP', name: 'British Pound', symbol: '£' },
+                        { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+                        { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
+                        { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr' }
+                    ], (o) => `${o.symbol} ${o.code} - ${o.name}`, 'USD');
+
+                    setup('narrow-priority', [
+                        { code: 'H', name: 'High Priority', color: '🔴' },
+                        { code: 'M', name: 'Medium Priority', color: '🟡' },
+                        { code: 'L', name: 'Low Priority', color: '🟢' }
+                    ], (o) => `${o.color} ${o.name}`, 'M');
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- With Multiple Selection -->
@@ -1292,16 +1248,14 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 staying crisp), not a <code>transform</code>. Open each dropdown to compare.
             </p>
 
-            <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
-                <!-- Default, for comparison -->
+            <kmwc-demo>
                 <div class="form-group">
                     <label>Default (<code>scale: 1</code>)</label>
                     <web-multiselect id="cbscale-default" multiple="true" show-checkboxes="true"
                         placeholder="Open to see default checkboxes..."></web-multiselect>
                 </div>
 
-                <!-- One ancestor knob scales BOTH pickers inside it -->
-                <div style="--base-checkbox-scale: 1.6; display: flex; flex-direction: column; gap: 1.5rem;">
+                <div style="--base-checkbox-scale: 1.6;">
                     <div class="form-group">
                         <label>Inside <code>--base-checkbox-scale: 1.6</code> (picker A)</label>
                         <web-multiselect id="cbscale-shared-a" multiple="true" show-checkboxes="true"
@@ -1314,29 +1268,13 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                     </div>
                 </div>
 
-                <!-- Per-instance override wins over the inherited base -->
                 <div class="form-group">
                     <label>Per-instance <code>--ms-checkbox-scale: 2</code></label>
                     <web-multiselect id="cbscale-instance" multiple="true" show-checkboxes="true"
                         style="--ms-checkbox-scale: 2;"
                         placeholder="One-off override..."></web-multiselect>
                 </div>
-            </div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;!-- 1. Shared contract: set it ONCE on an ancestor; every component inside follows --&gt;
-&lt;div style="--base-checkbox-scale: 1.6"&gt;
-    &lt;web-multiselect show-checkboxes&gt;&lt;/web-multiselect&gt;
-    &lt;web-multiselect show-checkboxes&gt;&lt;/web-multiselect&gt;   &lt;!-- both scale together --&gt;
-&lt;/div&gt;
-
-&lt;!-- 2. Per-instance override (wins over the inherited --base-checkbox-scale) --&gt;
-&lt;web-multiselect show-checkboxes style="--ms-checkbox-scale: 2"&gt;&lt;/web-multiselect&gt;
-
-/* Scales the box, border width and radius together — via calc, not transform,
-   so the check/dash stays crisp and centred at any scale. Default is 1. */</code></pre>
-            </details>
+            </kmwc-demo>
         </section>
 
         <!-- Key CSS Variables -->
@@ -1544,9 +1482,8 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             commonInit(document.getElementById('scheme-select'), preset);
             wireScheme('scheme', document.getElementById('scheme-demo'));
 
-            // Grouped options + fullscreen mode switch, themed.
+            // Grouped options + fullscreen mode switch, themed (data set up by TH02's shown script).
             const groupedSelect = document.getElementById('grouped-select');
-            commonInit(groupedSelect, preset);
             wireScheme('scheme2', document.getElementById('grouped-demo'));
 
             // Preview-as-fullscreen toggle (forces the overlay on desktop so the mode toggle shows).
@@ -1801,33 +1738,6 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             { value: 'go', label: 'Go' }
         ];
 
-        // Narrow input demo data
-        const countries = [
-            { code: 'US', name: 'United States', flag: '🇺🇸' },
-            { code: 'CZ', name: 'Czech Republic', flag: '🇨🇿' },
-            { code: 'DE', name: 'Germany', flag: '🇩🇪' },
-            { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-            { code: 'FR', name: 'France', flag: '🇫🇷' },
-            { code: 'JP', name: 'Japan', flag: '🇯🇵' },
-            { code: 'CA', name: 'Canada', flag: '🇨🇦' },
-            { code: 'AU', name: 'Australia', flag: '🇦🇺' }
-        ];
-
-        const currencies = [
-            { code: 'USD', name: 'US Dollar', symbol: '$' },
-            { code: 'EUR', name: 'Euro', symbol: '€' },
-            { code: 'GBP', name: 'British Pound', symbol: '£' },
-            { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-            { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
-            { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr' }
-        ];
-
-        const priorities = [
-            { code: 'H', name: 'High Priority', color: '🔴' },
-            { code: 'M', name: 'Medium Priority', color: '🟡' },
-            { code: 'L', name: 'Low Priority', color: '🟢' }
-        ];
-
         // Google Fonts @import for Shadow DOM injection
         const googleFontsImport = `
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;500;600&family=Fira+Code:wght@400;500&family=Quicksand:wght@400;500;600&family=Lexend:wght@400;500;600&display=swap');
@@ -1838,9 +1748,10 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             // pickers after the TH11 card: the gallery / color-scheme demos above set their own
             // grouped data in commonInit, and overwriting it here dropped their group headers.
             // TH11's own four pickers are set up by its typography script (their own data, groups and
-            // font callback), so they're skipped too.
+            // font callback), and TH14's narrow pickers by their shown script, so they're skipped too.
             const mergedStart = document.getElementById('resetBtn').closest('.card');
-            const ownSetup = new Set(['singleSelect', 'multiBadges', 'multiCount', 'grouped']);
+            const ownSetup = new Set(['singleSelect', 'multiBadges', 'multiCount', 'grouped',
+                'narrow-country', 'narrow-currency', 'narrow-priority']); // TH14 sets up its own
             document.querySelectorAll('web-multiselect').forEach(el => {
                 if (!(mergedStart.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
                 if (ownSetup.has(el.id)) return;
@@ -1859,43 +1770,6 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                     el.setSelected(['react', 'typescript']);
                 }
             });
-
-            // Initialize narrow input demos
-            const countrySelect = document.getElementById('narrow-country');
-            if (countrySelect) {
-                countrySelect.options = countries;
-                countrySelect.valueMember = 'code';
-                countrySelect.displayValueMember = 'name';
-                // Show flag + name in dropdown
-                countrySelect.getDisplayValueCallback = ({ option }) => `${option.flag} ${option.name}`;
-                // Show just code in closed input
-                countrySelect.renderSelectedContentCallback = ({ option }) => option.code;
-                countrySelect.value = 'US';
-            }
-
-            const currencySelect = document.getElementById('narrow-currency');
-            if (currencySelect) {
-                currencySelect.options = currencies;
-                currencySelect.valueMember = 'code';
-                currencySelect.displayValueMember = 'name';
-                // Show symbol + code + name in dropdown
-                currencySelect.getDisplayValueCallback = ({ option }) => `${option.symbol} ${option.code} - ${option.name}`;
-                // Show just code in closed input
-                currencySelect.renderSelectedContentCallback = ({ option }) => option.code;
-                currencySelect.value = 'USD';
-            }
-
-            const prioritySelect = document.getElementById('narrow-priority');
-            if (prioritySelect) {
-                prioritySelect.options = priorities;
-                prioritySelect.valueMember = 'code';
-                prioritySelect.displayValueMember = 'name';
-                // Show color + name in dropdown
-                prioritySelect.getDisplayValueCallback = ({ option }) => `${option.color} ${option.name}`;
-                // Show just code in closed input
-                prioritySelect.renderSelectedContentCallback = ({ option }) => option.code;
-                prioritySelect.value = 'M';
-            }
         });
     </script>
 
