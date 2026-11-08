@@ -13,6 +13,22 @@
         .legend { font-size: 0.8125rem; margin-top: 0.25rem; }
     </style>
 
+    <script type="module">
+        // Page harness (not part of the demos): demoLog(panelId) returns a
+        // log(cls, label, text) that appends a timestamped line to a .log-panel.
+        window.demoLog = (panelId) => {
+            const panel = document.getElementById(panelId);
+            return (cls, label, text) => {
+                if (panel.querySelector('.muted')) panel.innerHTML = '';
+                const row = document.createElement('div');
+                row.style.marginBottom = '0.4rem';
+                row.innerHTML = `<span class="${cls}">[${new Date().toLocaleTimeString()}] ${label}</span> ${text ?? ''}`;
+                panel.appendChild(row);
+                panel.scrollTop = panel.scrollHeight;
+            };
+        };
+    </script>
+
         <!-- ============================================================ -->
         <!-- 1. EVENTS — DOM events and the on* property twin             -->
         <!-- ============================================================ -->
@@ -27,34 +43,45 @@
                 <code>on*</code> property receives the <strong>detail itself</strong>. Events bubble but are not
                 <code>composed</code>. This picker wires both so you can watch them pair up.
             </p>
-            <div class="form-group">
-                <label>Pick a few</label>
-                <web-multiselect
-                    id="events-select"
-                    value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Select skills..."}'>
-                </web-multiselect>
-                <small class="form-text legend">
-                    <span class="tag-prop">[prop]</span> = <code>on*</code> property handler &nbsp;·&nbsp;
-                    <span class="tag-event">[event]</span> = <code>addEventListener</code>
-                </small>
-            </div>
-            <div id="events-log" class="log-panel"><div class="muted">Pick an option — [prop] and [event] entries log here…</div></div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Pick a few</label>
+                    <web-multiselect
+                        id="events-select"
+                        value-member="value"
+                        display-value-member="label" labels='{"searchPlaceholder": "Select skills..."}'>
+                    </web-multiselect>
+                    <small class="form-text legend">
+                        <span class="tag-prop">[prop]</span> = <code>on*</code> property handler &nbsp;·&nbsp;
+                        <span class="tag-event">[event]</span> = <code>addEventListener</code>
+                    </small>
+                </div>
+                <div id="events-log" class="log-panel"><div class="muted">Pick an option — [prop] and [event] entries log here…</div></div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('events-select');
+                    const log = demoLog('events-log'); // page helper: appends a line to the panel
+                    el.options = [
+                        { value: 'js', label: 'JavaScript' },
+                        { value: 'ts', label: 'TypeScript' },
+                        { value: 'py', label: 'Python' },
+                        { value: 'go', label: 'Go' },
+                        { value: 'rust', label: 'Rust' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>// Property handlers (the on* form) — each receives the event DETAIL
-// (the same object addEventListener sees as e.detail).
-el.onSelect   = ({ option }) =&gt; log('prop', 'onSelect', option.label);
-el.onDeselect = ({ option }) =&gt; log('prop', 'onDeselect', option.label);
-el.onChange   = ({ selectedOptions }) =&gt; log('prop', 'onChange', selectedOptions.map(o =&gt; o.value));
+                    // Property handlers (the on* form) — each receives the event DETAIL
+                    // (the same object addEventListener sees as e.detail).
+                    el.onSelect   = ({ option }) => log('tag-prop', '[prop] onSelect', option.label);
+                    el.onDeselect = ({ option }) => log('tag-prop', '[prop] onDeselect', option.label);
+                    el.onChange   = ({ selectedOptions }) =>
+                        log('tag-prop', '[prop] onChange', JSON.stringify(selectedOptions.map(o => o.value)));
 
-// The very same notifications as bubbling DOM events
-el.addEventListener('change', (e) =&gt; {
-  // e.detail = { selectedOptions, selectedValues, controller, element }
-  log('event', 'change', e.detail.selectedValues);
-});</code></pre>
-            </details>
+                    // The very same notifications as bubbling DOM events
+                    el.addEventListener('change', (e) => {
+                        // e.detail = { selectedOptions, selectedValues, controller, element }
+                        log('tag-event', '[event] change', JSON.stringify(e.detail.selectedValues));
+                    });
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -69,32 +96,42 @@ el.addEventListener('change', (e) =&gt; {
                 and <strong>Part-time</strong> are mutually exclusive — picking one while the other is selected is
                 vetoed. The veto is silent (no event fires); the message below is produced by the callback itself.
             </p>
-            <div class="form-group">
-                <label>Availability</label>
-                <web-multiselect
-                    id="exclusive-select"
-                    value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Choose availability..."}'>
-                </web-multiselect>
-                <small class="form-text">Try selecting Full-time, then Part-time.</small>
-            </div>
-            <div id="exclusive-log" class="log-panel"><div class="muted">Selections and blocks log here…</div></div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Availability</label>
+                    <web-multiselect
+                        id="exclusive-select"
+                        value-member="value"
+                        display-value-member="label" labels='{"searchPlaceholder": "Choose availability..."}'>
+                    </web-multiselect>
+                    <small class="form-text">Try selecting Full-time, then Part-time.</small>
+                </div>
+                <div id="exclusive-log" class="log-panel"><div class="muted">Selections and blocks log here…</div></div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('exclusive-select');
+                    const log = demoLog('exclusive-log'); // page helper: appends a line to the panel
+                    el.options = [
+                        { value: 'full', label: 'Full-time' },
+                        { value: 'part', label: 'Part-time' },
+                        { value: 'contract', label: 'Contract' },
+                        { value: 'remote', label: 'Remote OK' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>const EXCLUSIVE = ['full', 'part'];
-
-el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
-  // block if the option conflicts with something already selected
-  const conflict = EXCLUSIVE.includes(option.value)
-    &amp;&amp; selectedOptions.find(o =&gt; EXCLUSIVE.includes(o.value) &amp;&amp; o.value !== option.value);
-  if (conflict) {
-    controller.showMessage(`Blocked: can't pick ${option.label} while ${conflict.label} is selected`, { variant: 'warning' });
-    return false;            // ← veto
-  }
-  // return undefined ⇒ allow
-};</code></pre>
-            </details>
+                    const EXCLUSIVE = ['full', 'part'];
+                    el.beforeSelectCallback = ({ option, selectedOptions }) => {
+                        // block if the option conflicts with something already selected
+                        const conflict = EXCLUSIVE.includes(option.value)
+                            && selectedOptions.find(o => EXCLUSIVE.includes(o.value) && o.value !== option.value);
+                        if (conflict) {
+                            log('tag-block', '[blocked] beforeSelect',
+                                `can't pick ${option.label} while ${conflict.label} is selected`);
+                            return false;            // ← veto
+                        }
+                        // return undefined ⇒ allow
+                    };
+                    el.onSelect = ({ option }) => log('tag-ok', '[allowed] onSelect', option.label);
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -110,28 +147,39 @@ el.beforeSelectCallback = ({ option, selectedOptions, controller }) =&gt; {
                 which) and only the vetoed options stay. Programmatic <code>setSelected()</code> and form reset
                 bypass it.
             </p>
-            <div class="form-group">
-                <label>Team</label>
-                <web-multiselect
-                    id="required-select"
-                    value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Build the team..."}'>
-                </web-multiselect>
-                <small class="form-text">Team Lead can't be removed; the others can.</small>
-            </div>
-            <div id="required-log" class="log-panel"><div class="muted">Try removing Team Lead, then a developer…</div></div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Team</label>
+                    <web-multiselect
+                        id="required-select"
+                        value-member="value"
+                        display-value-member="label" labels='{"searchPlaceholder": "Build the team..."}'>
+                    </web-multiselect>
+                    <small class="form-text">Team Lead can't be removed; the others can.</small>
+                </div>
+                <div id="required-log" class="log-panel"><div class="muted">Try removing Team Lead, then a developer…</div></div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('required-select');
+                    const log = demoLog('required-log'); // page helper: appends a line to the panel
+                    el.options = [
+                        { value: 'lead', label: 'Team Lead' },
+                        { value: 'dev-a', label: 'Developer A' },
+                        { value: 'dev-b', label: 'Developer B' },
+                        { value: 'qa', label: 'QA Engineer' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>el.beforeDeselectCallback = ({ option, controller }) =&gt; {
-  if (option.value === 'lead') {
-    // in-component message — visible even in the fullscreen overlay
-    controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
-    return false;            // ← veto removal
-  }
-};
-el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
-            </details>
+                    el.beforeDeselectCallback = ({ option, source, controller }) => {
+                        if (option.value === 'lead') {
+                            log('tag-block', '[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`);
+                            // in-component message — visible even in the fullscreen overlay
+                            controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
+                            return false;            // ← veto removal
+                        }
+                    };
+                    el.onDeselect = ({ option }) => log('tag-ok', '[removed] onDeselect', option.label);
+                    el.setSelected(['lead']);        // pre-select (bypasses the veto)
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -151,57 +199,77 @@ el.setSelected(['lead']);    // pre-select (bypasses the veto)</code></pre>
                 Available as <code>el.showMessage()</code> and on <code>el.controller</code> / every <code>ctx.controller</code>.
                 (For the fullscreen overlay itself, see the <a href="examples-responsive.html">Responsive &amp; Mobile</a> page.)
             </p>
-            <div class="form-group">
-                <label>Pick something (or just fire a message)</label>
-                <web-multiselect id="message-select" value-member="value" display-value-member="label" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
-                <small class="form-text">
-                    The ⚠ / ⛔ / ✅ options fire a message from <code>beforeSelectCallback</code> — the same
-                    toasts the buttons below fire imperatively. Turn on “fullscreen preview”, open the
-                    dropdown, then select one — the message appears over the sheet.
-                </small>
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; align-items:center;">
-                <button type="button" data-msg="info">info</button>
-                <button type="button" data-msg="warning">warning</button>
-                <button type="button" data-msg="danger">danger</button>
-                <button type="button" data-msg="success">success</button>
-                <button type="button" id="msg-html">custom HTML</button>
-                <button type="button" id="msg-sticky">sticky (tap to close)</button>
-                <button type="button" id="msg-fs">toggle fullscreen preview</button>
-                <label style="margin-left:0.5rem;">placement (floating):
-                    <select id="msg-placement">
-                        <option value="bottom">bottom</option>
-                        <option value="top">top</option>
-                        <option value="bottom-start">bottom-start</option>
-                        <option value="bottom-end">bottom-end</option>
-                        <option value="right">right</option>
-                        <option value="left">left</option>
-                    </select>
-                </label>
-            </div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Pick something (or just fire a message)</label>
+                    <web-multiselect id="message-select" value-member="value" display-value-member="label" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
+                    <small class="form-text">
+                        The ⚠ / ⛔ / ✅ options fire a message from <code>beforeSelectCallback</code> — the same
+                        toasts the buttons below fire imperatively. Turn on “fullscreen preview”, open the
+                        dropdown, then select one — the message appears over the sheet.
+                    </small>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.75rem 0; align-items:center;">
+                    <button type="button" data-msg="info">info</button>
+                    <button type="button" data-msg="warning">warning</button>
+                    <button type="button" data-msg="danger">danger</button>
+                    <button type="button" data-msg="success">success</button>
+                    <button type="button" id="msg-html">custom HTML</button>
+                    <button type="button" id="msg-sticky">sticky (tap to close)</button>
+                    <button type="button" id="msg-fs">toggle fullscreen preview</button>
+                    <label style="margin-left:0.5rem;">placement (floating):
+                        <select id="msg-placement">
+                            <option value="bottom">bottom</option>
+                            <option value="top">top</option>
+                            <option value="bottom-start">bottom-start</option>
+                            <option value="bottom-end">bottom-end</option>
+                            <option value="right">right</option>
+                            <option value="left">left</option>
+                        </select>
+                    </label>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('message-select');
+                    const placement = document.getElementById('msg-placement');
+                    el.options = [
+                        { value: 'a', label: 'Alpha' }, { value: 'b', label: 'Bravo' },
+                        { value: 'c', label: 'Charlie' }, { value: 'd', label: 'Delta' },
+                        { value: 'warn', label: '⚠ Warn on select' },
+                        { value: 'err', label: '⛔ Error on select' },
+                        { value: 'ok', label: '✅ Success on select' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>// imperative — text + type + auto-dismiss (ms; 0 = sticky until tapped/replaced)
-el.showMessage('Saved!', { variant: 'success', autoHideMs: 2000 });
+                    // From a veto interceptor: showMessage() + return false explains the veto;
+                    // 'ok' allows the selection AND shows a success message.
+                    el.beforeSelectCallback = ({ option, controller }) => {
+                        if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { variant: 'warning' }); return false; }
+                        if (option.value === 'err') { controller.showMessage('Not allowed', { variant: 'danger' }); return false; }
+                        if (option.value === 'ok') { controller.showMessage('Nice choice!', { variant: 'success' }); }
+                    };
 
-// placement (floating case): a floating-ui Placement, default 'bottom'
-el.showMessage('Over here', { placement: 'top-start' });
-
-// rich content
-const box = document.createElement('span');
-box.innerHTML = '&lt;strong&gt;Heads up&lt;/strong&gt; — 3 items hidden';
-el.showMessage(box, { variant: 'warning', autoHideMs: 0 });
-
-el.hideMessage();               // dismiss programmatically
-
-// from a veto interceptor — same toasts, driven by the selection
-el.beforeSelectCallback = ({ option, controller }) =&gt; {
-  if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { variant: 'warning' }); return false; } // veto + warning
-  if (option.value === 'err')  { controller.showMessage('Not allowed', { variant: 'danger' }); return false; }                          // veto + danger
-  if (option.value === 'ok')   { controller.showMessage('Nice choice!', { variant: 'success' }); }                                     // allow + success
-};</code></pre>
-            </details>
+                    // Imperative — text + variant; placement is a floating-ui Placement (default 'bottom')
+                    document.querySelectorAll('[data-msg]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const variant = btn.dataset.msg;
+                            el.showMessage(`This is a ${variant} message`, { variant, placement: placement.value });
+                        });
+                    });
+                    // Rich content
+                    document.getElementById('msg-html').addEventListener('click', () => {
+                        const span = document.createElement('span');
+                        span.innerHTML = '<strong>Custom</strong> HTML content ✨';
+                        el.showMessage(span, { variant: 'info', autoHideMs: 4000, placement: placement.value });
+                    });
+                    // autoHideMs: 0 = sticky until tapped / replaced (el.hideMessage() dismisses from code)
+                    document.getElementById('msg-sticky').addEventListener('click', () => {
+                        el.showMessage('Sticky — tap me to dismiss', { variant: 'warning', autoHideMs: 0, placement: placement.value });
+                    });
+                    document.getElementById('msg-fs').addEventListener('click', () => {
+                        const isFs = el.getAttribute('presentation') === 'fullscreen';
+                        el.setAttribute('presentation', isFs ? 'floating' : 'fullscreen');
+                    });
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -219,43 +287,50 @@ el.beforeSelectCallback = ({ option, controller }) =&gt; {
                 <code>false</code> to abort (try adding a name that already exists, e.g. “Anna”), or nothing to just
                 let the <code>add</code> event fire and create the option yourself.
             </p>
-            <div class="form-group">
-                <label>Group members — type a name that isn't listed</label>
-                <web-multiselect
-                    id="create-select"
-                    value-member="value"
-                    display-value-member="label"
-                    allow-add-new labels='{"addNew": "Add new member: “{value}”", "searchPlaceholder": "Search or add a member..."}'>
-                </web-multiselect>
-                <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
-            </div>
-            <div id="create-log" class="log-panel"><div class="muted">The add event and resulting selection log here…</div></div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Group members — type a name that isn't listed</label>
+                    <web-multiselect
+                        id="create-select"
+                        value-member="value"
+                        display-value-member="label"
+                        allow-add-new labels='{"addNew": "Add new member: “{value}”", "searchPlaceholder": "Search or add a member..."}'>
+                    </web-multiselect>
+                    <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
+                </div>
+                <div id="create-log" class="log-panel"><div class="muted">The add event and resulting selection log here…</div></div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('create-select');
+                    const log = demoLog('create-log'); // page helper: appends a line to the panel
+                    el.options = [
+                        { value: 'anna', label: 'Anna' },
+                        { value: 'ben', label: 'Ben' },
+                        { value: 'carla', label: 'Carla' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;web-multiselect allow-add-new labels='{"addNew": "Add new member: \"{value}\""}'&gt;&lt;/web-multiselect&gt;
+                    // Async + cancelable. Return a rich option to create + select it,
+                    // false to abort (no add, no `add` event, search kept),
+                    // or nothing → only the `add` event fires (create the option yourself).
+                    el.beforeAddCallback = async ({ value, controller }) => {
+                        const key = value.trim().toLowerCase();
+                        if (el.options.some(o => o.value === key)) {
+                            controller.showMessage(`"${value}" already exists`, { variant: 'warning' });
+                            return false;                         // ← cancel
+                        }
+                        // (a real app might `await api.create(value)` here)
+                        return { value: key, label: value };      // ← rich option → create + select
+                    };
 
-// Async + cancelable. Return a rich option to create + select it,
-// false to abort (no add, no `add` event, search kept),
-// or nothing → only the `add` event fires (create the option yourself).
-el.beforeAddCallback = async ({ value, controller }) =&gt; {
-  if (await api.exists(value)) {
-    controller.showMessage(`"${value}" already exists`, { variant: 'warning' });
-    return false;                                  // ← cancel
-  }
-  return await api.create(value);                  // ← rich option → create + select
-};
+                    // …and/or listen for the intent (fires only when creation actually happened).
+                    // e.detail = { value, option?, selectedOptions, selectedValues } — or el.onAdd = ({ value }) => …
+                    el.addEventListener('add', (e) =>
+                        log('tag-ok', '[event] add', `value="${e.detail.value}" → now: ` +
+                            JSON.stringify(e.detail.selectedValues)));
 
-// …and/or just listen for the intent (fires unless the callback cancelled):
-el.addEventListener('add', (e) =&gt; {
-  // e.detail = { value, option?, selectedOptions, selectedValues }
-  log('event', 'add', e.detail.value);
-});
-// (or el.onAdd = ({ value }) =&gt; …)
-
-// Dynamic label instead of the {value} template:
-el.getAddNewTextCallback = ({ value }) =&gt; `Create "${value}"`;</code></pre>
-            </details>
+                    // Dynamic prompt label instead of the labels.addNew {value} template:
+                    // el.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -270,46 +345,49 @@ el.getAddNewTextCallback = ({ value }) =&gt; `Create "${value}"`;</code></pre>
                 member into the list. The new option comes back as a <strong>rich object</strong>
                 (avatar + role subtitle) and renders exactly like the seeded members.
             </p>
-            <div class="form-group">
-                <label>Project members</label>
-                <web-multiselect
-                    id="members-select"
-                    value-member="value"
-                    display-value-member="label"
-                    subtitle-member="subtitle"
-                    icon-member="icon"
-                    allow-add-new labels='{"addNew": "➕ Add new member: “{value}”", "addNewPending": "Adding “{value}” to the project…", "searchPlaceholder": "Search or add a member..."}'>
-                </web-multiselect>
-                <small class="form-text">
-                    Seeded with the Hornes — Audrey, Benjamin &amp; Jerry.
-                    <strong>Type <code>Bobby Briggs</code></strong> (not in the list) and pick the prompt to add him.
-                </small>
-            </div>
-            <div id="members-log" class="log-panel"><div class="muted">The add event logs here after the delay…</div></div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Project members</label>
+                    <web-multiselect
+                        id="members-select"
+                        value-member="value"
+                        display-value-member="label"
+                        subtitle-member="subtitle"
+                        icon-member="icon"
+                        allow-add-new labels='{"addNew": "➕ Add new member: “{value}”", "addNewPending": "Adding “{value}” to the project…", "searchPlaceholder": "Search or add a member..."}'>
+                    </web-multiselect>
+                    <small class="form-text">
+                        Seeded with the Hornes — Audrey, Benjamin &amp; Jerry.
+                        <strong>Type <code>Bobby Briggs</code></strong> (not in the list) and pick the prompt to add him.
+                    </small>
+                </div>
+                <div id="members-log" class="log-panel"><div class="muted">The add event logs here after the delay…</div></div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('members-select');
+                    const log = demoLog('members-log'); // page helper: appends a line to the panel
+                    el.options = [
+                        { value: 'audrey',   label: 'Audrey Horne',   subtitle: "One Eyed Jack's",     icon: '👩' },
+                        { value: 'benjamin', label: 'Benjamin Horne', subtitle: 'Great Northern Hotel', icon: '👨' },
+                        { value: 'jerry',    label: 'Jerry Horne',    subtitle: "Horne's Dept. Store",  icon: '🧑' }
+                    ];
 
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;web-multiselect allow-add-new subtitle-member="subtitle" icon-member="icon"
-  labels='{"addNew": "➕ Add new member: \"{value}\"", "addNewPending": "Adding \"{value}\" to the project…"}'&gt;&lt;/web-multiselect&gt;
-
-el.options = [
-  { value: 'audrey',   label: 'Audrey Horne',   subtitle: "One Eyed Jack's",        icon: '👩' },
-  { value: 'benjamin', label: 'Benjamin Horne', subtitle: 'Great Northern Hotel',   icon: '👨' },
-  { value: 'jerry',    label: 'Jerry Horne',    subtitle: "Horne's Dept. Store",    icon: '🧑' },
-];
-
-// Async: a short delay shows the pending spinner. Returns a RICH option
-// (subtitle + icon) so the created member renders like every other row.
-el.beforeAddCallback = async ({ value }) =&gt; {
-  await new Promise(r =&gt; setTimeout(r, 1200));      // ← server round-trip
-  return {
-    value: value.trim().toLowerCase().replace(/\s+/g, '-'),
-    label: value.trim(),
-    subtitle: 'New member · just added',
-    icon: '🆕',
-  };
-};</code></pre>
-            </details>
+                    // Async: a short delay shows the pending spinner. Returns a RICH option
+                    // (subtitle + icon) so the created member renders like every other row.
+                    el.beforeAddCallback = async ({ value }) => {
+                        log('tag-prop', '[pending] beforeAddCallback', `creating "${value}"… (~1.2s)`);
+                        await new Promise(r => setTimeout(r, 1200));      // ← server round-trip
+                        return {
+                            value: value.trim().toLowerCase().replace(/\s+/g, '-'),
+                            label: value.trim(),
+                            subtitle: 'New member · just added',
+                            icon: '🆕'
+                        };
+                    };
+                    el.addEventListener('add', (e) =>
+                        log('tag-ok', '[event] add', `created "${e.detail.option.label}" ` +
+                            `(${e.detail.option.subtitle}) → now: ` + JSON.stringify(e.detail.selectedValues)));
+                </script>
+            </kmwc-demo>
         </div>
 
         <!-- ============================================================ -->
@@ -339,171 +417,3 @@ el.beforeAddCallback = async ({ value }) =&gt; {
             </p>
         </div>
 
-    <script type="module">
-        document.addEventListener('DOMContentLoaded', () => {
-            const stamp = () => new Date().toLocaleTimeString();
-            function logger(el) {
-                return (cls, label, text) => {
-                    if (el.querySelector('.muted')) el.innerHTML = '';
-                    const row = document.createElement('div');
-                    row.style.marginBottom = '0.4rem';
-                    row.innerHTML = `<span class="${cls}">[${stamp()}] ${label}</span> ${text ?? ''}`;
-                    el.appendChild(row);
-                    el.scrollTop = el.scrollHeight;
-                };
-            }
-
-            // --- 1. Events + on* twin ---------------------------------
-            const skills = [
-                { value: 'js', label: 'JavaScript' },
-                { value: 'ts', label: 'TypeScript' },
-                { value: 'py', label: 'Python' },
-                { value: 'go', label: 'Go' },
-                { value: 'rust', label: 'Rust' }
-            ];
-            const eventsSelect = document.getElementById('events-select');
-            const eventsLog = logger(document.getElementById('events-log'));
-            eventsSelect.options = skills;
-
-            // on* twins receive the detail; addEventListener receives the CustomEvent.
-            eventsSelect.onSelect   = ({ option }) => eventsLog('tag-prop', '[prop] onSelect', option.label);
-            eventsSelect.onDeselect = ({ option }) => eventsLog('tag-prop', '[prop] onDeselect', option.label);
-            eventsSelect.onChange   = ({ selectedOptions }) =>
-                eventsLog('tag-prop', '[prop] onChange', JSON.stringify(selectedOptions.map(o => o.value)));
-            eventsSelect.addEventListener('change', (e) =>
-                eventsLog('tag-event', '[event] change', JSON.stringify(e.detail.selectedValues)));
-
-            // --- 2. beforeSelectCallback (mutually exclusive) ---------
-            const availability = [
-                { value: 'full', label: 'Full-time' },
-                { value: 'part', label: 'Part-time' },
-                { value: 'contract', label: 'Contract' },
-                { value: 'remote', label: 'Remote OK' }
-            ];
-            const EXCLUSIVE = ['full', 'part'];
-            const exclusiveSelect = document.getElementById('exclusive-select');
-            const exclusiveLog = logger(document.getElementById('exclusive-log'));
-            exclusiveSelect.options = availability;
-
-            exclusiveSelect.beforeSelectCallback = ({ option, selectedOptions }) => {
-                const conflict = EXCLUSIVE.includes(option.value)
-                    && selectedOptions.find(o => EXCLUSIVE.includes(o.value) && o.value !== option.value);
-                if (conflict) {
-                    exclusiveLog('tag-block', '[blocked] beforeSelect',
-                        `can't pick ${option.label} while ${conflict.label} is selected`);
-                    return false;
-                }
-                // allow
-            };
-            exclusiveSelect.onSelect = ({ option }) => exclusiveLog('tag-ok', '[allowed] onSelect', option.label);
-
-            // --- 3. beforeDeselectCallback (required item) ------------
-            const team = [
-                { value: 'lead', label: 'Team Lead' },
-                { value: 'dev-a', label: 'Developer A' },
-                { value: 'dev-b', label: 'Developer B' },
-                { value: 'qa', label: 'QA Engineer' }
-            ];
-            const requiredSelect = document.getElementById('required-select');
-            const requiredLog = logger(document.getElementById('required-log'));
-            requiredSelect.options = team;
-
-            requiredSelect.beforeDeselectCallback = ({ option, source, controller }) => {
-                if (option.value === 'lead') {
-                    requiredLog('tag-block', '[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`);
-                    // Explain the veto with an in-component message — visible even in the
-                    // fullscreen overlay, where this page log would be hidden.
-                    controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
-                    return false;
-                }
-            };
-            requiredSelect.onDeselect = ({ option }) => requiredLog('tag-ok', '[removed] onDeselect', option.label);
-            requiredSelect.setSelected(['lead']); // pre-select; bypasses the veto
-
-            // --- 4b. Add new (creation tool) -------------------------
-            const createSelect = document.getElementById('create-select');
-            const createLog = logger(document.getElementById('create-log'));
-            createSelect.options = [
-                { value: 'anna', label: 'Anna' },
-                { value: 'ben', label: 'Ben' },
-                { value: 'carla', label: 'Carla' }
-            ];
-            // Async + cancelable: return a rich option to create + select it, or false to abort.
-            // Here we reject a name that already exists (case-insensitive) — the search is left
-            // intact and no `add` event fires.
-            createSelect.beforeAddCallback = async ({ value, controller }) => {
-                const key = value.trim().toLowerCase();
-                const exists = createSelect.options.some(o => o.value === key);
-                if (exists) {
-                    controller.showMessage(`"${value}" already exists`, { variant: 'warning' });
-                    return false;                         // ← cancel
-                }
-                // (a real app might `await api.create(value)` here)
-                return { value: key, label: value };      // ← rich option → create + select
-            };
-            // The add event fires only when creation actually happened (not on cancel).
-            createSelect.addEventListener('add', (e) =>
-                createLog('tag-ok', '[event] add', `value="${e.detail.value}" → now: ` +
-                    JSON.stringify(e.detail.selectedValues)));
-
-            // --- 4c. Add new — async creation + rich option ----------
-            const membersSelect = document.getElementById('members-select');
-            const membersLog = logger(document.getElementById('members-log'));
-            membersSelect.options = [
-                { value: 'audrey',   label: 'Audrey Horne',   subtitle: "One Eyed Jack's",     icon: '👩' },
-                { value: 'benjamin', label: 'Benjamin Horne', subtitle: 'Great Northern Hotel', icon: '👨' },
-                { value: 'jerry',    label: 'Jerry Horne',    subtitle: "Horne's Dept. Store",  icon: '🧑' }
-            ];
-            // Async: the delay lets the pending spinner show; returns a rich option so the
-            // created member renders (avatar + subtitle) like the seeded rows.
-            membersSelect.beforeAddCallback = async ({ value }) => {
-                membersLog('tag-prop', '[pending] beforeAddCallback', `creating "${value}"… (~1.2s)`);
-                await new Promise(r => setTimeout(r, 1200));
-                return {
-                    value: value.trim().toLowerCase().replace(/\s+/g, '-'),
-                    label: value.trim(),
-                    subtitle: 'New member · just added',
-                    icon: '🆕'
-                };
-            };
-            membersSelect.addEventListener('add', (e) =>
-                membersLog('tag-ok', '[event] add', `created "${e.detail.option.label}" ` +
-                    `(${e.detail.option.subtitle}) → now: ` + JSON.stringify(e.detail.selectedValues)));
-
-            // --- 4. showMessage --------------------------------------
-            const msgSelect = document.getElementById('message-select');
-            msgSelect.options = [
-                { value: 'a', label: 'Alpha' }, { value: 'b', label: 'Bravo' },
-                { value: 'c', label: 'Charlie' }, { value: 'd', label: 'Delta' },
-                { value: 'warn', label: '⚠ Warn on select' },
-                { value: 'err', label: '⛔ Error on select' },
-                { value: 'ok', label: '✅ Success on select' }
-            ];
-            // Drive the same toasts from the selection itself: showMessage() + return false
-            // vetoes with an explanation; 'ok' allows the selection AND shows a success message.
-            msgSelect.beforeSelectCallback = ({ option, controller }) => {
-                if (option.value === 'warn') { controller.showMessage('Heads up — this one is discouraged', { variant: 'warning' }); return false; }
-                if (option.value === 'err') { controller.showMessage('Not allowed', { variant: 'danger' }); return false; }
-                if (option.value === 'ok') { controller.showMessage('Nice choice!', { variant: 'success' }); }
-            };
-            const msgPlacement = document.getElementById('msg-placement');
-            document.querySelectorAll('[data-msg]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const variant = btn.dataset.msg;
-                    msgSelect.showMessage(`This is a ${variant} message`, { variant, placement: msgPlacement.value });
-                });
-            });
-            document.getElementById('msg-html').addEventListener('click', () => {
-                const span = document.createElement('span');
-                span.innerHTML = '<strong>Custom</strong> HTML content ✨';
-                msgSelect.showMessage(span, { variant: 'info', autoHideMs: 4000, placement: msgPlacement.value });
-            });
-            document.getElementById('msg-sticky').addEventListener('click', () => {
-                msgSelect.showMessage('Sticky — tap me to dismiss', { variant: 'warning', autoHideMs: 0, placement: msgPlacement.value });
-            });
-            document.getElementById('msg-fs').addEventListener('click', () => {
-                const isFs = msgSelect.getAttribute('presentation') === 'fullscreen';
-                msgSelect.setAttribute('presentation', isFs ? 'floating' : 'fullscreen');
-            });
-        });
-    </script>
