@@ -464,6 +464,52 @@ panel.addEventListener('click', (e) =&gt; {
             </details>
         </div>
 
+        <div class="card">
+            <h2>CR10 · Page-wide custom CSS — <code>window.components['web-multiselect'].customStyles</code></h2>
+            <p>
+                One CSS string for <em>every</em> <code>&lt;web-multiselect&gt;</code> on the page, set once on
+                the tag's <code>window.components</code> entry (an <code>@import url(…)</code> works too — one
+                server file for all instances). <code>getCustomStylesCallback(ctx)</code> is the per-instance
+                variant. An instance's own <code>custom-styles</code> / <code>getCustomStylesCallback</code>
+                comes after the page layer and overrides it.
+            </p>
+            <p class="note info">
+                The switch restyles <strong>every picker on this page</strong> (square corners, accent border) —
+                scroll up to see it. The second picker keeps its pill badges: its own CSS wins.
+            </p>
+
+            <kmwc-demo>
+                <label><input type="checkbox" role="switch" id="cr-page-styles-toggle"> Page-wide CSS</label>
+                <div class="form-group">
+                    <label>No own CSS — takes the page layer</label>
+                    <web-multiselect id="cr-page-plain">
+                        <option value="react" selected>React</option>
+                        <option value="vue" selected>Vue.js</option>
+                        <option value="svelte">Svelte</option>
+                    </web-multiselect>
+                </div>
+                <div class="form-group">
+                    <label>Own <code>custom-styles</code> — overrides the badge radius</label>
+                    <web-multiselect id="cr-page-override"
+                        custom-styles=":host { --ms-badge-border-radius: 999px; }">
+                        <option value="react" selected>React</option>
+                        <option value="vue" selected>Vue.js</option>
+                        <option value="svelte">Svelte</option>
+                    </web-multiselect>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const PAGE_CSS = `:host {
+                        --ms-input-border-radius: 0;
+                        --ms-badge-border-radius: 0;
+                        --ms-input-border-color: var(--ms-accent-color);
+                    }`;
+                    document.getElementById('cr-page-styles-toggle').addEventListener('change', (e) => {
+                        window.components['web-multiselect'].customStyles = e.target.checked ? PAGE_CSS : '';
+                    });
+                </script>
+            </kmwc-demo>
+        </div>
+
     <style>
         /* Custom checkbox sizing for example #14 */
         #large-checkbox {
