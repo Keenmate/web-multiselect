@@ -31,7 +31,9 @@ export default definePlaywrightConfig({
     // (viewport swap) is testable.
     { name: 'mobile', testMatch: touchOnlySpecs, use: { ...devices['Pixel 7'] } },
     // Same desktop suite on Gecko and WebKit (Safari's engine).
-    { name: 'firefox', testIgnore: touchOnlySpecs, use: { ...devices['Desktop Firefox'], viewport } },
+    // Firefox flakes under parallel load (the dev server refuses some of its connections) —
+    // capped on its own so the other projects keep their parallelism.
+    { name: 'firefox', testIgnore: touchOnlySpecs, workers: 2, use: { ...devices['Desktop Firefox'], viewport } },
     { name: 'webkit', testIgnore: touchOnlySpecs, use: { ...devices['Desktop Safari'], viewport } },
     // iOS Safari: WebKit supports isMobile/hasTouch emulation (Firefox does not, so there
     // is no mobile-firefox project).
