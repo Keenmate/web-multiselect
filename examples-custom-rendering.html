@@ -217,11 +217,51 @@
                 together. The wrapper (<code>.ms__badge</code>) and the remove <code>×</code> stay
                 component-owned so removal keeps working; you own the content and the styling.
             </p>
-            <div class="form-group">
-                <label for="sexy-badges">Select Team Members</label>
-                <web-multiselect id="sexy-badges"></web-multiselect>
-                <small class="form-text">Pill-shaped badges with avatars; VIPs get a gradient fill. The remove button still works.</small>
-            </div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label for="sexy-badges">Select Team Members</label>
+                    <web-multiselect id="sexy-badges"></web-multiselect>
+                    <small class="form-text">Pill-shaped badges with avatars; VIPs get a gradient fill. The remove button still works.</small>
+                </div>
+                <script type="module" data-kmwc-show>
+                    // Fully Restyled "sexy" badges — own the whole pill via content + class + injected CSS.
+                    const sexy = document.getElementById('sexy-badges');
+                    sexy.options = [
+                        { id: 1, name: 'Ada Lovelace',      avatar: 'https://i.pravatar.cc/40?img=5',  vip: true },
+                        { id: 2, name: 'Alan Turing',       avatar: 'https://i.pravatar.cc/40?img=12', vip: false },
+                        { id: 3, name: 'Grace Hopper',      avatar: 'https://i.pravatar.cc/40?img=45', vip: true },
+                        { id: 4, name: 'Linus Torvalds',    avatar: 'https://i.pravatar.cc/40?img=15', vip: false },
+                        { id: 5, name: 'Margaret Hamilton', avatar: 'https://i.pravatar.cc/40?img=32', vip: true }
+                    ];
+                    sexy.valueMember = 'id';
+                    sexy.displayValueMember = 'name';
+
+                    // 1) Own the badge CONTENT (goes inside .ms__badge-text).
+                    sexy.renderBadgeContentCallback = ({ option }) =>
+                        `<img class="ava" src="${option.avatar}" alt=""><span>${option.name}</span>`;
+
+                    // 2) Tag special items so we can style their pill.
+                    sexy.getBadgeClassCallback = ({ option }) => option.vip ? 'badge--vip' : '';
+
+                    // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill). The visible
+                    //    fill is split between .ms__badge-text and .ms__badge-remove, so for a
+                    //    continuous VIP gradient we paint the wrapper and make those two transparent —
+                    //    the remove × stays fully functional (still component-owned).
+                    sexy.getCustomStylesCallback = () => `
+                        .ms__badge { border-radius: 999px; }
+                        .ms__badge-text { gap: .4rem; padding-inline-start: .35rem; }
+                        .ms__badge .ava { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+
+                        .ms__badge.badge--vip { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+                        .ms__badge.badge--vip .ms__badge-text,
+                        .ms__badge.badge--vip .ms__badge-remove {
+                            background: transparent; color: #fff; border-color: transparent;
+                        }
+                    `;
+
+                    sexy.setSelected([1, 2, 3]);
+                </script>
+            </kmwc-demo>
 
             <div class="note">
                 <div class="note-title">The pill is two layers</div>
@@ -231,27 +271,6 @@
                 on the wrapper <code>.ms__badge</code> and make those two transparent (the wrapper has
                 <code>overflow: hidden</code>, so it clips into one clean pill).
             </div>
-
-            <div class="code-block"><pre>// 1) Own the badge CONTENT (rendered inside .ms__badge-text)
-el.renderBadgeContentCallback = ({ option }) =&gt;
-  `&lt;img class="ava" src="${option.avatar}" alt=""&gt;&lt;span&gt;${option.name}&lt;/span&gt;`;
-
-// 2) Tag special items so their pill can be styled
-el.getBadgeClassCallback = ({ option }) =&gt; option.vip ? 'badge--vip' : '';
-
-// 3) Inject CSS into the shadow DOM (page CSS can't reach the pill)
-el.getCustomStylesCallback = () =&gt; `
-  .ms__badge { border-radius: 999px; }                 /* pill shape */
-  .ms__badge-text { gap: .4rem; padding-inline-start: .35rem; }
-  .ms__badge .ava { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
-
-  /* VIP: one continuous gradient across the whole pill */
-  .ms__badge.badge--vip { background: linear-gradient(135deg, #7c3aed, #ec4899); }
-  .ms__badge.badge--vip .ms__badge-text,
-  .ms__badge.badge--vip .ms__badge-remove {
-    background: transparent; color: #fff; border-color: transparent;
-  }
-`;</pre></div>
         </div>
 
         <div class="card">
@@ -263,11 +282,78 @@ el.getCustomStylesCallback = () =&gt; `
                 available sizes, and its own big <strong>Remove</strong> button — imagine the selection is
                 what gets zipped and downloaded.
             </p>
-            <div class="form-group">
-                <label for="icon-picker">Add icons to your pack</label>
-                <web-multiselect id="icon-picker" labels='{"searchPlaceholder": "Search icons…"}'></web-multiselect>
-                <small class="form-text">Each selected icon renders as a card; the card's Remove button deselects it.</small>
-            </div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label for="icon-picker">Add icons to your pack</label>
+                    <web-multiselect id="icon-picker" labels='{"searchPlaceholder": "Search icons…"}'></web-multiselect>
+                    <small class="form-text">Each selected icon renders as a card; the card's Remove button deselects it.</small>
+                </div>
+                <script type="module" data-kmwc-show>
+                    // Whole-badge render — an icon-pack picker where each selected icon becomes a card.
+                    const iconPicker = document.getElementById('icon-picker');
+                    // Inline SVG inner markup (Lucide-style); FA works too via the font-in-shadow pattern
+                    // shown on the Action Buttons page — inline SVG keeps this demo dependency-free.
+                    const ICON_PATHS = {
+                        star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+                        heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>',
+                        bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+                        bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
+                    };
+                    const iconSvg = (key, filled, px) =>
+                        `<svg viewBox="0 0 24 24" width="${px}" height="${px}" style="${filled
+                            ? 'fill:currentColor;stroke:none'
+                            : 'fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round'}">${ICON_PATHS[key]}</svg>`;
+
+                    iconPicker.options = [
+                        { id: 'star-f',  name: 'Star',     icon: 'star',     filled: true,  sizes: [16, 20, 24] },
+                        { id: 'star-o',  name: 'Star',     icon: 'star',     filled: false, sizes: [16, 24] },
+                        { id: 'heart-f', name: 'Heart',    icon: 'heart',    filled: true,  sizes: [16, 20, 24] },
+                        { id: 'heart-o', name: 'Heart',    icon: 'heart',    filled: false, sizes: [20, 24] },
+                        { id: 'book-f',  name: 'Bookmark', icon: 'bookmark', filled: true,  sizes: [16, 20] },
+                        { id: 'book-o',  name: 'Bookmark', icon: 'bookmark', filled: false, sizes: [16, 20, 24] },
+                        { id: 'bell-f',  name: 'Bell',     icon: 'bell',     filled: true,  sizes: [24] },
+                        { id: 'bell-o',  name: 'Bell',     icon: 'bell',     filled: false, sizes: [16, 20, 24] }
+                    ];
+                    iconPicker.valueMember = 'id';
+                    iconPicker.getDisplayValueCallback = ({ option }) => `${option.name} (${option.filled ? 'Filled' : 'Outline'})`;
+
+                    // Compact dropdown rows: small glyph + name + style.
+                    iconPicker.renderOptionContentCallback = ({ option }) => `
+                        <span style="display:inline-flex;align-items:center;gap:.6rem;width:100%;">
+                            <span style="color:var(--kmwc-success-color);display:inline-flex;">${iconSvg(option.icon, option.filled, 20)}</span>
+                            <strong>${option.name}</strong>
+                            <span style="margin-inline-start:auto;font-size:.72rem;color:var(--kmwc-text-color-3);">${option.filled ? 'Filled' : 'Outline'}</span>
+                        </span>`;
+
+                    // The whole selected badge is a card, with its own Remove button.
+                    iconPicker.renderBadgeCallback = ({ option }) => `
+                        <div class="icard">
+                            <div class="icard__title">${option.name}</div>
+                            <div class="icard__chip">${option.filled ? 'Filled' : 'Outline'}</div>
+                            <div class="icard__tile">${iconSvg(option.icon, option.filled, 36)}</div>
+                            <div class="icard__sizes">${option.sizes.map(s => `<span>${s}px</span>`).join('')}</div>
+                            <button type="button" class="icard__remove" data-ms-action="remove">Remove</button>
+                        </div>`;
+
+                    // Card CSS injected into the shadow DOM (page CSS can't reach the badges).
+                    iconPicker.getCustomStylesCallback = () => `
+                        .icard {
+                            position: relative; box-sizing: border-box; width: 150px;
+                            background: #0b1220; color: #e2e8f0;
+                            border: 1px solid #1f2937; border-radius: 12px;
+                            padding: 16px 12px 12px; text-align: center;
+                        }
+                        .icard__title { font-weight: 700; font-size: 1rem; }
+                        .icard__chip { display: inline-block; margin: 8px 0 12px; padding: 3px 12px; border-radius: 8px; background: #1f2937; color: #cbd5e1; font-size: .8rem; }
+                        .icard__tile { width: 76px; height: 76px; margin: 0 auto; border-radius: 14px; background: #15803d; color: #fff; display: flex; align-items: center; justify-content: center; }
+                        .icard__sizes { margin: 12px 0 14px; display: flex; gap: 14px; justify-content: center; color: #ea580c; font-weight: 700; font-size: .9rem; }
+                        .icard__remove { width: 100%; padding: 9px; border: none; border-radius: 8px; background: #7f1d1d; color: #fff; font-weight: 600; font-size: .9rem; cursor: pointer; }
+                        .icard__remove:hover { background: #991b1b; }
+                    `;
+
+                    iconPicker.setSelected(['star-f', 'heart-o', 'bell-o']);
+                </script>
+            </kmwc-demo>
 
             <div class="note">
                 <div class="note-title">Removal contract</div>
@@ -277,15 +363,6 @@ el.getCustomStylesCallback = () =&gt; `
                 just add a remove control — no event wiring. Return <code>null</code> to fall back to the
                 default pill for an item.
             </div>
-
-            <div class="code-block"><pre>el.renderBadgeCallback = ({ option }) =&gt; `
-  &lt;div class="icard"&gt;
-    &lt;div class="icard__tile"&gt;${option.svg}&lt;/div&gt;
-    &lt;div class="icard__title"&gt;${option.name}&lt;/div&gt;
-    &lt;button type="button" class="icard__remove" data-ms-action="remove"&gt;Remove&lt;/button&gt;
-  &lt;/div&gt;`;
-// data-value is stamped on the wrapper by the component; the click on
-// [data-ms-action="remove"] resolves it and deselects — no manual event.</pre></div>
         </div>
 
         <div class="card">
@@ -302,13 +379,84 @@ el.getCustomStylesCallback = () =&gt; `
                 shadow-DOM injection. Here it also shows the running <strong>total duration</strong>, an
                 aggregate the built-in badges can't express.
             </p>
-            <div class="form-group">
-                <label for="playlist">Add tracks</label>
-                <web-multiselect id="playlist" badges-display-mode="none" show-counter="true" enable-selected-popover="false" labels='{"searchPlaceholder": "Search tracks…"}'></web-multiselect>
-                <small class="form-text">The field shows only a <code>[N]</code> counter; the playlist below is entirely yours.</small>
-            </div>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label for="playlist">Add tracks</label>
+                    <web-multiselect id="playlist" badges-display-mode="none" show-counter="true" enable-selected-popover="false" labels='{"searchPlaceholder": "Search tracks…"}'></web-multiselect>
+                    <small class="form-text">The field shows only a <code>[N]</code> counter; the playlist below is entirely yours.</small>
+                </div>
 
-            <div id="playlist-panel" class="playlist" aria-live="polite"></div>
+                <div id="playlist-panel" class="playlist" aria-live="polite"></div>
+                <script type="module" data-kmwc-show>
+                    // Own the whole selection UI — built-in badges suppressed (count mode), the panel below
+                    // is plain light-DOM markup we render from `change` and reconcile via setSelected().
+                    const playlist = document.getElementById('playlist');
+                    const playlistPanel = document.getElementById('playlist-panel');
+                    playlist.options = [
+                        { id: 1, title: 'Bohemian Rhapsody',      artist: 'Queen',            seconds: 355 },
+                        { id: 2, title: 'Stairway to Heaven',     artist: 'Led Zeppelin',     seconds: 482 },
+                        { id: 3, title: 'Hotel California',        artist: 'Eagles',           seconds: 391 },
+                        { id: 4, title: 'Smells Like Teen Spirit', artist: 'Nirvana',         seconds: 301 },
+                        { id: 5, title: 'Billie Jean',            artist: 'Michael Jackson',  seconds: 294 },
+                        { id: 6, title: 'Like a Rolling Stone',   artist: 'Bob Dylan',        seconds: 369 },
+                        { id: 7, title: 'Imagine',                artist: 'John Lennon',      seconds: 183 },
+                        { id: 8, title: 'Purple Rain',            artist: 'Prince',           seconds: 520 }
+                    ];
+                    playlist.valueMember = 'id';
+                    playlist.getDisplayValueCallback = ({ option }) => `${option.title} — ${option.artist}`;
+
+                    const fmtDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+                    // Single render path — repaint the panel from whatever the component currently holds.
+                    const renderPlaylist = (items) => {
+                        if (!items.length) {
+                            playlistPanel.innerHTML =
+                                `<div class="playlist__empty">No tracks yet — search above to build your playlist.</div>`;
+                            return;
+                        }
+                        const total = items.reduce((sum, it) => sum + it.seconds, 0);
+                        playlistPanel.innerHTML = `
+                            <div class="playlist__head">
+                                <span class="playlist__count">${items.length} track${items.length > 1 ? 's' : ''}</span>
+                                <span class="playlist__total">${fmtDuration(total)} total</span>
+                                <button type="button" class="playlist__clear" data-clear>Clear all</button>
+                            </div>
+                            <ol class="playlist__list">
+                                ${items.map((it, i) => `
+                                    <li class="playlist__row">
+                                        <span class="playlist__num">${i + 1}</span>
+                                        <span class="playlist__meta">
+                                            <span class="playlist__title">${it.title}</span>
+                                            <span class="playlist__artist">${it.artist}</span>
+                                        </span>
+                                        <span class="playlist__dur">${fmtDuration(it.seconds)}</span>
+                                        <button type="button" class="playlist__x" data-remove="${it.id}" aria-label="Remove ${it.title}">✕</button>
+                                    </li>`).join('')}
+                            </ol>`;
+                    };
+
+                    // The component fires `change` for dropdown-driven changes AND for our own
+                    // setSelected(..., { notify: true }) calls — so one listener covers both.
+                    playlist.addEventListener('change', (e) => renderPlaylist(e.detail.selectedOptions));
+
+                    // Removal + clear go back through the component (it stays the source of truth).
+                    playlistPanel.addEventListener('click', (e) => {
+                        const removeBtn = e.target.closest('[data-remove]');
+                        if (removeBtn) {
+                            const remaining = playlist.selectedOptions
+                                .map((it) => it.id)
+                                .filter((id) => String(id) !== removeBtn.dataset.remove);
+                            playlist.setSelected(remaining, { notify: true });
+                        } else if (e.target.closest('[data-clear]')) {
+                            playlist.setSelected([], { notify: true });
+                        }
+                    });
+
+                    // Seed a starting playlist. setSelected() is silent by default, so paint once directly.
+                    playlist.setSelected([1, 3, 5]);
+                    renderPlaylist(playlist.selectedOptions);
+                </script>
+            </kmwc-demo>
 
             <div class="note">
                 <div class="note-title">Why no hook is needed</div>
@@ -319,28 +467,6 @@ el.getCustomStylesCallback = () =&gt; `
                 <code>change</code> so the <em>same</em> render path repaints the panel — whether the
                 change came from the dropdown or from your own ✕ buttons.
             </div>
-
-            <div class="code-block"><pre>&lt;web-multiselect badges-display-mode="none" show-counter="true"
-                 enable-selected-popover="false"&gt;&lt;/web-multiselect&gt;
-
-const el = document.getElementById('playlist');   // just [N] in the field
-const panel = document.getElementById('playlist-panel');
-
-// One render path — repaint from whatever the component currently holds.
-const render = (items) =&gt; { panel.innerHTML = items.length ? myMarkup(items) : emptyState; };
-el.addEventListener('change', (e) =&gt; render(e.detail.selectedOptions));
-
-// Removal/clear route back through the component (it owns the state).
-panel.addEventListener('click', (e) =&gt; {
-  const x = e.target.closest('[data-remove]');
-  if (x) {
-    const remaining = el.selectedOptions.map(i =&gt; i.id)
-      .filter(id =&gt; String(id) !== x.dataset.remove);
-    el.setSelected(remaining, { notify: true });   // re-fires change → render()
-  } else if (e.target.closest('[data-clear]')) {
-    el.setSelected([], { notify: true });
-  }
-});</pre></div>
         </div>
 
         <div class="card">
@@ -430,38 +556,27 @@ panel.addEventListener('click', (e) =&gt; {
                 <code>getCustomStylesCallback</code> wins (the attribute is the static fallback).
             </p>
 
-            <div class="form-group">
-                <label>Pick a couple — styled entirely by the attribute</label>
-                <web-multiselect id="cr-custom-styles"
-                    custom-styles="
-                        .ms__badge { background: #6d28d9; border-radius: 999px; }
-                        .ms__badge .ms__badge-text,
-                        .ms__badge .ms__badge-remove { background: transparent; color: #fff; border-color: transparent; }
-                        .ms__option { border-radius: 8px; }">
-                    <option value="react" data-icon="⚛️" selected>React</option>
-                    <option value="vue" data-icon="🖖">Vue.js</option>
-                    <option value="svelte" data-icon="🔥" selected>Svelte</option>
-                    <option value="solid" data-icon="💎">Solid</option>
-                </web-multiselect>
-                <small class="form-text">
-                    Purple pill badges + rounded option rows — all from the inline <code>custom-styles</code>
-                    string. This whole card has zero JavaScript (options are declarative <code>&lt;option&gt;</code>
-                    children too).
-                </small>
-            </div>
-
-            <details class="mt-1">
-                <summary>Show code</summary>
-<pre><code>&lt;web-multiselect
-    custom-styles="
-        .ms__badge { background: #6d28d9; border-radius: 999px; }
-        .ms__badge .ms__badge-text,
-        .ms__badge .ms__badge-remove { background: transparent; color: #fff; }
-        .ms__option { border-radius: 8px; }"&gt;
-  &lt;option value="react" data-icon="⚛️" selected&gt;React&lt;/option&gt;
-  &lt;option value="svelte" data-icon="🔥" selected&gt;Svelte&lt;/option&gt;
-&lt;/web-multiselect&gt;</code></pre>
-            </details>
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Pick a couple — styled entirely by the attribute</label>
+                    <web-multiselect id="cr-custom-styles"
+                        custom-styles="
+                            .ms__badge { background: #6d28d9; border-radius: 999px; }
+                            .ms__badge .ms__badge-text,
+                            .ms__badge .ms__badge-remove { background: transparent; color: #fff; border-color: transparent; }
+                            .ms__option { border-radius: 8px; }">
+                        <option value="react" data-icon="⚛️" selected>React</option>
+                        <option value="vue" data-icon="🖖">Vue.js</option>
+                        <option value="svelte" data-icon="🔥" selected>Svelte</option>
+                        <option value="solid" data-icon="💎">Solid</option>
+                    </web-multiselect>
+                    <small class="form-text">
+                        Purple pill badges + rounded option rows — all from the inline <code>custom-styles</code>
+                        string. This whole card has zero JavaScript (options are declarative <code>&lt;option&gt;</code>
+                        children too).
+                    </small>
+                </div>
+            </kmwc-demo>
         </div>
 
         <div class="card">
@@ -942,175 +1057,6 @@ panel.addEventListener('click', (e) =&gt; {
                 </span>
             `;
         };
-
-        // Fully Restyled "sexy" badges — own the whole pill via content + class + injected CSS.
-        const sexy = document.getElementById('sexy-badges');
-        sexy.options = [
-            { id: 1, name: 'Ada Lovelace',      avatar: 'https://i.pravatar.cc/40?img=5',  vip: true },
-            { id: 2, name: 'Alan Turing',       avatar: 'https://i.pravatar.cc/40?img=12', vip: false },
-            { id: 3, name: 'Grace Hopper',      avatar: 'https://i.pravatar.cc/40?img=45', vip: true },
-            { id: 4, name: 'Linus Torvalds',    avatar: 'https://i.pravatar.cc/40?img=15', vip: false },
-            { id: 5, name: 'Margaret Hamilton', avatar: 'https://i.pravatar.cc/40?img=32', vip: true }
-        ];
-        sexy.valueMember = 'id';
-        sexy.displayValueMember = 'name';
-
-        // 1) Own the badge CONTENT (goes inside .ms__badge-text).
-        sexy.renderBadgeContentCallback = ({ option }) =>
-            `<img class="ava" src="${option.avatar}" alt=""><span>${option.name}</span>`;
-
-        // 2) Tag special items so we can style their pill.
-        sexy.getBadgeClassCallback = ({ option }) => option.vip ? 'badge--vip' : '';
-
-        // 3) Inject CSS into the shadow DOM (page CSS can't reach the pill). The visible
-        //    fill is split between .ms__badge-text and .ms__badge-remove, so for a
-        //    continuous VIP gradient we paint the wrapper and make those two transparent —
-        //    the remove × stays fully functional (still component-owned).
-        sexy.getCustomStylesCallback = () => `
-            .ms__badge { border-radius: 999px; }
-            .ms__badge-text { gap: .4rem; padding-inline-start: .35rem; }
-            .ms__badge .ava { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
-
-            .ms__badge.badge--vip { background: linear-gradient(135deg, #7c3aed, #ec4899); }
-            .ms__badge.badge--vip .ms__badge-text,
-            .ms__badge.badge--vip .ms__badge-remove {
-                background: transparent; color: #fff; border-color: transparent;
-            }
-        `;
-
-        sexy.setSelected([1, 2, 3]);
-
-        // Whole-badge render — an icon-pack picker where each selected icon becomes a card.
-        const iconPicker = document.getElementById('icon-picker');
-        // Inline SVG inner markup (Lucide-style); FA works too via the font-in-shadow pattern
-        // shown on the Action Buttons page — inline SVG keeps this demo dependency-free.
-        const ICON_PATHS = {
-            star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
-            heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>',
-            bookmark: '<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
-            bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
-        };
-        const iconSvg = (key, filled, px) =>
-            `<svg viewBox="0 0 24 24" width="${px}" height="${px}" style="${filled
-                ? 'fill:currentColor;stroke:none'
-                : 'fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round'}">${ICON_PATHS[key]}</svg>`;
-
-        iconPicker.options = [
-            { id: 'star-f',  name: 'Star',     icon: 'star',     filled: true,  sizes: [16, 20, 24] },
-            { id: 'star-o',  name: 'Star',     icon: 'star',     filled: false, sizes: [16, 24] },
-            { id: 'heart-f', name: 'Heart',    icon: 'heart',    filled: true,  sizes: [16, 20, 24] },
-            { id: 'heart-o', name: 'Heart',    icon: 'heart',    filled: false, sizes: [20, 24] },
-            { id: 'book-f',  name: 'Bookmark', icon: 'bookmark', filled: true,  sizes: [16, 20] },
-            { id: 'book-o',  name: 'Bookmark', icon: 'bookmark', filled: false, sizes: [16, 20, 24] },
-            { id: 'bell-f',  name: 'Bell',     icon: 'bell',     filled: true,  sizes: [24] },
-            { id: 'bell-o',  name: 'Bell',     icon: 'bell',     filled: false, sizes: [16, 20, 24] }
-        ];
-        iconPicker.valueMember = 'id';
-        iconPicker.getDisplayValueCallback = ({ option }) => `${option.name} (${option.filled ? 'Filled' : 'Outline'})`;
-
-        // Compact dropdown rows: small glyph + name + style.
-        iconPicker.renderOptionContentCallback = ({ option }) => `
-            <span style="display:inline-flex;align-items:center;gap:.6rem;width:100%;">
-                <span style="color:var(--kmwc-success-color);display:inline-flex;">${iconSvg(option.icon, option.filled, 20)}</span>
-                <strong>${option.name}</strong>
-                <span style="margin-inline-start:auto;font-size:.72rem;color:var(--kmwc-text-color-3);">${option.filled ? 'Filled' : 'Outline'}</span>
-            </span>`;
-
-        // The whole selected badge is a card, with its own Remove button.
-        iconPicker.renderBadgeCallback = ({ option }) => `
-            <div class="icard">
-                <div class="icard__title">${option.name}</div>
-                <div class="icard__chip">${option.filled ? 'Filled' : 'Outline'}</div>
-                <div class="icard__tile">${iconSvg(option.icon, option.filled, 36)}</div>
-                <div class="icard__sizes">${option.sizes.map(s => `<span>${s}px</span>`).join('')}</div>
-                <button type="button" class="icard__remove" data-ms-action="remove">Remove</button>
-            </div>`;
-
-        // Card CSS injected into the shadow DOM (page CSS can't reach the badges).
-        iconPicker.getCustomStylesCallback = () => `
-            .icard {
-                position: relative; box-sizing: border-box; width: 150px;
-                background: #0b1220; color: #e2e8f0;
-                border: 1px solid #1f2937; border-radius: 12px;
-                padding: 16px 12px 12px; text-align: center;
-            }
-            .icard__title { font-weight: 700; font-size: 1rem; }
-            .icard__chip { display: inline-block; margin: 8px 0 12px; padding: 3px 12px; border-radius: 8px; background: #1f2937; color: #cbd5e1; font-size: .8rem; }
-            .icard__tile { width: 76px; height: 76px; margin: 0 auto; border-radius: 14px; background: #15803d; color: #fff; display: flex; align-items: center; justify-content: center; }
-            .icard__sizes { margin: 12px 0 14px; display: flex; gap: 14px; justify-content: center; color: #ea580c; font-weight: 700; font-size: .9rem; }
-            .icard__remove { width: 100%; padding: 9px; border: none; border-radius: 8px; background: #7f1d1d; color: #fff; font-weight: 600; font-size: .9rem; cursor: pointer; }
-            .icard__remove:hover { background: #991b1b; }
-        `;
-
-        iconPicker.setSelected(['star-f', 'heart-o', 'bell-o']);
-
-        // Own the whole selection UI — built-in badges suppressed (count mode), the panel below
-        // is plain light-DOM markup we render from `change` and reconcile via setSelected().
-        const playlist = document.getElementById('playlist');
-        const playlistPanel = document.getElementById('playlist-panel');
-        playlist.options = [
-            { id: 1, title: 'Bohemian Rhapsody',      artist: 'Queen',            seconds: 355 },
-            { id: 2, title: 'Stairway to Heaven',     artist: 'Led Zeppelin',     seconds: 482 },
-            { id: 3, title: 'Hotel California',        artist: 'Eagles',           seconds: 391 },
-            { id: 4, title: 'Smells Like Teen Spirit', artist: 'Nirvana',         seconds: 301 },
-            { id: 5, title: 'Billie Jean',            artist: 'Michael Jackson',  seconds: 294 },
-            { id: 6, title: 'Like a Rolling Stone',   artist: 'Bob Dylan',        seconds: 369 },
-            { id: 7, title: 'Imagine',                artist: 'John Lennon',      seconds: 183 },
-            { id: 8, title: 'Purple Rain',            artist: 'Prince',           seconds: 520 }
-        ];
-        playlist.valueMember = 'id';
-        playlist.getDisplayValueCallback = ({ option }) => `${option.title} — ${option.artist}`;
-
-        const fmtDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
-        // Single render path — repaint the panel from whatever the component currently holds.
-        const renderPlaylist = (items) => {
-            if (!items.length) {
-                playlistPanel.innerHTML =
-                    `<div class="playlist__empty">No tracks yet — search above to build your playlist.</div>`;
-                return;
-            }
-            const total = items.reduce((sum, it) => sum + it.seconds, 0);
-            playlistPanel.innerHTML = `
-                <div class="playlist__head">
-                    <span class="playlist__count">${items.length} track${items.length > 1 ? 's' : ''}</span>
-                    <span class="playlist__total">${fmtDuration(total)} total</span>
-                    <button type="button" class="playlist__clear" data-clear>Clear all</button>
-                </div>
-                <ol class="playlist__list">
-                    ${items.map((it, i) => `
-                        <li class="playlist__row">
-                            <span class="playlist__num">${i + 1}</span>
-                            <span class="playlist__meta">
-                                <span class="playlist__title">${it.title}</span>
-                                <span class="playlist__artist">${it.artist}</span>
-                            </span>
-                            <span class="playlist__dur">${fmtDuration(it.seconds)}</span>
-                            <button type="button" class="playlist__x" data-remove="${it.id}" aria-label="Remove ${it.title}">✕</button>
-                        </li>`).join('')}
-                </ol>`;
-        };
-
-        // The component fires `change` for dropdown-driven changes AND for our own
-        // setSelected(..., { notify: true }) calls — so one listener covers both.
-        playlist.addEventListener('change', (e) => renderPlaylist(e.detail.selectedOptions));
-
-        // Removal + clear go back through the component (it stays the source of truth).
-        playlistPanel.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('[data-remove]');
-            if (removeBtn) {
-                const remaining = playlist.selectedOptions
-                    .map((it) => it.id)
-                    .filter((id) => String(id) !== removeBtn.dataset.remove);
-                playlist.setSelected(remaining, { notify: true });
-            } else if (e.target.closest('[data-clear]')) {
-                playlist.setSelected([], { notify: true });
-            }
-        });
-
-        // Seed a starting playlist. setSelected() is silent by default, so paint once directly.
-        playlist.setSelected([1, 3, 5]);
-        renderPlaylist(playlist.selectedOptions);
 
         // 8. Person Selector (Single-Select)
         const person = document.getElementById('person');
