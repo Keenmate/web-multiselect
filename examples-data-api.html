@@ -78,20 +78,7 @@
                 Use your own data structure! Specify which properties to use for value, display, and other fields using <code>valueMember</code> and <code>displayValueMember</code>.
             </p>
 
-            <div class="code-block"><pre>// Your custom data structure
-const users = [
-  { userId: 1, fullName: 'John Doe', email: 'john@example.com', role: 'Admin' },
-  { userId: 2, fullName: 'Jane Smith', email: 'jane@example.com', role: 'User' },
-  ...
-];
-
-// Configure which properties to use
-multiselect.valueMember = 'userId';
-multiselect.displayValueMember = 'fullName';
-multiselect.subtitleMember = 'email';
-multiselect.options = users;</pre></div>
-
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Select Users:</label>
                 <web-multiselect id="custom-objects" value-member="userId" display-value-member="fullName" subtitle-member="email"></web-multiselect>
 
@@ -102,7 +89,34 @@ multiselect.options = users;</pre></div>
 
                 <button onclick="showCustomObjectsData()">Show Selected Data</button>
                 <button onclick="setCustomObjects()">Select John & Alice</button>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const users = document.getElementById('custom-objects');
+                    const output = document.getElementById('output-custom-objects');
+
+                    // Your own data structure — value-member / display-value-member /
+                    // subtitle-member (attributes above) say which properties to use.
+                    users.options = [
+                        { userId: 1, fullName: 'John Doe', email: 'john@example.com', role: 'Admin', avatar: '👨‍💼' },
+                        { userId: 2, fullName: 'Jane Smith', email: 'jane@example.com', role: 'User', avatar: '👩‍💻' },
+                        { userId: 3, fullName: 'Alice Johnson', email: 'alice@example.com', role: 'Manager', avatar: '👩‍💼' },
+                        { userId: 4, fullName: 'Bob Wilson', email: 'bob@example.com', role: 'User', avatar: '👨‍💻' }
+                    ];
+
+                    users.addEventListener('change', () => {
+                        output.textContent = JSON.stringify(users.selectedValue, null, 2);
+                    });
+
+                    window.showCustomObjectsData = () => {
+                        output.textContent = JSON.stringify({
+                            selectedValue: users.selectedValue,
+                            selectedOption: users.selectedOption,
+                            selectedOptions: users.selectedOptions
+                        }, null, 2);
+                    };
+
+                    window.setCustomObjects = () => users.setSelected([1, 3]); // John and Alice
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 2: [key, value] Tuples -->
@@ -112,17 +126,7 @@ multiselect.options = users;</pre></div>
                 Auto-detected! Simply pass an array of <code>[key, value]</code> tuples. Perfect for simple key-value pairs without creating objects.
             </p>
 
-            <div class="code-block"><pre>// Simple tuple arrays - no configuration needed!
-const languages = [
-  ['js', 'JavaScript'],
-  ['ts', 'TypeScript'],
-  ['py', 'Python'],
-  ['go', 'Go']
-];
-
-multiselect.options = languages; // Auto-detected as tuples</pre></div>
-
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Select Programming Languages:</label>
                 <web-multiselect id="tuples"></web-multiselect>
 
@@ -133,7 +137,34 @@ multiselect.options = languages; // Auto-detected as tuples</pre></div>
 
                 <button onclick="showTuplesData()">Show Selected</button>
                 <button onclick="setTuples()">Select JS & TS</button>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const languages = document.getElementById('tuples');
+                    const output = document.getElementById('output-tuples');
+
+                    // Simple tuple arrays — no configuration needed, auto-detected as [key, value].
+                    languages.options = [
+                        ['js', 'JavaScript'],
+                        ['ts', 'TypeScript'],
+                        ['py', 'Python'],
+                        ['go', 'Go'],
+                        ['rust', 'Rust'],
+                        ['java', 'Java']
+                    ];
+
+                    languages.addEventListener('change', () => {
+                        output.textContent = JSON.stringify(languages.selectedValue, null, 2);
+                    });
+
+                    window.showTuplesData = () => {
+                        output.textContent = JSON.stringify({
+                            selectedValue: languages.selectedValue,
+                            selectedOptions: languages.selectedOptions
+                        }, null, 2);
+                    };
+
+                    window.setTuples = () => languages.setSelected(['js', 'ts']);
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 3: Using Callbacks -->
@@ -143,18 +174,7 @@ multiselect.options = languages; // Auto-detected as tuples</pre></div>
                 Use callbacks when you need complex logic to extract values. Callbacks take precedence over members.
             </p>
 
-            <div class="code-block"><pre>const products = [
-  { sku: 'PRD-001', name: 'Laptop', price: 999, inStock: true },
-  { sku: 'PRD-002', name: 'Mouse', price: 29, inStock: false },
-  ...
-];
-
-multiselect.getValueCallback = ({ option }) => option.sku;
-multiselect.getDisplayValueCallback = ({ option }) => `${option.name} - $${option.price}`;
-multiselect.getIsDisabledCallback = ({ option }) => !option.inStock; // Disable out of stock
-multiselect.options = products;</pre></div>
-
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Select Products (out of stock disabled):</label>
                 <web-multiselect id="callbacks"></web-multiselect>
 
@@ -164,7 +184,37 @@ multiselect.options = products;</pre></div>
                 </div>
 
                 <button onclick="showCallbacksData()">Show Selected</button>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const products = document.getElementById('callbacks');
+                    const output = document.getElementById('output-callbacks');
+
+                    products.getValueCallback = ({ option }) => option.sku;
+                    products.getDisplayValueCallback = ({ option }) => `${option.name} - $${option.price}`;
+                    products.getSubtitleCallback = ({ option }) => option.inStock ? 'In Stock ✓' : 'Out of Stock';
+                    products.getIsDisabledCallback = ({ option }) => !option.inStock; // disable out of stock
+                    products.options = [
+                        { sku: 'PRD-001', name: 'Laptop', price: 999, inStock: true },
+                        { sku: 'PRD-002', name: 'Mouse', price: 29, inStock: false },
+                        { sku: 'PRD-003', name: 'Keyboard', price: 79, inStock: true },
+                        { sku: 'PRD-004', name: 'Monitor', price: 299, inStock: false },
+                        { sku: 'PRD-005', name: 'Webcam', price: 89, inStock: true }
+                    ];
+
+                    products.addEventListener('change', () => {
+                        output.textContent = JSON.stringify({
+                            skus: products.selectedValue,
+                            products: products.selectedOptions.map(p => ({ name: p.name, price: p.price }))
+                        }, null, 2);
+                    });
+
+                    window.showCallbacksData = () => {
+                        output.textContent = JSON.stringify({
+                            'selectedValue - SKUs': products.selectedValue,
+                            'selectedOptions': products.selectedOptions.map(p => ({ sku: p.sku, name: p.name, price: p.price }))
+                        }, null, 2);
+                    };
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 4: Form Integration - JSON Format -->
@@ -174,30 +224,33 @@ multiselect.options = products;</pre></div>
                 Seamless HTML form integration! Hidden inputs are automatically created and updated. Choose from 3 formats: <code>json</code>, <code>text</code> (joined by <code>value-separator</code>), or <code>array</code>.
             </p>
 
-            <div class="code-block"><pre>&lt;form id="myform"&gt;
-  &lt;multi-select
-    name="skills"           &lt;!-- Creates hidden input with this name --&gt;
-    value-format="json"  &lt;!-- Default: JSON array --&gt;
-    multiple&gt;
-  &lt;/multi-select&gt;
-&lt;/form&gt;
+            <kmwc-demo>
+                <form id="form-json" onsubmit="handleFormSubmit(event, 'form-json')">
+                    <label class="demo-label">Select Your Skills:</label>
+                    <web-multiselect id="form-json-select" name="skills" value-format="json"></web-multiselect>
 
-// Hidden input value: ["js","ts","py"]</pre></div>
+                    <div class="form-actions">
+                        <button type="submit">Submit Form</button>
+                        <button type="button" onclick="inspectFormData('form-json')">Inspect Form Data</button>
+                    </div>
 
-            <form id="form-json" onsubmit="handleFormSubmit(event, 'form-json')">
-                <label class="demo-label">Select Your Skills:</label>
-                <web-multiselect id="form-json-select" name="skills" value-format="json"></web-multiselect>
-
-                <div class="form-actions">
-                    <button type="submit">Submit Form</button>
-                    <button type="button" onclick="inspectFormData('form-json')">Inspect Form Data</button>
-                </div>
-
-                <div class="output">
-                    <div class="output-label">Hidden Input Value:</div>
-                    <pre id="output-form-json">Not submitted yet</pre>
-                </div>
-            </form>
+                    <div class="output">
+                        <div class="output-label">Hidden Input Value:</div>
+                        <pre id="output-form-json">Not submitted yet</pre>
+                    </div>
+                </form>
+                <script type="module" data-kmwc-show>
+                    document.getElementById('form-json-select').options = [
+                        ['js', 'JavaScript'],
+                        ['ts', 'TypeScript'],
+                        ['py', 'Python'],
+                        ['react', 'React'],
+                        ['vue', 'Vue.js']
+                    ];
+                    // name="skills" + value-format="json" (the default) → ONE hidden input
+                    // holding a JSON array. Pick JavaScript + TypeScript → skills = ["js","ts"]
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 5: Form Integration - CSV Format -->
@@ -207,27 +260,33 @@ multiselect.options = products;</pre></div>
                 Use CSV format for traditional comma-separated values. Great for legacy systems.
             </p>
 
-            <div class="code-block"><pre>&lt;multi-select
-  name="categories"
-  value-format="text"&gt;  &lt;!-- one field, comma-joined --&gt;
-&lt;/multi-select&gt;
+            <kmwc-demo>
+                <form id="form-csv" onsubmit="handleFormSubmit(event, 'form-csv')">
+                    <label class="demo-label">Select Categories:</label>
+                    <web-multiselect id="form-csv-select" name="categories" value-format="text"></web-multiselect>
 
-// Hidden input value: "tech,design,business"</pre></div>
+                    <div class="form-actions">
+                        <button type="submit">Submit Form</button>
+                        <button type="button" onclick="inspectFormData('form-csv')">Inspect Form Data</button>
+                    </div>
 
-            <form id="form-csv" onsubmit="handleFormSubmit(event, 'form-csv')">
-                <label class="demo-label">Select Categories:</label>
-                <web-multiselect id="form-csv-select" name="categories" value-format="text"></web-multiselect>
-
-                <div class="form-actions">
-                    <button type="submit">Submit Form</button>
-                    <button type="button" onclick="inspectFormData('form-csv')">Inspect Form Data</button>
-                </div>
-
-                <div class="output">
-                    <div class="output-label">Hidden Input Value (CSV):</div>
-                    <pre id="output-form-csv">Not submitted yet</pre>
-                </div>
-            </form>
+                    <div class="output">
+                        <div class="output-label">Hidden Input Value (CSV):</div>
+                        <pre id="output-form-csv">Not submitted yet</pre>
+                    </div>
+                </form>
+                <script type="module" data-kmwc-show>
+                    document.getElementById('form-csv-select').options = [
+                        ['tech', 'Technology'],
+                        ['design', 'Design'],
+                        ['business', 'Business'],
+                        ['marketing', 'Marketing'],
+                        ['sales', 'Sales']
+                    ];
+                    // value-format="text" → ONE hidden input, values joined by value-separator (",").
+                    // Pick Technology + Design + Business → categories = "tech,design,business"
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 6: Form Integration - Array Format -->
@@ -237,30 +296,36 @@ multiselect.options = products;</pre></div>
                 Use array format to create multiple hidden inputs. Standard HTML array handling with <code>name[]</code>.
             </p>
 
-            <div class="code-block"><pre>&lt;multi-select
-  name="tags"
-  value-format="array"&gt;  &lt;!-- Multiple inputs --&gt;
-&lt;/multi-select&gt;
+            <kmwc-demo>
+                <form id="form-array" onsubmit="handleFormSubmit(event, 'form-array')">
+                    <label class="demo-label">Select Tags:</label>
+                    <web-multiselect id="form-array-select" name="tags" value-format="array"></web-multiselect>
 
-// Creates multiple hidden inputs:
-// &lt;input name="tags[]" value="urgent"&gt;
-// &lt;input name="tags[]" value="feature"&gt;
-// &lt;input name="tags[]" value="bug"&gt;</pre></div>
+                    <div class="form-actions">
+                        <button type="submit">Submit Form</button>
+                        <button type="button" onclick="inspectFormData('form-array')">Inspect Form Data</button>
+                    </div>
 
-            <form id="form-array" onsubmit="handleFormSubmit(event, 'form-array')">
-                <label class="demo-label">Select Tags:</label>
-                <web-multiselect id="form-array-select" name="tags" value-format="array"></web-multiselect>
-
-                <div class="form-actions">
-                    <button type="submit">Submit Form</button>
-                    <button type="button" onclick="inspectFormData('form-array')">Inspect Form Data</button>
-                </div>
-
-                <div class="output">
-                    <div class="output-label">Hidden Inputs Created:</div>
-                    <pre id="output-form-array">Not submitted yet</pre>
-                </div>
-            </form>
+                    <div class="output">
+                        <div class="output-label">Hidden Inputs Created:</div>
+                        <pre id="output-form-array">Not submitted yet</pre>
+                    </div>
+                </form>
+                <script type="module" data-kmwc-show>
+                    document.getElementById('form-array-select').options = [
+                        ['urgent', 'Urgent'],
+                        ['feature', 'Feature Request'],
+                        ['bug', 'Bug Fix'],
+                        ['enhancement', 'Enhancement'],
+                        ['documentation', 'Documentation']
+                    ];
+                    // value-format="array" → one hidden input per value, named tags[].
+                    // Pick Urgent + Feature Request + Bug Fix → three hidden inputs:
+                    // <input name="tags[]" value="urgent">
+                    // <input name="tags[]" value="feature">
+                    // <input name="tags[]" value="bug">
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Example 7: New selectedValue API -->
@@ -505,7 +570,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                 </label>
             </div>
 
-            <div class="demo-area">
+            <kmwc-demo markup-hidden>
                 <label class="demo-label">Organization → Business Unit → Department Cascade:</label>
 
                 <div style="display: grid; gap: 1rem; margin: 1rem 0;">
@@ -568,53 +633,123 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                 </div>
 
                 <button onclick="resetCascade()">Reset Cascade</button>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const orgSelect = document.getElementById('cascade-org');
+                    const buSelect = document.getElementById('cascade-bu');
+                    const deptSelect = document.getElementById('cascade-dept');
+                    const buStatus = document.getElementById('bu-status');
+                    const deptStatus = document.getElementById('dept-status');
 
-            <p class="code-label">Implementation:</p>
-            <div class="code-block"><pre>const orgSelect = document.querySelector('#cascade-org');
-const buSelect = document.querySelector('#cascade-bu');
-const deptSelect = document.querySelector('#cascade-dept');
+                    const organizations = [
+                        { value: 'acme', label: 'ACME Corporation' },
+                        { value: 'globex', label: 'Globex Corporation' },
+                        { value: 'initech', label: 'Initech' }
+                    ];
+                    const businessUnits = {
+                        acme: [
+                            { value: 'acme-eng', label: 'Engineering' },
+                            { value: 'acme-sales', label: 'Sales' },
+                            { value: 'acme-ops', label: 'Operations' }
+                        ],
+                        globex: [
+                            { value: 'globex-rd', label: 'Research & Development' },
+                            { value: 'globex-mkt', label: 'Marketing' },
+                            { value: 'globex-hr', label: 'Human Resources' }
+                        ],
+                        initech: [
+                            { value: 'initech-it', label: 'IT Services' },
+                            { value: 'initech-fin', label: 'Finance' }
+                        ]
+                    };
+                    const departments = {
+                        'acme-eng': [
+                            { value: 'acme-eng-fe', label: 'Frontend Team' },
+                            { value: 'acme-eng-be', label: 'Backend Team' },
+                            { value: 'acme-eng-qa', label: 'QA Team' }
+                        ],
+                        'acme-sales': [
+                            { value: 'acme-sales-na', label: 'North America' },
+                            { value: 'acme-sales-eu', label: 'Europe' }
+                        ],
+                        'acme-ops': [
+                            { value: 'acme-ops-dc', label: 'Data Center' },
+                            { value: 'acme-ops-cloud', label: 'Cloud Operations' }
+                        ],
+                        'globex-rd': [
+                            { value: 'globex-rd-adv', label: 'Advanced Research' },
+                            { value: 'globex-rd-prod', label: 'Product Development' }
+                        ],
+                        'globex-mkt': [
+                            { value: 'globex-mkt-digital', label: 'Digital Marketing' },
+                            { value: 'globex-mkt-brand', label: 'Brand Management' }
+                        ],
+                        'globex-hr': [
+                            { value: 'globex-hr-recruit', label: 'Recruitment' },
+                            { value: 'globex-hr-learning', label: 'Learning & Development' }
+                        ],
+                        'initech-it': [
+                            { value: 'initech-it-infra', label: 'Infrastructure' },
+                            { value: 'initech-it-sec', label: 'Security' }
+                        ],
+                        'initech-fin': [
+                            { value: 'initech-fin-acc', label: 'Accounting' },
+                            { value: 'initech-fin-audit', label: 'Audit' }
+                        ]
+                    };
 
-// Initialize first level
-orgSelect.options = organizations;
+                    // Simulated API calls (300 ms network delay)
+                    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+                    const fetchBusinessUnits = async (orgId) => { await delay(300); return businessUnits[orgId] || []; };
+                    const fetchDepartments = async (buId) => { await delay(300); return departments[buId] || []; };
 
-// When organization changes, update business units
-orgSelect.addEventListener('change', async (e) =&gt; {
-    const orgId = e.detail.selectedValues[0];
+                    // Initialize the first level
+                    orgSelect.options = organizations;
 
-    if (orgId) {
-        // Fetch business units (simulated async)
-        const buOptions = await fetchBusinessUnits(orgId);
+                    // Organization changed → load its business units
+                    orgSelect.addEventListener('change', async (e) => {
+                        const orgId = e.detail.selectedValues[0];
 
-        // REACTIVE UPDATE - automatically re-renders!
-        buSelect.options = buOptions;
-        buSelect.setSelected([]);  // Clear previous selection
+                        if (orgId) {
+                            buStatus.textContent = '(loading...)';
+                            const buOptions = await fetchBusinessUnits(orgId);
 
-        // Clear departments
-        deptSelect.options = [];
-        deptSelect.setSelected([]);
-    } else {
-        // Organization cleared - reset cascade
-        buSelect.options = [];
-        deptSelect.options = [];
-    }
-});
+                            // REACTIVE UPDATE - automatically re-renders!
+                            buSelect.options = buOptions;
+                            buSelect.setSelected([]);  // clear the previous selection
+                            buStatus.textContent = `(${buOptions.length} available)`;
 
-// When business unit changes, update departments
-buSelect.addEventListener('change', async (e) =&gt; {
-    const buId = e.detail.selectedValues[0];
+                            // Clear departments
+                            deptSelect.options = [];
+                            deptSelect.setSelected([]);
+                            deptStatus.textContent = '(select business unit first)';
+                        } else {
+                            // Organization cleared - reset the cascade
+                            buSelect.options = [];
+                            deptSelect.options = [];
+                            buStatus.textContent = '(select organization first)';
+                            deptStatus.textContent = '(select business unit first)';
+                        }
+                    });
 
-    if (buId) {
-        // Fetch departments (simulated async)
-        const deptOptions = await fetchDepartments(buId);
+                    // Business unit changed → load its departments
+                    buSelect.addEventListener('change', async (e) => {
+                        const buId = e.detail.selectedValues[0];
 
-        // REACTIVE UPDATE - automatically re-renders!
-        deptSelect.options = deptOptions;
-        deptSelect.setSelected([]);
-    } else {
-        deptSelect.options = [];
-    }
-});</pre></div>
+                        if (buId) {
+                            deptStatus.textContent = '(loading...)';
+                            const deptOptions = await fetchDepartments(buId);
+
+                            // REACTIVE UPDATE - automatically re-renders!
+                            deptSelect.options = deptOptions;
+                            deptSelect.setSelected([]);
+                            deptStatus.textContent = `(${deptOptions.length} available)`;
+                        } else {
+                            deptSelect.options = [];
+                            deptStatus.textContent = '(select business unit first)';
+                        }
+                    });
+                </script>
+            </kmwc-demo>
 
             <p class="code-label">Key Reactive Behaviors:</p>
             <ul class="feature-list">
@@ -669,22 +804,33 @@ buSelect.addEventListener('change', async (e) =&gt; {
                 is what previously mis-rendered when the two calls raced).
             </p>
 
-            <div class="code-block"><pre>const el = document.querySelector('#compact-mode');
-el.options = languages;          // reactive write (coalesces on a microtask)
-el.setSelected(['js', 'ts', 'py']); // imperative call flushes it synchronously</pre></div>
-
-            <div class="grid-2">
-                <div class="demo-area">
+            <kmwc-demo preview-class="demo-area grid-2">
+                <div>
                     <label class="demo-label">Partial badges (pre-selected):</label>
                     <web-multiselect id="partial-mode" badges-display-mode="partial" max-visible-badge-count="2"
                         value-member="value" display-value-member="label"></web-multiselect>
                 </div>
-                <div class="demo-area">
+                <div>
                     <label class="demo-label">Compact badges (pre-selected):</label>
                     <web-multiselect id="compact-mode" badges-display-mode="compact"
                         value-member="value" display-value-member="label"></web-multiselect>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    const languages = [
+                        { value: 'js', label: 'JavaScript' },
+                        { value: 'ts', label: 'TypeScript' },
+                        { value: 'py', label: 'Python' },
+                        { value: 'go', label: 'Go' },
+                        { value: 'rust', label: 'Rust' }
+                    ];
+
+                    for (const id of ['partial-mode', 'compact-mode']) {
+                        const el = document.getElementById(id);
+                        el.options = languages;              // reactive write (coalesces on a microtask)
+                        el.setSelected(['js', 'ts', 'py']);  // imperative call flushes it synchronously
+                    }
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Deferred initialization: the render gate -->
@@ -855,28 +1001,6 @@ el.refresh();                     // silent repaint — never call both after an
                 eventsSelect.addEventListener('change', (e) => logEvent('change', { count: e.detail.selectedOptions?.length, selectedValues: e.detail.selectedValues, selectedLabels: e.detail.selectedOptions?.map(o => o.label) }));
             }
 
-            // API06: synchronous options-then-setSelected across badge modes. Assigning
-            // .options then calling setSelected() on the next line (no await) must render the
-            // pre-set selection right away — the imperative call flushes the coalesced options
-            // write. Compact mode's composite badge is the one that regressed when they raced.
-            const badgeModeData = [
-                { value: 'js', label: 'JavaScript' },
-                { value: 'ts', label: 'TypeScript' },
-                { value: 'py', label: 'Python' },
-                { value: 'go', label: 'Go' },
-                { value: 'rust', label: 'Rust' }
-            ];
-            const partialMode = document.querySelector('#partial-mode');
-            if (partialMode) {
-                partialMode.options = badgeModeData;
-                partialMode.setSelected(['js', 'ts', 'py']);
-            }
-            const compactMode = document.querySelector('#compact-mode');
-            if (compactMode) {
-                compactMode.options = badgeModeData;
-                compactMode.setSelected(['js', 'ts', 'py']);
-            }
-
             // API10: in-place options update, refresh(), prune-missing-selection. A fresh seed
             // each time so the demos never share array/object identity with one another.
             const fruitSeed = () => ([
@@ -908,89 +1032,6 @@ el.refresh();                     // silent repaint — never call both after an
             if (keepDemo) { keepDemo.options = fruitSeed(); keepDemo.setSelected(['cherry']); }
             const pruneDemo = document.querySelector('#prune-demo');
             if (pruneDemo) { pruneDemo.options = fruitSeed(); pruneDemo.setSelected(['cherry']); }
-
-            // Example 1: Custom Objects
-            const customObjectsSelect = document.querySelector('#custom-objects');
-            customObjectsSelect.options = [
-                { userId: 1, fullName: 'John Doe', email: 'john@example.com', role: 'Admin', avatar: '👨‍💼' },
-                { userId: 2, fullName: 'Jane Smith', email: 'jane@example.com', role: 'User', avatar: '👩‍💻' },
-                { userId: 3, fullName: 'Alice Johnson', email: 'alice@example.com', role: 'Manager', avatar: '👩‍💼' },
-                { userId: 4, fullName: 'Bob Wilson', email: 'bob@example.com', role: 'User', avatar: '👨‍💻' }
-            ];
-
-            customObjectsSelect.addEventListener('change', () => {
-                const value = customObjectsSelect.selectedValue;
-                document.getElementById('output-custom-objects').textContent = JSON.stringify(value, null, 2);
-            });
-
-            // Example 2: Tuples
-            const tuplesSelect = document.querySelector('#tuples');
-            tuplesSelect.options = [
-                ['js', 'JavaScript'],
-                ['ts', 'TypeScript'],
-                ['py', 'Python'],
-                ['go', 'Go'],
-                ['rust', 'Rust'],
-                ['java', 'Java']
-            ];
-
-            tuplesSelect.addEventListener('change', () => {
-                const value = tuplesSelect.selectedValue;
-                document.getElementById('output-tuples').textContent = JSON.stringify(value, null, 2);
-            });
-
-            // Example 3: Callbacks
-            const callbacksSelect = document.querySelector('#callbacks');
-            const products = [
-                { sku: 'PRD-001', name: 'Laptop', price: 999, inStock: true },
-                { sku: 'PRD-002', name: 'Mouse', price: 29, inStock: false },
-                { sku: 'PRD-003', name: 'Keyboard', price: 79, inStock: true },
-                { sku: 'PRD-004', name: 'Monitor', price: 299, inStock: false },
-                { sku: 'PRD-005', name: 'Webcam', price: 89, inStock: true }
-            ];
-
-            callbacksSelect.getValueCallback = ({ option }) => option.sku;
-            callbacksSelect.getDisplayValueCallback = ({ option }) => `${option.name} - $${option.price}`;
-            callbacksSelect.getSubtitleCallback = ({ option }) => option.inStock ? 'In Stock ✓' : 'Out of Stock';
-            callbacksSelect.getIsDisabledCallback = ({ option }) => !option.inStock;
-            callbacksSelect.options = products;
-
-            callbacksSelect.addEventListener('change', () => {
-                const value = callbacksSelect.selectedValue;
-                const items = callbacksSelect.selectedOptions;
-                document.getElementById('output-callbacks').textContent = JSON.stringify({
-                    skus: value,
-                    products: items.map(p => ({ name: p.name, price: p.price }))
-                }, null, 2);
-            });
-
-            // Example 4-6: Form Integration
-            const formJsonSelect = document.querySelector('#form-json-select');
-            formJsonSelect.options = [
-                ['js', 'JavaScript'],
-                ['ts', 'TypeScript'],
-                ['py', 'Python'],
-                ['react', 'React'],
-                ['vue', 'Vue.js']
-            ];
-
-            const formCsvSelect = document.querySelector('#form-csv-select');
-            formCsvSelect.options = [
-                ['tech', 'Technology'],
-                ['design', 'Design'],
-                ['business', 'Business'],
-                ['marketing', 'Marketing'],
-                ['sales', 'Sales']
-            ];
-
-            const formArraySelect = document.querySelector('#form-array-select');
-            formArraySelect.options = [
-                ['urgent', 'Urgent'],
-                ['feature', 'Feature Request'],
-                ['bug', 'Bug Fix'],
-                ['enhancement', 'Enhancement'],
-                ['documentation', 'Documentation']
-            ];
 
             // Example 7: Mode-dependent API
             const singleModeSelect = document.querySelector('#single-mode');
@@ -1373,113 +1414,11 @@ el.refresh();                     // silent repaint — never call both after an
                 document.getElementById('output-countries').textContent = JSON.stringify(value, null, 2);
             });
 
-            // Cascading Selects (Reactive Options)
+            // Cascading Selects (DA05) — the data loading lives in the demo's shown script;
+            // this is page harness: the keyboard-flow controls, the "Selected Path" output, Reset.
             const cascadeOrgSelect = document.querySelector('#cascade-org');
             const cascadeBuSelect = document.querySelector('#cascade-bu');
             const cascadeDeptSelect = document.querySelector('#cascade-dept');
-
-            // Mock data structure
-            const mockData = {
-                organizations: [
-                    { value: 'acme', label: 'ACME Corporation' },
-                    { value: 'globex', label: 'Globex Corporation' },
-                    { value: 'initech', label: 'Initech' }
-                ],
-                businessUnits: {
-                    acme: [
-                        { value: 'acme-eng', label: 'Engineering' },
-                        { value: 'acme-sales', label: 'Sales' },
-                        { value: 'acme-ops', label: 'Operations' }
-                    ],
-                    globex: [
-                        { value: 'globex-rd', label: 'Research & Development' },
-                        { value: 'globex-mkt', label: 'Marketing' },
-                        { value: 'globex-hr', label: 'Human Resources' }
-                    ],
-                    initech: [
-                        { value: 'initech-it', label: 'IT Services' },
-                        { value: 'initech-fin', label: 'Finance' }
-                    ]
-                },
-                departments: {
-                    'acme-eng': [
-                        { value: 'acme-eng-fe', label: 'Frontend Team' },
-                        { value: 'acme-eng-be', label: 'Backend Team' },
-                        { value: 'acme-eng-qa', label: 'QA Team' }
-                    ],
-                    'acme-sales': [
-                        { value: 'acme-sales-na', label: 'North America' },
-                        { value: 'acme-sales-eu', label: 'Europe' }
-                    ],
-                    'acme-ops': [
-                        { value: 'acme-ops-dc', label: 'Data Center' },
-                        { value: 'acme-ops-cloud', label: 'Cloud Operations' }
-                    ],
-                    'globex-rd': [
-                        { value: 'globex-rd-adv', label: 'Advanced Research' },
-                        { value: 'globex-rd-prod', label: 'Product Development' }
-                    ],
-                    'globex-mkt': [
-                        { value: 'globex-mkt-digital', label: 'Digital Marketing' },
-                        { value: 'globex-mkt-brand', label: 'Brand Management' }
-                    ],
-                    'globex-hr': [
-                        { value: 'globex-hr-recruit', label: 'Recruitment' },
-                        { value: 'globex-hr-learning', label: 'Learning & Development' }
-                    ],
-                    'initech-it': [
-                        { value: 'initech-it-infra', label: 'Infrastructure' },
-                        { value: 'initech-it-sec', label: 'Security' }
-                    ],
-                    'initech-fin': [
-                        { value: 'initech-fin-acc', label: 'Accounting' },
-                        { value: 'initech-fin-audit', label: 'Audit' }
-                    ]
-                }
-            };
-
-            // Simulate async data fetching
-            const fetchBusinessUnits = (orgId) => {
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(mockData.businessUnits[orgId] || []);
-                    }, 300); // Simulate network delay
-                });
-            };
-
-            const fetchDepartments = (buId) => {
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(mockData.departments[buId] || []);
-                    }, 300); // Simulate network delay
-                });
-            };
-
-            // Track current selections
-            let currentSelection = {
-                organization: null,
-                organizationLabel: null,
-                businessUnit: null,
-                businessUnitLabel: null,
-                department: null,
-                departmentLabel: null
-            };
-
-            // Update output display
-            const updateCascadeOutput = () => {
-                const output = document.getElementById('output-cascade');
-                output.textContent = JSON.stringify({
-                    organization: currentSelection.organizationLabel,
-                    organizationId: currentSelection.organization,
-                    businessUnit: currentSelection.businessUnitLabel,
-                    businessUnitId: currentSelection.businessUnit,
-                    department: currentSelection.departmentLabel,
-                    departmentId: currentSelection.department
-                }, null, 2);
-            };
-
-            // Initialize organization select with data
-            cascadeOrgSelect.options = mockData.organizations;
 
             // Keyboard-flow controls: apply to all three levels (empty = remove the attribute → mode default).
             const cascadeAll = [cascadeOrgSelect, cascadeBuSelect, cascadeDeptSelect];
@@ -1490,106 +1429,54 @@ el.refresh();                     // silent repaint — never call both after an
             document.getElementById('cascade-keep-search').addEventListener('change', (e) =>
                 applyCascadeAttr('keep-search-on-close', e.target.value));
 
-            // Organization change handler
-            cascadeOrgSelect.addEventListener('change', async (e) => {
+            // Track current selections (a level change resets everything below it)
+            const emptyCascadeSelection = () => ({
+                organization: null,
+                organizationLabel: null,
+                businessUnit: null,
+                businessUnitLabel: null,
+                department: null,
+                departmentLabel: null
+            });
+            let currentSelection = emptyCascadeSelection();
+
+            const updateCascadeOutput = () => {
+                document.getElementById('output-cascade').textContent = JSON.stringify({
+                    organization: currentSelection.organizationLabel,
+                    organizationId: currentSelection.organization,
+                    businessUnit: currentSelection.businessUnitLabel,
+                    businessUnitId: currentSelection.businessUnit,
+                    department: currentSelection.departmentLabel,
+                    departmentId: currentSelection.department
+                }, null, 2);
+            };
+
+            cascadeOrgSelect.addEventListener('change', (e) => {
                 const orgId = e.detail.selectedValues[0];
                 const orgItem = e.detail.selectedOptions[0];
-
+                currentSelection = emptyCascadeSelection();
                 if (orgId) {
-                    // Update selection
                     currentSelection.organization = orgId;
                     currentSelection.organizationLabel = orgItem ? orgItem.label : null;
-                    currentSelection.businessUnit = null;
-                    currentSelection.businessUnitLabel = null;
-                    currentSelection.department = null;
-                    currentSelection.departmentLabel = null;
-
-                    // Update status
-                    document.getElementById('bu-status').textContent = '(loading...)';
-
-                    // Fetch business units
-                    const buOptions = await fetchBusinessUnits(orgId);
-
-                    // REACTIVE UPDATE - automatically re-renders!
-                    cascadeBuSelect.options = buOptions;
-                    cascadeBuSelect.setSelected([]);
-
-                    // Update status
-                    document.getElementById('bu-status').textContent = `(${buOptions.length} available)`;
-
-                    // Clear departments
-                    cascadeDeptSelect.options = [];
-                    cascadeDeptSelect.setSelected([]);
-                    document.getElementById('dept-status').textContent = '(select business unit first)';
-                } else {
-                    // Organization cleared - reset everything
-                    currentSelection.organization = null;
-                    currentSelection.organizationLabel = null;
-                    currentSelection.businessUnit = null;
-                    currentSelection.businessUnitLabel = null;
-                    currentSelection.department = null;
-                    currentSelection.departmentLabel = null;
-
-                    cascadeBuSelect.options = [];
-                    cascadeDeptSelect.options = [];
-                    document.getElementById('bu-status').textContent = '(select organization first)';
-                    document.getElementById('dept-status').textContent = '(select business unit first)';
                 }
-
                 updateCascadeOutput();
             });
 
-            // Business unit change handler
-            cascadeBuSelect.addEventListener('change', async (e) => {
+            cascadeBuSelect.addEventListener('change', (e) => {
                 const buId = e.detail.selectedValues[0];
                 const buItem = e.detail.selectedOptions[0];
-
-                if (buId) {
-                    // Update selection
-                    currentSelection.businessUnit = buId;
-                    currentSelection.businessUnitLabel = buItem ? buItem.label : null;
-                    currentSelection.department = null;
-                    currentSelection.departmentLabel = null;
-
-                    // Update status
-                    document.getElementById('dept-status').textContent = '(loading...)';
-
-                    // Fetch departments
-                    const deptOptions = await fetchDepartments(buId);
-
-                    // REACTIVE UPDATE - automatically re-renders!
-                    cascadeDeptSelect.options = deptOptions;
-                    cascadeDeptSelect.setSelected([]);
-
-                    // Update status
-                    document.getElementById('dept-status').textContent = `(${deptOptions.length} available)`;
-                } else {
-                    // Business unit cleared
-                    currentSelection.businessUnit = null;
-                    currentSelection.businessUnitLabel = null;
-                    currentSelection.department = null;
-                    currentSelection.departmentLabel = null;
-
-                    cascadeDeptSelect.options = [];
-                    document.getElementById('dept-status').textContent = '(select business unit first)';
-                }
-
+                currentSelection.businessUnit = buId || null;
+                currentSelection.businessUnitLabel = buId && buItem ? buItem.label : null;
+                currentSelection.department = null;
+                currentSelection.departmentLabel = null;
                 updateCascadeOutput();
             });
 
-            // Department change handler
             cascadeDeptSelect.addEventListener('change', (e) => {
                 const deptId = e.detail.selectedValues[0];
                 const deptItem = e.detail.selectedOptions[0];
-
-                if (deptId) {
-                    currentSelection.department = deptId;
-                    currentSelection.departmentLabel = deptItem ? deptItem.label : null;
-                } else {
-                    currentSelection.department = null;
-                    currentSelection.departmentLabel = null;
-                }
-
+                currentSelection.department = deptId || null;
+                currentSelection.departmentLabel = deptId && deptItem ? deptItem.label : null;
                 updateCascadeOutput();
             });
 
@@ -1598,14 +1485,7 @@ el.refresh();                     // silent repaint — never call both after an
                 cascadeOrgSelect.setSelected([]);
                 cascadeBuSelect.options = [];
                 cascadeDeptSelect.options = [];
-                currentSelection = {
-                    organization: null,
-                    organizationLabel: null,
-                    businessUnit: null,
-                    businessUnitLabel: null,
-                    department: null,
-                    departmentLabel: null
-                };
+                currentSelection = emptyCascadeSelection();
                 document.getElementById('bu-status').textContent = '(select organization first)';
                 document.getElementById('dept-status').textContent = '(select business unit first)';
                 updateCascadeOutput();
@@ -1613,50 +1493,6 @@ el.refresh();                     // silent repaint — never call both after an
         });
 
         // Global functions for buttons
-        window.showCustomObjectsData = () => {
-            const select = document.querySelector('#custom-objects');
-            const value = select.selectedValue;
-            const item = select.selectedOption;
-            const selected = select.selectedOptions;
-
-            document.getElementById('output-custom-objects').textContent = JSON.stringify({
-                'selectedValue': value,
-                'selectedOption': item,
-                'selectedOptions': selected
-            }, null, 2);
-        };
-
-        window.setCustomObjects = () => {
-            const select = document.querySelector('#custom-objects');
-            select.setSelected([1, 3]); // John and Alice
-        };
-
-        window.showTuplesData = () => {
-            const select = document.querySelector('#tuples');
-            const value = select.selectedValue;
-            const selected = select.selectedOptions;
-
-            document.getElementById('output-tuples').textContent = JSON.stringify({
-                'selectedValue': value,
-                'selectedOptions': selected
-            }, null, 2);
-        };
-
-        window.setTuples = () => {
-            const select = document.querySelector('#tuples');
-            select.setSelected(['js', 'ts']);
-        };
-
-        window.showCallbacksData = () => {
-            const select = document.querySelector('#callbacks');
-            const value = select.selectedValue;
-            const items = select.selectedOptions;
-
-            document.getElementById('output-callbacks').textContent = JSON.stringify({
-                'selectedValue - SKUs': value,
-                'selectedOptions': items.map(p => ({ sku: p.sku, name: p.name, price: p.price }))
-            }, null, 2);
-        };
 
         window.inspectFormData = (formId) => {
             const form = document.getElementById(formId);
