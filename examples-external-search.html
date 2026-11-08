@@ -21,12 +21,6 @@
                 thread via <code>requestIdleCallback</code>. <strong>FlexSearch is a dev/consumer dependency only —
                 it is never part of the shipped multiselect bundle.</strong>
             </p>
-            <div class="code-block"><pre>import { FlexIndexer } from './examples-flex-indexer.js';
-
-const ix = new FlexIndexer();
-ix.build(options, (o) =&gt; `${o.label} ${o.code}`);   // index the options (batched)
-el.options = options;
-el.searchCallback = ({ term }) =&gt; ix.search(term, 50);   // externalize the whole search</pre></div>
             <p class="description">
                 The demo below is a flat list of cities with accented names. FlexSearch's
                 <code>Charset.Normalize</code> folds accents and <code>tokenize: "full"</code> matches partial tokens
@@ -35,10 +29,29 @@ el.searchCallback = ({ term }) =&gt; ix.search(term, 50);   // externalize the w
                 <code>muenchen</code>/<code>munch</code> → <em>München</em>. The built-in search finds the first
                 three too, but not <code>muenchen</code>, and it doesn't rank results.
             </p>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Search accent-free — it still matches:</label>
                 <web-multiselect id="cities" multiple="true" enable-search="true"></web-multiselect>
-            </div>
+                <script type="module" data-kmwc-show>
+                    import { FlexIndexer } from './examples-flex-indexer.js';   // small FlexSearch wrapper (demo code)
+
+                    const cities = [
+                        'Zürich', 'São Paulo', 'Kraków', 'München', 'Málaga', 'Düsseldorf', 'Reykjavík',
+                        'Bogotá', 'Medellín', 'Łódź', 'Gdańsk', 'Tromsø', 'Skopje', 'Chișinău', 'Timișoara',
+                        'Košice', 'Plzeň', 'Brno', 'Genève', 'Montréal', 'Québec', 'Đà Nẵng', 'Hạ Long',
+                        'Nürnberg', 'Örebro', 'Aarhus', 'Bratislava', 'Ljubljana', 'Zagreb', 'Poznań'
+                    ].map((name, i) => ({ value: String(i), label: name }));
+
+                    const index = new FlexIndexer((c) => c.label);   // one full-tokenize text field
+                    index.build(cities);                              // batched, off the main thread
+
+                    const el = document.getElementById('cities');
+                    el.valueMember = 'value';
+                    el.displayValueMember = 'label';
+                    el.options = cities;
+                    el.searchCallback = ({ term }) => index.search(term, 20);   // externalize the whole search
+                </script>
+            </kmwc-demo>
         </section>
 
         <!-- Demo B: ISCO tree + external index -->
@@ -105,24 +118,42 @@ el.searchCallback = ({ term }) =&gt; ix.search(term, 50);   // externalize the w
                 and key it on that array. It's also built lazily: a server-backed callback that never reads it pays
                 nothing. <code>normalizeSearchText</code> is the built-in normalization, exported for exactly this.
             </p>
-            <div class="code-block"><pre>import { normalizeSearchText } from '@keenmate/web-multiselect';
-
-el.getSearchValueCallback = ({ option: c }) =&gt; ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
-el.getSearchTermCallback = ({ term, target }) =&gt;
-    target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
-
-el.searchCallback = ({ term, entries }) =&gt;
-    entries
-        .filter((e) =&gt; e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-        .map((e) =&gt; e.data);</pre></div>
-            <div class="demo-area">
+            <kmwc-demo>
                 <label class="demo-label">Search by city name or postal code:</label>
                 <web-multiselect id="zip-search" multiple="true" enable-search="true" labels='{"searchPlaceholder": "Try 381, 370 0, cesk, kralove…"}'></web-multiselect>
                 <div class="output">
                     <div class="output-label">Last call:</div>
                     <pre id="zip-search-out">type to search…</pre>
                 </div>
-            </div>
+                <script type="module" data-kmwc-show>
+                    import { normalizeSearchText } from '/src/index.ts';   // '@keenmate/web-multiselect' in your app
+
+                    const cities = [
+                        ['Praha', '110 00'], ['Brno', '602 00'], ['Ostrava', '702 00'], ['Plzeň', '301 00'],
+                        ['Olomouc', '779 00'], ['Liberec', '460 01'], ['České Budějovice', '370 01'],
+                        ['Český Krumlov', '381 01'], ['Hradec Králové', '500 02'], ['Dvůr Králové nad Labem', '544 01'],
+                        ['Ústí nad Labem', '400 01'], ['Pardubice', '530 02'], ['Zlín', '760 01'], ['Jihlava', '586 01']
+                    ].map(([label, zip], i) => ({ value: String(i), label, zip }));
+
+                    const el = document.getElementById('zip-search');
+                    el.valueMember = 'value';
+                    el.displayValueMember = 'label';
+                    el.subtitleMember = 'zip';
+                    el.options = cities;
+
+                    // One search value per option (computed once) — an object here: name + postal code.
+                    el.getSearchValueCallback = ({ option: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
+                    // Prepare the typed term the same way for the callback.
+                    el.getSearchTermCallback = ({ term, target }) =>
+                        target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
+
+                    // entries = [{ data, searchValue }, …] — the same array on every call until the options change.
+                    el.searchCallback = ({ term, entries }) =>
+                        entries
+                            .filter((e) => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
+                            .map((e) => e.data);
+                </script>
+            </kmwc-demo>
         </section>
 
     <script type="module">
@@ -161,29 +192,8 @@ el.searchCallback = ({ term, entries }) =&gt;
             throw err;
         }
 
-        // --- Demo A: flat cities with accents ---------------------------------
-        (async () => {
-            const section = document.querySelector('#cities')?.closest('.example-section');
-            try {
-                const cities = [
-                    'Zürich', 'São Paulo', 'Kraków', 'München', 'Málaga', 'Düsseldorf', 'Reykjavík',
-                    'Bogotá', 'Medellín', 'Łódź', 'Gdańsk', 'Tromsø', 'Skopje', 'Chișinău', 'Timișoara',
-                    'Košice', 'Plzeň', 'Brno', 'Genève', 'Montréal', 'Québec', 'Đà Nẵng', 'Hạ Long',
-                    'Nürnberg', 'Örebro', 'Aarhus', 'Bratislava', 'Ljubljana', 'Zagreb', 'Poznań'
-                ].map((name, i) => ({ value: String(i), label: name }));
-
-                await ready;
-                const cityIx = new FlexIndexer((c) => c.label); // one full-tokenize text field
-                cityIx.build(cities);
-                const citiesEl = document.querySelector('#cities');
-                citiesEl.valueMember = 'value';
-                citiesEl.displayValueMember = 'label';
-                citiesEl.options = cities;
-                citiesEl.searchCallback = ({ term }) => cityIx.search(term, 20);
-            } catch (err) {
-                fail(section, err);
-            }
-        })();
+        // ES01 (cities) and ES04 (zip-search) configure their pickers in their own shown
+        // demo scripts; ES04's "Last call" read-out is page harness, below.
 
         // --- Demo B: full ISCO-08 tree ----------------------------------------
         (async () => {
@@ -268,42 +278,26 @@ el.searchCallback = ({ term, entries }) =&gt;
             }
         })();
 
-        // --- Demo D: object search values + ctx.entries --------------------
+        // --- Demo D harness: report each searchCallback call in the "Last call" panel ---
+        // Wraps the callback the shown ES04 script set — the demo code itself stays clean.
         (async () => {
             const section = document.querySelector('#zip-search')?.closest('.example-section');
             try {
-                const { normalizeSearchText } = await import('/src/index.ts');
-                const cities = [
-                    ['Praha', '110 00'], ['Brno', '602 00'], ['Ostrava', '702 00'], ['Plzeň', '301 00'],
-                    ['Olomouc', '779 00'], ['Liberec', '460 01'], ['České Budějovice', '370 01'],
-                    ['Český Krumlov', '381 01'], ['Hradec Králové', '500 02'], ['Dvůr Králové nad Labem', '544 01'],
-                    ['Ústí nad Labem', '400 01'], ['Pardubice', '530 02'], ['Zlín', '760 01'], ['Jihlava', '586 01']
-                ].map(([label, zip], i) => ({ value: String(i), label, zip }));
-
                 await ready;
                 const el = document.querySelector('#zip-search');
                 const out = document.querySelector('#zip-search-out');
-                el.valueMember = 'value';
-                el.displayValueMember = 'label';
-                el.subtitleMember = 'zip';
-                el.options = cities;
-
-                el.getSearchValueCallback = ({ option: c }) => ({ title: normalizeSearchText(c.label), zip: c.zip.replace(/\s/g, '') });
-                el.getSearchTermCallback = ({ term, target }) =>
-                    target === 'callback' ? { zip: term.replace(/\s/g, ''), text: normalizeSearchText(term) } : term;
-
+                const search = el.searchCallback;
+                if (typeof search !== 'function') throw new Error('ES04 demo script did not set searchCallback');
                 let firstEntries = null;
                 let calls = 0;
-                el.searchCallback = ({ term, entries }) => {
-                    firstEntries ??= entries;
+                el.searchCallback = (ctx) => {
+                    firstEntries ??= ctx.entries;
                     calls++;
-                    const results = entries
-                        .filter((e) => e.searchValue.zip.startsWith(term.zip) || e.searchValue.title.includes(term.text))
-                        .map((e) => e.data);
+                    const results = search(ctx);
                     out.textContent =
-                        `term:       ${JSON.stringify(term)}\n` +
-                        `results:    ${results.length} of ${entries.length}\n` +
-                        `entries is the same array as on call 1: ${entries === firstEntries} (call ${calls})`;
+                        `term:       ${JSON.stringify(ctx.term)}\n` +
+                        `results:    ${results.length} of ${ctx.entries.length}\n` +
+                        `entries is the same array as on call 1: ${ctx.entries === firstEntries} (call ${calls})`;
                     return results;
                 };
             } catch (err) {
