@@ -721,7 +721,7 @@ viewport under virtual scroll; `null` when the list fits). Return:
 - nothing — the defaults.
 
 A throwing callback skips the scroll (logged). There is no scroll event. Demo:
-`examples-basic.html` BU09.
+`examples-basic.html` BU10.
 
 ### Controller (`el.controller`)
 

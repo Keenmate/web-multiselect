@@ -231,36 +231,44 @@
                         <small class="form-text">Second-line descriptions come from <code>data-subtitle</code>.</small>
                     </div>
                 </div>
+            </kmwc-demo>
+        </div>
 
-                <div class="grid mt-1">
+        <!-- ============================================================= -->
+        <!-- BU05 · Disabled / Readonly States                               -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>BU05 · Disabled / Readonly States</h2>
+            <kmwc-demo>
+                <div class="grid">
                     <div class="form-group">
-                        <label>Whole control <code>disabled</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                        <label>Disabled Multiselect</label>
                         <web-multiselect id="decl-disabled" disabled show-counter show-clear>
                             <option value="red" selected>Red</option>
                             <option value="green" selected>Green</option>
                             <option value="blue">Blue</option>
                         </web-multiselect>
-                        <small class="form-text">No interaction, not focusable, and the value is <strong>not</strong> submitted with a form — like a native <code>disabled</code> control. A disabled <code>&lt;fieldset&gt;</code> does the same. The counter still shows the tally (dimmed); the inline clear (✕) and the badge ✕ are hidden.</small>
+                        <small class="form-text">No interaction, not focusable, not submitted with a form</small>
                     </div>
 
                     <div class="form-group">
-                        <label>Whole control <code>readonly</code> (+ <code>show-counter</code>, <code>show-clear</code>)</label>
+                        <label>Readonly Multiselect</label>
                         <web-multiselect id="decl-readonly" readonly show-counter show-clear>
                             <option value="red" selected>Red</option>
                             <option value="green" selected>Green</option>
                             <option value="blue">Blue</option>
                         </web-multiselect>
-                        <small class="form-text">The selection can't be changed and the dropdown doesn't open, but the control stays focusable and its value <strong>is</strong> submitted. The counter shows the tally; the inline clear (✕) and the badge ✕ are hidden.</small>
+                        <small class="form-text">The value can't change; still focusable and copyable, submitted with a form</small>
                     </div>
                 </div>
             </kmwc-demo>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU05 · Scroll-to API                                            -->
+        <!-- BU06 · Scroll-to API                                            -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU05 · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
+            <h2>BU06 · Scroll-to API — <code>scrollToGroup</code> / <code>scrollToValue</code> / <code>scrollToIndex</code></h2>
             <p>
                 Imperative commands that bring an option or group into view. Pair with <code>open()</code>
                 for an "open + jump" gesture. They work in floating, mobile fullscreen, virtual-scroll
@@ -339,10 +347,10 @@ el.scrollToValue('jp');</code></pre>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU06 · Search                                                   -->
+        <!-- BU07 · Search                                                   -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU06 · Search</h2>
+            <h2>BU07 · Search</h2>
             <p>
                 <strong>Filter</strong> mode hides non-matches; <strong>navigate</strong> mode keeps
                 every option visible and jumps focus between matches (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd> +
@@ -423,10 +431,10 @@ el.scrollToValue('jp');</code></pre>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU07 · Search matching                                          -->
+        <!-- BU08 · Search matching                                          -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU07 · Search matching — <code>search-behavior</code> &amp; <code>search-match</code></h2>
+            <h2>BU08 · Search matching — <code>search-behavior</code> &amp; <code>search-match</code></h2>
             <p>
                 Two independent switches for the built-in search. <code>search-behavior</code> decides how text
                 is <strong>normalized</strong>: <code>normalized</code> (the default) ignores case and accents, so
@@ -502,10 +510,10 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU08 · Preparing the term                                       -->
+        <!-- BU09 · Preparing the term                                       -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU08 · Preparing the term — <code>getSearchTermCallback</code></h2>
+            <h2>BU09 · Preparing the term — <code>getSearchTermCallback</code></h2>
             <p>
                 <code>getSearchTermCallback</code> turns what the user typed into what search should look for.
                 Return a string (used as-is) or a <code>RegExp</code>. Here part numbers are written with all sorts
@@ -549,10 +557,10 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
         </div>
 
         <!-- ============================================================= -->
-        <!-- BU09 · Scrolling the list                                       -->
+        <!-- BU10 · Scrolling the list                                       -->
         <!-- ============================================================= -->
         <div class="card">
-            <h2>BU09 · Scrolling the list — <code>beforeScrollCallback</code></h2>
+            <h2>BU10 · Scrolling the list — <code>beforeScrollCallback</code></h2>
             <p>
                 The dropdown scrolls an option into view on its own: a keyboard move (<code>keyboard</code>),
                 a navigate-mode match (<code>search</code>), the selected option of a single-select on open
@@ -651,7 +659,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             { value: 'redis', label: 'Redis', icon: '🔴', group: 'database' }
         ];
 
-        // BU05's grouped list: the same groups, long enough that every group overflows the
+        // BU06's grouped list: the same groups, long enough that every group overflows the
         // dropdown on its own — so each scrollTo* jump actually has to scroll.
         const scrollGroupedTechnologies = [
             ...groupedTechnologies.filter(t => t.group === 'frontend'),
@@ -813,7 +821,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                         : null; // null → default `[x]`
                 }));
 
-            // ── BU04 · Scroll-to API ─────────────────────────────────────
+            // ── BU06 · Scroll-to API ─────────────────────────────────────
             const scrollGrouped = document.getElementById('scroll-grouped');
             const scrollVirtual = document.getElementById('scroll-virtual');
             const scrollLogEl = document.getElementById('scroll-log');
@@ -849,7 +857,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
                 scrollLog(`   ↳ scrollTop=${Math.round(container.scrollTop)} · shows "${first}" … "${last}" (${visible.length} rows)${targetNote}`);
             };
 
-            // The block option for every BU05 jump ('' = the method's default, 'start').
+            // The block option for every BU06 jump ('' = the method's default, 'start').
             const scrollBlock = () => document.querySelector('input[name="scroll-block"]:checked').value;
             document.querySelectorAll('input[name="scroll-behavior"]').forEach((r) =>
                 r.addEventListener('change', (e) => {
@@ -881,7 +889,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             document.querySelectorAll('[data-scroll-virtual]').forEach((btn) =>
                 btn.addEventListener('click', () => runScroll(scrollVirtual, btn.dataset.scrollVirtual)));
 
-            // ── BU05 · Search ────────────────────────────────────────────
+            // ── BU07 · Search ────────────────────────────────────────────
             const exSearch = document.getElementById('ex-search');
             exSearch.options = countriesWithFlags;
 
