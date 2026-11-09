@@ -104,6 +104,30 @@ test.describe('close-on-scroll (default true, like a native select)', () => {
         await page.waitForTimeout(300);
         expect(await isOpen(ms)).toBe(true);
     });
+
+    test('Tab into a field below the fold: the browser scrolling it into view keeps it open; a real page scroll closes it', async ({ page }) => {
+        // Firefox scrolls the field into view BEFORE focus (which opens the dropdown), then makes a
+        // 1px correction scroll a frame later — that must not count as the user scrolling away.
+        await page.setViewportSize({ width: 1200, height: 700 });
+        await page.evaluate(() => {
+            document.body.style.paddingBottom = '2000px';
+            const box = document.createElement('div');
+            box.innerHTML = `<button id="before-fold">before</button><div style="height: 1200px"></div>
+                <web-multiselect id="fold-picker"></web-multiselect>`;
+            document.body.prepend(box);
+            (box.querySelector('web-multiselect') as any).options = Array.from({ length: 40 }, (_, i) => ({ value: `v${i}`, label: `Option ${i}` }));
+            window.scrollTo(0, 0);
+        });
+        const ms = page.locator('#fold-picker');
+        await ms.evaluate((h: any) => h.whenReady());
+        await page.locator('#before-fold').focus();
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(300);
+        expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0); // the browser scrolled it into view
+        expect(await isOpen(ms)).toBe(true);
+        await page.evaluate(() => window.scrollBy(0, 200));
+        await expect.poll(() => isOpen(ms)).toBe(false);
+    });
 });
 
 test('the close event says why: detail.reason', async ({ page }) => {

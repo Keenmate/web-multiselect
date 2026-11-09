@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Internal
 - `@keenmate/web-components-devkit` ^1.0.0-rc10 → ^1.0.0-rc11: every example page now ends with the devkit
   footer (Keenmate | GitHub | devkit version), as the index did. No generated file changes.
+- e2e regression test: Tab into a multiselect below the fold keeps the dropdown open while the browser
+  scrolls the field into view (Firefox's 1px follow-up scroll used to close it — fixed in core rc21's
+  scroll-close rule); a real page scroll afterwards still closes it.
 
 ## [3.0.0-rc02] - 2026-11-04 [PUBLISHED]
 
