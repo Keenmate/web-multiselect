@@ -13,6 +13,8 @@ function make(): VirtualScroll<number> {
     document.body.appendChild(container);
     // happy-dom has no layout: give the viewport a height
     Object.defineProperty(container, 'clientHeight', { configurable: true, get: () => VIEWPORT });
+    // …and the scroll range the 100-row spacer produces (core's box math clamps to scrollHeight)
+    Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => 100 * ITEM });
     vs = new VirtualScroll<number>({ container, itemHeight: ITEM, items: Array.from({ length: 100 }, (_, i) => i), renderItem: (i) => `<div>${i}</div>` });
     return vs;
 }

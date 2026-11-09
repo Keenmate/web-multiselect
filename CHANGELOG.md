@@ -13,7 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anchor reads the token where the panel opens. Same 4px by default; set it page-wide, per section or on
   `web-multiselect { --base-dropdown-offset: … }`. The message bubble and tooltips keep their own spacing.
 
+### Fixed
+- **Virtual list jumps honour the options padding and `scroll-padding`**: a keyboard / search / `scrollToIndex()` jump
+  in a virtual list now measures rows from the padded content top (`--ms-options-padding`) and clamps to the real
+  scroll range, so with a non-zero padding the last row can be brought fully into view (it stopped one padding short)
+  and `start` / `nearest` / `end` no longer land one padding off. A `scroll-padding-top/bottom` on
+  `.ms__options` is honoured too. Default (padding 0, no scroll-padding) unchanged.
+
 ### Internal
+- Virtual-list index → `scrollTop` math (`VirtualScroll.scrollToIndex`, start / center / end / nearest + clamp) is
+  core's `getScrollTopForBox()` (core rc21, SPEC §12.15) instead of a private copy; the cached `scrollTop` sync and
+  synchronous re-render stay.
 - `@keenmate/web-components-devkit` ^1.0.0-rc10 → ^1.0.0-rc11: every example page now ends with the devkit
   footer (Keenmate | GitHub | devkit version), as the index did. No generated file changes.
 - e2e regression test: Tab into a multiselect below the fold keeps the dropdown open while the browser

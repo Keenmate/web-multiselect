@@ -16,7 +16,7 @@
  * ```
  */
 
-import { observeElementSize } from '@keenmate/web-components-core';
+import { getScrollTopForBox, observeElementSize } from '@keenmate/web-components-core';
 
 export interface VirtualScrollConfig<T> {
     /** Container element with overflow-y: auto */
@@ -244,35 +244,30 @@ export class VirtualScroll<T> {
         }
 
         // Refresh the height first — right after open() the container may not have been measured
-        // yet, and a stale (or 0) viewportHeight throws off the center/nearest math.
+        // yet, and render() below sizes the window from viewportHeight.
         this.updateViewportHeight();
 
-        const itemTop = index * this.itemHeight;
-        const itemBottom = itemTop + this.itemHeight;
-        const maxScroll = Math.max(0, this.items.length * this.itemHeight - this.viewportHeight);
-
-        let target: number;
-        if (block === 'center') {
-            target = itemTop - (this.viewportHeight - this.itemHeight) / 2;
-        } else if (block === 'end') {
-            target = itemBottom - this.viewportHeight;
-        } else if (block === 'nearest') {
-            const viewportTop = this.container.scrollTop;
-            const viewportBottom = viewportTop + this.viewportHeight;
-            if (itemTop >= viewportTop && itemBottom <= viewportBottom) return; // already fully visible
-            target = itemTop < viewportTop ? itemTop : itemBottom - this.viewportHeight;
-        } else {
-            // 'start' — deterministic: put the item at the top of the viewport.
-            target = itemTop;
-        }
-
-        target = Math.max(0, Math.min(target, maxScroll));
+        // Core's box math (SPEC §12.15): the same block rules as scrollIntoContainer, the
+        // container's scroll-padding, clamped to the real scroll range; null = nothing moves.
+        // The rows sit inside the wrapper, so their content top includes its offset (the
+        // container's padding — `--ms-options-padding`).
+        const target = getScrollTopForBox(this.container, {
+            top: this.wrapperOffsetTop() + index * this.itemHeight,
+            height: this.itemHeight,
+        }, { block });
+        if (target === null) return;
 
         // Set scrollTop AND sync our cached value + re-render synchronously, rather than waiting
         // for the async 'scroll' event — so the correct rows are in place immediately.
         this.container.scrollTop = target;
         this.scrollTop = target;
         this.render();
+    }
+
+    /** The wrapper's top in the container's content (scrollTop) coordinates: it's the container's
+     *  only child, so that's the container's padding-top (`--ms-options-padding`). */
+    private wrapperOffsetTop(): number {
+        return parseFloat(getComputedStyle(this.container).paddingTop) || 0;
     }
 
     /**
