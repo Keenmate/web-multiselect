@@ -136,8 +136,8 @@ multiselect.setSelected(['js', 'ts']);
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
 | `labels` | `JSON object` | - | Every UI string (placeholders, empty / loading text, hint, counters, "add new" prompt, popover title, ARIA labels) — partial map, unset keys stay English. See [Labels (i18n)](#labels-i18n) |
-| `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted. An ancestor `<fieldset disabled>` disables it too. Reflects |
-| `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): no selection change, the dropdown doesn't open, still focusable and submitted. Reflects |
+| `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted; calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. An ancestor `<fieldset disabled>` disables it too. Reflects |
+| `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): the user can't change the selection and the dropdown doesn't open; still focusable, copyable and submitted. Calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. Reflects |
 | `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `release()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `ready` attribute after building |
 | `allow-groups` | `boolean` | `true` | Enable option grouping |
 | `group-select-mode` | `'none' \| 'cascade'` | `'none'` | Group-header selection in a flat (non-tree) grouped multi-select list. `none`: headers are inert labels. `cascade`: each header shows a tristate checkbox that checks/unchecks all of the group's currently-visible members (the group itself is never a selected value). No effect in tree mode (use `checkbox-mode`) or single-select |
@@ -374,6 +374,13 @@ multiselect.beforeKeydownCallback = (ctx) => {
   // ctx also exposes: event, key, isOpen, presentation, searchTerm,
   // focusedIndex, focusedOption, filteredOptions, selectedValues (the real values).
   // controller — see "Controller (el.controller)" below.
+};
+
+// Scroll hook — runs before the dropdown scrolls an option into view on its own
+// (synchronous). See "Scrolling" below.
+multiselect.beforeScrollCallback = ({ source }) => {
+  if (source === 'open') return false;                  // keep the list at the top on open
+  if (source === 'api') return { block: 'center' };     // centre scrollToValue() jumps
 };
 
 // Event handler properties (on* twins). Each receives the event DETAIL (not the
@@ -690,9 +697,35 @@ You do **not** need to await between a property write and an imperative method �
 | `whenReady()` | `Promise<void>` resolving once the first build is live (right after the `ready` event); at once when it already is. Core `BlissElement` |
 | `destroy()` | Final teardown (core `BlissElement`): tears the picker down for good; the element stays inert (no rebuild on re-insert) |
 
+### Scrolling
+
+The dropdown scrolls an option into view on its own in four cases, and only the list moves, never
+the page (core `scrollIntoContainer`). Each runs **`beforeScrollCallback(ctx)`** first, once per
+scroll:
+
+| `source` | When | Defaults (`ctx.options`) |
+|---|---|---|
+| `'keyboard'` | A focus move: arrow keys, Page Up / Down, Home / End, the fullscreen ▲ / ▼, the controller `focus*()` methods | `block: 'nearest'`, `behavior: 'auto'` (keys never animate) |
+| `'search'` | Navigate mode (`search-mode="navigate"`) jumps to the match of the typed term | `block: 'nearest'`, `behavior: 'auto'` |
+| `'open'` | A single-select opens and centres its selected option | `block: 'center'`, `behavior: 'auto'` |
+| `'api'` | `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()` | the call's `block` (`'start'`), `behavior` from `--ms-scroll-behavior` |
+
+In the phone fullscreen sheet every scroll is `block: 'center'`, `behavior: 'auto'` (so a match never
+lands behind the soft keyboard). `ctx` = `{ option, index, group, source, container, options,
+controller, element }` — `option` is `null` for a group header (`scrollToGroup()`, with `group` set),
+`index` is the position in the visible (filtered) list, `container` the list's scroller (the virtual
+viewport under virtual scroll; `null` when the list fits). Return:
+
+- `false` — skip the scroll (`scrollTo*()` still resolves `true`: the option was found);
+- a partial `{ block, behavior }` — merged over the defaults (virtual scroll ignores `behavior`, it always jumps);
+- nothing — the defaults.
+
+A throwing callback skips the scroll (logged). There is no scroll event. Demo:
+`examples-basic.html` BU09.
+
 ### Controller (`el.controller`)
 
-`el.controller` is the public facade — the same object every callback `ctx` and event detail carries as `controller`. It delegates to the live picker, so it survives rebuilds. Interactive methods behave like the matching gesture (vetoes included); `setSelected` is the programmatic, veto-free path.
+`el.controller` is the public facade — the same object every callback `ctx` and event detail carries as `controller`. It delegates to the live picker, so it survives rebuilds. Interactive methods behave like the matching gesture (vetoes included); `setSelected` is the programmatic, veto-free path. The selection methods also work on a `disabled` / `readonly` control (a call from code, like a native control's `value`); only the user's gestures are blocked there.
 
 | Group | Members |
 |-------|---------|

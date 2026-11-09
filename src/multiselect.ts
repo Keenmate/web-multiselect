@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
  *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
@@ -1635,7 +1635,7 @@ export class MultiSelectEngine<T = any> {
             // undoes the synchronous scrollToFocused() handleSearch ran before this frame —
             // re-apply it so a match far below the fold is scrolled into view.
             if (this.options.searchMode === 'navigate' && this.typedTerm.trim() && this.focusedIndex >= 0) {
-                this.scrollToFocused();
+                this.scrollToFocused('search');
             }
 
             // Attach tooltips to action buttons after rendering
@@ -2460,7 +2460,7 @@ export class MultiSelectEngine<T = any> {
                         this.focusedIndex = firstMatchIndex;
                     } // else: term with no matches — keep previous focus (flat-navigate parity)
                     this.renderDropdown();
-                    if (this.focusedIndex >= 0) this.scrollToFocused();
+                    if (this.focusedIndex >= 0) this.scrollToFocused('search');
                     this.updateFullscreenNav();
                     return;
                 }
@@ -2523,7 +2523,7 @@ export class MultiSelectEngine<T = any> {
             this.renderDropdown();
             // Scroll to focused item in navigate mode
             if (this.options.searchMode === 'navigate' && this.focusedIndex >= 0) {
-                this.scrollToFocused();
+                this.scrollToFocused('search');
             }
             this.updateFullscreenNav();
         }
@@ -2981,8 +2981,11 @@ export class MultiSelectEngine<T = any> {
      */
     private revealFocusedOnOpen(): void {
         if (!this.#isOpen || this.focusedIndex < 0) return;
+        const target = { option: this.filteredOptions[this.focusedIndex] ?? null, index: this.focusedIndex };
+        const defaults: MultiSelectScrollOptions = { block: 'center', behavior: 'auto' };
         if (this.virtualScroll) {
-            this.virtualScroll.scrollToIndex(this.focusedIndex, 'center');
+            const options = this.resolveScroll(target, 'open', this.optionsContainer, defaults);
+            if (options) this.virtualScroll.scrollToIndex(this.focusedIndex, options.block);
             return;
         }
         const el = this.dropdown.querySelector('.ms__option--focused') as HTMLElement | null;
@@ -2990,7 +2993,33 @@ export class MultiSelectEngine<T = any> {
         // fullscreen sheet): the nearest one inside the dropdown. None (the list fits) → nothing to do.
         const scroller = el && findScrollContainer(el, { stopAt: this.dropdown.parentElement });
         if (!el || !scroller) return;
-        scrollIntoContainer(el, { block: 'center', container: scroller });
+        const options = this.resolveScroll(target, 'open', scroller, defaults);
+        if (options) scrollIntoContainer(el, { ...options, container: scroller });
+    }
+
+    /**
+     * The one gate of every scroll the dropdown does on its own (keyboard move, navigate-mode search,
+     * reveal on open, the `scrollTo*()` methods): runs `beforeScrollCallback` (core
+     * `runBeforeCallbackSync`) with the option, the `source`, the list's scroll container and the
+     * `defaults`. Returns the options to use, or `null` when the callback skipped the scroll (`false`,
+     * or it threw).
+     */
+    private resolveScroll(
+        target: { option: T | null; index: number; group?: string },
+        source: MultiSelectScrollSource,
+        container: HTMLElement | null,
+        defaults: MultiSelectScrollOptions,
+    ): MultiSelectScrollOptions | null {
+        const hook = this.options.beforeScrollCallback;
+        if (!hook) return defaults;
+        const gate = runBeforeCallbackSync<object, Partial<MultiSelectScrollOptions>>(hook as (ctx: object) => unknown,
+            this.ctx({ ...target, source, container, options: { ...defaults } }), 'beforeScrollCallback');
+        if (gate.isRejected) {
+            interactionLogger.debug(`[${this.instanceId}] beforeScrollCallback skipped the scroll (${source}, index ${target.index})`);
+            return null;
+        }
+        const value = (gate as { value?: unknown }).value; // strictNullChecks is off: no union narrowing
+        return value && typeof value === 'object' ? { ...defaults, ...(value as Partial<MultiSelectScrollOptions>) } : defaults;
     }
 
     /** `tab-behavior`, resolved: unset = `select-focused` (single) / `close` (multi). */
@@ -3298,11 +3327,14 @@ export class MultiSelectEngine<T = any> {
         this.updateFullscreenSearchClear();
     }
 
-    private scrollToFocused(): void {
-        if (this.virtualScroll && this.focusedIndex >= 0) {
+    private scrollToFocused(source: MultiSelectScrollSource = 'keyboard'): void {
+        if (this.focusedIndex < 0) return;
+        const target = { option: this.filteredOptions[this.focusedIndex] ?? null, index: this.focusedIndex };
+        if (this.virtualScroll) {
             // Keyboard nav wants MINIMAL movement ('nearest') — don't slam the focused row to the
             // top on every arrow keypress (the public scrollTo* commands default to 'start' instead).
-            this.virtualScroll.scrollToIndex(this.focusedIndex, 'nearest');
+            const options = this.resolveScroll(target, source, this.optionsContainer, { block: 'nearest', behavior: 'auto' });
+            if (options) this.virtualScroll.scrollToIndex(this.focusedIndex, options.block);
             return;
         }
         // Standard mode: scroll the list to the row
@@ -3310,7 +3342,7 @@ export class MultiSelectEngine<T = any> {
         if (!focusedElement) return;
         // Keyboard-driven (arrow keys, navigate-mode typing): always instant — a smooth scroll per
         // keystroke lags behind the focus and is torn down by the next re-render.
-        this.applyScrollIntoContainer(focusedElement, { isInstant: true });
+        this.applyScrollIntoContainer(focusedElement, { isInstant: true, source, target });
     }
 
     /**
@@ -3325,17 +3357,19 @@ export class MultiSelectEngine<T = any> {
      * (→ `--base-scroll-behavior`: smooth; `auto` under reduced motion or `motion="none"`).
      * The caller may override `block`.
      */
-    private applyScrollIntoContainer(el: HTMLElement, opts?: { block?: ScrollLogicalPosition; isInstant?: boolean }): void {
+    private applyScrollIntoContainer(
+        el: HTMLElement,
+        opts: { block?: ScrollLogicalPosition; isInstant?: boolean; source: MultiSelectScrollSource; target: { option: T | null; index: number; group?: string } },
+    ): void {
         const stopAt = this.dropdown.parentElement;
-        if (this.presentationMode === 'fullscreen') {
-            scrollIntoContainer(el, { block: opts?.block ?? 'center', behavior: 'auto', stopAt });
-        } else {
-            scrollIntoContainer(el, {
-                block: opts?.block ?? 'nearest',
-                behavior: opts?.isInstant ? 'auto' : this.getScrollBehavior(),
-                stopAt,
-            });
-        }
+        const defaults: MultiSelectScrollOptions = this.presentationMode === 'fullscreen'
+            ? { block: opts.block ?? 'center', behavior: 'auto' }
+            : { block: opts.block ?? 'nearest', behavior: opts.isInstant ? 'auto' : this.getScrollBehavior() };
+        // beforeScrollCallback (the one gate) sees the scroller core finds; none → the list fits.
+        const container = this.options.beforeScrollCallback ? findScrollContainer(el, { stopAt }) : null;
+        const options = this.resolveScroll(opts.target, opts.source, container, defaults);
+        if (!options) return;
+        scrollIntoContainer(el, { block: options.block, behavior: options.behavior, stopAt });
     }
 
     /** `--ms-scroll-behavior` read off the host (`smooth` when unset / not rendered). */
@@ -3354,6 +3388,11 @@ export class MultiSelectEngine<T = any> {
      * sheet build), so `el.open(); el.scrollToIndex(i)` works.
      */
     public scrollToIndex(index: number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
+        return this.scrollToListIndex(index, opts);
+    }
+
+    /** {@link scrollToIndex}, also naming the group it reveals (`scrollToGroup()` → `beforeScrollCallback`'s `group`). */
+    private scrollToListIndex(index: number, opts?: { block?: ScrollLogicalPosition }, group?: string): Promise<boolean> {
         const block = opts?.block ?? 'start';
         if (!this.#isOpen) {
             interactionLogger.debug(`[${this.instanceId}] scrollToIndex(${index}) → false (closed)`);
@@ -3369,7 +3408,7 @@ export class MultiSelectEngine<T = any> {
         // Re-driving the open panel from an external control's click handler: shield the
         // trailing click so it doesn't bubble to our outside-click listener and close.
         this.armClickGuard();
-        return this.scrollToRenderedIndex(index, { block });
+        return this.scrollToRenderedIndex(index, { block }, group);
     }
 
     /**
@@ -3415,7 +3454,8 @@ export class MultiSelectEngine<T = any> {
             ) as HTMLElement | null;
             if (label) {
                 interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — header found, scrolling label into view (block=${block})`);
-                this.applyScrollIntoContainer(label, { block });
+                const first = this.filteredOptions.findIndex(o => (this.getItemGroup(o) || '') === name);
+                this.applyScrollIntoContainer(label, { block, source: 'api', target: { option: null, index: first, group: name } });
                 return Promise.resolve(true);
             }
         }
@@ -3424,7 +3464,7 @@ export class MultiSelectEngine<T = any> {
         const index = this.filteredOptions.findIndex(o => (this.getItemGroup(o) || '') === name);
         interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — no header (virtual=${!!this.virtualScroll}), first member index ${index}`);
         if (index < 0) return Promise.resolve(false);
-        return this.scrollToIndex(index, { block });
+        return this.scrollToListIndex(index, { block }, name);
     }
 
     /**
@@ -3433,20 +3473,21 @@ export class MultiSelectEngine<T = any> {
      * `.ms__option[data-index]` element into view. Defers one frame if the list isn't ready yet
      * (post-open virtual init / fullscreen sheet build), then retries once.
      */
-    private scrollToRenderedIndex(index: number, opts?: { block?: ScrollLogicalPosition }): Promise<boolean> {
+    private scrollToRenderedIndex(index: number, opts?: { block?: ScrollLogicalPosition }, group?: string): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             const attempt = (retried: boolean): void => {
                 if (!this.#isOpen || index < 0 || index >= this.filteredOptions.length) return resolve(false);
+                const target = { option: this.filteredOptions[index] ?? null, index, group };
                 if (this.virtualScroll) {
                     // The DOM ScrollLogicalPosition, as the virtual list's index math (default 'start').
-                    const vBlock = opts?.block ?? 'start';
-                    this.virtualScroll.scrollToIndex(index, vBlock);
-                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${vBlock})`);
+                    const options = this.resolveScroll(target, 'api', this.optionsContainer, { block: opts?.block ?? 'start', behavior: 'auto' });
+                    if (options) this.virtualScroll.scrollToIndex(index, options.block);
+                    interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via virtual (block=${options?.block ?? 'skipped'})`);
                     return resolve(true);
                 }
                 const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
                 if (el) {
-                    this.applyScrollIntoContainer(el, opts);
+                    this.applyScrollIntoContainer(el, { block: opts?.block, source: 'api', target });
                     interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via the DOM row`);
                     return resolve(true);
                 }

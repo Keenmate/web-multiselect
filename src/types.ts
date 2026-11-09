@@ -455,6 +455,44 @@ export interface KeydownContext<T = any> extends MultiSelectContext<T> {
 }
 
 /**
+ * What made the dropdown scroll an option into view on its own — `beforeScrollCallback`'s `source`:
+ * - `'keyboard'` — a focus move (arrow keys, Page Up / Down, Home / End, the fullscreen ▲ / ▼, the
+ *   controller `focus*()` methods);
+ * - `'search'` — navigate mode jumped to the match of the typed term;
+ * - `'open'` — the dropdown opened and centres the focused (selected) option;
+ * - `'api'` — `scrollToIndex()` / `scrollToValue()` / `scrollToGroup()`.
+ */
+export type MultiSelectScrollSource = 'keyboard' | 'search' | 'open' | 'api';
+
+/** The scroll the dropdown is about to do (`beforeScrollCallback`'s `options`; a returned partial is merged over it). */
+export interface MultiSelectScrollOptions {
+    /** Vertical alignment: `'nearest'` scrolls only as far as needed; `'start'` / `'center'` / `'end'` align. */
+    block: ScrollLogicalPosition;
+    /** `'auto'` (instant) or `'smooth'`. Virtual scroll always jumps instantly. */
+    behavior: ScrollBehavior;
+}
+
+/**
+ * `ctx` of `beforeScrollCallback` — the dropdown is about to scroll an option (or a group header)
+ * into view on its own. Return `false` to skip the scroll, or a partial `options` to replace the
+ * defaults. Must answer synchronously.
+ */
+export interface BeforeScrollContext<T = any> extends MultiSelectContext<T> {
+    /** The option about to be revealed — `null` when it is a group header (`scrollToGroup()`). */
+    option: T | null;
+    /** Its index in the visible (filtered) list; for a group header, the group's first option. */
+    index: number;
+    /** The group name, for `scrollToGroup()`; otherwise `undefined`. */
+    group?: string;
+    /** Why the dropdown scrolls. */
+    source: MultiSelectScrollSource;
+    /** The list's scroll container (the virtual-scroll viewport in virtual mode) — `null` when the list doesn't scroll (it fits). */
+    container: HTMLElement | null;
+    /** What the dropdown is about to use (its defaults for this `source` and presentation). */
+    options: MultiSelectScrollOptions;
+}
+
+/**
  * `ctx` of the action-item callbacks (`getTextCallback`, `getIsVisibleCallback`, …): a
  * snapshot of the selection. At activation (`onClick`, `beforeActionCallback`, `onAction` /
  * the `action` event) the core action fields are added — see {@link MultiSelectActionEventDetail}.
@@ -1119,6 +1157,13 @@ export interface MultiSelectConfig<T = any> {
      * (Ctrl+A → select all), or suppress a default. Property-only.
      */
     beforeKeydownCallback?: ((ctx: KeydownContext<T>) => void | false) | null;
+    /**
+     * Runs before the dropdown scrolls an option into view on its own (keyboard move, navigate-mode
+     * search, reveal on open, the `scrollTo*()` methods) with a {@link BeforeScrollContext}. Return
+     * `false` to skip the scroll, a partial {@link MultiSelectScrollOptions} to replace the defaults,
+     * or nothing for the defaults. Must answer synchronously. Property-only.
+     */
+    beforeScrollCallback?: ((ctx: BeforeScrollContext<T>) => void | false | Partial<MultiSelectScrollOptions>) | null;
     /** Twin of the `select` event (engine use; on the element, assign `el.onSelect`). */
     onSelect?: ((detail: SelectEventDetail<T>) => void) | null;
     /** Twin of the `deselect` event (engine use; on the element, assign `el.onDeselect`). */

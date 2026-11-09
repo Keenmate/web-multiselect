@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — beforeScrollCallback</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>beforeScrollCallback</h1>
+    <p>Targeted by <code>e2e/before-scroll.spec.ts</code>. Every scroll the dropdown does on its own
+       (keyboard, navigate-mode search, reveal on open, <code>scrollTo*()</code>) goes through
+       <code>beforeScrollCallback</code> (rulebook D-CA-5). Each instance records its calls in
+       <code>el.scrollLog</code>; <code>el.scrollAnswer</code> is what the callback returns.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">long grouped list (60 options), standard rendering</div>
+        <web-multiselect id="bs-list" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">single-select (the selected option is revealed on open)</div>
+        <web-multiselect id="bs-single" multiple="false" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">navigate search mode</div>
+        <web-multiselect id="bs-navigate" search-mode="navigate" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">virtual scroll (60 options)</div>
+        <web-multiselect id="bs-virtual" enable-virtual-scroll="true" virtual-scroll-threshold="10" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = Array.from({ length: 60 }, (_, i) => ({ value: `v${i}`, label: `Option ${i}` }));
+        // Groups turn virtual scroll off, so only the standard list is grouped.
+        const grouped = items.map((item, i) => ({ ...item, group: `Group ${Math.floor(i / 10)}` }));
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['bs-list', 'bs-single', 'bs-navigate', 'bs-virtual']) {
+                const el = document.getElementById(id);
+                el.scrollLog = [];
+                el.scrollAnswer = undefined;
+                el.beforeScrollCallback = (ctx) => {
+                    el.scrollLog.push({
+                        source: ctx.source,
+                        value: ctx.option ? ctx.option.value : null,
+                        index: ctx.index,
+                        group: ctx.group ?? null,
+                        options: { ...ctx.options },
+                        hasContainer: ctx.container instanceof HTMLElement,
+                        containerClass: ctx.container ? ctx.container.className : null,
+                        isElement: ctx.element === el,
+                    });
+                    return el.scrollAnswer;
+                };
+                el.options = id === 'bs-list' ? grouped : items;
+            }
+        });
+    </script>
+</body>
+</html>

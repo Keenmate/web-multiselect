@@ -100,6 +100,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Navigate-mode: Ctrl/Cmd + ↑ jumps to previous match           | ✗      |      |         |
 | Focused option scrolls into view                              | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
 | Focused option highlight only on the focused one (grouped)    | ✓      | `keyboard.spec.ts`           | `keyboard.html`           |
+| `beforeScrollCallback`: every self-initiated scroll (`keyboard` / `search` / `open` / `api`, virtual too); `false` skips, a partial replaces the defaults | ✓ | `before-scroll.spec.ts` | `before-scroll.html` |
 
 ## 7. Action buttons
 
@@ -133,7 +134,8 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `is-disabled-member` marks specific options unselectable         | ✓      | `disabled.spec.ts`           | `disabled.html`           |
 | Disabled option ignores click                                 | ✓      | `disabled.spec.ts`           | `disabled.html`           |
 | Disabled option ignores keyboard select                       | ✓      | `disabled.spec.ts`           | `disabled.html`           |
-| Disabled component (entire control)                           | ✗      |      |         |
+| Disabled / readonly control (`disabled` / `readonly`, `<fieldset disabled>`), not submitted / submitted | ✓ | `control-state.spec.ts` | `control-state.html` |
+| Disabled / readonly: controller selection methods from code still work (SPEC §6.4) | ✓ | `control-state.spec.ts` | `control-state.html` |
 
 ## 10. Add new
 

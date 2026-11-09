@@ -548,6 +548,51 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             </kmwc-demo>
         </div>
 
+        <!-- ============================================================= -->
+        <!-- BU09 · Scrolling the list                                       -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>BU09 · Scrolling the list — <code>beforeScrollCallback</code></h2>
+            <p>
+                The dropdown scrolls an option into view on its own: a keyboard move (<code>keyboard</code>),
+                a navigate-mode match (<code>search</code>), the selected option of a single-select on open
+                (<code>open</code>) and the <code>scrollTo*()</code> methods (<code>api</code>). Only the list
+                moves, never the page. <code>beforeScrollCallback</code> runs first: return <code>false</code>
+                to skip the scroll, <code>{ block, behavior }</code> to change it, or nothing for the defaults.
+                Open the picker, arrow down, try the buttons — the read-out shows each call.
+            </p>
+
+            <kmwc-demo>
+                <div class="controls">
+                    <label><input type="checkbox" id="bs-skip-keyboard"> skip <code>keyboard</code> scrolls</label>
+                    <label><input type="checkbox" id="bs-center-api" checked> centre <code>api</code> jumps</label>
+                    <button type="button" id="bs-jump"><code>open()</code> + <code>scrollToValue('item-40')</code></button>
+                </div>
+                <web-multiselect id="ex-before-scroll" multiple="false" value='["item-25"]'
+                    value-member="value" display-value-member="label"></web-multiselect>
+                <div class="output">
+                    <div class="output-label">beforeScrollCallback:</div>
+                    <pre id="bs-out">(open the picker)</pre>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('ex-before-scroll');
+                    el.options = Array.from({ length: 60 }, (_, i) => ({ value: `item-${i}`, label: `Item ${i}` }));
+
+                    const out = document.getElementById('bs-out');
+                    el.beforeScrollCallback = ({ source, option, options }) => {
+                        out.textContent = `${source} → ${option?.label} (default block: ${options.block})`;
+                        if (source === 'keyboard' && document.getElementById('bs-skip-keyboard').checked) return false;
+                        if (source === 'api' && document.getElementById('bs-center-api').checked) return { block: 'center' };
+                    };
+
+                    document.getElementById('bs-jump').addEventListener('click', () => {
+                        el.open();
+                        el.scrollToValue('item-40');
+                    });
+                </script>
+            </kmwc-demo>
+        </div>
+
     <script type="module">
         import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
 
