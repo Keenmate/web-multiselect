@@ -122,6 +122,9 @@ export class MultiSelectEngine<T = any> {
     private isFocusNavigated = false;
     // This engine's own public facade (built once) — used when no element passes `options.controller`.
     private controller: MultiSelectController<T> | null = null;
+    // > 0 while a controller selection method runs: a call from code still works on a disabled /
+    // readonly control (core SPEC §6.4 — only the user's gestures are blocked). See asCodeCall().
+    private codeCallDepth = 0;
     // Shared prototype of the per-option ctx (controller / element / presentation getters). See itemCtx().
     private itemCtxProto: object | null = null;
     // Normalized `actionButtons` (string shorthand expanded), cached per source array so an item keeps
@@ -3065,25 +3068,25 @@ export class MultiSelectEngine<T = any> {
             get isOpen() { return self.isOpen; },
             get isMessageShown() { return self.isMessageShown; },
             setSelected: (values, opts) => this.setSelected(values, opts),
-            selectAll: () => { void this.userSelectAll(); },
-            clearSelection: () => { void this.userClearSelection('clear-selection'); },
-            toggleValue: (value) => {
+            selectAll: () => this.asCodeCall(() => { void this.userSelectAll(); }),
+            clearSelection: () => this.asCodeCall(() => { void this.userClearSelection('clear-selection'); }),
+            toggleValue: (value) => this.asCodeCall(() => {
                 const opt = byValue(value);
                 if (opt) this.toggleOption(opt);
-            },
-            selectValue: (value) => {
+            }),
+            selectValue: (value) => this.asCodeCall(() => {
                 if (this.selectedValues.has(String(value))) return; // already selected — no-op
                 const opt = byValue(value);
                 if (opt) this.toggleOption(opt);
-            },
-            deselectValue: (value) => {
+            }),
+            deselectValue: (value) => this.asCodeCall(() => {
                 if (!this.selectedValues.has(String(value))) return; // not selected — no-op
                 const opt = this.selectedByValue.get(String(value)) ?? byValue(value);
                 if (opt) this.toggleOption(opt);
-            },
-            toggleFocused: () => {
+            }),
+            toggleFocused: () => this.asCodeCall(() => {
                 if (this.focusedIndex >= 0) this.toggleOption(this.filteredOptions[this.focusedIndex]);
-            },
+            }),
             open: () => this.open(),
             close: () => this.closeWith('api'),
             toggle: () => this.toggle(),
@@ -3533,7 +3536,7 @@ export class MultiSelectEngine<T = any> {
      * `false` vetoes). Answers synchronously for a sync hook; a Promise only for an async one.
      */
     private vetoOne(kind: 'select' | 'deselect', option: T, source: SelectionSource): boolean | Promise<boolean> {
-        if (this.isInteractionBlocked()) return false;
+        if (this.isSelectionChangeBlocked()) return false;
         const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
         if (!hook) return true;
         const selectedOptions = this.selectedOptions;
@@ -3549,7 +3552,7 @@ export class MultiSelectEngine<T = any> {
 
     /** {@link vetoOne} over a bulk gesture → the allowed options (sync when every hook is). */
     private vetoMany(kind: 'select' | 'deselect', options: T[], source: SelectionSource): T[] | Promise<T[]> {
-        if (this.isInteractionBlocked()) return [];
+        if (this.isSelectionChangeBlocked()) return [];
         const hook = kind === 'select' ? this.options.beforeSelectCallback : this.options.beforeDeselectCallback;
         if (!hook || options.length === 0) return options;
         const results = options.map(option => this.vetoOne(kind, option, source));
@@ -5413,6 +5416,21 @@ export class MultiSelectEngine<T = any> {
     /** Disabled or readonly: the user can't change the selection or open the dropdown. */
     private isInteractionBlocked(): boolean {
         return !!this.options.isDisabled || !!this.options.isReadonly;
+    }
+
+    /**
+     * A selection change is blocked: disabled / readonly, unless it is a call from code (a
+     * controller selection method, see {@link asCodeCall}), which still works under both (core
+     * SPEC §6.4, native semantics) and still runs the before-callbacks.
+     */
+    private isSelectionChangeBlocked(): boolean {
+        return this.codeCallDepth === 0 && this.isInteractionBlocked();
+    }
+
+    /** Run a controller selection method as a call from code (not blocked by disabled / readonly). */
+    private asCodeCall(fn: () => void): void {
+        this.codeCallDepth++;
+        try { fn(); } finally { this.codeCallDepth--; }
     }
 
     /**

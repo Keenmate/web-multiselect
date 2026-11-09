@@ -58,6 +58,29 @@ test('readonly: focusable, not openable, badge removal blocked, value submitted'
     expect(await formData(page)).toHaveProperty('f-readonly', JSON.stringify(['apple']));
 });
 
+// Core SPEC §6.4: calls from code still work under both (only the user's gestures are blocked).
+for (const id of ['ms-disabled', 'ms-readonly']) {
+    test(`${id.slice(3)}: controller selection methods from code still work`, async ({ page }) => {
+        const p = ms(page, id);
+        const read = () => p.evaluate((el: any) => el.selectedValue);
+        await p.evaluate((el: any) => el.controller.selectValue('banana'));
+        expect(await read()).toEqual(['apple', 'banana']);
+        await p.evaluate((el: any) => el.controller.deselectValue('apple'));
+        expect(await read()).toEqual(['banana']);
+        await p.evaluate((el: any) => el.controller.toggleValue('cherry'));
+        expect(await read()).toEqual(['banana', 'cherry']);
+        await p.evaluate((el: any) => el.controller.clearSelection());
+        expect(await read()).toEqual([]);
+        await p.evaluate((el: any) => el.controller.selectAll());
+        expect(await read()).toEqual(['apple', 'banana', 'cherry']);
+        // Still blocked for the user: no clear ✕, no badge ✕, the dropdown doesn't open.
+        await expect(p.locator('.ms__input-clear')).toBeHidden();
+        await expect(p.locator('.ms__badge-remove').first()).toBeHidden();
+        await p.evaluate((el: any) => el.open());
+        expect(await p.evaluate((el: any) => el.isOpen)).toBe(false);
+    });
+}
+
 test('disabled: badges dim and have no remove button; re-enabling brings it back', async ({ page }) => {
     const p = ms(page, 'ms-disabled');
     await expect(p.locator('.ms__badge')).toHaveCount(1);
