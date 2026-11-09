@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Changed
+- **The field → panel gap is the page token `--base-dropdown-offset`** (`@keenmate/base-css-variables` ^2.0.1,
+  core rc21): the dropdown, the selected-items popover and the floating hint no longer hard-code `4`, core's
+  anchor reads the token where the panel opens. Same 4px by default; set it page-wide, per section or on
+  `web-multiselect { --base-dropdown-offset: … }`. The message bubble and tooltips keep their own spacing.
+
 ### Internal
 - `@keenmate/web-components-devkit` ^1.0.0-rc10 → ^1.0.0-rc11: every example page now ends with the devkit
   footer (Keenmate | GitHub | devkit version), as the index did. No generated file changes.

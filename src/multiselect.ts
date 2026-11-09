@@ -4117,7 +4117,7 @@ export class MultiSelectEngine<T = any> {
         return {
             strategy: 'fixed',
             placement: 'bottom-start',
-            offset: 4,
+            // No `offset`: core's default is the page's field → panel gap `--base-dropdown-offset`.
             shift: 8,
             // Locked → flip once to where it fits, then pin (core 'freeze'). Unlocked
             // → re-flip every frame (default shouldFlip:true, no lock).
@@ -4859,7 +4859,7 @@ export class MultiSelectEngine<T = any> {
         const handle = anchor(this.hint, this.inputWrapper, {
             strategy: 'fixed',
             placement: hintPlacement,
-            offset: 4,
+            // No `offset`: the same field → panel gap as the dropdown (`--base-dropdown-offset`).
             shift: 8,
             shouldFlip: false
         });

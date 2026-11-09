@@ -31,6 +31,21 @@ test.describe('default placement', () => {
 
         expect(dropdownBox!.y).toBeGreaterThanOrEqual(inputBox!.y + inputBox!.height - 1);
     });
+
+    test('the field → dropdown gap is --base-dropdown-offset (4 by default, follows the host)', async ({ page }) => {
+        const p = picker(page, 'default-below');
+        const gap = async () => {
+            const dropdown = await openDropdown(p);
+            const field = (await p.locator('.ms__input-wrapper').boundingBox())!;
+            const panel = (await dropdown.boundingBox())!;
+            await page.keyboard.press('Escape');
+            await expect(dropdown).toBeHidden();
+            return panel.y - (field.y + field.height);
+        };
+        expect(await gap()).toBeCloseTo(4, 0);
+        await p.evaluate((el) => (el as HTMLElement).style.setProperty('--base-dropdown-offset', '12px'));
+        expect(await gap()).toBeCloseTo(12, 0);
+    });
 });
 
 test.describe('flip placement', () => {
