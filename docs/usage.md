@@ -540,11 +540,11 @@ multiselect.renderOptionContentCallback = ({ option }) => {
   return `<strong>${option.name}</strong> <span class="badge">${option.status}</span>`;
 };
 
-// Loading states (async search, async add-new) — the shared KeenMate loader.
+// Loading states (async search, async add-new) — the shared Keenmate loader.
 // ctx: { component, context: 'search' | 'add-new', containerElement, element, label }.
 // Fill containerElement (already role="status" + aria-label); optionally return a cleanup.
 // Beats the page-wide window.components.renderLoadingCallback (one hook for every
-// KeenMate component); unset = the default .ms__loader drawn from --ms-loader-* tokens.
+// Keenmate component); unset = the default .ms__loader drawn from --ms-loader-* tokens.
 multiselect.renderLoadingCallback = ({ containerElement }) => {
   containerElement.innerHTML = '<span class="my-dots"><i></i><i></i><i></i></span>';
 };
@@ -752,7 +752,7 @@ document.querySelector('web-multiselect').controller.selectAll();
 | `open` | `{ controller, element, presentation, … }` | The dropdown opened (user or `open()`). Twin: `onOpen(detail)` |
 | `close` | `{ reason, controller, element, presentation, … }` | The dropdown closed — any reason; `detail.reason` says which (`api`, `toggle`, `escape`, `tab`, `select`, `outside-click`, `scroll`, `reference-removed`, `overlay`, `parent`, `back`, `close-button`, `disabled`, `destroy`). Twin: `onClose(detail)` |
 | `value-format-error` | `{ error, value }` | `getValueFormatCallback` threw: the error is logged, `''` is written into the hidden input, and the host is marked invalid (`customError`, `validationMessage` = `labels.valueFormatError`) so the form won't submit (`<form novalidate>` submits `''`). `error` = what was thrown, `value` = the selected values the callback got. The next successful format clears it. Twin: `onValueFormatError(detail)` |
-| `input-rejected` | `{ configKey, attribute?, value, reason?, kept, source }` | (Core, every KeenMate component.) An attribute or property write was refused — an invalid value (`badge-height="24px"`, an unknown enum value, …) warns and keeps the previous value (`kept`). Fired synchronously, so it has fired when the write returns; `setAttributes()` also returns the list. Twin: `onInputRejected(detail)` |
+| `input-rejected` | `{ configKey, attribute?, value, reason?, kept, source }` | (Core, every Keenmate component.) An attribute or property write was refused — an invalid value (`badge-height="24px"`, an unknown enum value, …) warns and keeps the previous value (`kept`). Fired synchronously, so it has fired when the write returns; `setAttributes()` also returns the list. Twin: `onInputRejected(detail)` |
 
 All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`, `ValueFormatErrorEventDetail` (and `InputRejection` for `input-rejected`).
 

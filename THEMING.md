@@ -146,7 +146,7 @@ The floating options container.
 | **Default** | `.ms__dropdown` | `--ms-dropdown-bg`, `--ms-dropdown-text-color`, `--ms-dropdown-border`, `--ms-dropdown-border-radius`, `--ms-dropdown-box-shadow`, `--ms-options-max-height`, `--ms-z-index-dropdown` |
 | **Visible** | `--visible` | *(display: block)* |
 
-**Gap to the field:** the dropdown, the selected-items popover and the floating hint sit `--base-dropdown-offset` (`@keenmate/base-css-variables` 2.0.1+, `4px` when unset) away from the field — the one field → panel gap every KeenMate component shares (core reads it when the panel opens). Override it page-wide, per section, or per component: `web-multiselect { --base-dropdown-offset: 8px; }`.
+**Gap to the field:** the dropdown, the selected-items popover and the floating hint sit `--base-dropdown-offset` (`@keenmate/base-css-variables` 2.0.1+, `4px` when unset) away from the field — the one field → panel gap every Keenmate component shares (core reads it when the panel opens). Override it page-wide, per section, or per component: `web-multiselect { --base-dropdown-offset: 8px; }`.
 
 ### Floating Hint
 
