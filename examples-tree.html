@@ -591,7 +591,7 @@ web-multiselect {
                         <button type="button" data-tr="clear">clearSearch()</button>
                     </div>
                 </div>
-                <div id="tr-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
+                <div id="tr-scroll-log" class="log-panel" data-empty="scrollTo* results log here…"></div>
                 <script type="module" data-kmwc-show>
                     const isco = await (await fetch('./examples-data/isco08.json')).json();
                     const el = document.getElementById('tree-scroll');
@@ -600,7 +600,6 @@ web-multiselect {
 
                     const logPanel = document.getElementById('tr-scroll-log');
                     const log = (msg) => {
-                        logPanel.querySelector('.muted')?.remove();
                         logPanel.insertAdjacentHTML('beforeend', `<div class="log-line">${msg}</div>`);
                         logPanel.scrollTop = logPanel.scrollHeight;
                     };

@@ -328,7 +328,7 @@
                     <small class="form-text">Virtual mode scrolls by index math — the row need not be rendered yet.</small>
                 </div>
             </div>
-            <div id="scroll-log" class="log-panel"><div class="muted">scrollTo* return values log here…</div></div>
+            <div id="scroll-log" class="log-panel" data-empty="scrollTo* return values log here…"></div>
 
             <details class="mt-1">
                 <summary>Show code</summary>
@@ -827,9 +827,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
             const scrollLogEl = document.getElementById('scroll-log');
             const scrollLog = (msg) => {
                 if (!scrollLogEl) return;
-                if (scrollLogEl.querySelector('.muted')) scrollLogEl.innerHTML = '';
                 const row = document.createElement('div');
-                row.style.marginBottom = '0.4rem';
+                row.className = 'log-line';
                 row.textContent = msg;
                 scrollLogEl.appendChild(row);
                 scrollLogEl.scrollTop = scrollLogEl.scrollHeight;

@@ -5,27 +5,17 @@
     <link rel="stylesheet" href="/src/css/main.css">
 
     <style>
-        /* Box comes from the kit's `.log-panel`; page keeps its entry-tag colours (theme-aware). */
-        .tag-prop  { color: light-dark(#9b1d8e, #f0abfc); font-weight: 600; }
-        .tag-event { color: var(--kmwc-info-color); font-weight: 600; }
-        .tag-block { color: var(--kmwc-danger-color); font-weight: 600; }
-        .tag-ok    { color: var(--kmwc-success-color); font-weight: 600; }
         .legend { font-size: 0.8125rem; margin-top: 0.25rem; }
     </style>
 
     <script type="module">
+        import { appendLogLine } from '@keenmate/web-components-devkit/examples';
+
         // Page harness (not part of the demos): demoLog(panelId) returns a
-        // log(cls, label, text) that appends a timestamped line to a .log-panel.
+        // log(name, detail, variant?) that appends a line in the kit's log format.
         window.demoLog = (panelId) => {
             const panel = document.getElementById(panelId);
-            return (cls, label, text) => {
-                if (panel.querySelector('.muted')) panel.innerHTML = '';
-                const row = document.createElement('div');
-                row.style.marginBottom = '0.4rem';
-                row.innerHTML = `<span class="${cls}">[${new Date().toLocaleTimeString()}] ${label}</span> ${text ?? ''}`;
-                panel.appendChild(row);
-                panel.scrollTop = panel.scrollHeight;
-            };
+            return (name, detail, variant) => appendLogLine(panel, { name, detail, variant });
         };
     </script>
 
@@ -52,11 +42,11 @@
                         display-value-member="label" labels='{"searchPlaceholder": "Select skills..."}'>
                     </web-multiselect>
                     <small class="form-text legend">
-                        <span class="tag-prop">[prop]</span> = <code>on*</code> property handler &nbsp;·&nbsp;
-                        <span class="tag-event">[event]</span> = <code>addEventListener</code>
+                        [prop] = <code>on*</code> property handler &nbsp;·&nbsp;
+                        [event] = <code>addEventListener</code>
                     </small>
                 </div>
-                <div id="events-log" class="log-panel"><div class="muted">Pick an option — [prop] and [event] entries log here…</div></div>
+                <div id="events-log" class="log-panel" data-empty="Pick an option — [prop] and [event] entries log here…"></div>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('events-select');
                     const log = demoLog('events-log'); // page helper: appends a line to the panel
@@ -70,15 +60,15 @@
 
                     // Property handlers (the on* form) — each receives the event DETAIL
                     // (the same object addEventListener sees as e.detail).
-                    el.onSelect   = ({ option }) => log('tag-prop', '[prop] onSelect', option.label);
-                    el.onDeselect = ({ option }) => log('tag-prop', '[prop] onDeselect', option.label);
+                    el.onSelect   = ({ option }) => log('[prop] onSelect', option.label);
+                    el.onDeselect = ({ option }) => log('[prop] onDeselect', option.label);
                     el.onChange   = ({ selectedOptions }) =>
-                        log('tag-prop', '[prop] onChange', JSON.stringify(selectedOptions.map(o => o.value)));
+                        log('[prop] onChange', JSON.stringify(selectedOptions.map(o => o.value)));
 
                     // The very same notifications as bubbling DOM events
                     el.addEventListener('change', (e) => {
                         // e.detail = { selectedOptions, selectedValues, controller, element }
-                        log('tag-event', '[event] change', JSON.stringify(e.detail.selectedValues));
+                        log('[event] change', JSON.stringify(e.detail.selectedValues), 'info');
                     });
                 </script>
             </kmwc-demo>
@@ -106,7 +96,7 @@
                     </web-multiselect>
                     <small class="form-text">Try selecting Full-time, then Part-time.</small>
                 </div>
-                <div id="exclusive-log" class="log-panel"><div class="muted">Selections and blocks log here…</div></div>
+                <div id="exclusive-log" class="log-panel" data-empty="Selections and blocks log here…"></div>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('exclusive-select');
                     const log = demoLog('exclusive-log'); // page helper: appends a line to the panel
@@ -123,13 +113,13 @@
                         const conflict = EXCLUSIVE.includes(option.value)
                             && selectedOptions.find(o => EXCLUSIVE.includes(o.value) && o.value !== option.value);
                         if (conflict) {
-                            log('tag-block', '[blocked] beforeSelect',
-                                `can't pick ${option.label} while ${conflict.label} is selected`);
+                            log('[blocked] beforeSelect',
+                                `can't pick ${option.label} while ${conflict.label} is selected`, 'danger');
                             return false;            // ← veto
                         }
                         // return undefined ⇒ allow
                     };
-                    el.onSelect = ({ option }) => log('tag-ok', '[allowed] onSelect', option.label);
+                    el.onSelect = ({ option }) => log('[allowed] onSelect', option.label, 'success');
                 </script>
             </kmwc-demo>
         </div>
@@ -157,7 +147,7 @@
                     </web-multiselect>
                     <small class="form-text">Team Lead can't be removed; the others can.</small>
                 </div>
-                <div id="required-log" class="log-panel"><div class="muted">Try removing Team Lead, then a developer…</div></div>
+                <div id="required-log" class="log-panel" data-empty="Try removing Team Lead, then a developer…"></div>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('required-select');
                     const log = demoLog('required-log'); // page helper: appends a line to the panel
@@ -170,13 +160,13 @@
 
                     el.beforeDeselectCallback = ({ option, source, controller }) => {
                         if (option.value === 'lead') {
-                            log('tag-block', '[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`);
+                            log('[blocked] beforeDeselect', `Team Lead is required — cannot be removed (source: ${source})`, 'danger');
                             // in-component message — visible even in the fullscreen overlay
                             controller.showMessage('Team Lead is required — cannot be removed', { variant: 'warning' });
                             return false;            // ← veto removal
                         }
                     };
-                    el.onDeselect = ({ option }) => log('tag-ok', '[removed] onDeselect', option.label);
+                    el.onDeselect = ({ option }) => log('[removed] onDeselect', option.label, 'success');
                     el.setSelected(['lead']);        // pre-select (bypasses the veto)
                 </script>
             </kmwc-demo>
@@ -298,7 +288,7 @@
                     </web-multiselect>
                     <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
                 </div>
-                <div id="create-log" class="log-panel"><div class="muted">The add event and resulting selection log here…</div></div>
+                <div id="create-log" class="log-panel" data-empty="The add event and resulting selection log here…"></div>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('create-select');
                     const log = demoLog('create-log'); // page helper: appends a line to the panel
@@ -324,8 +314,8 @@
                     // …and/or listen for the intent (fires only when creation actually happened).
                     // e.detail = { value, option?, selectedOptions, selectedValues } — or el.onAdd = ({ value }) => …
                     el.addEventListener('add', (e) =>
-                        log('tag-ok', '[event] add', `value="${e.detail.value}" → now: ` +
-                            JSON.stringify(e.detail.selectedValues)));
+                        log('[event] add', `value="${e.detail.value}" → now: ` +
+                            JSON.stringify(e.detail.selectedValues), 'success'));
 
                     // Dynamic prompt label instead of the labels.addNew {value} template:
                     // el.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
@@ -361,7 +351,7 @@
                         <strong>Type <code>Bobby Briggs</code></strong> (not in the list) and pick the prompt to add him.
                     </small>
                 </div>
-                <div id="members-log" class="log-panel"><div class="muted">The add event logs here after the delay…</div></div>
+                <div id="members-log" class="log-panel" data-empty="The add event logs here after the delay…"></div>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('members-select');
                     const log = demoLog('members-log'); // page helper: appends a line to the panel
@@ -374,7 +364,7 @@
                     // Async: a short delay shows the pending spinner. Returns a RICH option
                     // (subtitle + icon) so the created member renders like every other row.
                     el.beforeAddCallback = async ({ value }) => {
-                        log('tag-prop', '[pending] beforeAddCallback', `creating "${value}"… (~1.2s)`);
+                        log('[pending] beforeAddCallback', `creating "${value}"… (~1.2s)`, 'warning');
                         await new Promise(r => setTimeout(r, 1200));      // ← server round-trip
                         return {
                             value: value.trim().toLowerCase().replace(/\s+/g, '-'),
@@ -384,8 +374,8 @@
                         };
                     };
                     el.addEventListener('add', (e) =>
-                        log('tag-ok', '[event] add', `created "${e.detail.option.label}" ` +
-                            `(${e.detail.option.subtitle}) → now: ` + JSON.stringify(e.detail.selectedValues)));
+                        log('[event] add', `created "${e.detail.option.label}" ` +
+                            `(${e.detail.option.subtitle}) → now: ` + JSON.stringify(e.detail.selectedValues), 'success'));
                 </script>
             </kmwc-demo>
         </div>

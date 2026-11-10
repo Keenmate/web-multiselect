@@ -118,7 +118,7 @@
                 </div>
                 <span class="form-text">The log shows the resulting <code>scrollTop</code> and which rows landed in view.</span>
             </div>
-            <div id="vs-scroll-log" class="log-panel"><div class="muted">scrollTo* results log here…</div></div>
+            <div id="vs-scroll-log" class="log-panel" data-empty="scrollTo* results log here…"></div>
 
             <details class="mt-1">
                 <summary>Show code</summary>
@@ -366,9 +366,8 @@ el.scrollToIndex(7500, { block: 'center' });</code></pre>
             const vsLogEl = document.getElementById('vs-scroll-log');
             const vsLog = (msg) => {
                 if (!vsLogEl) return;
-                if (vsLogEl.querySelector('.muted')) vsLogEl.innerHTML = '';
                 const row = document.createElement('div');
-                row.style.marginBottom = '0.4rem';
+                row.className = 'log-line';
                 row.textContent = msg;
                 vsLogEl.appendChild(row);
                 vsLogEl.scrollTop = vsLogEl.scrollHeight;

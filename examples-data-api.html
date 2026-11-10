@@ -31,22 +31,11 @@
 
         /* Request log — shows fetches firing, completing, and being cancelled.
            Box comes from the kit's `.log-panel--dark` (a console, dark in both themes);
-           this tunes height + entries. */
+           this tunes its height. Lines come from the kit's appendLogLine. */
         .req-log {
             --log-max-height: 9rem;
             margin-top: 0.75rem;
         }
-
-        .req-log:empty:before {
-            content: "Request activity will appear here…";
-            color: var(--kmwc-console-muted-color);
-        }
-
-        .req-log .entry { padding: 0.15rem 0; white-space: pre-wrap; }
-        .req-log .entry--start     { color: var(--kmwc-console-info-color); }
-        .req-log .entry--done      { color: var(--kmwc-console-ok-color); }
-        .req-log .entry--cancelled { color: var(--kmwc-console-warn-color); }
-        .req-log .entry--error     { color: var(--kmwc-console-err-color); }
 
         /* `form` panel + `.form-actions` footer come from the devkit examples kit. */
 
@@ -449,7 +438,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                     subtitle-member="subtitle"
                     icon-member="icon" labels='{"searchPlaceholder": "Type to search GitHub users...", "searchHint": "💡 Type at least 2 characters to search"}'></web-multiselect>
 
-                <div class="log-panel log-panel--dark req-log" id="github-log"></div>
+                <div class="log-panel log-panel--dark req-log" id="github-log" data-empty="Request activity will appear here…"></div>
 
                 <div class="output">
                     <div class="output-label">Selected Users:</div>
@@ -480,7 +469,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                     subtitle-member="category"
                     value-member="id" labels='{"searchPlaceholder": "Search products..."}'></web-multiselect>
 
-                <div class="log-panel log-panel--dark req-log" id="product-log"></div>
+                <div class="log-panel log-panel--dark req-log" id="product-log" data-empty="Request activity will appear here…"></div>
 
                 <div class="output">
                     <div class="output-label">Selected Product IDs:</div>
@@ -517,7 +506,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                     subtitle-member="category"
                     value-member="id" labels='{"searchPlaceholder": "Search products (debounced)..."}'></web-multiselect>
 
-                <div class="log-panel log-panel--dark req-log" id="debounce-log"></div>
+                <div class="log-panel log-panel--dark req-log" id="debounce-log" data-empty="Request activity will appear here…"></div>
             </div>
 
             <h3>Country Lookup with Icons</h3>
@@ -783,9 +772,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
                 </web-multiselect>
                 <small class="form-text">Open browser console to see events</small>
             </div>
-            <div id="event-log" class="log-panel">
-                <div class="muted">Event log will appear here...</div>
-            </div>
+            <div id="event-log" class="log-panel" data-empty="Event log will appear here..."></div>
             <small class="form-text" style="margin-top: 0.75rem; display: block;">
                 Looking for the <code>on*</code> property handlers and the
                 <code>beforeSelect</code>/<code>beforeDeselect</code> interceptors?
@@ -970,6 +957,7 @@ el.refresh();                     // silent repaint — never call both after an
 
     <script type="module">
         import '/src/index.ts';
+        import { appendLogLine } from '@keenmate/web-components-devkit/examples';
 
         // Wait for custom element to be defined
         customElements.whenDefined('web-multiselect').then(() => {
@@ -988,14 +976,7 @@ el.refresh();                     // silent repaint — never call both after an
             const eventLog = document.getElementById('event-log');
             if (eventsSelect) {
                 eventsSelect.options = technologies;
-                const logEvent = (eventName, detail) => {
-                    const timestamp = new Date().toLocaleTimeString();
-                    const logEntry = document.createElement('div');
-                    logEntry.style.marginBottom = '0.5rem';
-                    logEntry.innerHTML = `<strong style="color: var(--kmwc-info-color);">[${timestamp}] ${eventName}:</strong> ${JSON.stringify(detail, null, 2)}`;
-                    eventLog.appendChild(logEntry);
-                    eventLog.scrollTop = eventLog.scrollHeight;
-                };
+                const logEvent = (eventName, detail) => appendLogLine(eventLog, { name: eventName, detail, variant: 'info' });
                 eventsSelect.addEventListener('select', (e) => logEvent('select', { option: e.detail.option?.label, selectedValues: e.detail.selectedValues }));
                 eventsSelect.addEventListener('deselect', (e) => logEvent('deselect', { option: e.detail.option?.label, selectedValues: e.detail.selectedValues }));
                 eventsSelect.addEventListener('change', (e) => logEvent('change', { count: e.detail.selectedOptions?.length, selectedValues: e.detail.selectedValues, selectedLabels: e.detail.selectedOptions?.map(o => o.label) }));
@@ -1125,16 +1106,17 @@ el.refresh();                     // silent repaint — never call both after an
 
             // --- Shared helpers for the abort/cancellation demos ---
 
-            // Append a colour-coded line to a request log, newest at the bottom.
+            // Append a line to a request log (kit format), newest at the bottom.
+            const REQUEST_LOG_KINDS = {
+                start: { name: '→ start', variant: 'info' },
+                done: { name: '✓ done', variant: 'success' },
+                cancelled: { name: '⛔ cancelled', variant: 'warning' },
+                error: { name: '⚠️ error', variant: 'danger' },
+            };
             function logRequest(logId, kind, message) {
                 const log = document.getElementById(logId);
                 if (!log) return;
-                const entry = document.createElement('div');
-                entry.className = `entry entry--${kind}`;
-                const label = { start: '→', done: '✓', cancelled: '⛔', error: '⚠️' }[kind] || '•';
-                entry.textContent = `${label} ${message}`;
-                log.appendChild(entry);
-                log.scrollTop = log.scrollHeight;
+                appendLogLine(log, { ...REQUEST_LOG_KINDS[kind], detail: message });
                 // Keep the log from growing without bound.
                 while (log.childElementCount > 30) log.removeChild(log.firstChild);
             }

@@ -181,6 +181,8 @@ el.enableLogging('debug');                       // one verbose element
         </div>
 
     <script type="module">
+        import { mapToEscapedHtml } from '@keenmate/web-components-devkit/examples';
+
         // The component entry (loaded in <head> by the devkit layout) runs registerComponent(),
         // so window.components is populated before this script runs.
 
@@ -207,7 +209,6 @@ el.enableLogging('debug');                       // one verbose element
         };
 
         // ── 1. registry inspector ────────────────────────────────────────────
-        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
         window.refreshRegistry = () => {
             const view = document.getElementById('registry-view');
@@ -221,17 +222,17 @@ el.enableLogging('debug');                       // one verbose element
                 // Reflect each category's effective level from the underlying loggers.
                 const lvl = window.__catLevel?.[c];
                 const on = lvl && lvl !== 'silent';
-                return `<span class="chip ${on ? 'on' : ''}">${esc(c.split(':')[1] || c)}${on ? ` · ${lvl}` : ''}</span>`;
+                return `<span class="chip ${on ? 'on' : ''}">${mapToEscapedHtml(c.split(':')[1] || c)}${on ? ` · ${lvl}` : ''}</span>`;
             }).join('');
             const instPills = instances.length
-                ? instances.map((el, i) => `<span class="chip">${esc(el.id || `#${i}`)}</span>`).join('')
+                ? instances.map((el, i) => `<span class="chip">${mapToEscapedHtml(el.id || `#${i}`)}</span>`).join('')
                 : '<span class="muted">none connected</span>';
 
             view.innerHTML = `
-                <dt>version()</dt><dd>${esc(r.version())}</dd>
-                <dt>config.name</dt><dd>${esc(cfg.name ?? '—')}</dd>
-                <dt>config.author</dt><dd>${esc(cfg.author ?? '—')}</dd>
-                <dt>config.license</dt><dd>${esc(cfg.license ?? '—')}</dd>
+                <dt>version()</dt><dd>${mapToEscapedHtml(r.version())}</dd>
+                <dt>config.name</dt><dd>${mapToEscapedHtml(cfg.name ?? '—')}</dd>
+                <dt>config.author</dt><dd>${mapToEscapedHtml(cfg.author ?? '—')}</dd>
+                <dt>config.license</dt><dd>${mapToEscapedHtml(cfg.license ?? '—')}</dd>
                 <dt>logging</dt><dd>${cats.length ? catPills : '<span class="muted">no bundle</span>'}</dd>
                 <dt>getInstances()</dt><dd><span class="count-badge">${instances.length}</span> &nbsp; ${instPills}</dd>
             `;
