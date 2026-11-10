@@ -442,8 +442,8 @@
 
         /* Built-in color-scheme demo. The card's OWN chrome follows the same signal it
            passes to the picker, so the whole panel flips coherently:
-           - Auto  → JS sets `color-scheme: light dark` (no data-theme); light-dark() below
-                     resolves per the OS, and the picker inherits that color-scheme.
+           - Auto  → no data-theme: the card and the picker both inherit the page's scheme (the
+                     page's <html data-theme> / color-scheme; on a page with no signal, the OS).
            - Light → data-theme="light"  (section signal, read via theme-source="closest" on the picker)
            - Dark  → data-theme="dark"
            No component color overrides here (no --ms- or --base- vars): dark styling is 100%
@@ -456,7 +456,7 @@
             border-radius: 8px;
             border: 1px solid;
             transition: background-color .2s ease, color .2s ease, border-color .2s ease;
-            /* Auto (no data-theme): follow the used color-scheme (set to `light dark` by JS). */
+            /* Auto (no data-theme): follow the inherited color-scheme, like the picker does. */
             background: light-dark(#ffffff, #0c0c0e);
             color: light-dark(#111827, #e5e5e5);
             border-color: light-dark(#e2e8f0, #2e2e33);
@@ -521,7 +521,7 @@
             </ul>
 
             <div class="segmented" role="radiogroup" aria-label="Color scheme">
-                <label><input type="radio" name="scheme" value="auto" checked> Auto (OS)</label>
+                <label><input type="radio" name="scheme" value="auto" checked> Auto (page)</label>
                 <label><input type="radio" name="scheme" value="light"> Light</label>
                 <label><input type="radio" name="scheme" value="dark"> Dark</label>
             </div>
@@ -571,7 +571,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
             </p>
 
             <div class="segmented" role="radiogroup" aria-label="Color scheme">
-                <label><input type="radio" name="scheme2" value="auto" checked> Auto (OS)</label>
+                <label><input type="radio" name="scheme2" value="auto" checked> Auto (page)</label>
                 <label><input type="radio" name="scheme2" value="light"> Light</label>
                 <label><input type="radio" name="scheme2" value="dark"> Dark</label>
             </div>
@@ -1461,15 +1461,10 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 .forEach((id) => commonInit(document.getElementById(id), preset));
 
             // Reusable Auto/Light/Dark switcher — drives the signal on a demo card that the
-            // picker inside inherits. Auto = no signal + OS switching; light/dark = data-theme.
+            // picker inside inherits. Auto = no signal (card and picker inherit the page); light/dark = data-theme.
             const applySchemeTo = (card, value) => {
-                if (value === 'auto') {
-                    card.removeAttribute('data-theme');
-                    card.style.colorScheme = 'light dark';
-                } else {
-                    card.style.colorScheme = '';
-                    card.setAttribute('data-theme', value);
-                }
+                if (value === 'auto') card.removeAttribute('data-theme');
+                else card.setAttribute('data-theme', value);
             };
             const wireScheme = (radioName, card) => {
                 document.querySelectorAll(`input[name="${radioName}"]`).forEach((r) => {
