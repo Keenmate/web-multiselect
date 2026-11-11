@@ -168,6 +168,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Remove-button tooltip                                         | ✓      | `tooltips.spec.ts`           | `tooltips.html`           |
 | `badge-tooltip-placement` / `-delay` / `-offset`              | ✗      |      |         |
 | Tooltips use `position:fixed` (escape overflow)               | ✓      | `tooltips.spec.ts`           | `tooltips.html`           |
+| `--ms-tooltip-width` / `-min-width` / `-max-width` (+ option twins) take effect | ✓ | `tooltips.spec.ts`           | `tooltips.html`           |
 
 ## 13. Custom rendering
 

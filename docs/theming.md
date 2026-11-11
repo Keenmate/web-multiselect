@@ -363,9 +363,13 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 | `--ms-tooltip-padding` | `calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem))` | Tooltip padding |
 | `--ms-tooltip-border-radius` | `var(--ms-border-radius-lg)` | Tooltip border radius |
 | `--ms-tooltip-font-size` | `calc(var(--base-font-size-sm, 1.4) * var(--ms-rem))` | Tooltip font size |
-| `--ms-tooltip-max-width` | `calc(32 * var(--ms-rem))` | Tooltip maximum width |
+| `--ms-tooltip-width` | `auto` | Tooltip width — `auto` shrinks to the content (capped by max-width); set a length for a fixed box (and `--ms-tooltip-max-width: none`) |
+| `--ms-tooltip-min-width` | `0` | Tooltip minimum width — a floor that still grows up to max-width |
+| `--ms-tooltip-max-width` | `calc(32 * var(--ms-rem))` | Tooltip maximum width (the wrap point; `none` with a fixed width) |
 | `--ms-tooltip-shadow` | `var(--base-shadow-md, 0 2px 8px var(--ms-shadow-color))` | Tooltip box shadow |
 | `--ms-tooltip-z-index` | `var(--base-z-tooltip, 9000)` | Tooltip z-index (follows the shared `--base-z-*` scale) |
+
+Option (dropdown row) tooltips read their own `--ms-option-tooltip-*` twins (`-bg`, `-text-color`, `-padding`, `-border-radius`, `-font-size`, `-width`, `-min-width`, `-max-width`, `-shadow`, `-z-index`), each defaulting to the shared `--ms-tooltip-*` value above — so one `--ms-tooltip-width` setting sizes badge and option tooltips alike; override an `--ms-option-tooltip-*` variable to diverge.
 
 ### Typography
 

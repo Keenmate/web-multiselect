@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Added
+- **Tooltip width variables `--ms-tooltip-width` (`auto`) and `--ms-tooltip-min-width` (`0`)** next to
+  `--ms-tooltip-max-width` (web-treeview's width model): `auto` shrinks to the content and wraps at max-width; a length
+  gives a fixed box (pair with `--ms-tooltip-max-width: none`); min-width is a floor that still grows up to max-width.
+  The option-tooltip twins `--ms-option-tooltip-width` / `--ms-option-tooltip-min-width` default to the shared values,
+  so one setting sizes badge and option tooltips alike. Defaults leave the rendering unchanged.
+
+### Examples and docs
+- Tooltips page: TT02 gets `--ms-option-tooltip-width` / `-min-width` controls and the width model; TT03's custom
+  badge tooltip is now an element (bold name, italic description, a chip with the badge's place in the selection and
+  where it is shown) instead of plain text; TT01's custom option tooltip no longer caps its own width, so the width
+  variables govern it. `docs/theming.md` / `THEMING.md` list the new variables and the `--ms-option-tooltip-*` twins.
+- e2e: the width variables take effect on an open tooltip (shared width covers badge + option tooltips, min-width
+  floor, max-width cap, defaults).
+
 ### Changed
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc21`** (was `^1.0.0-rc20`).
 - **The field → panel gap is the page token `--base-dropdown-offset`** (`@keenmate/base-css-variables` ^2.0.1,

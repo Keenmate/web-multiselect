@@ -804,6 +804,11 @@
   --ms-tooltip-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-tooltip-border-radius: var(--ms-border-radius-lg);
   --ms-tooltip-font-size: calc(var(--base-font-size-sm, 1.4) * var(--ms-rem));
+  /* Width model: auto = shrink-to-content (capped by max-width). Set --ms-tooltip-width
+     to a length for a fixed box (also set --ms-tooltip-max-width: none), or
+     --ms-tooltip-min-width for a floor that still grows up to max-width. */
+  --ms-tooltip-width: auto;
+  --ms-tooltip-min-width: 0;
   --ms-tooltip-max-width: calc(32 * var(--ms-rem));
   --ms-tooltip-shadow: var(--base-shadow-md, 0 2px 8px var(--ms-shadow-color));
   --ms-tooltip-z-index: var(--base-z-tooltip, 9000);
@@ -815,6 +820,8 @@
   --ms-option-tooltip-padding: var(--ms-tooltip-padding);
   --ms-option-tooltip-border-radius: var(--ms-tooltip-border-radius);
   --ms-option-tooltip-font-size: var(--ms-tooltip-font-size);
+  --ms-option-tooltip-width: var(--ms-tooltip-width);
+  --ms-option-tooltip-min-width: var(--ms-tooltip-min-width);
   --ms-option-tooltip-max-width: var(--ms-tooltip-max-width);
   --ms-option-tooltip-shadow: var(--ms-tooltip-shadow);
   --ms-option-tooltip-z-index: var(--ms-tooltip-z-index);

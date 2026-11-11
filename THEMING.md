@@ -254,7 +254,7 @@ Badge tooltips showing full text on hover.
 
 | State | Selector | CSS Variables |
 |-------|----------|---------------|
-| **Default** | `.ms__badge-tooltip` | `--ms-tooltip-bg`, `--ms-tooltip-text-color`, `--ms-tooltip-padding`, `--ms-tooltip-border-radius`, `--ms-tooltip-font-size`, `--ms-tooltip-max-width`, `--ms-tooltip-shadow`, `--ms-tooltip-z-index` |
+| **Default** | `.ms__badge-tooltip` | `--ms-tooltip-bg`, `--ms-tooltip-text-color`, `--ms-tooltip-padding`, `--ms-tooltip-border-radius`, `--ms-tooltip-font-size`, `--ms-tooltip-width`, `--ms-tooltip-min-width`, `--ms-tooltip-max-width`, `--ms-tooltip-shadow`, `--ms-tooltip-z-index` |
 | **Visible** | `--visible` | *(opacity: 1, visibility: visible)* |
 
 ---

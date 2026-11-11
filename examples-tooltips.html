@@ -66,7 +66,10 @@
                 Option tooltips render with class <code>.ms__option-tooltip</code> and read their own
                 <code>--ms-option-tooltip-*</code> variables, which default to the shared
                 <code>--ms-tooltip-*</code> surface. Override them (set on the element) to style option tooltips
-                independently of badge tooltips — drag the controls and hover a row to see it live.
+                independently of badge tooltips — drag the controls and hover a row to see it live. The width
+                model: <code>-width</code> is <code>auto</code> (shrink to the content, wrapping at
+                <code>-max-width</code>); give it a length for a fixed box, or set <code>-min-width</code> for a
+                floor that still grows up to <code>-max-width</code>.
             </p>
 
             <div class="controls">
@@ -80,6 +83,12 @@
                     <input type="number" id="sty-radius" min="0" max="24" step="1" value="2" class="w-xs"></label>
                 <label title="Maximum width of the tooltip in px before its text wraps (--ms-option-tooltip-max-width)."><code>--ms-option-tooltip-max-width</code> (px):
                     <input type="number" id="sty-maxw" min="80" max="480" step="10" value="160" class="w-xs"></label>
+            </div>
+            <div class="controls">
+                <label title="Fixed tooltip width in px (--ms-option-tooltip-width; 0 = auto, the default: shrink to the content up to max-width). A fixed width above max-width is still capped — raise max-width too."><code>--ms-option-tooltip-width</code> (px, 0 = auto):
+                    <input type="number" id="sty-w" min="0" max="480" step="10" value="0" class="w-xs"></label>
+                <label title="Minimum tooltip width in px (--ms-option-tooltip-min-width; 0 = none). Short content grows to this floor; longer content still grows up to max-width."><code>--ms-option-tooltip-min-width</code> (px):
+                    <input type="number" id="sty-minw" min="0" max="480" step="10" value="0" class="w-xs"></label>
             </div>
 
             <div class="demo-area">
@@ -102,14 +111,15 @@
             <p>
                 The same tooltip engine drives the selected-badge tooltips. Enable with
                 <code>enable-badge-tooltips</code>; place them with <code>badge-tooltip-placement</code>, customize
-                content with <code>getBadgeTooltipCallback</code> (the <strong>custom content</strong> toggle), and
+                content with <code>getBadgeTooltipCallback</code> (the <strong>custom content</strong> toggle: here an element with
+                the name, the description and the badge's place in the selection), and
                 set the remove-button text with <code>labels.removeItem</code> (<code>{item}</code> = the
                 item name; also the button's aria-label).
             </p>
 
             <div class="controls">
                 <label title="Turn hover tooltips on the selected badges on/off (the enable-badge-tooltips attribute)."><input type="checkbox" id="bdg-enable" checked> <code>enable-badge-tooltips</code></label>
-                <label title="Drive the badge tooltip content from getBadgeTooltipCallback (here 'label: description') instead of the default."><input type="checkbox" id="bdg-custom"> custom content (<code>getBadgeTooltipCallback</code>)</label>
+                <label title="Drive the badge tooltip content from getBadgeTooltipCallback: here an element (bold name, description, and where the badge is shown) instead of the default text."><input type="checkbox" id="bdg-custom"> custom content (<code>getBadgeTooltipCallback</code>)</label>
             </div>
             <div class="controls">
                 <span><code>badge-tooltip-placement</code>:</span>
@@ -150,7 +160,12 @@ el.getOptionTooltipCallback = ({ option }) =&gt; string | HTMLElement
 
 // Independent styling (default to the shared --ms-tooltip-* surface):
 --ms-option-tooltip-bg | -text-color | -padding | -border-radius
---ms-option-tooltip-font-size | -max-width | -shadow | -z-index</pre></div>
+--ms-option-tooltip-font-size | -width | -min-width | -max-width | -shadow | -z-index
+
+// Width model (shared --ms-tooltip-* and the option twins alike):
+--ms-tooltip-width       // auto (shrink to content) | a length for a fixed box
+--ms-tooltip-min-width   // 0 | a floor that still grows up to max-width
+--ms-tooltip-max-width   // calc(32 * --ms-rem) wrap point | none with a fixed width</pre></div>
 
             <h3>Badge tooltips</h3>
             <div class="code-block"><pre>enable-badge-tooltips      // attribute (boolean, default false)
@@ -204,7 +219,7 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
             // The callback also gets the row's state (isSelected, isFocused, isDisabled, …).
             const optCustomCb = ({ option, isSelected }) => {
                 const box = document.createElement('div');
-                box.style.cssText = 'display: grid; gap: .25rem; max-width: 16rem; white-space: normal;';
+                box.style.cssText = 'display: grid; gap: .25rem; white-space: normal;';
                 const name = document.createElement('strong');
                 name.style.cssText = 'font-size: 1.05em; letter-spacing: .02em; text-transform: uppercase;';
                 name.textContent = option.label;
@@ -253,6 +268,11 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
             document.getElementById('sty-fg').addEventListener('input', (e) => setVar('--ms-option-tooltip-text-color', e.target.value));
             document.getElementById('sty-radius').addEventListener('input', (e) => setVar('--ms-option-tooltip-border-radius', `${e.target.value}px`));
             document.getElementById('sty-maxw').addEventListener('input', (e) => setVar('--ms-option-tooltip-max-width', `${e.target.value}px`));
+            document.getElementById('sty-w').addEventListener('input', (e) => {
+                const n = parseInt(e.target.value, 10);
+                setVar('--ms-option-tooltip-width', n > 0 ? `${n}px` : 'auto');
+            });
+            document.getElementById('sty-minw').addEventListener('input', (e) => setVar('--ms-option-tooltip-min-width', `${parseInt(e.target.value, 10) || 0}px`));
 
             // ── TT03 · Badge tooltips ────────────────────────────────────
             const bdgTt = document.getElementById('tt-badge');
@@ -261,7 +281,25 @@ el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
             bdgTt.subtitleMember = 'description';
             bdgTt.options = fruitOptions;
             bdgTt.setSelected(['apple', 'banana', 'cherry']);
-            const bdgCustomCb = ({ option }) => `${option.label}: ${option.description}`;
+            // Custom content: an element built from the badge's context — the name, the description
+            // and where the badge is shown (a chip in the field vs. a row in the selected-items popover).
+            // Display only: tooltips are pointer-events:none, so never put buttons / links in them.
+            const bdgCustomCb = ({ option, isInPopover, displayMode, controller }) => {
+                const box = document.createElement('div');
+                box.style.cssText = 'display: grid; gap: .25rem; white-space: normal;';
+                const name = document.createElement('strong');
+                name.style.cssText = 'font-size: 1.05em; letter-spacing: .02em; text-transform: uppercase;';
+                name.textContent = option.label;
+                const about = document.createElement('span');
+                about.style.cssText = 'opacity: .8; font-style: italic;';
+                about.textContent = option.description;
+                const where = document.createElement('span');
+                where.style.cssText = 'justify-self: start; margin-top: .15rem; padding: 0 .45rem; border-radius: 999px; font-size: .85em; background: #2563eb; color: #fff;';
+                const sel = controller.selectedOptions;
+                where.textContent = `#${sel.indexOf(option) + 1} of ${sel.length} selected · ${isInPopover ? 'in the popover' : `in the field (${displayMode} mode)`}`;
+                box.append(name, about, where);
+                return box;
+            };
 
             document.getElementById('bdg-enable').addEventListener('change', (e) =>
                 boolAttr(bdgTt, 'enable-badge-tooltips', e.target.checked));

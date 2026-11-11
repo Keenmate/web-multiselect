@@ -1601,9 +1601,19 @@
       "usage": "Tooltip font size"
     },
     {
+      "name": "ms-tooltip-width",
+      "category": "tooltip",
+      "usage": "Tooltip width (auto = shrink-to-content; set a length for a fixed box + max-width:none)"
+    },
+    {
+      "name": "ms-tooltip-min-width",
+      "category": "tooltip",
+      "usage": "Tooltip minimum width (0 = none; a floor that still grows up to max-width)"
+    },
+    {
       "name": "ms-tooltip-max-width",
       "category": "tooltip",
-      "usage": "Tooltip max width"
+      "usage": "Tooltip max width (wrap point; set none when using a fixed width)"
     },
     {
       "name": "ms-tooltip-shadow",
@@ -2381,9 +2391,19 @@
       "usage": "Option tooltip font size"
     },
     {
+      "name": "ms-option-tooltip-min-width",
+      "category": "tooltip",
+      "usage": "Option tooltip minimum width (defaults to --ms-tooltip-min-width)"
+    },
+    {
       "name": "ms-option-tooltip-max-width",
       "category": "tooltip",
       "usage": "Option tooltip maximum width"
+    },
+    {
+      "name": "ms-option-tooltip-width",
+      "category": "tooltip",
+      "usage": "Option tooltip width (defaults to --ms-tooltip-width)"
     },
     {
       "name": "ms-option-tooltip-padding",

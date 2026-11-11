@@ -614,6 +614,8 @@
   border-radius: var(--ms-tooltip-border-radius);
   font-size: var(--ms-tooltip-font-size);
   line-height: var(--ms-line-height-relaxed);
+  width: var(--ms-tooltip-width);
+  min-width: var(--ms-tooltip-min-width);
   max-width: var(--ms-tooltip-max-width);
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -642,6 +644,8 @@
   border-radius: var(--ms-option-tooltip-border-radius);
   font-size: var(--ms-option-tooltip-font-size);
   line-height: var(--ms-line-height-relaxed);
+  width: var(--ms-option-tooltip-width);
+  min-width: var(--ms-option-tooltip-min-width);
   max-width: var(--ms-option-tooltip-max-width);
   word-wrap: break-word;
   white-space: pre-wrap;

@@ -230,3 +230,60 @@ test('option tooltip is dismissed immediately when the list scrolls', async ({ p
 
     await expect(tooltip).toHaveCount(0);
 });
+
+// ============================================================================
+// WIDTH VARIABLES (--ms-tooltip-width / -min-width / -max-width + option twins)
+// ============================================================================
+
+test('--ms-tooltip-width sizes the badge AND option tooltips (option twins default to the shared value)', async ({ page }) => {
+    const p = picker(page, 'width-shared-tt');
+    await selectFirst(p, 'apple');
+
+    await p.locator('.ms__badge:not([data-ms-action])').hover();
+    const badgeTip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
+    await expect(badgeTip).toBeVisible({ timeout: 2000 });
+    expect(await badgeTip.evaluate(el => getComputedStyle(el).width)).toBe('300px');
+
+    await page.mouse.move(0, 0);
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="banana"]').hover();
+    const optionTip = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(optionTip).toBeVisible({ timeout: 2000 });
+    const box = await optionTip.evaluate(el => ({ width: getComputedStyle(el).width, maxWidth: getComputedStyle(el).maxWidth }));
+    expect(box).toEqual({ width: '300px', maxWidth: 'none' });
+});
+
+test('--ms-option-tooltip-min-width is a floor for short content', async ({ page }) => {
+    const p = picker(page, 'width-min-tt');
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="apple"]').hover();
+    const tip = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(tip).toBeVisible({ timeout: 2000 });
+    const r = await tip.evaluate(el => ({ minWidth: getComputedStyle(el).minWidth, width: parseFloat(getComputedStyle(el).width) }));
+    expect(r.minWidth).toBe('250px');
+    expect(r.width).toBeGreaterThanOrEqual(249.5);
+});
+
+test('--ms-tooltip-max-width caps long content (auto width wraps at the cap)', async ({ page }) => {
+    const p = picker(page, 'width-max-tt');
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="apple"]').hover();
+    const tip = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(tip).toBeVisible({ timeout: 2000 });
+    // content-box: the cap applies to the content width (padding sits outside it).
+    const r = await tip.evaluate(el => ({ maxWidth: getComputedStyle(el).maxWidth, width: parseFloat(getComputedStyle(el).width), height: el.getBoundingClientRect().height }));
+    expect(r.maxWidth).toBe('120px');
+    expect(r.width).toBeLessThanOrEqual(120.5);
+    expect(r.height).toBeGreaterThan(40); // wrapped onto several lines
+});
+
+test('default width model: auto width, 0 min-width', async ({ page }) => {
+    const p = picker(page, 'option-tt');
+    await openDropdown(p);
+    await p.locator('.ms__option[data-value="apple"]').hover();
+    const tip = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
+    await expect(tip).toBeVisible({ timeout: 2000 });
+    const r = await tip.evaluate(el => ({ minWidth: getComputedStyle(el).minWidth, width: el.getBoundingClientRect().width }));
+    expect(r.minWidth).toBe('0px');
+    expect(r.width).toBeLessThan(200); // shrinks to the short content
+});

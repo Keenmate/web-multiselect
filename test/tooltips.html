@@ -74,6 +74,31 @@
             value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">--ms-tooltip-width: 300px (+ max-width: none) — one shared setting sizes badge AND option tooltips</div>
+        <web-multiselect id="width-shared-tt"
+            enable-badge-tooltips="true" badge-tooltip-delay="0"
+            enable-option-tooltips="true" option-tooltip-delay="0"
+            style="--ms-tooltip-width: 300px; --ms-tooltip-max-width: none;"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">--ms-option-tooltip-min-width: 250px (short content grows to the floor)</div>
+        <web-multiselect id="width-min-tt"
+            enable-option-tooltips="true" option-tooltip-delay="0"
+            style="--ms-option-tooltip-min-width: 250px;"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">--ms-tooltip-max-width: 120px (long content wraps at the cap)</div>
+        <web-multiselect id="width-max-tt"
+            enable-option-tooltips="true" option-tooltip-delay="0"
+            style="--ms-tooltip-max-width: 120px;"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -85,7 +110,8 @@
 
         customElements.whenDefined('web-multiselect').then(() => {
             const ids = ['default-tt', 'custom-tt', 'remove-tt',
-                'option-tt', 'option-custom-tt', 'option-side-tt', 'option-follow-tt'];
+                'option-tt', 'option-custom-tt', 'option-side-tt', 'option-follow-tt',
+                'width-shared-tt', 'width-min-tt'];
             for (const id of ids) {
                 document.getElementById(id).options = items;
             }
@@ -101,6 +127,12 @@
                 value: `item-${i}`, label: `Item ${i}`, description: `Row number ${i}`
             }));
             document.getElementById('option-scroll-tt').options = many;
+
+            // Long tooltip text so the max-width cap has something to wrap.
+            const maxTt = document.getElementById('width-max-tt');
+            maxTt.options = items;
+            maxTt.getOptionTooltipCallback = ({ option }) =>
+                `${option.label} — ${option.description}, a long sentence that must wrap well past one hundred and twenty pixels`;
         });
     </script>
 </body>
