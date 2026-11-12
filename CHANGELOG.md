@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Internal — core 1.0.0-rc22 (2026-11-13)
+- **Requires `@keenmate/web-components-core` `^1.0.0-rc22`** (was `^1.0.0-rc21`).
+
 ### Added
 - **Tooltip width variables `--ms-tooltip-width` (`auto`) and `--ms-tooltip-min-width` (`0`)** next to
   `--ms-tooltip-max-width` (web-treeview's width model): `auto` shrinks to the content and wraps at max-width; a length
