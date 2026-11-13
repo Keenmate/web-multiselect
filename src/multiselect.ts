@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -204,11 +204,10 @@ export class MultiSelectEngine<T = any> {
     // Detaches the visualViewport listener that shrinks the fullscreen sheet to sit
     // above the soft keyboard (null when not attached). See observeKeyboardInset().
     private keyboardInsetCleanup: (() => void) | null = null;
-    // True while a history entry is pushed for the open fullscreen sheet, so the phone
-    // Back gesture/button pops it (closing the sheet) instead of navigating the page.
-    // See pushOverlayHistory()/popOverlayHistory()/onOverlayPopstate().
-    private overlayHistoryActive = false;
-    private readonly onOverlayPopstate = (): void => this.handleOverlayPopstate();
+    // Releases the history entry held for the open fullscreen sheet (null when none), so
+    // the phone Back gesture/button closes the sheet instead of navigating the page. See
+    // claimBackEntry() / releaseBackEntry().
+    private releaseBack: (() => void) | null = null;
 
     // Floating UI cleanup functions
     /** The open dropdown as a core popover (kept mounted; anchored only while floating). Created per open. */
@@ -4517,7 +4516,7 @@ export class MultiSelectEngine<T = any> {
         this.buildFullscreenHeader();
         this.lockBodyScroll();
         // Trap the phone Back gesture/button so it closes the sheet instead of navigating.
-        this.pushOverlayHistory();
+        this.claimBackEntry();
         // Track the soft keyboard so the sheet shrinks to sit above it (see method doc).
         this.observeKeyboardInset();
 
@@ -4541,9 +4540,8 @@ export class MultiSelectEngine<T = any> {
     /** Tear down the fullscreen dropdown chrome and restore page scroll (no-op if floating). */
     private exitFullscreen(): void {
         this.unobserveKeyboardInset();
-        // Consume the history entry we pushed on open (no-op if the Back gesture already
-        // popped it — see handleOverlayPopstate).
-        this.popOverlayHistory();
+        // Give back the history entry held on open (no-op if the Back gesture already popped it).
+        this.releaseBackEntry();
         this.dropdown.classList.remove('ms__dropdown--fullscreen');
         if (this.fullscreenHeader) {
             this.fullscreenHeader.remove();
@@ -4560,41 +4558,27 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Back-gesture handling for the fullscreen sheet. On open we push a history entry
-     * (same URL) and listen for `popstate`; the phone Back gesture/button then pops that
-     * entry — which we treat as "close the sheet" — instead of navigating away from the
-     * page. A programmatic close (✕, selection, Escape) consumes the entry via
-     * `history.back()` so the stack is left as it was found.
+     * Back-gesture handling for the fullscreen sheet (core `claimBackEntry()`, rulebook C-RO-15):
+     * one history entry while it is open, so the phone Back gesture/button closes the sheet
+     * instead of navigating away from the page. Any other close gives the entry back
+     * (`releaseBackEntry()`), and the page keeps its scroll position.
      */
-    private pushOverlayHistory(): void {
-        if (this.overlayHistoryActive) return;
-        if (typeof history === 'undefined' || typeof window === 'undefined') return;
-        this.overlayHistoryActive = true;
-        history.pushState({ msOverlay: this.instanceId }, '');
-        window.addEventListener('popstate', this.onOverlayPopstate);
+    private claimBackEntry(): void {
+        if (this.releaseBack) return;
+        this.releaseBack = claimBackEntry(() => {
+            this.releaseBack = null;
+            // Close whichever fullscreen sheet holds the entry — the options dropdown or the
+            // selected-items popover (mutually exclusive; showPopover() closes the dropdown first).
+            if (this.#isOpen) this.closeWith('back');
+            else if (this.showSelectedPopover) this.hideSelectedPopover();
+        });
     }
 
-    /** Back gesture/button fired: our pushed entry is already gone, so just close the
-     *  sheet — WITHOUT popping history again (popOverlayHistory becomes a no-op). */
-    private handleOverlayPopstate(): void {
-        if (!this.overlayHistoryActive) return;
-        this.overlayHistoryActive = false;
-        window.removeEventListener('popstate', this.onOverlayPopstate);
-        // Close whichever fullscreen sheet pushed the entry — the options dropdown or the
-        // selected-items popover (mutually exclusive; showPopover() closes the dropdown first).
-        if (this.#isOpen) this.closeWith('back');
-        else if (this.showSelectedPopover) this.hideSelectedPopover();
-    }
-
-    /** Programmatic close: remove the listener and pop the entry we pushed (so the
-     *  history stack returns to its pre-open state). No-op if a Back gesture already
-     *  consumed it (overlayHistoryActive is false by then). */
-    private popOverlayHistory(): void {
-        if (!this.overlayHistoryActive) return;
-        this.overlayHistoryActive = false;
-        window.removeEventListener('popstate', this.onOverlayPopstate);
-        // The listener is already detached, so the popstate this triggers is ignored.
-        history.back();
+    /** A close other than Back: give the entry back (no-op when none is held). */
+    private releaseBackEntry(): void {
+        const release = this.releaseBack;
+        this.releaseBack = null;
+        release?.();
     }
 
     /**
@@ -4980,7 +4964,7 @@ export class MultiSelectEngine<T = any> {
             // Push a history entry too, so the phone Back gesture closes the sheet instead
             // of navigating the page away (same guard the options dropdown uses).
             this.lockBodyScroll();
-            this.pushOverlayHistory();
+            this.claimBackEntry();
         } else {
             this.positionSelectedPopover();
         }
@@ -4997,9 +4981,9 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.classList.remove('ms__selected-popover--virtual');
         this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
         this.unlockBodyScroll();
-        // Consume the history entry we pushed on fullscreen open (no-op if a Back gesture
+        // Give back the history entry held on fullscreen open (no-op if a Back gesture
         // already popped it, or if we were never fullscreen).
-        this.popOverlayHistory();
+        this.releaseBackEntry();
         this.hideMessage();
         this.selectedPopoverPlacement = null;
 
@@ -6173,14 +6157,6 @@ export class MultiSelectEngine<T = any> {
         if (this.hintCleanup) this.hintCleanup();
         this.selectedPopoverHandle?.destroy();
         this.selectedPopoverHandle = null;
-
-        // Detach Back-gesture handling WITHOUT popping history — a teardown (e.g. a DOM
-        // move) must not trigger navigation. Any entry we pushed is harmless (same URL).
-        // Done before exitFullscreen() so its popOverlayHistory() no-ops.
-        if (this.overlayHistoryActive) {
-            this.overlayHistoryActive = false;
-            if (typeof window !== 'undefined') window.removeEventListener('popstate', this.onOverlayPopstate);
-        }
 
         // Restore page scroll if we're torn down while a fullscreen overlay is open
         // (e.g. a DOM move destroys the picker mid-open).

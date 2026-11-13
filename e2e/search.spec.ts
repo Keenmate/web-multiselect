@@ -194,11 +194,11 @@ test.describe('navigate mode — fullscreen match navigator', () => {
     });
 
     // A programmatic close (✕) consumes the pushed entry, so it doesn't leave a history
-    // trap. The overlay entry carries a marker in history.state; while open it's the
+    // trap. The overlay entry (core claimBackEntry) carries { kmBackEntry: true } in history.state; while open it's the
     // current entry, and after ✕ the current entry is no longer the overlay's (we moved
     // back off it via history.back()).
     const onOverlayEntry = (page: Page) =>
-        page.evaluate(() => !!(history.state && (history.state as any).msOverlay));
+        page.evaluate(() => !!(history.state && (history.state as any).kmBackEntry));
 
     test('closing via the ✕ button consumes the pushed history entry', async ({ page }) => {
         const p = picker(page, 'navigate-fs');
@@ -268,7 +268,7 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
     test('closing via the ✕ button consumes the pushed history entry', async ({ page }) => {
         const p = picker(page, 'popover-fs');
         const onOverlayEntry = () =>
-            page.evaluate(() => !!(history.state && (history.state as any).msOverlay));
+            page.evaluate(() => !!(history.state && (history.state as any).kmBackEntry));
 
         await openPopoverFullscreen(p);
         expect(await onOverlayEntry()).toBe(true); // sitting on the pushed entry

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Changed — the phone Back entry is core `claimBackEntry()` (2026-11-13)
+- **The fullscreen sheet and the fullscreen selected-items popover hold their Back history entry through
+  core `claimBackEntry()`** (needs `@keenmate/web-components-core` `^1.0.0-rc23`; rulebook C-RO-15) instead
+  of a private `pushState` / `popstate` copy. Back still closes the sheet / popover; any other close gives the
+  entry back; the page keeps its scroll position (no jump to the top on close). `history.state` of the entry
+  is now core's `{ kmBackEntry: true }` (was `{ msOverlay: <instanceId> }`), and a teardown (DOM move) while
+  open now gives the entry back too.
+
 ### Internal — core 1.0.0-rc22 (2026-11-13)
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc22`** (was `^1.0.0-rc21`).
 

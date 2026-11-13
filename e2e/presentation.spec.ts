@@ -143,3 +143,48 @@ test.describe('fullscreen scale under base-css-variables (--base-rem: 1rem)', ()
         expect(height).toBe('60px');
     });
 });
+
+test.describe('closing the fullscreen sheet keeps the page scroll (core claimBackEntry, C-RO-15)', () => {
+    test('✕ and the phone Back gesture close it without jumping the page to the top', async ({ page }) => {
+        // A tall page with the picker well below the top.
+        await page.evaluate(() => {
+            const spacer = document.createElement('div');
+            spacer.style.height = '1500px';
+            document.body.prepend(spacer);
+            document.body.style.minHeight = '4000px';
+        });
+        const p = picker(page, 'fullscreen');
+        // Near the top of the viewport, not centred: a focus-driven scrollIntoView on close would
+        // centre it and land elsewhere, so only a kept position passes.
+        await p.evaluate((el) => { el.scrollIntoView({ block: 'start', behavior: 'instant' }); window.scrollBy({ top: -80, behavior: 'instant' }); });
+        const scrollY = () => page.evaluate(() => Math.round(window.scrollY));
+        const before = await scrollY();
+        expect(before).toBeGreaterThan(1000);
+        // Every scroll position the page passes through from the close on (a jump to the top
+        // and back is a visible flash even when the final position is right).
+        const watch = () => page.evaluate(() => {
+            const w = window as unknown as { __scrolls: number[] };
+            w.__scrolls = [];
+            window.addEventListener('scroll', () => w.__scrolls.push(Math.round(window.scrollY)));
+        });
+        const closedAt = async () => {
+            await expect(fullscreen(p)).toHaveCount(0);
+            await page.waitForTimeout(300); // the history.back() and its traversal
+            const seen = await page.evaluate(() => (window as unknown as { __scrolls: number[] }).__scrolls);
+            return [...new Set([...seen, await scrollY()])];
+        };
+
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+        await watch();
+        await p.locator('.ms__fullscreen-close').click();
+        expect(await closedAt()).toEqual([before]);
+
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+        await watch();
+        await page.evaluate(() => history.back());
+        expect(await closedAt()).toEqual([before]);
+        expect(await page.evaluate(() => history.scrollRestoration)).toBe('auto');
+    });
+});
