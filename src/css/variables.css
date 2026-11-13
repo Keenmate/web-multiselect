@@ -412,17 +412,34 @@
      --ms-fullscreen-rem gives the enlarged phone-view sizes wherever they're consumed. */
   --ms-fullscreen-bg: var(--ms-dropdown-bg);
   --ms-fullscreen-text-color: var(--ms-dropdown-text-color);
-  --ms-fullscreen-header-bg: var(--ms-dropdown-bg);
-  --ms-fullscreen-header-border: var(--ms-border-width) solid var(--ms-dropdown-border-color);
-  --ms-fullscreen-header-gap: calc(0.8 * var(--ms-fullscreen-rem));
-  /* Split into v/h so the close button can reclaim this exact padding with negative
-     margins to reach the sheet's physical corner (see .ms__fullscreen-close). */
-  --ms-fullscreen-header-padding-v: calc(0.8 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-header-padding-h: calc(1.2 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-header-padding: var(--ms-fullscreen-header-padding-v) var(--ms-fullscreen-header-padding-h);
-  --ms-fullscreen-header-min-height: calc(5.6 * var(--ms-fullscreen-rem)); /* consistent bar height: search vs title */
-  --ms-fullscreen-title-font-size: calc(1.7 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-title-font-weight: var(--base-font-weight-semibold, 600);
+  /* Sheet chrome — the header bar, title and close of both phone sheets are core's
+     .km-sheet-header / -title / -close (SHEET_CHROME_CSS, SPEC §12.9). These per-instance
+     overrides are UNSET by default and mapped onto core's private --_km-sheet-* with NO
+     fallback, so an unset one falls through to the page-wide --km-sheet-* and then core's
+     base-token default. Set any of them on the element (or a selector) to theme one
+     multiselect, e.g. a bordered "button" close like a command palette:
+       --ms-fullscreen-close-border: 1px solid var(--ms-border-color);
+       --ms-fullscreen-close-border-radius: 8px;
+       --ms-fullscreen-close-bg: var(--ms-input-bg);
+     The close's tap target reaches into the sheet's top-trailing corner (core ::after), so
+     bordering the chip doesn't shrink what's clickable; --ms-fullscreen-close-edge-nudge
+     slides it toward the edge. */
+  --_km-sheet-header-bg: var(--ms-fullscreen-header-bg);
+  --_km-sheet-header-border: var(--ms-fullscreen-header-border);
+  --_km-sheet-header-gap: var(--ms-fullscreen-header-gap);
+  --_km-sheet-header-padding-block: var(--ms-fullscreen-header-padding-v);
+  --_km-sheet-header-padding-inline: var(--ms-fullscreen-header-padding-h);
+  --_km-sheet-header-min-height: var(--ms-fullscreen-header-min-height);
+  --_km-sheet-title-font-size: var(--ms-fullscreen-title-font-size);
+  --_km-sheet-title-font-weight: var(--ms-fullscreen-title-font-weight);
+  --_km-sheet-close-size: var(--ms-fullscreen-close-size);
+  --_km-sheet-close-icon-size: var(--ms-fullscreen-close-icon-size);
+  --_km-sheet-close-color: var(--ms-fullscreen-close-color);
+  --_km-sheet-close-bg: var(--ms-fullscreen-close-bg);
+  --_km-sheet-close-bg-hover: var(--ms-fullscreen-close-bg-hover);
+  --_km-sheet-close-border: var(--ms-fullscreen-close-border);
+  --_km-sheet-close-border-radius: var(--ms-fullscreen-close-border-radius);
+  --_km-sheet-close-edge-nudge: var(--ms-fullscreen-close-edge-nudge);
   --ms-fullscreen-search-border: var(--ms-input-border);
   --ms-fullscreen-search-border-radius: var(--ms-input-border-radius);
   --ms-fullscreen-search-padding: calc(0.8 * var(--ms-fullscreen-rem)) calc(1.2 * var(--ms-fullscreen-rem));
@@ -444,31 +461,10 @@
   /* Gap between the leading toggle and the search field. Defaults to the header gap so it
      matches the field↔close spacing on the trailing side (symmetric bar); override to
      decouple. */
-  --ms-fullscreen-mode-toggle-gap: var(--ms-fullscreen-header-gap);
+  --ms-fullscreen-mode-toggle-gap: var(--_km-sheet-header-gap, var(--km-sheet-header-gap, calc(var(--base-space-sm, 0.8) * var(--base-rem, 10px))));
   --ms-fullscreen-mode-toggle-color: var(--ms-input-clear-color);
   --ms-fullscreen-mode-toggle-bg: transparent;
   --ms-fullscreen-mode-toggle-bg-hover: var(--ms-option-bg-matched, transparent);
-  --ms-fullscreen-close-size: calc(3.6 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-close-icon-size: calc(1.6 * var(--ms-fullscreen-rem));
-  --ms-fullscreen-close-color: var(--ms-dropdown-text-color);
-  /* Visible close chip. Defaults to a borderless, transparent, round hit-glyph (so it
-     reads as a bare ✕), but these turn it into a bordered "button" like a command-
-     palette close — e.g. --ms-fullscreen-close-border: 1px solid var(--ms-border-color);
-     --ms-fullscreen-close-border-radius: calc(0.8 * var(--ms-fullscreen-rem));
-     --ms-fullscreen-close-bg: var(--ms-input-bg);. The tap target stays larger than the
-     chip (see the ::after in floating.css), so bordering it doesn't shrink what's
-     clickable. */
-  --ms-fullscreen-close-bg: transparent;
-  --ms-fullscreen-close-border: none;
-  --ms-fullscreen-close-border-radius: 50%;
-  --ms-fullscreen-close-bg-hover: var(--ms-option-bg-matched, transparent);
-  /* Corner tap target. The visible chip stays --close-size (so it never inflates the
-     header height), but a transparent ::after extends the *hit* area into the sheet's
-     top-trailing corner — the dead header padding around a centered button was the "tap
-     here → nothing happens" zone, and the corner is the easiest place to hit.
-     --edge-nudge is a negative inline-end margin that slides the whole button (and its
-     glyph) that much closer to the physical edge. */
-  --ms-fullscreen-close-edge-nudge: calc(0.8 * var(--ms-fullscreen-rem));
   /* Truncated-label info affordance (fullscreen only). A circled "i" revealed at the
      trailing edge of a row whose label is clipped, so the full label is one tap away
      on touch (where hover tooltips never fire). Sized in --ms-fullscreen-rem. */

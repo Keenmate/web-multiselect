@@ -20,6 +20,11 @@
       "token": "--base-focused-text-color",
       "rule": "C2",
       "reason": "Same as --base-selected-text-color: 'unchanged' for the option title is --ms-option-title-color."
+    },
+    {
+      "token": "--base-touch-target-min",
+      "rule": "C1",
+      "reason": "Re-reads core's sheet chrome default (SHEET_CHROME_CSS sizes .km-sheet-close by --base-touch-target-min, 44px) so the fullscreen mode toggle mirrors the effective close size. Core reads it; not (yet) in the base-css-variables contract."
     }
   ]
 }

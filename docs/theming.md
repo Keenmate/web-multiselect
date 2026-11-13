@@ -371,6 +371,37 @@ For the complete list of all available CSS variables, see [`src/css/variables.cs
 
 Option (dropdown row) tooltips read their own `--ms-option-tooltip-*` twins (`-bg`, `-text-color`, `-padding`, `-border-radius`, `-font-size`, `-width`, `-min-width`, `-max-width`, `-shadow`, `-z-index`), each defaulting to the shared `--ms-tooltip-*` value above — so one `--ms-tooltip-width` setting sizes badge and option tooltips alike; override an `--ms-option-tooltip-*` variable to diverge.
 
+### Phone sheet header & close (core sheet chrome)
+
+The header bar, title and ✕ of both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover)
+are `@keenmate/web-components-core`'s shared sheet chrome (`.km-sheet-header` / `.km-sheet-title` / `.km-sheet-close`,
+core SPEC §12.9) — the same bar every Keenmate component's phone sheet uses. Three layers, later wins:
+core's base-token defaults → page-wide `--km-sheet-*` on `:root` (all components at once) → the per-instance
+`--ms-fullscreen-*` overrides below. The `--ms-*` ones are **unset by default** (they map onto core's private
+`--_km-sheet-*` with no fallback), so set them only to theme one multiselect. The search field, the navigate-mode
+match row and the leading mode toggle stay multiselect's own (`--ms-fullscreen-search-*`, `-nav-*`, `-mode-toggle-*`);
+the toggle mirrors the close's effective size / edge nudge, whichever layer set them.
+
+| Variable | Core counterpart | Description |
+|----------|------------------|-------------|
+| `--ms-fullscreen-header-bg` | `--km-sheet-header-bg` | Header bar background |
+| `--ms-fullscreen-header-border` | `--km-sheet-header-border` | Header bar bottom border |
+| `--ms-fullscreen-header-gap` | `--km-sheet-header-gap` | Gap between header items |
+| `--ms-fullscreen-header-padding-v` | `--km-sheet-header-padding-block` | Header block padding |
+| `--ms-fullscreen-header-padding-h` | `--km-sheet-header-padding-inline` | Header inline padding |
+| `--ms-fullscreen-header-min-height` | `--km-sheet-header-min-height` | Header bar minimum height |
+| `--ms-fullscreen-title-font-size` | `--km-sheet-title-font-size` | Popover sheet title size |
+| `--ms-fullscreen-title-font-weight` | `--km-sheet-title-font-weight` | Popover sheet title weight |
+| `--ms-fullscreen-close-size` | `--km-sheet-close-size` | Close chip size (default 44px touch target) |
+| `--ms-fullscreen-close-icon-size` | `--km-sheet-close-icon-size` | ✕ icon size |
+| `--ms-fullscreen-close-color` | `--km-sheet-close-color` | ✕ color |
+| `--ms-fullscreen-close-bg` / `-bg-hover` | `--km-sheet-close-bg` / `-bg-hover` | Chip background (rest / hover) |
+| `--ms-fullscreen-close-border` / `-border-radius` | `--km-sheet-close-border` / `-border-radius` | Chip border — e.g. `1px solid …` + `8px` for a bordered "button" close |
+| `--ms-fullscreen-close-edge-nudge` | `--km-sheet-close-edge-nudge` | How far the close slides toward the trailing edge |
+
+The close's tap target always reaches into the sheet's top-trailing corner (core's `::after`), so bordering the chip
+doesn't shrink what's clickable. The ✕ glyph is core's `--base-icon-close` (`--km-sheet-close-icon` page-wide).
+
 ### Typography
 
 Font sizes and weights read the shared scale directly — `--base-font-size-*` (× `--ms-rem`) and

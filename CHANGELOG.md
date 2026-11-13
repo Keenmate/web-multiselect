@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Changed — the phone sheet header / close are core's sheet chrome (2026-11-13)
+- **Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) use core's shared sheet
+  chrome** (`SHEET_CHROME_CSS`, `.km-sheet-header` / `.km-sheet-title` / `.km-sheet-close`, core SPEC §12.9;
+  needs `@keenmate/web-components-core` `1.0.0-rc24`; rulebook C-RO-17). multiselect's own close / header / title
+  rules are gone; the search field, the navigate-mode match row and the leading mode toggle stay (the toggle now
+  mirrors the close's EFFECTIVE size / edge nudge, whichever layer set them). Visual change: the bar, title and ✕
+  follow core's base-token defaults (44px close chip, `--base-icon-close` glyph) — the same look as every other
+  Keenmate phone sheet. The floating selected-items popover keeps its compact header. The close's `aria-label`
+  still comes from `labels.close`.
+- **`--ms-fullscreen-header-*` / `-title-*` / `-close-*` are now unset-by-default instance overrides** mapped onto
+  core's `--_km-sheet-*` (no fallback): unset → page-wide `--km-sheet-*` → core default. Setting them works as before.
+- **BREAKING: `--ms-fullscreen-header-padding` (shorthand) removed** — core has no shorthand; use
+  `--ms-fullscreen-header-padding-v` / `-h` (or page-wide `--km-sheet-header-padding-block` / `-inline`).
+  `--ms-fullscreen-mode-toggle-gap` now defaults to the effective sheet header gap.
+
 ### Changed — the phone Back entry is core `claimBackEntry()` (2026-11-13)
 - **The fullscreen sheet and the fullscreen selected-items popover hold their Back history entry through
   core `claimBackEntry()`** (needs `@keenmate/web-components-core` `^1.0.0-rc23`; rulebook C-RO-15) instead

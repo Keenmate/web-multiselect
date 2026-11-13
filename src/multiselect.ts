@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -4337,10 +4337,12 @@ export class MultiSelectEngine<T = any> {
                 this.selectedPopoverPlacement = null;
                 this.clearFloatingInlineGeometry(this.selectedPopover);
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
+                this.syncSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
                 this.lockBodyScroll();
             } else {
                 this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
+                this.syncSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
                 this.unlockBodyScroll();
                 this.positionSelectedPopover();
@@ -4591,8 +4593,11 @@ export class MultiSelectEngine<T = any> {
     private buildFullscreenHeader(): void {
         if (this.fullscreenHeader) return;
 
+        // Core sheet chrome (SPEC §12.9): the bar / close look is `km-sheet-*`; the ms classes
+        // keep only the ms layout around it (search field, wrapped nav row, mode toggle).
+        this.adoptSheetChrome(this.dropdown);
         const header = document.createElement('div');
-        header.className = 'ms__fullscreen-header';
+        header.className = 'ms__fullscreen-header km-sheet-header';
         header.classList.toggle('ms__fullscreen-header--no-search', !this.options.isSearchEnabled);
 
         if (this.options.isSearchEnabled) {
@@ -4652,10 +4657,10 @@ export class MultiSelectEngine<T = any> {
 
         const close = document.createElement('button');
         close.type = 'button';
-        close.className = 'ms__fullscreen-close';
+        close.className = 'ms__fullscreen-close km-sheet-close';
         close.setAttribute('aria-label', this.resolveLabel('close'));
-        // The ✕ glyph is drawn via CSS (::before mask icon), shared with the popover
-        // close so both overlays have the same close button.
+        // No text: the ✕ is core's masked --base-icon-close (km-sheet-close), the same close
+        // the selected-items sheet gets.
         close.addEventListener('click', () => this.closeWith('close-button'));
         header.appendChild(close);
 
@@ -5024,9 +5029,28 @@ export class MultiSelectEngine<T = any> {
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
             </div>
         `;
+        this.syncSelectedPopoverSheetChrome();
 
         // Attach tooltips to popover badges
         this.attachBadgeTooltips(this.selectedPopover);
+    }
+
+    /** Adopt core's `SHEET_CHROME_CSS` into the root `el` lives in (the shadow root; standalone:
+     *  the overlay container's document / shadow root). Idempotent per root. */
+    private adoptSheetChrome(el: HTMLElement): void {
+        const root = el.getRootNode();
+        if (root instanceof Document || root instanceof ShadowRoot) adoptStyles(root, SHEET_CHROME_CSS);
+    }
+
+    /** The selected-items popover header is a core sheet header (`km-sheet-header` / `-title` /
+     *  `-close`, SPEC §12.9) only while it is the phone sheet — the floating popover keeps its
+     *  own compact header. Re-run after every render and on a presentation switch. */
+    private syncSelectedPopoverSheetChrome(): void {
+        const isSheet = this.selectedPopover.classList.contains('ms__selected-popover--fullscreen');
+        if (isSheet) this.adoptSheetChrome(this.selectedPopover);
+        this.selectedPopover.querySelector('.ms__selected-popover-header')?.classList.toggle('km-sheet-header', isSheet);
+        this.selectedPopover.querySelector('.ms__selected-popover-header > span')?.classList.toggle('km-sheet-title', isSheet);
+        this.selectedPopover.querySelector('.ms__selected-popover-close')?.classList.toggle('km-sheet-close', isSheet);
     }
 
     /** Whether the consumer set `labels[key]` (vs the English default). */
@@ -5071,6 +5095,7 @@ export class MultiSelectEngine<T = any> {
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
             this.selectedPopover.innerHTML = html;
+            this.syncSelectedPopoverSheetChrome();
             this.selectedPopoverContainer = this.selectedPopover.querySelector('.ms__selected-popover-body') as HTMLDivElement;
         } else {
             // Just update the count in header
@@ -5078,6 +5103,7 @@ export class MultiSelectEngine<T = any> {
             if (header) {
                 header.textContent = this.selectedPopoverTitleText(count);
             }
+            this.syncSelectedPopoverSheetChrome();
         }
 
         if (!this.selectedPopoverContainer) return;

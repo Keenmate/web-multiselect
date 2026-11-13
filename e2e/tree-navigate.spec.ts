@@ -153,6 +153,19 @@ test.describe('tree — fullscreen search-mode toggle (show-search-mode-toggle)'
         await expect(toggle(p)).toHaveAttribute('aria-label', 'Switch to navigate mode');
     });
 
+    test('toggle mirrors the core sheet close across the bar (glyph centres equidistant from the edges)', async ({ page }) => {
+        const p = picker(page, 'tree-navigate-fs-toggle');
+        await openFullscreen(p);
+        const [h, t, c] = await Promise.all([
+            p.locator('.ms__fullscreen-header').boundingBox(),
+            toggle(p).boundingBox(),
+            p.locator('.ms__fullscreen-close.km-sheet-close').boundingBox(),
+        ]);
+        const lead = t!.x + t!.width / 2 - h!.x;
+        const trail = h!.x + h!.width - (c!.x + c!.width / 2);
+        expect(Math.abs(lead - trail)).toBeLessThanOrEqual(1);
+    });
+
     test('switching mode on an empty search box leaves nothing focused', async ({ page }) => {
         const p = picker(page, 'tree-navigate-fs-toggle');
         await openFullscreen(p);

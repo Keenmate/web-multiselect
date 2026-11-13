@@ -278,6 +278,21 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
 
         await expect.poll(() => onOverlayEntry()).toBe(false); // moved back off it
     });
+
+    test('the sheet header is core sheet chrome (km-sheet-*), labelled from ms labels', async ({ page }) => {
+        const p = picker(page, 'popover-fs');
+        await openPopoverFullscreen(p);
+
+        await expect(p.locator('.ms__selected-popover-header')).toHaveClass(/km-sheet-header/);
+        await expect(p.locator('.ms__selected-popover-header > span')).toHaveClass(/km-sheet-title/);
+        const close = p.locator('.ms__selected-popover-close');
+        await expect(close).toHaveClass(/km-sheet-close/);
+        await expect(close).toHaveAttribute('aria-label', 'Close');
+        await expect(close).toHaveText(''); // the ✕ is a CSS mask, not a text glyph
+        // The core 44px close chip (base touch-target default), not the compact floating one.
+        const box = await close.boundingBox();
+        expect(Math.round(box!.width)).toBe(44);
+    });
 });
 
 test.describe('fullscreen — host-page overflow clamp', () => {

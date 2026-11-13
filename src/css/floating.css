@@ -111,10 +111,8 @@
    the selected-items popover has no actions row. */
 .ms__dropdown--fullscreen {
   --ms-actions-gap: calc(0.4 * var(--ms-rem));
-  /* Horizontal padding matches the header (--ms-fullscreen-header-padding-h) and the
-     option rows (--ms-option-padding-h), both 1.2rem, so the action buttons' outer edges
-     line up with the search field and the option checkboxes instead of starting ~0.4rem
-     further out. Vertical stays 0.8rem for the row's own rhythm. */
+  /* Horizontal padding matches the option rows (--ms-option-padding-h, 1.2rem), so the
+     action buttons' outer edges line up with the option checkboxes. Vertical stays 0.8rem for the row's own rhythm. */
   --ms-actions-padding: calc(0.8 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-action-btn-padding: calc(0.6 * var(--ms-rem)) calc(1.2 * var(--ms-rem));
   --ms-action-btn-font-size: calc(var(--ms-font-scale-sm) * var(--ms-rem));
@@ -145,7 +143,7 @@
 
   /* Keep the sheet's CONTENT inside the display's safe area — the biggest offender is
      LANDSCAPE, where the Android nav bar sits on one side and a camera cutout / rounded
-     corner on the other, so a plain `width: 100vw` sheet runs its rows and search box
+     corner on the other, so a plain full-viewport-width sheet runs its rows and search box
      UNDER those system bars (left/right edges clipped, the field looks "too wide for the
      screen"). `box-sizing: border-box` keeps the outer box a full-bleed 100dvw × 100dvh
      (so the BACKGROUND still paints edge-to-edge with no gaps at the corners), while the
@@ -198,25 +196,23 @@
   flex: 0 0 auto;
 }
 
-/* Shared fullscreen header bar — ONE treatment for both the dropdown (search
-   field) and the selected-items popover (title). Same padding, height, border, and
-   close button, so the two mobile overlays are visually identical. The popover's
-   header/close reuse their own class names but adopt these rules under
-   `--fullscreen`, and the selectors are listed together so there's one source of
-   truth (no drift between the two headers). */
-.ms__fullscreen-header,
-.ms__selected-popover--fullscreen .ms__selected-popover-header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
+/* Fullscreen header bar — core's sheet chrome (SPEC §12.9): the bar, the title and the close
+   (.km-sheet-header / -title / -close, SHEET_CHROME_CSS adopted by JS) are ONE shared look for
+   both overlays (the dropdown's search header and the selected-items sheet's title header),
+   themed by the --ms-fullscreen-header-* / -title-* / -close-* instance overrides (mapped onto
+   --_km-sheet-* in variables.css) or page-wide by --km-sheet-*. These rules keep only the
+   dropdown's own layout around it. The --_ms-sheet-* locals re-read core's EFFECTIVE values
+   (same 3-layer chain + defaults as SHEET_CHROME_CSS) so the search row and the mode toggle
+   stay aligned with the core bar / close whatever layer set them. */
+.ms__fullscreen-header {
+  --_ms-sheet-header-min-height: var(--_km-sheet-header-min-height, var(--km-sheet-header-min-height, calc(5.6 * var(--base-rem, 10px))));
+  --_ms-sheet-header-padding-block: var(--_km-sheet-header-padding-block, var(--km-sheet-header-padding-block, calc(var(--base-space-sm, 0.8) * var(--base-rem, 10px))));
+  --_ms-sheet-header-gap: var(--_km-sheet-header-gap, var(--km-sheet-header-gap, calc(var(--base-space-sm, 0.8) * var(--base-rem, 10px))));
+  --_ms-sheet-close-size: var(--_km-sheet-close-size, var(--km-sheet-close-size, var(--base-touch-target-min, 44px)));
+  --_ms-sheet-close-edge-nudge: var(--_km-sheet-close-edge-nudge, var(--km-sheet-close-edge-nudge, calc(var(--base-space-sm, 0.8) * var(--base-rem, 10px))));
   /* Wrap lets the navigate-mode match navigator (flex-basis 100%) drop onto its own
      row under the search box while search + close stay on the first row. */
   flex-wrap: wrap;
-  gap: var(--ms-fullscreen-header-gap);
-  min-height: var(--ms-fullscreen-header-min-height);
-  padding: var(--ms-fullscreen-header-padding);
-  background: var(--ms-fullscreen-header-bg);
-  border-bottom: var(--ms-fullscreen-header-border);
 }
 
 /* Keep the search field's top padding constant whether or not the navigate-mode nav row
@@ -236,7 +232,8 @@
 }
 
 .ms__fullscreen-header > .ms__fullscreen-search-wrapper {
-  min-height: var(--ms-fullscreen-header-min-height);
+  /* The core bar is border-box: its min-height includes the block padding. */
+  min-height: calc(var(--_ms-sheet-header-min-height) - 2 * var(--_ms-sheet-header-padding-block));
 }
 
 /* Match navigator (navigate searchMode only): result count on the lead edge, round
@@ -316,8 +313,7 @@
    shrinkable and could have made room. That's the "close on a second line, but only
    on some (narrower) phones" bug. Basis 0 keeps its hypothetical size at 0 so it
    never forces the close to wrap; flex-grow still fills the bar. */
-.ms__fullscreen-header > .ms__fullscreen-search-wrapper,
-.ms__selected-popover--fullscreen .ms__selected-popover-header > span {
+.ms__fullscreen-header > .ms__fullscreen-search-wrapper {
   flex: 1 1 0;
   min-width: 0;
 }
@@ -329,14 +325,6 @@
   position: relative;
   display: flex;
   align-items: center;
-}
-
-/* Popover title typography in fullscreen (matches a header title, not the small
-   floating-popover label). */
-.ms__selected-popover--fullscreen .ms__selected-popover-header {
-  font-size: var(--ms-fullscreen-title-font-size);
-  font-weight: var(--ms-fullscreen-title-font-weight);
-  color: var(--ms-fullscreen-text-color);
 }
 
 .ms__fullscreen-search {
@@ -406,15 +394,15 @@
   width: var(--ms-fullscreen-mode-toggle-size);
   height: var(--ms-fullscreen-mode-toggle-size);
   margin-inline-end: var(--ms-fullscreen-mode-toggle-gap);
-  /* Mirror the close (✕) so both icons read as symmetric across the bar. The close is
-     pulled toward the trailing edge by --ms-fullscreen-close-edge-nudge, landing its
-     GLYPH centre at `header-padding-h - edge-nudge + close-size/2` from that edge. This
+  /* Mirror the close (✕) so both icons read as symmetric across the bar. The core close is
+     pulled toward the trailing edge by the sheet close edge nudge, landing its
+     GLYPH centre at `header-padding-inline - edge-nudge + close-size/2` from that edge. This
      nudge lands the toggle's glyph centre the same distance from the LEADING edge — the
      `(close-size - toggle-size)/2` term compensates for the toggle being a smaller chip
      than the close, so it's the drawn glyphs (not just the button boxes) that align. */
   margin-inline-start: calc(
-    (var(--ms-fullscreen-close-size) - var(--ms-fullscreen-mode-toggle-size)) / 2
-    - var(--ms-fullscreen-close-edge-nudge)
+    (var(--_ms-sheet-close-size) - var(--ms-fullscreen-mode-toggle-size)) / 2
+    - var(--_ms-sheet-close-edge-nudge)
   );
   padding: 0;
   color: var(--ms-fullscreen-mode-toggle-color);
@@ -445,66 +433,6 @@
 
 .ms__fullscreen-mode-toggle[data-mode="filter"] {
   --ms-fullscreen-mode-toggle-icon: var(--ms-icon-filter);
-}
-
-/* Shared close button — a fixed-size chip in both overlays: mask-icon ✕ centered in a
-   --close-size box that's round and borderless by default, but fully themeable into a
-   bordered "button" (see the --ms-fullscreen-close-bg / -border / -border-radius vars,
-   e.g. a light border + small radius like a command-palette close). The visible box is
-   a contained square so a border reads as a button, NOT a full-height strip; a separate
-   transparent ::after (below) keeps the tap target large and corner-reaching. A small
-   negative inline-end margin slides the button (and glyph) closer to the edge. */
-.ms__fullscreen-close,
-.ms__selected-popover--fullscreen .ms__selected-popover-close {
-  flex: 0 0 auto;
-  position: relative;                 /* anchor for the ::after hit-area extension */
-  box-sizing: border-box;             /* a border must not grow the --close-size box */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--ms-fullscreen-close-size);
-  height: var(--ms-fullscreen-close-size);
-  margin-inline-start: auto;          /* trailing edge even with no search field beside it (search off) */
-  margin-inline-end: calc(-1 * var(--ms-fullscreen-close-edge-nudge));  /* slide toward the edge */
-  padding: 0;
-  color: var(--ms-fullscreen-close-color);
-  background: var(--ms-fullscreen-close-bg);
-  border: var(--ms-fullscreen-close-border);
-  border-radius: var(--ms-fullscreen-close-border-radius);
-  cursor: pointer;
-}
-
-/* Invisible hit-area extension — grows the tap target well beyond the visible chip so
-   the whole top-trailing corner (the easiest place to tap, and the old dead padding
-   around a centered button) dismisses the sheet, without changing the chip's look. It
-   overshoots UP past the button (harmless — that's off the top of the sheet) and past
-   the trailing edge (clipped), and reaches a bounded amount below and into the leading
-   gap (kept short so it never covers the first option row or the search field). */
-.ms__fullscreen-close::after,
-.ms__selected-popover--fullscreen .ms__selected-popover-close::after {
-  content: "";
-  position: absolute;
-  inset-block-start: calc(-1 * var(--ms-fullscreen-close-size));
-  inset-block-end: calc(-1 * var(--ms-fullscreen-header-padding-v));
-  inset-inline-end: calc(-1 * var(--ms-fullscreen-header-padding-h));
-  inset-inline-start: calc(-1 * var(--ms-fullscreen-header-gap));
-}
-
-.ms__fullscreen-close:hover,
-.ms__selected-popover--fullscreen .ms__selected-popover-close:hover {
-  background: var(--ms-fullscreen-close-bg-hover);
-  color: var(--ms-fullscreen-close-color);
-}
-
-.ms__fullscreen-close::before,
-.ms__selected-popover--fullscreen .ms__selected-popover-close::before {
-  content: "";
-  display: block;
-  width: var(--ms-fullscreen-close-icon-size);
-  height: var(--ms-fullscreen-close-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-remove) center / contain no-repeat;
-          mask: var(--ms-icon-remove) center / contain no-repeat;
 }
 
 /* Truncated-label reveal — a circled "i" at the trailing edge of a fullscreen row
@@ -793,7 +721,9 @@
   max-height: none;
 }
 
-.ms__selected-popover-header {
+/* The compact floating header. On the phone sheet JS adds km-sheet-header / -title / -close
+   (core's sheet chrome), and these rules step aside. */
+.ms__selected-popover-header:not(.km-sheet-header) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -805,7 +735,7 @@
   color: var(--ms-selected-popover-header-color);
 }
 
-.ms__selected-popover-close {
+.ms__selected-popover-close:not(.km-sheet-close) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -822,12 +752,12 @@
   transition: all var(--ms-transition-normal) var(--ms-easing-snappy);
 }
 
-.ms__selected-popover-close:hover {
+.ms__selected-popover-close:not(.km-sheet-close):hover {
   background: var(--ms-selected-popover-close-bg-hover);
   color: var(--ms-selected-popover-close-color-hover);
 }
 
-.ms__selected-popover-close::before {
+.ms__selected-popover-close:not(.km-sheet-close)::before {
   content: "";
   display: block;
   width: var(--ms-selected-popover-close-icon-size);

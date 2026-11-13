@@ -19,6 +19,8 @@ test('labels.selectedPopoverTitle translates the header and interpolates {count}
     // Default (English) header.
     await badge.click();
     await expect(header).toHaveText('Selected Items (3)');
+    // Floating popover keeps its compact header — core's sheet chrome is the phone sheet only.
+    await expect(p.locator('.ms__selected-popover-close')).not.toHaveClass(/km-sheet-close/);
     // Close via the popover's own ✕ — the open popover covers the counter badge, so a
     // second badge click can't reach it (Chromium's hit-test lets it through; Firefox doesn't).
     await p.locator('.ms__selected-popover-close').click();

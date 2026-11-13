@@ -437,6 +437,16 @@
       "name": "base-loader-size",
       "required": false,
       "usage": "Loader size"
+    },
+    {
+      "name": "base-space-sm",
+      "required": false,
+      "usage": "Phone sheet header spacing (gap / block padding / close edge nudge) — core sheet chrome default"
+    },
+    {
+      "name": "base-touch-target-min",
+      "required": false,
+      "usage": "Phone sheet close button size — core sheet chrome default (44px)"
     }
   ],
   "componentVariables": [
@@ -1938,77 +1948,72 @@
     {
       "name": "ms-fullscreen-close-bg",
       "category": "fullscreen",
-      "usage": "Fullscreen close button background"
+      "usage": "Phone sheet close button background — unset by default; instance override of core --km-sheet-close-bg (sheet chrome, mapped onto --_km-sheet-close-bg)"
     },
     {
       "name": "ms-fullscreen-close-bg-hover",
       "category": "fullscreen",
-      "usage": "Fullscreen close button background on hover"
+      "usage": "Phone sheet close button background on hover — unset by default; instance override of core --km-sheet-close-bg-hover (sheet chrome, mapped onto --_km-sheet-close-bg-hover)"
     },
     {
       "name": "ms-fullscreen-close-border",
       "category": "fullscreen",
-      "usage": "Fullscreen close button border"
+      "usage": "Phone sheet close button border — unset by default; instance override of core --km-sheet-close-border (sheet chrome, mapped onto --_km-sheet-close-border)"
     },
     {
       "name": "ms-fullscreen-close-border-radius",
       "category": "fullscreen",
-      "usage": "Fullscreen close button border radius"
+      "usage": "Phone sheet close button border radius — unset by default; instance override of core --km-sheet-close-border-radius (sheet chrome, mapped onto --_km-sheet-close-border-radius)"
     },
     {
       "name": "ms-fullscreen-close-color",
       "category": "fullscreen",
-      "usage": "Fullscreen close button icon color"
+      "usage": "Phone sheet close button icon color — unset by default; instance override of core --km-sheet-close-color (sheet chrome, mapped onto --_km-sheet-close-color)"
     },
     {
       "name": "ms-fullscreen-close-edge-nudge",
       "category": "fullscreen",
-      "usage": "Fullscreen close button inset from the header edge"
+      "usage": "Phone sheet close button inset from the header edge — unset by default; instance override of core --km-sheet-close-edge-nudge (sheet chrome, mapped onto --_km-sheet-close-edge-nudge)"
     },
     {
       "name": "ms-fullscreen-close-icon-size",
       "category": "fullscreen",
-      "usage": "Fullscreen close button icon size"
+      "usage": "Phone sheet close button icon size — unset by default; instance override of core --km-sheet-close-icon-size (sheet chrome, mapped onto --_km-sheet-close-icon-size)"
     },
     {
       "name": "ms-fullscreen-close-size",
       "category": "fullscreen",
-      "usage": "Fullscreen close button box size"
+      "usage": "Phone sheet close button box size — unset by default; instance override of core --km-sheet-close-size (sheet chrome, mapped onto --_km-sheet-close-size)"
     },
     {
       "name": "ms-fullscreen-header-bg",
       "category": "fullscreen",
-      "usage": "Fullscreen header background"
+      "usage": "Phone sheet header background — unset by default; instance override of core --km-sheet-header-bg (sheet chrome, mapped onto --_km-sheet-header-bg)"
     },
     {
       "name": "ms-fullscreen-header-border",
       "category": "fullscreen",
-      "usage": "Fullscreen header bottom border"
+      "usage": "Phone sheet header bottom border — unset by default; instance override of core --km-sheet-header-border (sheet chrome, mapped onto --_km-sheet-header-border)"
     },
     {
       "name": "ms-fullscreen-header-gap",
       "category": "fullscreen",
-      "usage": "Gap between items in the fullscreen header"
+      "usage": "Gap between items in the fullscreen header — unset by default; instance override of core --km-sheet-header-gap (sheet chrome, mapped onto --_km-sheet-header-gap)"
     },
     {
       "name": "ms-fullscreen-header-min-height",
       "category": "fullscreen",
-      "usage": "Minimum height of the fullscreen header"
-    },
-    {
-      "name": "ms-fullscreen-header-padding",
-      "category": "fullscreen",
-      "usage": "Fullscreen header padding (shorthand)"
+      "usage": "Minimum height of the fullscreen header — unset by default; instance override of core --km-sheet-header-min-height (sheet chrome, mapped onto --_km-sheet-header-min-height)"
     },
     {
       "name": "ms-fullscreen-header-padding-h",
       "category": "fullscreen",
-      "usage": "Fullscreen header horizontal padding"
+      "usage": "Phone sheet header horizontal padding — unset by default; instance override of core --km-sheet-header-padding-inline (sheet chrome, mapped onto --_km-sheet-header-padding-inline)"
     },
     {
       "name": "ms-fullscreen-header-padding-v",
       "category": "fullscreen",
-      "usage": "Fullscreen header vertical padding"
+      "usage": "Phone sheet header vertical padding — unset by default; instance override of core --km-sheet-header-padding-block (sheet chrome, mapped onto --_km-sheet-header-padding-block)"
     },
     {
       "name": "ms-fullscreen-info-bg-hover",
@@ -2178,12 +2183,12 @@
     {
       "name": "ms-fullscreen-title-font-size",
       "category": "fullscreen",
-      "usage": "Fullscreen header title font size"
+      "usage": "Phone sheet header title font size — unset by default; instance override of core --km-sheet-title-font-size (sheet chrome, mapped onto --_km-sheet-title-font-size)"
     },
     {
       "name": "ms-fullscreen-title-font-weight",
       "category": "fullscreen",
-      "usage": "Fullscreen header title font weight"
+      "usage": "Phone sheet header title font weight — unset by default; instance override of core --km-sheet-title-font-weight (sheet chrome, mapped onto --_km-sheet-title-font-weight)"
     },
     {
       "name": "ms-fullscreen-tree-base-indent",
