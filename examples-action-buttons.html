@@ -352,7 +352,7 @@
             <h2>AB07 · Summary</h2>
 
             <h3>Static Properties</h3>
-            <div class="code-block"><pre>action?: 'select-all' | 'clear-selection'             // Built-ins only (or the string shorthand 'select-all')
+            <div class="code-block" data-language="ts"><pre><code>action?: 'select-all' | 'clear-selection'             // Built-ins only (or the string shorthand 'select-all')
 id?: string                                     // Identifies a custom item (reported in the action event)
 text?: string                                   // Plain text (default for built-ins: labels.selectAll / clearSelection)
 icon?: string                                   // Plain-text glyph, rendered before the text
@@ -362,10 +362,10 @@ cssClass?: string                               // Optional
 isVisible?: boolean                             // Optional (default: true)
 isDisabled?: boolean                            // Optional (default: false)
 isDanger?: boolean                              // Destructive styling (default: false)
-isToggled?: boolean                             // Toggle state (ON) → aria-pressed (default: false)</pre></div>
+isToggled?: boolean                             // Toggle state (ON) → aria-pressed (default: false)</code></pre></div>
 
             <h3>Dynamic Callbacks</h3>
-            <div class="code-block"><pre>onClick?: (detail) => void | Promise&lt;void&gt;      // Runs for built-ins too, before the built-in
+            <div class="code-block" data-language="ts"><pre><code>onClick?: (detail) => void | Promise&lt;void&gt;      // Runs for built-ins too, before the built-in
 getIsVisibleCallback?: (ctx) => boolean          // Dynamic visibility
 getIsDisabledCallback?: (ctx) => boolean         // Dynamic disabled state
 getIsToggledCallback?: (ctx) => boolean          // Dynamic toggle state
@@ -378,12 +378,12 @@ getTooltipCallback?: (ctx) => string             // Dynamic tooltip
 // detail = ctx + { action, id, item, source, sourceEvent, triggerElement, dataset }
 
 beforeActionCallback?: (detail) => false | void  // element-level: false cancels onClick, the action event and the built-in
-onAction / 'action' event                        // every activation — order: beforeActionCallback → onClick → action → built-in</pre></div>
+onAction / 'action' event                        // every activation — order: beforeActionCallback → onClick → action → built-in</code></pre></div>
 
             <h3>Layout attributes</h3>
-            <div class="code-block"><pre>actions-position  // 'top' (default) | 'bottom'
+            <div class="code-block" data-language="ts"><pre><code>actions-position  // 'top' (default) | 'bottom'
 actions-layout    // 'nowrap' (default) | 'wrap'
-actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-between'</pre></div>
+actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-between'</code></pre></div>
 
             <h3>Priority Rules</h3>
             <div class="note">

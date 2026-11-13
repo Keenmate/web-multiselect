@@ -332,9 +332,9 @@
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>el.open();
+<div class="code-block" data-language="js"><pre><code>el.open();
 el.scrollToGroup('backend');   // header at the top (or the group's first row in virtual mode)
-el.scrollToValue('redis', { block: 'center' });   // → Promise<false> if filtered out by the current search
+el.scrollToValue('redis', { block: 'center' });   // → Promise&lt;false&gt; if filtered out by the current search
 el.scrollToIndex(0, { block: 'nearest' });       // start (default) | center | end | nearest
 
 // Smooth or instant: --ms-scroll-behavior (smooth by default; auto under reduced motion / motion="none")
@@ -342,7 +342,7 @@ el.style.setProperty('--ms-scroll-behavior', 'auto');
 
 // Reveal a filtered-out option, then scroll to it:
 el.clearSearch();
-el.scrollToValue('jp');</code></pre>
+el.scrollToValue('jp');</code></pre></div>
             </details>
         </div>
 
@@ -504,8 +504,8 @@ el.scrollToValue('jp');</code></pre>
 
             <details class="mt-1">
                 <summary>The same normalization for your own code — <code>normalizeSearchText()</code></summary>
-<pre><code>import { normalizeSearchText } from '@keenmate/web-multiselect';
-normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre>
+<div class="code-block" data-language="js"><pre><code>import { normalizeSearchText } from '@keenmate/web-multiselect';
+normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
             </details>
         </div>
 

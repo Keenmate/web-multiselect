@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   variables govern it. `docs/theming.md` / `THEMING.md` list the new variables and the `--ms-option-tooltip-*` twins.
 - e2e: the width variables take effect on an open tooltip (shared width covers badge + option tooltips, min-width
   floor, max-width cap, defaults).
+- Example pages on devkit `^1.0.0-rc14`: reference tables stack into cards on a phone (RS09 / TH03 grids keep
+  `table-scroll`), and every hand-written code block is plain text with `data-language`, highlighted by the kit with
+  its Copy button (LG05's block had no `<pre>`; BU06's `Promise<false>` was swallowed as a tag). Reference fixes:
+  TT04 lists the real properties `isOptionTooltipsEnabled` / `shouldOptionTooltipFollowCursor` (not
+  `enableOptionTooltips` / `optionTooltipFollowCursor`); TH19 drops `--base-font-size-2xs` /
+  `--base-font-weight-normal` (never read) and adds `--base-font-size-xl`.
 
 ### Changed
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc21`** (was `^1.0.0-rc20`).

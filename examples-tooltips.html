@@ -147,15 +147,15 @@
             <h2>TT04 · Summary</h2>
 
             <h3>Option tooltips</h3>
-            <div class="code-block"><pre>enable-option-tooltips        // boolean, default false
+            <div class="code-block" data-language="ts"><pre><code>enable-option-tooltips        // boolean, default false
 option-tooltip-placement      // 'top' | 'top-start' | ... | 'left' | 'right' (default 'top-start')
 option-tooltip-delay          // ms before show (falls back to badge-tooltip-delay, then 100)
 option-tooltip-offset         // px gap (falls back to badge-tooltip-offset, then 8)
 option-tooltip-follow-cursor  // boolean, default false — anchor to & track the pointer
 
-el.enableOptionTooltips
+el.isOptionTooltipsEnabled
 el.optionTooltipPlacement
-el.optionTooltipFollowCursor
+el.shouldOptionTooltipFollowCursor
 el.getOptionTooltipCallback = ({ option }) =&gt; string | HTMLElement
 
 // Independent styling (default to the shared --ms-tooltip-* surface):
@@ -165,16 +165,16 @@ el.getOptionTooltipCallback = ({ option }) =&gt; string | HTMLElement
 // Width model (shared --ms-tooltip-* and the option twins alike):
 --ms-tooltip-width       // auto (shrink to content) | a length for a fixed box
 --ms-tooltip-min-width   // 0 | a floor that still grows up to max-width
---ms-tooltip-max-width   // calc(32 * --ms-rem) wrap point | none with a fixed width</pre></div>
+--ms-tooltip-max-width   // calc(32 * --ms-rem) wrap point | none with a fixed width</code></pre></div>
 
             <h3>Badge tooltips</h3>
-            <div class="code-block"><pre>enable-badge-tooltips      // attribute (boolean, default false)
+            <div class="code-block" data-language="ts"><pre><code>enable-badge-tooltips      // attribute (boolean, default false)
 badge-tooltip-placement    // 'top' | 'bottom' | 'left' | 'right' (default 'top')
 badge-tooltip-delay        // ms before show (default 100)
 badge-tooltip-offset       // px gap (default 8)
 labels='{"removeItem":"Remove {item}"}' // × tooltip + aria-label
 el.getBadgeTooltipCallback        = ({ option }) =&gt; string | HTMLElement
-el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</pre></div>
+el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</code></pre></div>
 
             <div class="note">
                 <div class="note-title">Shared styling:</div>

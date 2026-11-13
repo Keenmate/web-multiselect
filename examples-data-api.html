@@ -398,7 +398,7 @@
                 </div>
             </div>
 
-            <div class="code-block"><pre>const multiselect = document.querySelector('web-multiselect');
+            <div class="code-block" data-language="js"><pre><code>const multiselect = document.querySelector('web-multiselect');
 
 multiselect.open();      // Open the dropdown
 multiselect.close();     // Close the dropdown
@@ -406,7 +406,7 @@ multiselect.toggle();    // Toggle open/closed
 
 multiselect.isOpen;          // → true / false
 multiselect.isOpen = true;   // open by assignment
-multiselect.isOpen = false;  // close by assignment</pre></div>
+multiselect.isOpen = false;  // close by assignment</code></pre></div>
         </section>
 
         <!-- Example 8: Async Search / Lookup -->
@@ -416,7 +416,7 @@ multiselect.isOpen = false;  // close by assignment</pre></div>
                 Load options dynamically as users type. Perfect for large datasets, API searches, or real-time filtering.
             </p>
 
-            <div class="code-block"><pre>// searchCallback receives { term, signal, … } — forward ctx.signal (an AbortSignal).
+            <div class="code-block" data-language="js"><pre><code>// searchCallback receives { term, signal, … } — forward ctx.signal (an AbortSignal).
 // Forward it to fetch — when a newer keystroke supersedes this
 // request (or the element is destroyed), the in-flight fetch is
 // cancelled instead of racing the newer one.
@@ -425,7 +425,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
     return await response.json();
 };
 
-// Pair with search-debounce="300" to also coalesce keystroke bursts.</pre></div>
+// Pair with search-debounce="300" to also coalesce keystroke bursts.</code></pre></div>
 
             <h3>User Search (GitHub API with Fallback)</h3>
             <div class="demo-area">
@@ -861,7 +861,7 @@ multiselect.searchCallback = async ({ term: query, signal }) => {
             </div>
 
             <p class="code-label">Framework integration (e.g. Phoenix LiveView):</p>
-            <div class="code-block"><pre>&lt;!-- server-rendered markup: `defer` holds the build through the upgrade race --&gt;
+            <div class="code-block" data-language="html"><pre><code>&lt;!-- server-rendered markup: `defer` holds the build through the upgrade race --&gt;
 &lt;web-multiselect defer phx-update="ignore" id="skills"&gt;&lt;/web-multiselect&gt;
 
 // in the phx-hook `mounted()` — everything is wired BEFORE the first paint:
@@ -870,7 +870,7 @@ el.options = JSON.parse(el.dataset.options);
 el.getCustomStylesCallback = () =&gt; `.ms__badge { background: var(--brand); color: #fff; }`;
 el.addEventListener('change', (e) =&gt; this.pushEvent('changed', e.detail));
 el.release();                       // build once, flash-free
-// (or, driven from the server: patch the attribute off — remove `defer`)</pre></div>
+// (or, driven from the server: patch the attribute off — remove `defer`)</code></pre></div>
         </section>
 
         <!-- Example 10: In-place options update, refresh(), prune-missing-selection -->
@@ -947,12 +947,12 @@ el.release();                       // build once, flash-free
             </div>
 
             <p class="code-label">The contract — assign when the set changed, refresh when it didn't:</p>
-            <div class="code-block"><pre>// the SET changed (new array, add/remove) → assign; it repaints itself
+            <div class="code-block" data-language="js"><pre><code>// the SET changed (new array, add/remove) → assign; it repaints itself
 el.options = await fetchFromServer();
 
 // same objects mutated in place, or callback state changed → refresh (no new array)
 option.disabled = true;           // or: disabledIds.add(id)
-el.refresh();                     // silent repaint — never call both after an assign</pre></div>
+el.refresh();                     // silent repaint — never call both after an assign</code></pre></div>
         </section>
 
     <script type="module">

@@ -145,8 +145,7 @@
 
         <div class="card">
             <h2>LG05 · Usage</h2>
-            <div class="code-block">
-// No import needed at call sites — the registry is a global, populated the
+            <div class="code-block" data-language="js"><pre><code>// No import needed at call sites — the registry is a global, populated the
 // moment the component module is loaded anywhere on the page.
 const ms = window.components['web-multiselect'];
 
@@ -176,8 +175,7 @@ for (const el of ms.getInstances()) console.log(el.id, el.selectedOptions);
 // A page call never overwrites a type level, so call order doesn't matter.
 // Instance debug / trace lines print through console.log (Chrome hides console.debug).
 window.components.logging.enableLogging('info'); // page level
-el.enableLogging('debug');                       // one verbose element
-            </div>
+el.enableLogging('debug');                       // one verbose element</code></pre></div>
         </div>
 
     <script type="module">

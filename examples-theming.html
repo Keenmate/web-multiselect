@@ -496,7 +496,7 @@
 
             <details class="mt-1">
                 <summary>Show code</summary>
-<pre><code>&lt;!-- 1. Per-instance (wins over everything) --&gt;
+<div class="code-block" data-language="html"><pre><code>&lt;!-- 1. Per-instance (wins over everything) --&gt;
 &lt;web-multiselect data-theme="dark"&gt;&lt;/web-multiselect&gt;
 
 &lt;!-- 2. Page signal (detected once for every Keenmate component) --&gt;
@@ -511,7 +511,7 @@
 
 // switch at runtime — it's just an attribute
 picker.setAttribute('data-theme', 'dark');   // or 'light'
-picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
+picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre></div>
             </details>
         </section>
 
@@ -586,7 +586,7 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 variables instead. The presets below are just different <code>--ms-rem</code> values.</p>
 
             <!-- Size Reference Table — --ms-rem drives input height (3.5×) and font (1.4×). -->
-            <table class="reference-table">
+            <table class="reference-table table-scroll">
                 <thead>
                     <tr>
                         <th>Preset</th>
@@ -1307,11 +1307,6 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>--base-font-size-2xs</code> (read directly)</td>
-                        <td>10px</td>
-                        <td><code>--base-font-size-2xs</code></td>
-                    </tr>
-                    <tr>
                         <td><code>--base-font-size-xs</code> (read directly)</td>
                         <td>12px</td>
                         <td><code>--base-font-size-xs</code></td>
@@ -1332,9 +1327,9 @@ picker.removeAttribute('data-theme');        // back to inherit/OS</code></pre>
                         <td><code>--base-font-size-lg</code></td>
                     </tr>
                     <tr>
-                        <td><code>--base-font-weight-normal</code> (read directly)</td>
-                        <td>400</td>
-                        <td><code>--base-font-weight-normal</code></td>
+                        <td><code>--base-font-size-xl</code> (read directly)</td>
+                        <td>20px</td>
+                        <td><code>--base-font-size-xl</code></td>
                     </tr>
                     <tr>
                         <td><code>--base-font-weight-medium</code> (read directly)</td>
