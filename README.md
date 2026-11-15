@@ -31,6 +31,19 @@ Reads the `--base-*` tokens from [`@keenmate/base-css-variables`](https://www.np
 - Custom rendering callbacks for options, badges, and group headers.
 - Form integration via standard hidden inputs (FormData-compatible).
 
+## What's New in v3.0.0-rc03
+
+Upgrade guide: the [3.0.0-rc03 release notes](release-notes/3.0.0-rc03.md); full list: the
+[CHANGELOG 3.0.0-rc03 section](CHANGELOG.md).
+
+- **Phone sheets — core's sheet chrome, `--ms-sheet-*` variables** — The fullscreen dropdown and the fullscreen selected-items popover now draw their top bar, title and ✕ with core's shared sheet chrome, so they look like every other Keenmate phone sheet (a 44px close chip, the `--base-icon-close` glyph). The bar's variables are renamed from `--ms-fullscreen-header-*` / `-title-*` / `-close-*` to `--ms-sheet-*`, with the same 19 suffixes as core's page-wide `--km-sheet-*`. They are unset by default, and the `--ms-fullscreen-header-padding` shorthand is gone. Back still closes the sheet, now through core `claimBackEntry()`, and the page keeps its scroll position.
+- **Dropdown — closes on scroll, says why it closed** — The dropdown runs on core `createPopover()` and, like a native select, now closes when the page or a scroller around it scrolls (`close-on-scroll`, default `true`; a scroll inside the list never closes it). The `close` event carries `detail.reason` (`escape`, `outside-click`, `scroll`, `select`, `reference-removed`, …). The selected-items popover moved to core's overlay tree too, so opening another overlay closes it.
+- **Inputs — length inputs are CSS lengths** — `dropdown-min-width`, `dropdown-max-width`, `max-height`, `dropdown-width` and `selected-popover-width` are parsed by core `toCssLength()`. A bare number means px, an invalid length or `null` is refused with an `input-rejected` event, and removing the attribute resets it.
+- **Messages — `variant` and `danger`** — `showMessage()` takes `{ variant }` instead of `{ type }`, and `'error'` is now `'danger'`, matching the rest of Keenmate. The class is `.ms__message--danger` and the variables are `--ms-message-danger-bg` / `-color`. There are no aliases.
+- **Scrolling — `beforeScrollCallback`** — Every scroll the dropdown does on its own (keyboard moves, navigate-mode search, revealing the selection on open, `scrollToIndex` / `scrollToValue` / `scrollToGroup`) now goes through `beforeScrollCallback(ctx)`. Return `false` to skip it, or `{ block, behavior }` to change it. `ctx.source` says what triggered it. Virtual lists also honour `--ms-options-padding` and `scroll-padding` on a jump, so the last row comes fully into view.
+- **Theming — page-wide custom CSS, tooltip widths, dropdown gap** — `window.components['web-multiselect'].customStyles` styles every instance (an instance's own `customStyles` still wins), and an `@import` in it now registers icon fonts. New `--ms-tooltip-width` / `--ms-tooltip-min-width` (with option-tooltip twins) complete the tooltip width model. The field-to-panel gap is the page token `--base-dropdown-offset`.
+- **Fixes — controller under disabled / readonly, WebKit Backspace** — `el.controller.selectAll()`, `selectValue()`, `clearSelection()` and the other selection methods used to be silently ignored on a disabled or readonly control; calls from code now work, and only user gestures are blocked. In Safari, Backspace in a read-only input no longer navigates the page Back.
+
 ## What's New in v3.0.0-rc02
 
 Upgrade guide: the [3.0.0-rc02 release notes](release-notes/3.0.0-rc02.md); full list: the
@@ -45,59 +58,7 @@ Upgrade guide: the [3.0.0-rc02 release notes](release-notes/3.0.0-rc02.md); full
 - **Data — quotes in values, corrected security notice** — An option value containing a quote (`say "hi"`) cut its `data-value` attribute short, so the wrong value was selected and the badge couldn't be removed; option values and tree paths are now escaped. The README's XSS notice is corrected: display values, full titles, subtitles and icons are HTML by design and must be sanitized when untrusted.
 - **Logging — closest level wins** — Log levels coalesce element → type → page → `warn`, every warning now goes through the loggers (so `disableLogging()` silences them all), and a new `resetLogging()` clears an element's or type's own level.
 
-## What's New in v3.0.0-rc01
-
-**A major release — breaking, no aliases.** The callbacks, events and inputs follow the shared
-Keenmate interaction model and naming rulebook (`@keenmate/web-components-core` 1.0.0-rc17), so
-code written for 2.x needs updating. Upgrade guide: the
-[3.0.0-rc01 release notes](release-notes/3.0.0-rc01.md); full old → new tables: the
-[CHANGELOG 3.0.0-rc01 section](CHANGELOG.md); step-by-step:
-[ai/migration-guide.txt](ai/migration-guide.txt).
-
-**Breaking changes:**
-
-- **Callbacks take one `ctx`** — per-option callbacks read `ctx.option` (row callbacks also
-  `ctx.optionIndex`), e.g. `getDisplayValueCallback: ({ option }) => option.name`; every ctx
-  carries `controller` / `element`. Before-hooks cancel with `false`
-  (`beforeSelectCallback`, `beforeAddCallback` (was `addNewCallback`), `beforeKeydownCallback`
-  (was `keydownCallback`)). `on*` properties receive the event **detail**. Custom action
-  buttons use `id` + `onClick(detail)`; a new `action` event reports every button /
-  `data-action` click; the toggle state is `isToggled` / `getIsToggledCallback`.
-- **One naming vocabulary** — `isMultiple`, `shouldCloseOnSelect`, `name`, `isDisabledMember` /
-  `is-disabled-member`, `maxVisibleBadgeCount`, `virtualScrollItemHeight`, … (attributes derived
-  from the property names).
-- **UI strings → `labels`** — `search-placeholder`, `select-placeholder`, `empty-message`,
-  `loading-message`, `add-new-text`, … are gone; set `labels` (property or JSON attribute,
-  `labels='{"selectPlaceholder":"Pick a country"}'`). Empty states are `noData` / `noResults`.
-- **Initial selection = `value` / `defaultValue`** — was `initial-values` / `initialValues`; parsed
-  per `value-format`; `el.value` is the live submitted value. `value-format="csv"` → `text`
-  (joined by the new `value-separator`).
-- **`form.reset()` restores the initial selection** — it used to clear it; it does so without firing
-  `deselect` / `change`.
-- **Selection state is properties** — `selectedOptions` / `selectedValue` / `selectedOption` /
-  `searchTerm` on the element and `el.controller` (was `getSelected()` / `getValue()` /
-  `selectedItem` / `searchText`); `el.controller.clearSelection()` (was `clearAll()`; action id
-  and label `clear-selection` / `labels.clearSelection`).
-- **Member defaults for all data** — `value` / `label` / `group` / `icon` / `subtitle` /
-  `disabled`, so `[{ value, label }]` works without configuration; a `get*Callback` always beats its member.
-- **`presentation`** — was `mobile-presentation`; the `mobile` width breakpoint is 768px (was 640).
-- **Defer / ready from core** — `el.release()` (was `el.ready()`), host attribute `ready` +
-  `:state(ready)` (was `is-ready`), `el.whenReady()`, property `shouldDefer`.
-- **Removed** — `show-debug-info` and the debug panel (use `el.enableLogging()`),
-  `--ms-transition-fast` (one duration: `--ms-transition-normal`), the component's own
-  `prefers-reduced-motion` block (core applies reduced motion on every page; the 1.5s loader
-  slowdown needs base-css-variables).
-- **Browser floor** — Chrome/Edge 119+, Firefox 128+, Safari 18+ (relative-colour syntax in the
-  standalone colour fallbacks).
-
-**Also new:** the `motion` level (`motion="none | snappy | smooth"`, `data-motion` on a section,
-`window.components.motion`), list scrolling that never moves the page, responsive rules (below),
-`disabled` / `readonly`, `open` / `close` /
-`value-format-error` events, `getOptionByValue()`, the shared loader (`renderLoadingCallback`),
-standalone colours that follow the base-css-variables contract (accent `#3b82f6`; disabled rows
-are tinted).
-
-Earlier releases: [2.6.0-rc03](release-notes/2.6.0-rc03.md), [2.6.0-rc02](release-notes/2.6.0-rc02.md), [CHANGELOG](CHANGELOG.md).
+Earlier releases: [3.0.0-rc01](release-notes/3.0.0-rc01.md), [2.6.0-rc03](release-notes/2.6.0-rc03.md), [2.6.0-rc02](release-notes/2.6.0-rc02.md), [CHANGELOG](CHANGELOG.md).
 
 ## Install
 

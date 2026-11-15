@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-rc03] - 2026-11-07
+## [3.0.0-rc03] - 2026-11-15 [PUBLISHED]
 
 ### Changed — phone sheet bar variables renamed to `--ms-sheet-*` (2026-11-15)
 - **BREAKING: the phone sheet bar variables are `--ms-sheet-*`** — the same 19 suffixes as core's `--km-sheet-*` and
@@ -61,6 +61,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal — core 1.0.0-rc22 (2026-11-13)
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc22`** (was `^1.0.0-rc21`).
+
+### Changed — core 1.0.0-rc20 alignment (2026-11-09)
+- **BREAKING: the five length inputs are CSS lengths** — `dropdown-min-width`, `dropdown-max-width`, `max-height`,
+  `dropdown-width` and `selected-popover-width` go through core `toCssLength()`: a bare number means px, an invalid
+  length is refused (warning + `input-rejected`, previous value kept), and `null` is refused — remove the attribute
+  or assign `undefined` to reset to the default.
+- **The selected-items popover runs on core `createPopover()`**, like the dropdown: outside click, Escape and
+  single-active coordination come from core's overlay tree (the document click / keydown listeners are gone).
+  Opening another overlay of the same group now closes it.
+- **Writing direction is the effective CSS direction** (core `isRtl`): a nested `dir="ltr"` inside an RTL section
+  stays LTR, and a CSS `direction: rtl` counts.
+- **An `@import` in custom CSS is also linked in `<head>`** by core, so an icon font's `@font-face` registers;
+  `window.components.shouldHoistImports = false` turns it off.
+- The close event's `detail.reason` gains `'reference-removed'` (the control left the page while open).
+- **Requires `@keenmate/web-components-core` `^1.0.0-rc20`.**
+
+### Added — `beforeScrollCallback` (2026-11-09)
+- **`beforeScrollCallback(ctx)`** (property-only) gates every scroll the dropdown does on its own — keyboard focus
+  moves, navigate-mode search, the single-select reveal on open, `scrollToIndex` / `scrollToValue` / `scrollToGroup`.
+  `ctx = { option, index, group, source ('keyboard' | 'search' | 'open' | 'api'), container, options: { block,
+  behavior }, controller, element }`; return `false` to skip the scroll (`scrollTo*` still resolve `true`), or a
+  partial `{ block, behavior }` to replace the defaults. Virtual scroll runs it before its index scroll. New types
+  `BeforeScrollContext`, `MultiSelectScrollSource`, `MultiSelectScrollOptions`. Demo BU09.
+
+### Fixed — controller selection methods on a disabled / readonly control (2026-11-09)
+- `el.controller.selectAll()` / `clearSelection()` / `selectValue()` / `deselectValue()` / `toggleValue()` /
+  `toggleFocused()` were silently ignored while the control was disabled or readonly. Calls from code now work under
+  both (native semantics, core SPEC §6.4; the before-callbacks still apply); clicks, keys, the clear / badge ✕ and
+  `open()` stay blocked.
+
+### Added — page-wide custom CSS (2026-11-08)
+- **`window.components['web-multiselect'].customStyles` / `.getCustomStylesCallback(ctx)`** style every instance
+  (core `createCustomStyles()`); an instance's own `customStyles` / `getCustomStylesCallback` comes after and
+  overrides. Demo CR10.
+
+### Fixed — WebKit Backspace on a read-only input (2026-11-08)
+- On a read-only input (`readonly` / `enable-search="false"`) Backspace / Delete navigated the page Back in
+  WebKit; they are now suppressed there. Copy shortcuts keep working.
+
+### Changed — the dropdown on core `createPopover()`, close-on-scroll, close reasons (2026-11-07)
+- **The dropdown runs on core `createPopover()`** — kept mounted between opens, anchored only while floating, outside
+  click by core's overlay tree. Async results re-anchor the open panel in place (it can flip above); switching
+  floating ↔ fullscreen while open re-anchors instead of re-creating.
+- **`close-on-scroll` / `shouldCloseOnScroll` (default `true`)** — the floating dropdown now closes when the page or
+  a scroll container around the control scrolls, like a native select. A scroll inside the dropdown never closes it;
+  the fullscreen sheet is unaffected. Set `close-on-scroll="false"` for the old behaviour.
+- **The close event carries `detail.reason`** (`DropdownCloseReason`: `api` | `toggle` | `escape` | `tab` |
+  `select` | `outside-click` | `scroll` | `resize` | `overlay` | `parent` | `back` | `close-button` | `disabled` |
+  `destroy`).
+- **BREAKING: message `type` → `variant`, `'error'` → `'danger'`** — `controller.showMessage(text, { variant })`
+  (was `type`), type `MessageVariant` (was `MessageType`), class `.ms__message--danger` (was `--error`), variables
+  `--ms-message-danger-bg` / `-color` (were `--ms-message-error-*`). No aliases.
+- **Added** `getParentPathCallback` / `getLevelCallback` / `getHasChildrenCallback` — callback twins of
+  `parentPathMember` / `levelMember` / `hasChildrenMember`, taking precedence over them.
+- **Added** `--ms-font-scale-xs` / `-sm` / `-base` and `--ms-tree-indent-scale` — the single entry point for the
+  `--base-*` font / indent steps; rules read these instead of `--base-*` directly. Same values by default.
+- The fullscreen sheet and the message use `100dvw` (was `100vw`).
+
+### Internal — core rc19 / rc20 plumbing (2026-11-07 – 2026-11-09)
+- core `^1.0.0-rc19`, then `^1.0.0-rc20`. The tag is defined only by core `registerComponent()` in the package entry;
+  the own `<html>` overflow-x clamp around the sheets is gone (core `lockBodyScroll()`); virtual scroll watches its
+  container through core `observeElementSize()`; every input is a typed property on `MultiSelectElement`.
+- `formatValidityCallback` → `onFormatValidity` (the `@internal` engine → element bridge); tree files moved to
+  `src/utils/` (`ltree-node.ts`, `tree-helpers.ts`).
+- Example pages: sections converted to `<kmwc-demo>`; BU05 Disabled / Readonly States split out of BU04 (BU05–BU09
+  renumbered to BU06–BU10).
 
 ### Added
 - **Tooltip width variables `--ms-tooltip-width` (`auto`) and `--ms-tooltip-min-width` (`0`)** next to
