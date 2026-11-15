@@ -412,34 +412,40 @@
      --ms-fullscreen-rem gives the enlarged phone-view sizes wherever they're consumed. */
   --ms-fullscreen-bg: var(--ms-dropdown-bg);
   --ms-fullscreen-text-color: var(--ms-dropdown-text-color);
-  /* Sheet chrome — the header bar, title and close of both phone sheets are core's
-     .km-sheet-header / -title / -close (SHEET_CHROME_CSS, SPEC §12.9). These per-instance
-     overrides are UNSET by default and mapped onto core's private --_km-sheet-* with NO
-     fallback, so an unset one falls through to the page-wide --km-sheet-* and then core's
-     base-token default. Set any of them on the element (or a selector) to theme one
-     multiselect, e.g. a bordered "button" close like a command palette:
-       --ms-fullscreen-close-border: 1px solid var(--ms-border-color);
-       --ms-fullscreen-close-border-radius: 8px;
-       --ms-fullscreen-close-bg: var(--ms-input-bg);
+  /* Sheet chrome. A sheet is a panel that covers the page on a phone — a bottom sheet, a side
+     drawer, a full-screen picker. These variables style its top bar: the strip (header-*), its
+     title (title-*) and the round close button (close-*). Both phone sheets (the fullscreen
+     dropdown and the fullscreen selected-items popover) use core's .km-sheet-header / -title /
+     -close (SHEET_CHROME_CSS, SPEC §12.9). These per-instance --ms-sheet-* overrides are UNSET
+     by default and mapped onto core's private --_km-sheet-* with NO fallback, so an unset one
+     falls through to the page-wide --km-sheet-* and then core's base-token default. Set any of
+     them on the element (or a selector) to theme one multiselect, e.g. a bordered "button"
+     close like a command palette:
+       --ms-sheet-close-border: 1px solid var(--ms-border-color);
+       --ms-sheet-close-border-radius: 8px;
+       --ms-sheet-close-bg: var(--ms-input-bg);
      The close's tap target reaches into the sheet's top-trailing corner (core ::after), so
-     bordering the chip doesn't shrink what's clickable; --ms-fullscreen-close-edge-nudge
-     slides it toward the edge. */
-  --_km-sheet-header-bg: var(--ms-fullscreen-header-bg);
-  --_km-sheet-header-border: var(--ms-fullscreen-header-border);
-  --_km-sheet-header-gap: var(--ms-fullscreen-header-gap);
-  --_km-sheet-header-padding-block: var(--ms-fullscreen-header-padding-v);
-  --_km-sheet-header-padding-inline: var(--ms-fullscreen-header-padding-h);
-  --_km-sheet-header-min-height: var(--ms-fullscreen-header-min-height);
-  --_km-sheet-title-font-size: var(--ms-fullscreen-title-font-size);
-  --_km-sheet-title-font-weight: var(--ms-fullscreen-title-font-weight);
-  --_km-sheet-close-size: var(--ms-fullscreen-close-size);
-  --_km-sheet-close-icon-size: var(--ms-fullscreen-close-icon-size);
-  --_km-sheet-close-color: var(--ms-fullscreen-close-color);
-  --_km-sheet-close-bg: var(--ms-fullscreen-close-bg);
-  --_km-sheet-close-bg-hover: var(--ms-fullscreen-close-bg-hover);
-  --_km-sheet-close-border: var(--ms-fullscreen-close-border);
-  --_km-sheet-close-border-radius: var(--ms-fullscreen-close-border-radius);
-  --_km-sheet-close-edge-nudge: var(--ms-fullscreen-close-edge-nudge);
+     bordering the chip doesn't shrink what's clickable; --ms-sheet-close-edge-nudge slides it
+     toward the edge. */
+  --_km-sheet-header-gap: var(--ms-sheet-header-gap);
+  --_km-sheet-header-padding-block: var(--ms-sheet-header-padding-block);
+  --_km-sheet-header-padding-inline: var(--ms-sheet-header-padding-inline);
+  --_km-sheet-header-min-height: var(--ms-sheet-header-min-height);
+  --_km-sheet-header-bg: var(--ms-sheet-header-bg);
+  --_km-sheet-header-border: var(--ms-sheet-header-border);
+  --_km-sheet-title-color: var(--ms-sheet-title-color);
+  --_km-sheet-title-font-size: var(--ms-sheet-title-font-size);
+  --_km-sheet-title-font-weight: var(--ms-sheet-title-font-weight);
+  --_km-sheet-close-size: var(--ms-sheet-close-size);
+  --_km-sheet-close-icon-size: var(--ms-sheet-close-icon-size);
+  --_km-sheet-close-icon: var(--ms-sheet-close-icon);
+  --_km-sheet-close-color: var(--ms-sheet-close-color);
+  --_km-sheet-close-bg: var(--ms-sheet-close-bg);
+  --_km-sheet-close-bg-hover: var(--ms-sheet-close-bg-hover);
+  --_km-sheet-close-border: var(--ms-sheet-close-border);
+  --_km-sheet-close-border-radius: var(--ms-sheet-close-border-radius);
+  --_km-sheet-close-edge-nudge: var(--ms-sheet-close-edge-nudge);
+  --_km-sheet-close-focus-color: var(--ms-sheet-close-focus-color);
   --ms-fullscreen-search-border: var(--ms-input-border);
   --ms-fullscreen-search-border-radius: var(--ms-input-border-radius);
   --ms-fullscreen-search-padding: calc(0.8 * var(--ms-fullscreen-rem)) calc(1.2 * var(--ms-fullscreen-rem));

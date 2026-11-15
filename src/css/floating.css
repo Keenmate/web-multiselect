@@ -199,7 +199,7 @@
 /* Fullscreen header bar — core's sheet chrome (SPEC §12.9): the bar, the title and the close
    (.km-sheet-header / -title / -close, SHEET_CHROME_CSS adopted by JS) are ONE shared look for
    both overlays (the dropdown's search header and the selected-items sheet's title header),
-   themed by the --ms-fullscreen-header-* / -title-* / -close-* instance overrides (mapped onto
+   themed by the --ms-sheet-header-* / -title-* / -close-* instance overrides (mapped onto
    --_km-sheet-* in variables.css) or page-wide by --km-sheet-*. These rules keep only the
    dropdown's own layout around it. The --_ms-sheet-* locals re-read core's EFFECTIVE values
    (same 3-layer chain + defaults as SHEET_CHROME_CSS) so the search row and the mode toggle

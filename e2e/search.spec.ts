@@ -476,8 +476,8 @@ test.describe('fullscreen close — corner hit target', () => {
         const p = picker(page, 'filter-fs');
         // Turn the ✕ into a bordered "button" through the public vars.
         await p.evaluate((host: HTMLElement) => {
-            host.style.setProperty('--ms-fullscreen-close-border', '2px solid rgb(10, 20, 30)');
-            host.style.setProperty('--ms-fullscreen-close-border-radius', '8px');
+            host.style.setProperty('--ms-sheet-close-border', '2px solid rgb(10, 20, 30)');
+            host.style.setProperty('--ms-sheet-close-border-radius', '8px');
         });
         await openFullscreen(p);
 
@@ -489,6 +489,37 @@ test.describe('fullscreen close — corner hit target', () => {
         expect(style.color).toBe('rgb(10, 20, 30)');
         expect(style.radius).toBe('8px');
         expect(style.box).toBe('border-box'); // the border doesn't grow the chip
+    });
+
+    test('the --ms-sheet-* bar variables reach core sheet chrome (title colour, icon, focus, padding)', async ({ page }) => {
+        const p = picker(page, 'filter-fs');
+        await p.evaluate((host: HTMLElement) => {
+            host.style.setProperty('--ms-sheet-close-icon', 'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E")');
+            host.style.setProperty('--ms-sheet-close-focus-color', 'rgb(1, 2, 3)');
+            host.style.setProperty('--ms-sheet-title-color', 'rgb(4, 5, 6)');
+            host.style.setProperty('--ms-sheet-header-padding-inline', '17px');
+            host.style.setProperty('--ms-sheet-header-padding-block', '5px');
+        });
+        await openFullscreen(p);
+        const s = await p.evaluate((host: any) => {
+            const root = host.shadowRoot;
+            const close = root.querySelector('.ms__fullscreen-close');
+            const header = getComputedStyle(root.querySelector('.ms__fullscreen-header'));
+            const before = getComputedStyle(close, '::before');
+            return {
+                icon: before.maskImage || (before as any).webkitMaskImage,
+                // :focus-visible can't be forced reliably; the mapped private var is what core's rule reads.
+                focus: getComputedStyle(close).getPropertyValue('--_km-sheet-close-focus-color').trim(),
+                title: getComputedStyle(close).getPropertyValue('--_km-sheet-title-color').trim(),
+                padInline: header.paddingInlineStart,
+                padBlock: header.paddingTop,
+            };
+        });
+        expect(s.icon).toContain('data:image/svg+xml');
+        expect(s.focus).toBe('rgb(1, 2, 3)');
+        expect(s.title).toBe('rgb(4, 5, 6)');
+        expect(s.padInline).toBe('17px');
+        expect(s.padBlock).toBe('5px');
     });
 });
 

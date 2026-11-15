@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc03] - 2026-11-07
 
+### Changed — phone sheet bar variables renamed to `--ms-sheet-*` (2026-11-15)
+- **BREAKING: the phone sheet bar variables are `--ms-sheet-*`** — the same 19 suffixes as core's `--km-sheet-*` and
+  every other Keenmate component (`--cp-sheet-*`, `--dz-sheet-*`, `--wg-sheet-*`, `--drp-sheet-*`). A **sheet** is a
+  panel that covers the page on a phone — a bottom sheet, a side drawer, a full-screen picker; these variables style
+  its top bar: the strip (`header-*`), its title (`title-*`) and the round close button (`close-*`). Still unset by
+  default (unset → page-wide `--km-sheet-*` → core default). Everything else stays `--ms-fullscreen-*` (bg,
+  text-color, rem, search, nav, mode-toggle, info, tree). No aliases — rename in your theme:
+  - `--ms-fullscreen-header-gap` → `--ms-sheet-header-gap`
+  - `--ms-fullscreen-header-padding-v` → `--ms-sheet-header-padding-block`
+  - `--ms-fullscreen-header-padding-h` → `--ms-sheet-header-padding-inline`
+  - `--ms-fullscreen-header-min-height` → `--ms-sheet-header-min-height`
+  - `--ms-fullscreen-header-bg` → `--ms-sheet-header-bg`
+  - `--ms-fullscreen-header-border` → `--ms-sheet-header-border`
+  - `--ms-fullscreen-title-font-size` → `--ms-sheet-title-font-size`
+  - `--ms-fullscreen-title-font-weight` → `--ms-sheet-title-font-weight`
+  - `--ms-fullscreen-close-size` → `--ms-sheet-close-size`
+  - `--ms-fullscreen-close-icon-size` → `--ms-sheet-close-icon-size`
+  - `--ms-fullscreen-close-color` → `--ms-sheet-close-color`
+  - `--ms-fullscreen-close-bg` → `--ms-sheet-close-bg`
+  - `--ms-fullscreen-close-bg-hover` → `--ms-sheet-close-bg-hover`
+  - `--ms-fullscreen-close-border` → `--ms-sheet-close-border`
+  - `--ms-fullscreen-close-border-radius` → `--ms-sheet-close-border-radius`
+  - `--ms-fullscreen-close-edge-nudge` → `--ms-sheet-close-edge-nudge`
+- **Added** the three suffixes multiselect lacked: `--ms-sheet-title-color`, `--ms-sheet-close-icon`,
+  `--ms-sheet-close-focus-color`.
+
 ### Changed — the phone sheet header / close are core's sheet chrome (2026-11-13)
 - **Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) use core's shared sheet
   chrome** (`SHEET_CHROME_CSS`, `.km-sheet-header` / `.km-sheet-title` / `.km-sheet-close`, core SPEC §12.9;
@@ -16,10 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   follow core's base-token defaults (44px close chip, `--base-icon-close` glyph) — the same look as every other
   Keenmate phone sheet. The floating selected-items popover keeps its compact header. The close's `aria-label`
   still comes from `labels.close`.
-- **`--ms-fullscreen-header-*` / `-title-*` / `-close-*` are now unset-by-default instance overrides** mapped onto
+- **`--ms-fullscreen-header-*` / `-title-*` / `-close-*` (now `--ms-sheet-*`, see above) are now unset-by-default instance overrides** mapped onto
   core's `--_km-sheet-*` (no fallback): unset → page-wide `--km-sheet-*` → core default. Setting them works as before.
 - **BREAKING: `--ms-fullscreen-header-padding` (shorthand) removed** — core has no shorthand; use
-  `--ms-fullscreen-header-padding-v` / `-h` (or page-wide `--km-sheet-header-padding-block` / `-inline`).
+  `--ms-sheet-header-padding-block` / `-inline` (or page-wide `--km-sheet-header-padding-block` / `-inline`).
   `--ms-fullscreen-mode-toggle-gap` now defaults to the effective sheet header gap.
 
 ### Changed — the phone Back entry is core `claimBackEntry()` (2026-11-13)

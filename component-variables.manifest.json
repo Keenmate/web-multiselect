@@ -1946,74 +1946,99 @@
       "usage": "Fullscreen overlay background"
     },
     {
-      "name": "ms-fullscreen-close-bg",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button background — unset by default; instance override of core --km-sheet-close-bg (sheet chrome, mapped onto --_km-sheet-close-bg)"
+      "name": "ms-sheet-header-gap",
+      "category": "sheet",
+      "usage": "Phone sheet bar: gap between the bar items (search / title, close). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-gap (then --km-sheet-header-gap, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-bg-hover",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button background on hover — unset by default; instance override of core --km-sheet-close-bg-hover (sheet chrome, mapped onto --_km-sheet-close-bg-hover)"
+      "name": "ms-sheet-header-padding-block",
+      "category": "sheet",
+      "usage": "Phone sheet bar: block (top / bottom) padding of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-padding-block (then --km-sheet-header-padding-block, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-border",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button border — unset by default; instance override of core --km-sheet-close-border (sheet chrome, mapped onto --_km-sheet-close-border)"
+      "name": "ms-sheet-header-padding-inline",
+      "category": "sheet",
+      "usage": "Phone sheet bar: inline (start / end) padding of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-padding-inline (then --km-sheet-header-padding-inline, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-border-radius",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button border radius — unset by default; instance override of core --km-sheet-close-border-radius (sheet chrome, mapped onto --_km-sheet-close-border-radius)"
+      "name": "ms-sheet-header-min-height",
+      "category": "sheet",
+      "usage": "Phone sheet bar: minimum height of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-min-height (then --km-sheet-header-min-height, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-color",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button icon color — unset by default; instance override of core --km-sheet-close-color (sheet chrome, mapped onto --_km-sheet-close-color)"
+      "name": "ms-sheet-header-bg",
+      "category": "sheet",
+      "usage": "Phone sheet bar: bar background. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-bg (then --km-sheet-header-bg, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-edge-nudge",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button inset from the header edge — unset by default; instance override of core --km-sheet-close-edge-nudge (sheet chrome, mapped onto --_km-sheet-close-edge-nudge)"
+      "name": "ms-sheet-header-border",
+      "category": "sheet",
+      "usage": "Phone sheet bar: bar bottom border. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-border (then --km-sheet-header-border, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-icon-size",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button icon size — unset by default; instance override of core --km-sheet-close-icon-size (sheet chrome, mapped onto --_km-sheet-close-icon-size)"
+      "name": "ms-sheet-title-color",
+      "category": "sheet",
+      "usage": "Phone sheet bar: title text colour (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-color (then --km-sheet-title-color, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-close-size",
-      "category": "fullscreen",
-      "usage": "Phone sheet close button box size — unset by default; instance override of core --km-sheet-close-size (sheet chrome, mapped onto --_km-sheet-close-size)"
+      "name": "ms-sheet-title-font-size",
+      "category": "sheet",
+      "usage": "Phone sheet bar: title font size (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-font-size (then --km-sheet-title-font-size, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-bg",
-      "category": "fullscreen",
-      "usage": "Phone sheet header background — unset by default; instance override of core --km-sheet-header-bg (sheet chrome, mapped onto --_km-sheet-header-bg)"
+      "name": "ms-sheet-title-font-weight",
+      "category": "sheet",
+      "usage": "Phone sheet bar: title font weight (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-font-weight (then --km-sheet-title-font-weight, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-border",
-      "category": "fullscreen",
-      "usage": "Phone sheet header bottom border — unset by default; instance override of core --km-sheet-header-border (sheet chrome, mapped onto --_km-sheet-header-border)"
+      "name": "ms-sheet-close-size",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip size (default 44px touch target). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-size (then --km-sheet-close-size, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-gap",
-      "category": "fullscreen",
-      "usage": "Gap between items in the fullscreen header — unset by default; instance override of core --km-sheet-header-gap (sheet chrome, mapped onto --_km-sheet-header-gap)"
+      "name": "ms-sheet-close-icon-size",
+      "category": "sheet",
+      "usage": "Phone sheet bar: ✕ icon size. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-icon-size (then --km-sheet-close-icon-size, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-min-height",
-      "category": "fullscreen",
-      "usage": "Minimum height of the fullscreen header — unset by default; instance override of core --km-sheet-header-min-height (sheet chrome, mapped onto --_km-sheet-header-min-height)"
+      "name": "ms-sheet-close-icon",
+      "category": "sheet",
+      "usage": "Phone sheet bar: ✕ glyph (any url(...)). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-icon (then --km-sheet-close-icon, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-padding-h",
-      "category": "fullscreen",
-      "usage": "Phone sheet header horizontal padding — unset by default; instance override of core --km-sheet-header-padding-inline (sheet chrome, mapped onto --_km-sheet-header-padding-inline)"
+      "name": "ms-sheet-close-color",
+      "category": "sheet",
+      "usage": "Phone sheet bar: ✕ colour. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-color (then --km-sheet-close-color, then the --base-* default)"
     },
     {
-      "name": "ms-fullscreen-header-padding-v",
-      "category": "fullscreen",
-      "usage": "Phone sheet header vertical padding — unset by default; instance override of core --km-sheet-header-padding-block (sheet chrome, mapped onto --_km-sheet-header-padding-block)"
+      "name": "ms-sheet-close-bg",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip background. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-bg (then --km-sheet-close-bg, then the --base-* default)"
+    },
+    {
+      "name": "ms-sheet-close-bg-hover",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip background on hover. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-bg-hover (then --km-sheet-close-bg-hover, then the --base-* default)"
+    },
+    {
+      "name": "ms-sheet-close-border",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip border (e.g. 1px solid … for a bordered \"button\" close). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-border (then --km-sheet-close-border, then the --base-* default)"
+    },
+    {
+      "name": "ms-sheet-close-border-radius",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip border radius. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-border-radius (then --km-sheet-close-border-radius, then the --base-* default)"
+    },
+    {
+      "name": "ms-sheet-close-edge-nudge",
+      "category": "sheet",
+      "usage": "Phone sheet bar: how far the close slides toward the trailing edge. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-edge-nudge (then --km-sheet-close-edge-nudge, then the --base-* default)"
+    },
+    {
+      "name": "ms-sheet-close-focus-color",
+      "category": "sheet",
+      "usage": "Phone sheet bar: close chip focus outline colour. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-focus-color (then --km-sheet-close-focus-color, then the --base-* default)"
     },
     {
       "name": "ms-fullscreen-info-bg-hover",
@@ -2179,16 +2204,6 @@
       "name": "ms-fullscreen-text-color",
       "category": "fullscreen",
       "usage": "Fullscreen overlay text color"
-    },
-    {
-      "name": "ms-fullscreen-title-font-size",
-      "category": "fullscreen",
-      "usage": "Phone sheet header title font size — unset by default; instance override of core --km-sheet-title-font-size (sheet chrome, mapped onto --_km-sheet-title-font-size)"
-    },
-    {
-      "name": "ms-fullscreen-title-font-weight",
-      "category": "fullscreen",
-      "usage": "Phone sheet header title font weight — unset by default; instance override of core --km-sheet-title-font-weight (sheet chrome, mapped onto --_km-sheet-title-font-weight)"
     },
     {
       "name": "ms-fullscreen-tree-base-indent",
