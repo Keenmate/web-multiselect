@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed — the phone sheet header / close are core's sheet chrome (2026-11-13)
 - **Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) use core's shared sheet
   chrome** (`SHEET_CHROME_CSS`, `.km-sheet-header` / `.km-sheet-title` / `.km-sheet-close`, core SPEC §12.9;
-  needs `@keenmate/web-components-core` `1.0.0-rc24`; rulebook C-RO-17). multiselect's own close / header / title
+  needs `@keenmate/web-components-core` `^1.0.0-rc24`; rulebook C-RO-17). multiselect's own close / header / title
   rules are gone; the search field, the navigate-mode match row and the leading mode toggle stay (the toggle now
   mirrors the close's EFFECTIVE size / edge nudge, whichever layer set them). Visual change: the bar, title and ✕
   follow core's base-token defaults (44px close chip, `--base-icon-close` glyph) — the same look as every other
@@ -55,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entry back; the page keeps its scroll position (no jump to the top on close). `history.state` of the entry
   is now core's `{ kmBackEntry: true }` (was `{ msOverlay: <instanceId> }`), and a teardown (DOM move) while
   open now gives the entry back too.
+
+### Internal — core 1.0.0-rc24 (2026-11-15)
+- core `^1.0.0-rc24` (was `^1.0.0-rc22`).
 
 ### Internal — core 1.0.0-rc22 (2026-11-13)
 - **Requires `@keenmate/web-components-core` `^1.0.0-rc22`** (was `^1.0.0-rc21`).
