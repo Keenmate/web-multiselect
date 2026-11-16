@@ -25,6 +25,8 @@ test('default JSON format emits a single hidden input with JSON array value', as
     const hidden = page.locator('input[type="hidden"][name="fruits-json"]');
     await expect(hidden).toHaveCount(1);
     expect(await hidden.inputValue()).toBe(JSON.stringify(['apple', 'banana']));
+    // no id: two pickers with the same name (or a host whose id is its name) would duplicate it
+    expect(await hidden.getAttribute('id')).toBeNull();
 });
 
 test('value-format="text" emits comma-separated values', async ({ page }) => {

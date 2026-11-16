@@ -5353,7 +5353,6 @@ export class MultiSelectEngine<T = any> {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = this.options.name;
-            input.id = this.options.name;
             input.value = formValue;
             input.disabled = !!this.options.isDisabled;
             targetElement.appendChild(input);

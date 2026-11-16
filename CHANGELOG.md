@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc04] - 2026-11-16
+
+### Changed — the hidden form input has no `id` (2026-11-16)
+- **BREAKING: the single hidden `<input type="hidden" name="…">` (`value-format` `json` / `text` /
+  `getValueFormatCallback`) no longer gets `id = name`.** Two pickers with the same `name`, or
+  `<web-multiselect id="tags" name="tags">`, put duplicate ids in the page (a `<label for="tags">` or
+  `getElementById('tags')` found the hidden input). The `array` format never had one, nor do
+  web-daterangepicker's / web-editor's hidden inputs. Select it by name:
+  `form.elements.namedItem('tags')` / `input[type=hidden][name="tags"]`.
+
 ## [3.0.0-rc03] - 2026-11-15 [PUBLISHED]
 
 ### Changed — phone sheet bar variables renamed to `--ms-sheet-*` (2026-11-15)
