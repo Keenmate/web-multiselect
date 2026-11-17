@@ -971,3 +971,24 @@ test.describe('highlighting HTML labels', () => {
         await expect(option.locator('b mark')).toHaveText('B');
     });
 });
+
+test.describe('IME composition (core onTextInput / isImeEnter)', () => {
+    test('half-typed text does not filter; the committed word does; the confirming Enter selects nothing', async ({ page }) => {
+        const p = picker(page, 'filter');
+        await openDropdown(p);
+        const all = await visibleOptions(p).count();
+        const field = input(p);
+        await field.evaluate((el: HTMLInputElement) => {
+            el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+            el.value = 'zzzz';
+            el.dispatchEvent(new InputEvent('input', { bubbles: true, isComposing: true }));
+        });
+        await expect(visibleOptions(p)).toHaveCount(all); // composing: no search yet
+        await field.evaluate((el: HTMLInputElement) => {
+            el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, isComposing: true }));
+            el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: 'zzzz' }));
+        });
+        await expect(visibleOptions(p)).toHaveCount(0); // committed: filtered
+        expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(0);
+    });
+});

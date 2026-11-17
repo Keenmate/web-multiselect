@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -2260,9 +2260,8 @@ export class MultiSelectEngine<T = any> {
                 this.open();
             }
         });
-        this.input.addEventListener('input', (e) => {
-            const value = (e.target as HTMLInputElement).value;
-
+        // Core `onTextInput`: once per committed change — an IME's half-typed syllables don't search.
+        onTextInput(this.input, (value) => {
             // Auto-open dropdown when user starts typing (if search is enabled)
             if (this.options.isSearchEnabled && !this.#isOpen) {
                 this.open();
@@ -2576,6 +2575,8 @@ export class MultiSelectEngine<T = any> {
     }
 
     private handleKeydown(e: KeyboardEvent): void {
+        // A key confirming / choosing an IME candidate belongs to the IME, not to the list (core).
+        if (isImeEnter(e)) return;
         // Consumer keyboard hook: runs before ALL built-in handling (open or closed). Returning
         // false suppresses the built-in handling of this key — the consumer owns preventDefault.
         // Synchronous: preventDefault must happen in this tick.
@@ -4557,8 +4558,7 @@ export class MultiSelectEngine<T = any> {
             search.autocomplete = 'off';
 
             // Proxy to the same search path as the main input, keeping the two in sync.
-            search.addEventListener('input', (e) => {
-                const value = (e.target as HTMLInputElement).value;
+            onTextInput(search, (value) => {
                 this.input.value = value;
                 this.handleSearch(value);
                 this.updateFullscreenSearchClear();
