@@ -49,3 +49,24 @@ test('virtual list: aria-activedescendant points at a rendered row after a long 
         return id ? await p.locator(`[id="${id}"]`).count() : 0;
     }).toBe(1);
 });
+
+test('a key a beforeKeydownCallback cancels is left alone (core does not handle keys, nor preventDefault them)', async ({ page }) => {
+    await page.goto('/test/search.html');
+    const p = page.locator('#filter');
+    const field = p.locator('.ms__input');
+    await field.click();
+    await field.press('ArrowDown');
+    const activeValue = async () => {
+        const id = await field.getAttribute('aria-activedescendant');
+        return p.locator(`[id="${id}"]`).getAttribute('data-value');
+    };
+    const before = await activeValue();
+    await p.evaluate((el: any) => {
+        el.beforeKeydownCallback = ({ key }: { key: string }) => (key === 'ArrowDown' ? false : undefined);
+        (window as any).__prevented = null;
+        el.addEventListener('keydown', (e: KeyboardEvent) => { (window as any).__prevented = e.defaultPrevented; });
+    });
+    await field.press('ArrowDown');
+    expect(await page.evaluate(() => (window as any).__prevented)).toBe(false);
+    expect(await activeValue()).toBe(before); // the highlight didn't move
+});

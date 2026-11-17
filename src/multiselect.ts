@@ -1346,9 +1346,8 @@ export class MultiSelectEngine<T = any> {
     /**
      * Point `aria-activedescendant` at the highlighted row (`.ms__option--focused`) after every render,
      * open / close and virtual recycle. The keyboard model stays the picker's own (navigate mode, tree,
-     * virtual rows, the "add new" prompt, caret-aware Home / End, `beforeKeydownCallback`), so core's
-     * helper is used for the ARIA side only: `getItems` returns just the active row, which leaves its own
-     * arrow / Enter handling nothing to move to (core has no "ARIA only" option yet — reported as a gap).
+     * virtual rows, the "add new" prompt, caret-aware Home / End, `beforeKeydownCallback`), so core's helper
+     * runs with `shouldHandleKeys: false` (ARIA only) and the picker drives `setActive()`.
      */
     private syncListboxAria(): void {
         if (this.#isDestroyed) return;
@@ -1360,23 +1359,17 @@ export class MultiSelectEngine<T = any> {
             return;
         }
         const input = (this.presentationMode === 'fullscreen' && this.fullscreenSearchInput) || this.input;
-        const activeRow = (): HTMLElement | null =>
-            this.activeNavListbox?.querySelector('.ms__option--focused[role="option"]') as HTMLElement | null;
         if (listbox !== this.activeNavListbox || input !== this.activeNavInput) {
             this.activeNav?.destroy();
             this.activeNavListbox = listbox;
             this.activeNavInput = input;
             this.activeNav = createActiveDescendant(input, listbox, {
-                getItems: () => {
-                    const row = activeRow();
-                    return row ? [row] : [];
-                },
-                isSkipped: () => false,
+                getItems: () => Array.from(listbox.querySelectorAll<HTMLElement>('[role="option"]')),
+                shouldHandleKeys: false,
                 shouldScroll: false, // the picker scrolls its own (virtual) list
-                pageSize: 0,
             });
         }
-        this.activeNav!.setActive(activeRow());
+        this.activeNav!.setActive(listbox.querySelector('.ms__option--focused[role="option"]') as HTMLElement | null);
     }
 
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
