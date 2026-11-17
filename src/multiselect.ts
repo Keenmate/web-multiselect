@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -116,7 +116,7 @@ export class MultiSelectEngine<T = any> {
     // leaf-level atoms, refreshed from `selectedValues` before each render.
     private cascadeIndex: CascadeIndex<T> | null = null;
     private cascadeCheckedAtoms: Set<string> = new Set();
-    private hiddenInputs: HTMLInputElement[] = [];
+    private formInputs?: FormInputs;
     private focusedIndex = -1;
     /** True when the user moved `focusedIndex` (arrows, PageUp/Down, Home/End) rather than search
      *  auto-highlighting a match; `tab-behavior="select-navigated"` only commits then. */
@@ -5320,41 +5320,17 @@ export class MultiSelectEngine<T = any> {
     // ========================================================================
 
     private updateHiddenInput(): void {
-        // Remove existing inputs
-        this.hiddenInputs.forEach(input => input.remove());
-        this.hiddenInputs = [];
-
+        // Core `createFormInputs` (SPEC §12.21): light-DOM hidden inputs on the host (hostElement when
+        // shadowed) — a string = one `name` input, an array = one `name[]` per value, never an `id`,
+        // disabled while the control is. No `name` = no inputs.
+        this.formInputs ??= createFormInputs(this.options.hostElement || this.element);
         if (!this.options.name) {
+            this.formInputs.clear();
             this.options.onFormatValidity?.(null);
             return;
         }
-
         const { value: formValue, failure } = this.formatFormValue();
-
-        // Use hostElement if provided (for shadow DOM), otherwise use element
-        const targetElement = this.options.hostElement || this.element;
-
-        if (Array.isArray(formValue)) {
-            // Multiple <input name="field[]" value="val1">
-            formValue.forEach(value => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = `${this.options.name}[]`;
-                input.value = value;
-                input.disabled = !!this.options.isDisabled;
-                targetElement.appendChild(input);
-                this.hiddenInputs.push(input);
-            });
-        } else {
-            // Single input with formatted value
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = this.options.name;
-            input.value = formValue;
-            input.disabled = !!this.options.isDisabled;
-            targetElement.appendChild(input);
-            this.hiddenInputs.push(input);
-        }
+        this.formInputs.write(this.options.name, formValue, { isDisabled: !!this.options.isDisabled });
 
         if (failure) {
             // A throwing getValueFormatCallback: '' was written, the host turns invalid (the form
@@ -5379,28 +5355,13 @@ export class MultiSelectEngine<T = any> {
     /** {@link getFormValue} plus the failure of a throwing `getValueFormatCallback` (no side effects). */
     private formatFormValue(): { value: string | string[]; failure?: { error: unknown; values: (string | number)[] } } {
         const values = Array.from(this.selectedByValue.values()).map(opt => this.getItemValue(opt));
-
-        // Custom callback takes precedence (also over `array`: one field)
-        if (this.options.getValueFormatCallback) {
-            try {
-                return { value: this.options.getValueFormatCallback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions })) };
-            } catch (error) {
-                return { value: '', failure: { error, values } };
-            }
-        }
-
-        const format = this.options.valueFormat || 'json';
-
-        if (format === 'array') {
-            return { value: values.map(v => String(v)) };
-        }
-
-        if (format === 'text') {
-            return { value: values.join(this.options.valueSeparator ?? ',') };
-        }
-
-        // json format (default)
-        return { value: JSON.stringify(values) };
+        const callback = this.options.getValueFormatCallback;
+        // Core `formatFormValue`: the callback wins (also over `array`: one field), then json / text / array.
+        const result = formatFormValue(values, this.options.valueFormat || 'json', {
+            separator: this.options.valueSeparator ?? ',',
+            callback: callback && (() => callback(this.ctx({ selectedValues: values, selectedOptions: this.selectedOptions }))),
+        });
+        return 'error' in result ? { value: result.value, failure: { error: result.error, values } } : { value: result.value };
     }
 
     // ========================================================================
@@ -5500,7 +5461,7 @@ export class MultiSelectEngine<T = any> {
             if (isDisabled || isReadonly) this.input.setAttribute('aria-readonly', String(isReadonly && !isDisabled));
             else this.input.removeAttribute('aria-readonly');
         }
-        for (const input of this.hiddenInputs) input.disabled = isDisabled;
+        for (const input of this.formInputs?.inputs ?? []) input.disabled = isDisabled;
         if (isDisabled || isReadonly) {
             if (this.#isOpen) this.closeWith('disabled');
             if (isDisabled && this.showSelectedPopover) this.hideSelectedPopover();
@@ -6197,8 +6158,7 @@ export class MultiSelectEngine<T = any> {
 
         // The hidden form inputs live in the host's light DOM, outside `element` — a rebuilt
         // engine starts with an empty list, so leaving them would submit stale duplicates.
-        this.hiddenInputs.forEach(input => input.remove());
-        this.hiddenInputs = [];
+        this.formInputs?.clear();
 
         // Clear the element's content to prevent duplication on re-initialization
         this.element.innerHTML = '';
