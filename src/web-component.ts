@@ -35,6 +35,7 @@ import {
   lintCssVars,
   getEnvironment,
   resolvePresentation,
+  createControllerFacade,
   type InputDef,
   type CustomStylesHandle,
   type EnvironmentSnapshot,
@@ -1062,49 +1063,29 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    * writes first (`flush`). Reads return empty values before the first build.
    */
   protected override createController(): MultiSelectController<T> {
-    const engine = () => {
+    // Core `createControllerFacade` (SPEC §12.34): frozen, reads the CURRENT engine controller (a
+    // rebuild is picked up), answers with the empty state before the first build.
+    return createControllerFacade<MultiSelectController<T>>(() => {
       this.flush();
       return this.#picker?.getController();
-    };
-    const call = <K extends keyof MultiSelectController<T>>(name: K) =>
-      ((...args: unknown[]) => (engine()?.[name] as ((...a: unknown[]) => unknown) | undefined)?.(...args)) as MultiSelectController<T>[K];
-    return {
-      get selectedOptions() { return engine()?.selectedOptions ?? []; },
-      get selectedOption() { return engine()?.selectedOption ?? null; },
-      get selectedValue() { return engine()?.selectedValue ?? null; },
-      get options() { return engine()?.options ?? []; },
-      get searchTerm() { return engine()?.searchTerm ?? ''; },
-      get isOpen() { return engine()?.isOpen ?? false; },
-      get isMessageShown() { return engine()?.isMessageShown ?? false; },
-      setSelected: call('setSelected'),
-      selectAll: call('selectAll'),
-      clearSelection: call('clearSelection'),
-      toggleValue: call('toggleValue'),
-      selectValue: call('selectValue'),
-      deselectValue: call('deselectValue'),
-      toggleFocused: call('toggleFocused'),
-      open: call('open'),
-      close: call('close'),
-      toggle: call('toggle'),
-      search: call('search'),
-      clearSearch: call('clearSearch'),
-      scrollToValue: (value) => engine()?.scrollToValue(value) ?? Promise.resolve(false),
-      getOptionByValue: (value) => engine()?.getOptionByValue(value) ?? null,
-      scrollToGroup: (group) => engine()?.scrollToGroup(group) ?? Promise.resolve(false),
-      scrollToIndex: (index) => engine()?.scrollToIndex(index) ?? Promise.resolve(false),
-      refresh: call('refresh'),
-      focusNext: call('focusNext'),
-      focusPrevious: call('focusPrevious'),
-      focusFirst: call('focusFirst'),
-      focusLast: call('focusLast'),
-      focusPageUp: call('focusPageUp'),
-      focusPageDown: call('focusPageDown'),
-      focusNextMatch: call('focusNextMatch'),
-      focusPreviousMatch: call('focusPreviousMatch'),
-      focusIndex: call('focusIndex'),
-      showMessage: call('showMessage'),
-      hideMessage: call('hideMessage'),
-    };
+    }, {
+      methods: [
+        'setSelected', 'selectAll', 'clearSelection', 'toggleValue', 'selectValue', 'deselectValue', 'toggleFocused',
+        'open', 'close', 'toggle', 'search', 'clearSearch', 'scrollToValue', 'getOptionByValue', 'scrollToGroup',
+        'scrollToIndex', 'refresh', 'focusNext', 'focusPrevious', 'focusFirst', 'focusLast', 'focusPageUp',
+        'focusPageDown', 'focusNextMatch', 'focusPreviousMatch', 'focusIndex', 'showMessage', 'hideMessage',
+      ],
+      state: {
+        selectedOptions: () => [], selectedOption: null, selectedValue: null, options: () => [],
+        searchTerm: '', isOpen: false, isMessageShown: false,
+      },
+      emptyResults: {
+        scrollToValue: () => Promise.resolve(false),
+        scrollToGroup: () => Promise.resolve(false),
+        scrollToIndex: () => Promise.resolve(false),
+        getOptionByValue: () => null,
+      },
+    });
   }
 
   /** Presentation flags on every event detail the element emits itself (e.g. `ready`). */
