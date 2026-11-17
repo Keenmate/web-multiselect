@@ -727,7 +727,7 @@ export interface MultiSelectConfig<T = any> {
      * {@link GroupLabelRenderContext}: `groupName` plus the group's members and selection
      * (e.g. `selectedCount`), so a custom header can show a per-group count.
      */
-    renderGroupLabelContentCallback?: (ctx: GroupLabelRenderContext<T>) => string | HTMLElement;
+    renderGroupLabelContentCallback?: (ctx: GroupLabelRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**
      * Group-header selection in a flat (non-tree) grouped, multi-select list.
      * - `none` (default) — group headers are inert labels.
@@ -746,6 +746,9 @@ export interface MultiSelectConfig<T = any> {
 
     // ========================================================================
     // CUSTOM RENDERING CALLBACKS
+    // Every render*ContentCallback / renderBadgeCallback result is read by core `renderSlotHtml`:
+    // a string is HTML, `null` / `undefined` = the built-in content, `false` = empty (no badge for
+    // renderBadgeCallback); an element is serialized — markup only, its listeners don't survive.
     // ========================================================================
 
     /**
@@ -753,7 +756,7 @@ export interface MultiSelectConfig<T = any> {
      * `[data-action]` element inside fires the `action` event (`source: 'option'`, `option`)
      * instead of toggling the row.
      */
-    renderOptionContentCallback?: (ctx: OptionContentRenderContext<T>) => string | HTMLElement;
+    renderOptionContentCallback?: (ctx: OptionContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**
      * Draw a loading state yourself (SPEC §12.14 shared loader). Called with
      * `{ component, context, containerElement, element, label }` — `context` is `'search'`
@@ -765,7 +768,7 @@ export interface MultiSelectConfig<T = any> {
      */
     renderLoadingCallback?: RenderLoaderCallback | null;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */
-    renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
+    renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**
      * Custom renderer for the WHOLE badge (main badges area) — return HTML string or HTMLElement
      * for the entire pill/card, not just its content. Unlike renderBadgeContentCallback (which fills
@@ -777,13 +780,13 @@ export interface MultiSelectConfig<T = any> {
      * default pill for a given item if the callback returns null/empty. Main badges area only (the
      * selected-items popover keeps using renderSelectedItemContentCallback).
      */
-    renderBadgeCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined;
+    renderBadgeCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**
      * Custom renderer for selected item content in the selected-items popover — return HTML string
      * or HTMLElement. `ctx` is a {@link BadgeContentRenderContext} (a popover item is rendered
      * through the same badge path): `isInPopover` is `true`.
      */
-    renderSelectedItemContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement;
+    renderSelectedItemContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**
      * Callback to add custom CSS classes to selected items in popover - return string or array of
      * class names. `ctx` is the popover item's {@link BadgeContentRenderContext} (`isInPopover`

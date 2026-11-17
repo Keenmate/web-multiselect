@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -1470,36 +1470,20 @@ export class MultiSelectEngine<T = any> {
                         // chip (--has-count) so the chip can park at the trailing edge.
                         const baseLabelClass = groupCascade ? 'ms__group-label ms__group-label--selectable' : 'ms__group-label';
                         // Check if custom group label callback is provided
-                        if (this.options.renderGroupLabelContentCallback) {
-                            // Custom label owns its content — it gets the selection via context and
-                            // renders its own count (see BU03). We still inject the checkbox chrome.
-                            // `info` is exactly the selection half of GroupLabelRenderContext, so
-                            // spread it rather than re-listing every field (can't drift).
-                            const customContent = this.options.renderGroupLabelContentCallback(this.ctx({ groupName, ...info }));
-                            if (customContent instanceof HTMLElement) {
-                                // HTMLElement - wrap in group-label div
-                                const wrapper = document.createElement('div');
-                                wrapper.className = baseLabelClass;
-                                wrapper.dataset.group = groupName;
-                                if (groupCascade) {
-                                    wrapper.dataset.groupSelect = 'cascade';
-                                    const tpl = document.createElement('template');
-                                    tpl.innerHTML = checkbox;
-                                    if (tpl.content.firstChild) wrapper.appendChild(tpl.content.firstChild);
-                                }
-                                wrapper.appendChild(customContent);
-                                html += wrapper.outerHTML;
-                            } else {
-                                // String (HTML or plain text)
-                                html += `<div class="${baseLabelClass}"${groupAttr}${selectAttr}>${checkbox}${customContent}</div>`;
-                            }
-                        } else {
-                            // Default rendering: title + a trailing count of how many of the group's
-                            // members are currently selected (any grouped list, cascade or not).
-                            const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount, groupName);
-                            const labelClass = countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
-                            html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${escapeHtml(groupName)}${countHtml}</div>`;
-                        }
+                        // Default: title + a trailing count of how many of the group's members are
+                        // currently selected (any grouped list, cascade or not).
+                        const countHtml = this.groupCountHtml(info.selectedCount, info.memberCount, groupName);
+                        const defaultLabel = (): string => `${escapeHtml(groupName)}${countHtml}`;
+                        // A custom label (core `renderSlotHtml`: string = HTML, null = the default, false =
+                        // empty) owns its content — it gets the selection via context and renders its own
+                        // count (see BU03); the checkbox chrome stays ours. `info` is exactly the selection
+                        // half of GroupLabelRenderContext, spread so it can't drift.
+                        const callback = this.options.renderGroupLabelContentCallback;
+                        const slot = callback
+                            ? renderSlotHtml(() => callback(this.ctx({ groupName, ...info })), defaultLabel)
+                            : { html: defaultLabel(), kind: 'default' as const };
+                        const labelClass = slot.kind === 'default' && countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
+                        html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${slot.html}</div>`;
                     }
                     groups[groupName].forEach(option => {
                         html += this.renderOption(option, indexOf.get(option) ?? -1);
@@ -1830,25 +1814,10 @@ export class MultiSelectEngine<T = any> {
                 isDisabled: disabled,
                 isTreeNode: false
             });
-            html += this.toHtml(this.options.renderOptionContentCallback(context));
+            const callback = this.options.renderOptionContentCallback;
+            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(icon, displayValue, subtitle)).html;
         } else {
-            // Default rendering
-            if (icon) {
-                html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
-            } else if (this.options.shouldReserveIconSlot) {
-                // Reserve the fixed-width gutter so icon-less rows keep the same label
-                // start column as rows that have an icon.
-                html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
-            }
-
-            html += '<div class="ms__option-text">';
-            html += `<div class="ms__option-title">${this.highlightMatch(displayValue)}</div>`;
-
-            if (subtitle) {
-                html += `<div class="ms__option-subtitle">${subtitle}</div>`;
-            }
-
-            html += '</div>';
+            html += this.defaultOptionContentHtml(icon, displayValue, subtitle);
         }
 
         html += this.renderOptionInfoButton();
@@ -1950,22 +1919,10 @@ export class MultiSelectEngine<T = any> {
                 isSelectable: selectable,
                 isIndeterminate
             });
-            html += this.toHtml(this.options.renderOptionContentCallback(context));
+            const callback = this.options.renderOptionContentCallback;
+            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(icon, displayValue, subtitle)).html;
         } else {
-            if (icon) {
-                html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
-            } else if (this.options.shouldReserveIconSlot) {
-                // Reserve the fixed-width gutter so icon-less rows keep the same label
-                // start column as rows that have an icon (most visible in a tree, where
-                // depth indent already offsets each row).
-                html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
-            }
-            html += '<div class="ms__option-text">';
-            html += `<div class="ms__option-title">${this.highlightMatch(displayValue)}</div>`;
-            if (subtitle) {
-                html += `<div class="ms__option-subtitle">${subtitle}</div>`;
-            }
-            html += '</div>';
+            html += this.defaultOptionContentHtml(icon, displayValue, subtitle);
         }
 
         html += this.renderOptionInfoButton();
@@ -5134,8 +5091,24 @@ export class MultiSelectEngine<T = any> {
      * string. (DOM sinks that hold a live node instead — the reveal/message panels — use
      * textContent/appendChild directly and intentionally don't go through here.)
      */
-    private toHtml(v: string | HTMLElement | null | undefined): string {
-        return v == null ? '' : typeof v === 'string' ? v : v.outerHTML;
+    /**
+     * The built-in option content: icon (or the reserved gutter), the highlighted title and the subtitle.
+     * Also what a `renderOptionContentCallback` returning `null` / `undefined` gets (core `renderSlotHtml`).
+     */
+    private defaultOptionContentHtml(icon: string | undefined, displayValue: string, subtitle: string | undefined): string {
+        let html = '';
+        if (icon) {
+            html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
+        } else if (this.options.shouldReserveIconSlot) {
+            // Reserve the fixed-width gutter so icon-less rows keep the same label start column
+            // as rows that have an icon (most visible in a tree, where depth indent offsets each row).
+            html += `<span class="ms__option-icon ms__option-icon--empty" aria-hidden="true"></span>`;
+        }
+        html += '<div class="ms__option-text">';
+        html += `<div class="ms__option-title">${this.highlightMatch(displayValue)}</div>`;
+        if (subtitle) html += `<div class="ms__option-subtitle">${subtitle}</div>`;
+        html += '</div>';
+        return html;
     }
 
     /**
@@ -5190,8 +5163,11 @@ export class MultiSelectEngine<T = any> {
         // `data-value`, and the click handler deselects on any inner `[data-ms-action="remove"]`
         // (or `.ms__badge-remove`). Falls back to the default pill when it returns nothing.
         if (!ctx.isInPopover && this.options.renderBadgeCallback) {
-            const customHtml = this.toHtml(this.options.renderBadgeCallback(renderCtx));
-            if (customHtml.trim() !== '') {
+            const callback = this.options.renderBadgeCallback;
+            const slot = renderSlotHtml(() => callback(renderCtx));
+            if (slot.kind === 'hidden') return '';
+            const customHtml = slot.html;
+            if (slot.kind === 'custom' && customHtml.trim() !== '') {
                 const classCb = this.options.getBadgeClassCallback;
                 let wrapperClasses = 'ms__badge ms__badge--custom';
                 if (classCb) {
@@ -5203,15 +5179,13 @@ export class MultiSelectEngine<T = any> {
         }
 
         // Resolve content
-        let badgeContent: string;
+        // Core `renderSlotHtml`: string = HTML, null = the default text, false = empty.
         const popoverCallback = ctx.isInPopover ? this.options.renderSelectedItemContentCallback : undefined;
-        if (popoverCallback) {
-            badgeContent = this.toHtml(popoverCallback(renderCtx));
-        } else if (this.options.renderBadgeContentCallback) {
-            badgeContent = this.toHtml(this.options.renderBadgeContentCallback(renderCtx));
-        } else {
-            badgeContent = this.getItemBadgeDisplayValue(option, ctx);
-        }
+        const contentCallback = popoverCallback ?? this.options.renderBadgeContentCallback;
+        const defaultContent = (): string => this.getItemBadgeDisplayValue(option, ctx);
+        const badgeContent = contentCallback
+            ? renderSlotHtml(() => contentCallback(renderCtx), defaultContent).html
+            : defaultContent();
 
         // Resolve classes
         const classCallback = ctx.isInPopover

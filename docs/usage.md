@@ -526,7 +526,10 @@ multiselect.getCountLabelCallback = ({ selectedCount, totalCount }) => `${select
 // button's aria-label comes from labels.removeItem instead)
 multiselect.getRemoveButtonTooltipCallback = ({ option }) => `Unassign ${option.name}`;
 
-// Custom rendering - Full HTML control
+// Custom rendering - Full HTML control. Every render*ContentCallback / renderBadgeCallback result is
+// read the same way (core renderSlotHtml): a string is HTML, null / undefined = the built-in content,
+// false = empty (renderBadgeCallback: no badge). Markup only — a returned element is serialized, so
+// its listeners don't survive; use [data-action] / [data-ms-action] attributes for clicks.
 multiselect.renderGroupLabelContentCallback = (ctx) => {
   // ctx: groupName, members, selectedMembers, selectedCount, memberCount,
   // selectableCount, checkState, plus presentation / isFullscreen / isModal
@@ -558,7 +561,7 @@ multiselect.renderBadgeContentCallback = ({ option, isInPopover }) => {
 // Replace the WHOLE badge (not just its content). Wrapped in
 // .ms__badge.ms__badge--custom; an inner [data-ms-action="remove"] (or
 // .ms__badge-remove) removes the item.
-// Return null to fall back to the default pill for that item.
+// Return null to fall back to the default pill for that item, false for no badge.
 multiselect.renderBadgeCallback = ({ option }) => {
   return `<span class="my-chip">${option.name} <button data-ms-action="remove">×</button></span>`;
 };

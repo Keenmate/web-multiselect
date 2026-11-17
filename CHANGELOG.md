@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the keyboard highlight (core `/a11y` `createActiveDescendant`), focus stays in the field. The row checkboxes are
   now decorative (`aria-hidden`, `tabindex="-1"`). See docs/accessibility.md → Combobox pattern.
 
+### Changed — render-callback results read by core `renderSlotHtml` (2026-11-17)
+- **`renderOptionContentCallback`, `renderGroupLabelContentCallback`, `renderBadgeContentCallback`,
+  `renderSelectedItemContentCallback` and `renderBadgeCallback` follow core's one result contract.** A string is
+  HTML (as before). `null` / `undefined` now draws the built-in content — the option's icon / title / subtitle,
+  the group name + selected count, the badge text — where it used to leave the slot empty (a group label printed
+  `null`). `false` leaves the slot empty (`renderBadgeCallback`: no badge for that item). A returned element is
+  serialized as before — markup only, documented now: its listeners and properties don't survive.
+
 ### Changed — the phone sheet is the modal tier (2026-11-17)
 - The fullscreen phone sheet stacks at `--base-z-modal` (7000; core `Z_INDEX`: dialogs, sheets and drawers) instead
   of one above the tooltip tier (9001), so the page's toasts (8000) and tooltips (9000) stay visible over it. The
