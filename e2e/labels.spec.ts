@@ -62,3 +62,31 @@ test('labels map interpolates {count} in group count, remove-hidden, and counter
     await expect(p.locator('.ms__dropdown')).toBeVisible();
     await expect(p.locator('.ms__group-count').first()).toHaveAttribute('aria-label', '10 vybráno');
 });
+
+/**
+ * Page-wide labels (core /locale): `window.components.locale.labels['web-multiselect']` sits between the
+ * instance `labels` and the English default, and assigning the page object re-renders live pickers
+ * (core `localeChanged()` → rebuild, selection kept).
+ */
+test('page-wide window.components.locale labels apply live; the instance labels win', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    const p = page.locator('#lbl-count');
+    const before = await p.evaluate((el: any) => el.selectedOptions.length);
+
+    await page.evaluate(() => {
+        (window as any).components.locale = {
+            labels: { 'web-multiselect': { removeHiddenItems: 'Page: remove {count}', andMore: 'Page: +{count}' } },
+        };
+    });
+    await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Page: remove 12');
+    await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
+    expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(before);
+
+    await p.evaluate((el: any) => { el.labels = { removeHiddenItems: 'Mine {count}' }; });
+    await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Mine 12');
+    await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
+
+    await page.evaluate(() => { (window as any).components.locale = null; });
+    await p.evaluate((el: any) => { el.labels = undefined; });
+    await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Remove 12 hidden items');
+});

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — page-wide labels through core `/locale` (2026-11-17)
+- Labels resolve through core `createLabels`: instance `labels` → page-wide
+  `window.components.locale.labels['web-multiselect']` → English. Assigning `window.components.locale` re-renders
+  live pickers (core `localeChanged()`, selection kept); `formatLabelCallback` and
+  `window.components.security.shouldEscapeLabels` apply. The own `resolveLabel` seam is gone.
+
 ### Changed — the hidden form input has no `id` (2026-11-16)
 - **BREAKING: the single hidden `<input type="hidden" name="…">` (`value-format` `json` / `text` /
   `getValueFormatCallback`) no longer gets `id = name`.** Two pickers with the same `name`, or

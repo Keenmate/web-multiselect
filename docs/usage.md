@@ -624,6 +624,18 @@ untrusted text); ARIA labels and placeholders are plain text. `{value}` (the typ
 `{item}`, `{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the
 picker (the selection is kept).
 
+Labels resolve per key through core `/locale` (`createLabels`): the instance `labels` → the page-wide
+`window.components.locale.labels['web-multiselect']` → the English default. Assigning
+`window.components.locale` re-renders every live picker (selection kept); a page-wide
+`formatLabelCallback` (ICU / i18next) formats every label, and `window.components.security =
+{ shouldEscapeLabels: true }` turns the HTML labels above into plain text.
+
+```js
+window.components.locale = {
+  labels: { 'web-multiselect': { noResults: 'Nic nenalezeno', removeItem: 'Odebrat {item}' } },
+};
+```
+
 | Key | Default | Used for |
 |-----|---------|----------|
 | `selectPlaceholder` | `Pick an option…` | Closed-input placeholder when search is not usable (picker mode) |

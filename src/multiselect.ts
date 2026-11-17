@@ -17,7 +17,7 @@ import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, 
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
- *  interpolated by `resolveLabel`. Every key here is also optional on `MultiSelectLabels`. */
+ *  interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     selectPlaceholder: 'Pick an option…',
     searchPlaceholder: 'Search…',
@@ -73,6 +73,7 @@ import {
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
+import { createLabels, getPageLocale, type Labels } from '@keenmate/web-components-core/locale';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
 import {
@@ -350,7 +351,7 @@ export class MultiSelectEngine<T = any> {
             member: this.options.displayValueMember,
             callback: this.options.getDisplayValueCallback,
             transform: String,
-            fallback: () => this.resolveLabel('noDisplayValue')
+            fallback: () => this.labels.text('noDisplayValue')
         });
     }
 
@@ -878,7 +879,7 @@ export class MultiSelectEngine<T = any> {
     private buildCounterTooltip(items: T[]): string {
         const MAX = 12;
         const labels = items.slice(0, MAX).map(o => this.getItemBadgeDisplayValue(o));
-        if (items.length > MAX) labels.push(this.resolveLabel('andMore', { count: items.length - MAX }));
+        if (items.length > MAX) labels.push(this.labels.text('andMore', { count: items.length - MAX }));
         return labels.join('\n');
     }
 
@@ -1125,7 +1126,7 @@ export class MultiSelectEngine<T = any> {
         this.clearButton.type = 'button';
         this.clearButton.className = 'ms__input-clear';
         this.clearButton.tabIndex = -1;
-        this.clearButton.setAttribute('aria-label', this.resolveLabel('clearAllSelections'));
+        this.clearButton.setAttribute('aria-label', this.labels.text('clearAllSelections'));
         this.clearButton.style.display = 'none';
         this.clearButton.addEventListener('mousedown', (e) => e.preventDefault());
         this.clearButton.addEventListener('click', (e) => {
@@ -1175,7 +1176,7 @@ export class MultiSelectEngine<T = any> {
         container.appendChild(this.dropdown);
 
         // Create hint if provided (attached to container)
-        const searchHint = this.resolveLabel('searchHint');
+        const searchHint = this.labels.text('searchHint');
         if (searchHint) {
             this.hint = document.createElement('div');
             this.hint.className = 'ms__hint';
@@ -1299,7 +1300,7 @@ export class MultiSelectEngine<T = any> {
     private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
         const label = this.formatCountLabel(selectedCount, total, groupName);
-        return `<span class="ms__group-count" aria-label="${escapeHtml(this.resolveLabel('groupSelected', { count: selectedCount }))}">${escapeHtml(label)}</span>`;
+        return `<span class="ms__group-count" aria-label="${escapeHtml(this.labels.text('groupSelected', { count: selectedCount }))}">${escapeHtml(label)}</span>`;
     }
 
     /**
@@ -1361,7 +1362,7 @@ export class MultiSelectEngine<T = any> {
             // slot carries role="status" + aria-label, so the visible text is aria-hidden.
             html += '<div class="ms__loading">';
             html += '<span class="ms__loader-slot" data-ms-loader="search"></span>';
-            html += `<div class="ms__loading-text" aria-hidden="true">${this.resolveLabel('searching')}</div>`;
+            html += `<div class="ms__loading-text" aria-hidden="true">${this.labels.html('searching')}</div>`;
             html += '</div>';
             this.dropdownInner.innerHTML = html;
             this.mountLoaders(this.dropdownInner);
@@ -1653,13 +1654,13 @@ export class MultiSelectEngine<T = any> {
     private getBuiltInActionDefaults(action: MultiSelectAction | 'custom'): { text?: string; isDisabled?: boolean } {
         if (action === 'select-all') {
             return {
-                text: this.resolveLabel('selectAll'),
+                text: this.labels.text('selectAll'),
                 isDisabled: !this.filteredOptions.some(option =>
                     !this.getItemDisabled(option) && !this.selectedValues.has(String(this.getItemValue(option)))),
             };
         }
         if (action === 'clear-selection') {
-            return { text: this.resolveLabel('clearSelection'), isDisabled: this.selectedValues.size === 0 };
+            return { text: this.labels.text('clearSelection'), isDisabled: this.selectedValues.size === 0 };
         }
         return {};
     }
@@ -1810,7 +1811,7 @@ export class MultiSelectEngine<T = any> {
      */
     private renderOptionInfoButton(): string {
         if (this.presentationMode !== 'fullscreen') return '';
-        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${escapeHtml(this.resolveLabel('showFullLabel'))}"></button>`;
+        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${escapeHtml(this.labels.text('showFullLabel'))}"></button>`;
     }
 
     /**
@@ -1936,7 +1937,7 @@ export class MultiSelectEngine<T = any> {
                 + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
                 + `</div>`;
         }
-        return `<div class="ms__empty">${this.resolveLabel(this.isNoData() ? 'noData' : 'noResults')}</div>`;
+        return `<div class="ms__empty">${this.labels.html(this.isNoData() ? 'noData' : 'noResults')}</div>`;
     }
 
     /** Empty-state kind: true = nothing exists at all (`labels.noData`), false = data exists but
@@ -1963,7 +1964,7 @@ export class MultiSelectEngine<T = any> {
         if (this.options.getAddNewTextCallback) {
             return escapeHtml(String(this.options.getAddNewTextCallback(this.ctx({ value }))));
         }
-        return this.resolveLabel('addNew', { value: escapeHtml(value) });
+        return this.labels.html('addNew', { value });
     }
 
     /**
@@ -1978,7 +1979,7 @@ export class MultiSelectEngine<T = any> {
             const context = slot.dataset.msLoader || 'search';
             const html = context === 'add-new'
                 ? this.getAddNewPendingText((this.typedTerm || '').trim())
-                : this.resolveLabel('searching');
+                : this.labels.html('searching');
             this.loaderRemovers.push(renderLoader(this.hostEl(), slot, context, {
                 prefix: 'ms',
                 label: this.htmlToText(html),
@@ -2003,7 +2004,7 @@ export class MultiSelectEngine<T = any> {
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
-        return this.resolveLabel('addNewPending', { value: escapeHtml(value) });
+        return this.labels.html('addNewPending', { value });
     }
 
     /**
@@ -2050,13 +2051,13 @@ export class MultiSelectEngine<T = any> {
      * search is unusable → the search placeholder.
      */
     private getPlaceholderText(): string {
-        const noDataPlaceholder = this.resolveLabel('noDataPlaceholder');
+        const noDataPlaceholder = this.labels.text('noDataPlaceholder');
         if (noDataPlaceholder && this.allOptions.length === 0) {
             return noDataPlaceholder;
         }
         if (!this.options.isSearchEnabled) {
             // `''` = deliberately empty (L4) — no fallback to the search placeholder.
-            return this.resolveLabel('selectPlaceholder');
+            return this.labels.text('selectPlaceholder');
         }
         return this.getSearchPlaceholder();
     }
@@ -2070,9 +2071,9 @@ export class MultiSelectEngine<T = any> {
      */
     private getSearchPlaceholder(): string {
         if (this.options.isSearchModeToggleShown && !this.hasLabel('searchPlaceholder')) {
-            return this.resolveLabel((this.options.searchMode || 'filter') === 'navigate' ? 'navigatePlaceholder' : 'filterPlaceholder');
+            return this.labels.text((this.options.searchMode || 'filter') === 'navigate' ? 'navigatePlaceholder' : 'filterPlaceholder');
         }
-        return this.resolveLabel('searchPlaceholder');
+        return this.labels.text('searchPlaceholder');
     }
 
     /** Re-apply the (possibly mode-aware) placeholder to the live inputs after a mode switch. */
@@ -2174,7 +2175,7 @@ export class MultiSelectEngine<T = any> {
                 moreBadgeHtml = `
                     <div class="ms__badge ms__badge--counter ms__badge--more" data-ms-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.resolveLabel('removeHiddenItems', { count: remainingCount }))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.labels.text('removeHiddenItems', { count: remainingCount }))}"></button>
                     </div>
                 `;
             }
@@ -2198,7 +2199,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge" data-ms-action="show-selected">
                         <span class="ms__badge-text">${compactText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -2212,7 +2213,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge ms__badge--counter" data-ms-action="show-selected">
                         <span class="ms__badge-text">${countText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.resolveLabel('clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('clearAllSelections'))}"></button>
                     </div>
                 `;
             } else {
@@ -4644,7 +4645,7 @@ export class MultiSelectEngine<T = any> {
             const clear = document.createElement('button');
             clear.type = 'button';
             clear.className = 'ms__fullscreen-search-clear';
-            clear.setAttribute('aria-label', this.resolveLabel('clearSearch'));
+            clear.setAttribute('aria-label', this.labels.text('clearSearch'));
             // Use mousedown+preventDefault so the tap doesn't blur/steal focus from
             // the search field, then run the clear on click and restore focus.
             clear.addEventListener('mousedown', (e) => e.preventDefault());
@@ -4658,7 +4659,7 @@ export class MultiSelectEngine<T = any> {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'ms__fullscreen-close km-sheet-close';
-        close.setAttribute('aria-label', this.resolveLabel('close'));
+        close.setAttribute('aria-label', this.labels.text('close'));
         // No text: the ✕ is core's masked --base-icon-close (km-sheet-close), the same close
         // the selected-items sheet gets.
         close.addEventListener('click', () => this.closeWith('close-button'));
@@ -4699,13 +4700,13 @@ export class MultiSelectEngine<T = any> {
         const prev = document.createElement('button');
         prev.type = 'button';
         prev.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--prev';
-        prev.setAttribute('aria-label', this.resolveLabel('prevMatch'));
+        prev.setAttribute('aria-label', this.labels.text('prevMatch'));
         prev.addEventListener('click', () => this.focusPreviousMatch());
 
         const next = document.createElement('button');
         next.type = 'button';
         next.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--next';
-        next.setAttribute('aria-label', this.resolveLabel('nextMatch'));
+        next.setAttribute('aria-label', this.labels.text('nextMatch'));
         next.addEventListener('click', () => this.focusNextMatch());
 
         controls.appendChild(prev);
@@ -4763,7 +4764,7 @@ export class MultiSelectEngine<T = any> {
         this.fullscreenModeToggle.dataset.mode = mode;
         // The button switches TO the other mode; label it by the action, expose current
         // mode via aria-pressed(=navigate) for assistive tech.
-        const label = this.resolveLabel(mode === 'navigate' ? 'switchToFilterMode' : 'switchToNavigateMode');
+        const label = this.labels.text(mode === 'navigate' ? 'switchToFilterMode' : 'switchToNavigateMode');
         this.fullscreenModeToggle.setAttribute('aria-label', label);
         this.fullscreenModeToggle.setAttribute('title', label);
         this.fullscreenModeToggle.setAttribute('aria-pressed', String(mode === 'navigate'));
@@ -4785,13 +4786,13 @@ export class MultiSelectEngine<T = any> {
 
         if (this.fullscreenNavCount) {
             if (total === 0) {
-                this.fullscreenNavCount.textContent = this.resolveLabel('noResults');
+                this.fullscreenNavCount.textContent = this.labels.text('noResults');
             } else {
                 const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
                 const pos = matched.indexOf(this.focusedIndex);
                 this.fullscreenNavCount.textContent = pos >= 0
-                    ? this.resolveLabel('matchPosition', { position: pos + 1, total })
-                    : this.resolveLabel(total === 1 ? 'matchCountOne' : 'matchCount', { count: total });
+                    ? this.labels.text('matchPosition', { position: pos + 1, total })
+                    : this.labels.text(total === 1 ? 'matchCountOne' : 'matchCount', { count: total });
             }
         }
 
@@ -5023,7 +5024,7 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.innerHTML = `
             <div class="ms__selected-popover-header">
                 <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.resolveLabel('close'))}"></button>
+                <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('close'))}"></button>
             </div>
             <div class="ms__selected-popover-body">
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
@@ -5053,28 +5054,24 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.querySelector('.ms__selected-popover-close')?.classList.toggle('km-sheet-close', isSheet);
     }
 
-    /** Whether the consumer set `labels[key]` (vs the English default). */
+    /** Whether the instance or the page (`window.components.locale.labels['web-multiselect']`) set `labels[key]`. */
     private hasLabel(key: keyof MultiSelectLabels): boolean {
-        return typeof this.options.labels?.[key] === 'string';
+        return typeof this.options.labels?.[key] === 'string'
+            || typeof getPageLocale()?.labels?.['web-multiselect']?.[key] === 'string';
     }
 
-    /** Resolve a UI string — THE label seam (rulebook D-NC-24; core `/locale` plugs in here):
-     *  the instance `labels[key]` if set, else the English default, with named `{…}`
-     *  placeholders interpolated. Returns raw text (not escaped) — escape at the call site
-     *  when it goes into innerHTML; `setAttribute` / `textContent` contexts need none. */
-    private resolveLabel(key: keyof MultiSelectLabels, vars?: Record<string, string | number>): string {
-        let text = this.options.labels?.[key] ?? DEFAULT_LABELS[key];
-        if (vars) {
-            for (const [name, value] of Object.entries(vars)) {
-                text = text.replace(new RegExp(`\\{${name}\\}`, 'g'), String(value));
-            }
-        }
-        return text;
+    /** The UI strings (core `/locale`, rulebook D-NC-24): instance `labels` → page-wide
+     *  `window.components.locale.labels['web-multiselect']` → the English default. `.text()` for
+     *  attributes / `textContent` (escape it yourself inside an HTML string), `.html()` for markup
+     *  (the template is HTML, the `{…}` values are escaped). */
+    private get labels(): Labels<Required<MultiSelectLabels>> {
+        return this.labelsApi ??= createLabels(this.hostEl(), DEFAULT_LABELS, () => this.options.labels, { tag: 'web-multiselect' });
     }
+    private labelsApi?: Labels<Required<MultiSelectLabels>>;
 
     /** The selected-items popover header text (`labels.selectedPopoverTitle`, `{count}` = selection count). */
     private selectedPopoverTitleText(count: number): string {
-        return this.resolveLabel('selectedPopoverTitle', { count });
+        return this.labels.text('selectedPopoverTitle', { count });
     }
 
     private renderSelectedPopoverVirtual(selectedOptions: T[], count: number): void {
@@ -5090,7 +5087,7 @@ export class MultiSelectEngine<T = any> {
             const html = `
                 <div class="ms__selected-popover-header">
                     <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                    <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.resolveLabel('close'))}"></button>
+                    <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('close'))}"></button>
                 </div>
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
@@ -5176,8 +5173,8 @@ export class MultiSelectEngine<T = any> {
         const callback = this.options.getCounterCallback;
         if (callback) return callback(this.ctx(moreCount === undefined ? { count } : { count, moreCount }));
         return moreCount !== undefined
-            ? this.resolveLabel('moreCount', { count: moreCount })
-            : this.resolveLabel('selectedCount', { count });
+            ? this.labels.text('moreCount', { count: moreCount })
+            : this.labels.text('selectedCount', { count });
     }
 
     /**
@@ -5237,7 +5234,7 @@ export class MultiSelectEngine<T = any> {
         return `
             <div class="${escapeHtml(badgeClasses)}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.resolveLabel('removeItem', { item: removeLabel }))}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.labels.text('removeItem', { item: removeLabel }))}"></button>
             </div>
         `;
     }
@@ -5363,7 +5360,7 @@ export class MultiSelectEngine<T = any> {
             // A throwing getValueFormatCallback: '' was written, the host turns invalid (the form
             // won't submit unless `novalidate`), and `value-format-error` reports it.
             dataLogger.error(`[${this.instanceId}] getValueFormatCallback threw — submitting '':`, failure.error);
-            this.options.onFormatValidity?.(failure, this.resolveLabel('valueFormatError'));
+            this.options.onFormatValidity?.(failure, this.labels.text('valueFormatError'));
             this.options.onValueFormatError?.(this.ctx({ error: failure.error, value: failure.values }));
         } else {
             this.options.onFormatValidity?.(null);
@@ -5788,7 +5785,7 @@ export class MultiSelectEngine<T = any> {
     /** Build the remove-button tooltip text (callback > `labels.removeItem`). */
     private buildRemoveButtonTooltipText(itemName: string, option?: T, info?: BadgeRenderInfo): string {
         if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(this.badgeCtx(option, info));
-        return this.resolveLabel('removeItem', { item: itemName });
+        return this.labels.text('removeItem', { item: itemName });
     }
 
     private attachBadgeTooltips(container?: HTMLElement): void {
@@ -5846,7 +5843,7 @@ export class MultiSelectEngine<T = any> {
                     id: 'badge-more-remove',
                     trigger: removeBtn,
                     // Same label as the button's aria-label (localizable via `labels`).
-                    content: this.resolveLabel('removeHiddenItems', { count: hiddenCount })
+                    content: this.labels.text('removeHiddenItems', { count: hiddenCount })
                 });
             }
         }

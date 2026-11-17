@@ -471,6 +471,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.offsetWidth);
   }
 
+  /** The page-wide `window.components.locale` changed (core /locale): rebuild so every label and
+   *  placeholder re-resolves — the same path a `labels` change takes (selection kept). */
+  protected override localeChanged(): void {
+    if (this.#picker) this.#rebuildPicker();
+  }
+
   /** `disabled` input or ancestor `<fieldset disabled>` flipped (core): apply it in place. */
   protected override disabledChanged(isDisabled: boolean): void {
     this.#picker?.setDisabled(isDisabled);
