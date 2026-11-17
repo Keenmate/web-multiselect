@@ -16,6 +16,9 @@ function make(): VirtualScroll<number> {
     // …and the scroll range the 100-row spacer produces (core's box math clamps to scrollHeight)
     Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => 100 * ITEM });
     vs = new VirtualScroll<number>({ container, itemHeight: ITEM, items: Array.from({ length: 100 }, (_, i) => i), renderItem: (i) => `<div>${i}</div>` });
+    // …and the geometry core's virtual window reads the list top from (the spacer scrolls with the content)
+    const spacer = container.querySelector('.km-virtual-spacer') as HTMLElement;
+    spacer.getBoundingClientRect = () => ({ top: -container.scrollTop, bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: -container.scrollTop, toJSON() {} }) as DOMRect;
     return vs;
 }
 
