@@ -601,6 +601,42 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
             </kmwc-demo>
         </div>
 
+        <div class="card">
+            <h2>BU11 · Page-wide labels — <code>window.components.locale</code></h2>
+            <p>
+                Every UI string goes through core <code>/locale</code>: the instance <code>labels</code> win, then the
+                page-wide <code>window.components.locale.labels['web-multiselect']</code>, then English. Assigning the
+                page object re-renders every live picker (the selection is kept). The second picker keeps its own
+                <code>searchPlaceholder</code>.
+            </p>
+
+            <kmwc-demo>
+                <div class="controls">
+                    <label><input type="radio" name="loc-lang" value="en" checked> English (unset)</label>
+                    <label><input type="radio" name="loc-lang" value="cs"> Czech, page-wide</label>
+                </div>
+                <div class="field-row">
+                    <web-multiselect id="ex-locale-a" value='["js","ts","python"]' badges-display-mode="count"
+                        value-member="value" display-value-member="label"></web-multiselect>
+                    <web-multiselect id="ex-locale-b" value-member="value" display-value-member="label"
+                        labels='{"searchPlaceholder": "My own placeholder"}'></web-multiselect>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const langs = ['JavaScript', 'TypeScript', 'Python', 'Java', 'Go'].map((label) => ({ value: label.toLowerCase().replace('javascript', 'js').replace('typescript', 'ts'), label }));
+                    for (const id of ['ex-locale-a', 'ex-locale-b']) document.getElementById(id).options = langs;
+
+                    const CS = {
+                        searchPlaceholder: 'Hledat…', noResults: 'Nic nenalezeno', selectedCount: '{count} vybráno',
+                        selectedPopoverTitle: 'Vybrané položky ({count})', close: 'Zavřít', removeItem: 'Odebrat {item}',
+                    };
+                    document.querySelectorAll('input[name="loc-lang"]').forEach((r) => r.addEventListener('change', () => {
+                        window.components.locale = r.value === 'cs' ? { labels: { 'web-multiselect': CS } } : null;
+                    }));
+                    window.addEventListener('pagehide', () => { window.components.locale = null; });
+                </script>
+            </kmwc-demo>
+        </div>
+
     <script type="module">
         import { attachControlsPersistence } from '@keenmate/web-components-devkit/examples';
 
