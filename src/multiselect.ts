@@ -74,6 +74,7 @@ import {
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
 import { createLabels, getPageLocale, type Labels } from '@keenmate/web-components-core/locale';
+import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
 import {
@@ -1088,6 +1089,7 @@ export class MultiSelectEngine<T = any> {
         this.input.className = 'ms__input';
         this.input.placeholder = this.getPlaceholderText();
         this.input.autocomplete = 'off';
+        this.setComboboxAria(this.input);
 
         this.input.readOnly = this.isInputReadOnly();
 
@@ -1313,7 +1315,7 @@ export class MultiSelectEngine<T = any> {
             opts.indeterminate ? 'aria-checked="mixed"' : '',
             opts.disabled ? 'disabled' : ''
         ].filter(Boolean).join(' ');
-        return `<input type="checkbox" class="${cls}"${attrs ? ' ' + attrs : ''}>`;
+        return `<input type="checkbox" class="${cls}" tabindex="-1" aria-hidden="true"${attrs ? ' ' + attrs : ''}>`;
     }
 
     /** Group-header tristate checkbox (maps the group's roll-up state onto `checkboxHtml`). */
@@ -1321,7 +1323,68 @@ export class MultiSelectEngine<T = any> {
         return this.checkboxHtml({ checked: state === 'checked', indeterminate: state === 'indeterminate' });
     }
 
+    // -- ARIA combobox / listbox (core /a11y createActiveDescendant, SPEC 12.25) --
+
+    /** `role="listbox"` + multiselectable (+ the control's accessible name) on an options container. */
+    private listboxAttrs(): string {
+        const label = this.input?.getAttribute('aria-label') || this.hostEl().getAttribute('aria-label');
+        return ` role="listbox"${this.options.isMultiple ? ' aria-multiselectable="true"' : ''}${label ? ` aria-label="${escapeHtml(label)}"` : ''}`;
+    }
+
+    /** The search field (the control input or the sheet's own) is a combobox driving the listbox. */
+    private setComboboxAria(input: HTMLInputElement): void {
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-haspopup', 'listbox');
+        input.setAttribute('aria-expanded', String(this.#isOpen));
+    }
+
+    private activeNav: ActiveDescendant | null = null;
+    private activeNavInput: HTMLElement | null = null;
+    private activeNavListbox: HTMLElement | null = null;
+
+    /**
+     * Point `aria-activedescendant` at the highlighted row (`.ms__option--focused`) after every render,
+     * open / close and virtual recycle. The keyboard model stays the picker's own (navigate mode, tree,
+     * virtual rows, the "add new" prompt, caret-aware Home / End, `beforeKeydownCallback`), so core's
+     * helper is used for the ARIA side only: `getItems` returns just the active row, which leaves its own
+     * arrow / Enter handling nothing to move to (core has no "ARIA only" option yet — reported as a gap).
+     */
+    private syncListboxAria(): void {
+        if (this.#isDestroyed) return;
+        for (const field of [this.input, this.fullscreenSearchInput]) field?.setAttribute('aria-expanded', String(this.#isOpen));
+        const listbox = this.#isOpen ? (this.dropdown?.querySelector('[role="listbox"]') as HTMLElement | null) : null;
+        if (!listbox) {
+            this.activeNav?.destroy();
+            this.activeNav = this.activeNavInput = this.activeNavListbox = null;
+            return;
+        }
+        const input = (this.presentationMode === 'fullscreen' && this.fullscreenSearchInput) || this.input;
+        const activeRow = (): HTMLElement | null =>
+            this.activeNavListbox?.querySelector('.ms__option--focused[role="option"]') as HTMLElement | null;
+        if (listbox !== this.activeNavListbox || input !== this.activeNavInput) {
+            this.activeNav?.destroy();
+            this.activeNavListbox = listbox;
+            this.activeNavInput = input;
+            this.activeNav = createActiveDescendant(input, listbox, {
+                getItems: () => {
+                    const row = activeRow();
+                    return row ? [row] : [];
+                },
+                isSkipped: () => false,
+                shouldScroll: false, // the picker scrolls its own (virtual) list
+                pageSize: 0,
+            });
+        }
+        this.activeNav!.setActive(activeRow());
+    }
+
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
+        this.renderDropdownContent(opts);
+        this.syncListboxAria();
+    }
+
+    private renderDropdownContent(opts?: { preserveScroll?: boolean }): void {
         // Clean up any existing action button tooltips before re-rendering
         this.destroyAllActionButtonTooltips();
         // Release the previous render's loaders (runs a render hook's cleanup).
@@ -1377,9 +1440,9 @@ export class MultiSelectEngine<T = any> {
         // count crosses the threshold (e.g. filtering from many matches to few).
         if (this.options.isVirtualScrollEnabled) {
             const virtualScrollItemHeight = this.scaledOptionHeight();
-            html += `<div class="ms__options ms__options--fixed-height" style="--ms-option-height: ${virtualScrollItemHeight}px;">`;
+            html += `<div class="ms__options ms__options--fixed-height"${this.listboxAttrs()} style="--ms-option-height: ${virtualScrollItemHeight}px;">`;
         } else {
-            html += '<div class="ms__options">';
+            html += `<div class="ms__options"${this.listboxAttrs()}>`;
         }
 
         if (this.filteredOptions.length === 0) {
@@ -1567,7 +1630,7 @@ export class MultiSelectEngine<T = any> {
             if (!actionsAtBottom) html += actionsHTML;
 
             // Create options container for virtual scroll (sizing applied below).
-            html += `<div class="ms__options ms__options--virtual" style="overflow-y: auto; position: relative;"></div>`;
+            html += `<div class="ms__options ms__options--virtual"${this.listboxAttrs()} style="overflow-y: auto; position: relative;"></div>`;
             if (actionsAtBottom) html += actionsHTML;
             this.dropdownInner.innerHTML = html;
 
@@ -1621,6 +1684,8 @@ export class MultiSelectEngine<T = any> {
                         this.markTruncatedOptions();
                         // Re-round the edge rows as they're recycled into/out of view.
                         this.applyEdgeOptionRadii();
+                        // The active row may have been recycled into / out of view.
+                        this.syncListboxAria();
                     }
                 });
             } else {
@@ -1638,6 +1703,7 @@ export class MultiSelectEngine<T = any> {
 
             // Attach tooltips to action buttons after rendering
             this.attachActionButtonTooltips();
+            this.syncListboxAria();
         });
     }
 
@@ -1752,7 +1818,7 @@ export class MultiSelectEngine<T = any> {
             ? ` data-checkbox-align="${this.options.checkboxAlign}"`
             : '';
 
-        let html = `<div class="${classes.join(' ')}" data-value="${escapeHtml(String(value))}" data-index="${index}"${checkboxAlignAttr}>`;
+        let html = `<div class="${classes.join(' ')}" role="option" aria-selected="${isSelected}"${disabled ? ' aria-disabled="true"' : ''} data-value="${escapeHtml(String(value))}" data-index="${index}"${checkboxAlignAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple) {
             html += this.checkboxHtml({ checked: isSelected, disabled });
@@ -1860,7 +1926,10 @@ export class MultiSelectEngine<T = any> {
             : '';
 
         const selectableAttr = selectable ? '' : ' data-selectable="false"';
-        let html = `<div class="${classes.join(' ')}" data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
+        const ariaOption = selectable
+            ? ` role="option" aria-selected="${isSelected}" aria-level="${level}"${disabled ? ' aria-disabled="true"' : ''}`
+            : ' role="presentation"';
+        let html = `<div class="${classes.join(' ')}"${ariaOption} data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple && selectable) {
             html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
@@ -3973,6 +4042,7 @@ export class MultiSelectEngine<T = any> {
 
         this.#isOpen = false;
         this.element.classList.remove('ms--open');
+        this.syncListboxAria();
         // Hides the panel, stops positioning, leaves the overlay tree.
         const popover = this.dropdownPopover;
         this.dropdownPopover = null;
@@ -4417,7 +4487,16 @@ export class MultiSelectEngine<T = any> {
      * variables are calc()s of --ms-rem. 0 when computed styles aren't readable (jsdom).
      */
     private measurePopoverLength(name: string): number {
-        return readCssLengthPx(this.selectedPopover, name);
+        // Not core `readCssLengthPx`: it measures the probe's layout box, and the popover is measured while
+        // still `display: none` (before it opens) — the computed value resolves there, a rect is 0.
+        // Core gap reported (readCssLengthPx could read the computed length instead).
+        if (typeof getComputedStyle !== 'function') return 0;
+        const probe = document.createElement('span');
+        probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:var(${name})`;
+        this.selectedPopover.appendChild(probe);
+        const px = parseFloat(getComputedStyle(probe).height);
+        probe.remove();
+        return Number.isFinite(px) ? px : 0;
     }
 
     /**
@@ -4556,6 +4635,7 @@ export class MultiSelectEngine<T = any> {
             search.className = 'ms__fullscreen-search';
             search.placeholder = this.getPlaceholderText();
             search.autocomplete = 'off';
+            this.setComboboxAria(search);
 
             // Proxy to the same search path as the main input, keeping the two in sync.
             onTextInput(search, (value) => {
@@ -6057,6 +6137,8 @@ export class MultiSelectEngine<T = any> {
         this.#isDestroyed = true;
         const wasOpen = this.#isOpen;
         this.#isOpen = false;
+        this.activeNav?.destroy();
+        this.activeNav = null;
         this.clearLoaders();
         this.destroyAllTooltips();
         this.hideLabelReveal();

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — ARIA combobox / listbox (2026-11-17)
+- The search field is a `role="combobox"` (`aria-expanded`, `aria-autocomplete="list"`, `aria-controls`) over a
+  `role="listbox"` of `role="option"` rows with `aria-selected` / `aria-disabled`; `aria-activedescendant` follows
+  the keyboard highlight (core `/a11y` `createActiveDescendant`), focus stays in the field. The row checkboxes are
+  now decorative (`aria-hidden`, `tabindex="-1"`). See docs/accessibility.md → Combobox pattern.
+
 ### Changed — the phone sheet is the modal tier (2026-11-17)
 - The fullscreen phone sheet stacks at `--base-z-modal` (7000; core `Z_INDEX`: dialogs, sheets and drawers) instead
   of one above the tooltip tier (9001), so the page's toasts (8000) and tooltips (9000) stay visible over it. The
