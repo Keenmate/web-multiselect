@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — internals on core helpers (2026-11-17)
+- Virtual lists (options, selected-items popover) run on core `createVirtualWindow`: the rows sit in a
+  `.km-virtual-spacer` → `.km-virtual-window.ms__virtual-scroll-viewport` (translateY) instead of an absolutely
+  positioned wrapper / viewport; each row is still a fixed-height `.ms__virtual-item`. A hidden list keeps its
+  last known size.
+- Hidden form inputs via core `createFormInputs` / `formatFormValue` (same output; the inputs are reused instead
+  of re-created on every change), async `searchCallback` via core `createAsyncRunner` (a synchronous callback
+  no longer flashes the loader), `el.controller` via core `createControllerFacade` (now frozen), instance ids via
+  `createId`, CSS lengths / scroll behavior via `readCssLengthPx` / `readScrollBehavior`.
+- The JS wheel guard on the dropdown is gone — `overscroll-behavior: contain` already keeps the page from
+  scrolling at the list's ends.
+- Typing is IME-safe (core `onTextInput` / `isImeEnter`): composing doesn't search, the Enter that confirms a
+  candidate doesn't pick.
+
 ### Added — ARIA combobox / listbox (2026-11-17)
 - The search field is a `role="combobox"` (`aria-expanded`, `aria-autocomplete="list"`, `aria-controls`) over a
   `role="listbox"` of `role="option"` rows with `aria-selected` / `aria-disabled`; `aria-activedescendant` follows

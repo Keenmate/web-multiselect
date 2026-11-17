@@ -1,8 +1,12 @@
 /**
- * Virtual Scroll Implementation
+ * Virtual scroll for the options list and the selected-items popover — a thin adapter over core's
+ * `createVirtualWindow` (SPEC §12.26, rulebook C-CA-26): core owns the window math (visible range,
+ * overscan, the full-height spacer, index → scrollTop with the container's scroll-padding); this class
+ * keeps the picker's item model (`setItems` resets the scroll on a new list, a row = `renderItem(item, i)`
+ * wrapped in a fixed-height `.ms__virtual-item`).
  *
- * Renders only visible items in the viewport for optimal performance with large datasets.
- * Based on fixed-height items for fast offset calculations.
+ * Structure: container (overflow-y: auto) → `.km-virtual-spacer` (total height) →
+ * `.km-virtual-window.ms__virtual-scroll-viewport` (translateY) → `.ms__virtual-item` rows.
  *
  * @example
  * ```typescript
@@ -16,13 +20,13 @@
  * ```
  */
 
-import { getScrollTopForBox, observeElementSize } from '@keenmate/web-components-core';
+import { createVirtualWindow, type VirtualWindow } from '@keenmate/web-components-core';
 
 export interface VirtualScrollConfig<T> {
     /** Container element with overflow-y: auto */
     container: HTMLElement;
 
-    /** Fixed height of each item in pixels (required for performance) */
+    /** Fixed height of each item in pixels */
     itemHeight: number;
 
     /** Array of items to render */
@@ -31,299 +35,84 @@ export interface VirtualScrollConfig<T> {
     /** Function that returns HTML string for each item */
     renderItem: (item: T, index: number) => string;
 
-    /** Number of items to render above/below viewport (default: 10) */
+    /** Number of items to render above/below the viewport (default: 10) */
     bufferSize?: number;
 
-    /** Optional callback when visible range changes */
+    /** Called after the visible rows were (re)rendered — they are in the DOM */
     onVisibleRangeChange?: (start: number, end: number) => void;
-
-    /** Optional callback on scroll */
-    onScroll?: (scrollTop: number) => void;
 }
 
 export class VirtualScroll<T> {
     private container: HTMLElement;
-    private wrapper: HTMLDivElement;
-    private viewport: HTMLDivElement;
     private itemHeight: number;
     private items: T[];
     private renderItem: (item: T, index: number) => string;
-    private bufferSize: number;
     private onVisibleRangeChange?: (start: number, end: number) => void;
-    private onScroll?: (scrollTop: number) => void;
-
-    private scrollTop = 0;
-    private viewportHeight = 0;
-    private visibleStart = 0;
-    private visibleEnd = 0;
-
-    private scrollHandler: () => void;
-    private stopObservingSize?: () => void;
+    private window: VirtualWindow;
 
     constructor(config: VirtualScrollConfig<T>) {
         this.container = config.container;
         this.itemHeight = config.itemHeight;
         this.items = config.items;
         this.renderItem = config.renderItem;
-        this.bufferSize = config.bufferSize ?? 10;
         this.onVisibleRangeChange = config.onVisibleRangeChange;
-        this.onScroll = config.onScroll;
 
-        // Bind scroll handler
-        this.scrollHandler = this.handleScroll.bind(this);
-
-        // Initialize DOM structure
-        this.init();
-    }
-
-    /**
-     * Initialize virtual scroll DOM structure
-     *
-     * Structure:
-     * container (overflow-y: auto)
-     *   └─ wrapper (height: totalItems * itemHeight)
-     *      └─ viewport (position: absolute, top: 0)
-     *         └─ items (position: absolute, top: index * itemHeight)
-     */
-    private init(): void {
-        // Clear container
         this.container.innerHTML = '';
-
-        // Create wrapper (sets total scrollable height)
-        this.wrapper = document.createElement('div');
-        this.wrapper.style.position = 'relative';
-        this.wrapper.style.width = '100%';
-        this.wrapper.style.height = `${this.items.length * this.itemHeight}px`;
-        this.wrapper.className = 'ms__virtual-scroll-wrapper';
-
-        // Create viewport (holds visible items)
-        this.viewport = document.createElement('div');
-        this.viewport.style.position = 'absolute';
-        this.viewport.style.top = '0';
-        this.viewport.style.left = '0';
-        this.viewport.style.right = '0';
-        this.viewport.style.width = '100%';
-        this.viewport.className = 'ms__virtual-scroll-viewport';
-
-        // Assemble structure
-        this.wrapper.appendChild(this.viewport);
-        this.container.appendChild(this.wrapper);
-
-        // Setup event listeners
-        this.container.addEventListener('scroll', this.scrollHandler);
-
-        // Watch for container size changes (core's shared, throttled element-size observer;
-        // the initial measure is the explicit call below).
-        this.stopObservingSize = observeElementSize(this.container, () => {
-            this.updateViewportHeight();
-            this.render();
-        }, { shouldFireImmediately: false });
-
-        // Initial render
-        this.updateViewportHeight();
-        this.render();
+        this.window = createVirtualWindow(this.container, {
+            getCount: () => this.items.length,
+            rowHeight: () => this.itemHeight,
+            overscan: config.bufferSize ?? 10,
+            render: ({ start, end, window }) => {
+                if (!window) return;
+                window.classList.add('ms__virtual-scroll-viewport');
+                let html = '';
+                for (let i = start; i < end; i++) {
+                    html += `<div class="ms__virtual-item" style="height: ${this.itemHeight}px;" data-index="${i}">${this.renderItem(this.items[i], i)}</div>`;
+                }
+                window.innerHTML = html;
+                // After the rows are in the DOM, so consumers can read / measure them
+                // (per-row tooltips, clipped-label flags).
+                this.onVisibleRangeChange?.(start, end);
+            },
+        });
     }
 
-    /**
-     * Update viewport height (visible area)
-     */
-    private updateViewportHeight(): void {
-        const newHeight = this.container.clientHeight;
-        // Only update if we have a valid height (prevent 0 height from breaking rendering)
-        if (newHeight > 0) {
-            this.viewportHeight = newHeight;
-        }
-    }
-
-    /**
-     * Handle scroll event
-     */
-    private handleScroll(): void {
-        this.scrollTop = this.container.scrollTop;
-
-        // Call optional scroll callback
-        if (this.onScroll) {
-            this.onScroll(this.scrollTop);
-        }
-
-        // Re-render if visible range changed
-        this.render();
-    }
-
-    /**
-     * Calculate visible range based on scroll position
-     */
-    private calculateVisibleRange(): { start: number; end: number } {
-        // Calculate indices for visible area
-        const startIndex = Math.floor(this.scrollTop / this.itemHeight);
-        const endIndex = Math.ceil((this.scrollTop + this.viewportHeight) / this.itemHeight);
-
-        // Add buffer zone for smooth scrolling
-        const bufferedStart = Math.max(0, startIndex - this.bufferSize);
-        const bufferedEnd = Math.min(this.items.length, endIndex + this.bufferSize);
-
-        return { start: bufferedStart, end: bufferedEnd };
-    }
-
-    /**
-     * Render visible items
-     */
-    private render(): void {
-        const { start, end } = this.calculateVisibleRange();
-
-        // Skip if range hasn't changed
-        if (start === this.visibleStart && end === this.visibleEnd) {
-            return;
-        }
-
-        this.visibleStart = start;
-        this.visibleEnd = end;
-
-        // Build HTML for visible items
-        let html = '';
-        for (let i = start; i < end; i++) {
-            const item = this.items[i];
-            const itemHtml = this.renderItem(item, i);
-
-            // Wrap with positioned container
-            const top = i * this.itemHeight;
-            html += `<div class="ms__virtual-item" style="position: absolute; top: ${top}px; left: 0; right: 0; height: ${this.itemHeight}px;" data-index="${i}">`;
-            html += itemHtml;
-            html += '</div>';
-        }
-
-        // Update viewport
-        this.viewport.innerHTML = html;
-
-        // Fire the range-change callback AFTER the new rows are in the DOM, so
-        // consumers can read/measure them (e.g. attach per-row tooltips, flag
-        // clipped labels). Firing it before innerHTML would hand them the previous
-        // frame's rows — or nothing on the first render.
-        if (this.onVisibleRangeChange) {
-            this.onVisibleRangeChange(start, end);
-        }
-    }
-
-    /**
-     * Update items and re-render
-     */
+    /** Replace the items and re-render; a different list (search results) starts at the top. */
     public setItems(items: T[]): void {
-        // Check if items actually changed (different array or different length)
         const itemsChanged = items !== this.items || items.length !== this.items.length;
-
         this.items = items;
-
-        // Update wrapper height
-        this.wrapper.style.height = `${items.length * this.itemHeight}px`;
-
-        // Update viewport height (container dimensions may have changed)
-        this.updateViewportHeight();
-
-        // Only reset scroll position when items actually change (e.g., search results)
-        // Don't reset when just re-rendering with same items (e.g., focus change)
-        if (itemsChanged) {
-            this.scrollTop = 0;
-            this.container.scrollTop = 0;
-        }
-
-        // Reset visible range to force re-render
-        this.visibleStart = -1;
-        this.visibleEnd = -1;
-
-        // Re-render
-        this.render();
+        if (itemsChanged) this.container.scrollTop = 0;
+        this.window.refresh();
     }
 
-    /**
-     * Scroll to make item at index visible (like scrollIntoView with block: 'nearest')
-     * Only scrolls if item is outside visible area, and scrolls minimally
-     */
+    /** Scroll the container (never the page) so row `index` shows, rendering the rows at once. */
     public scrollToIndex(index: number, block: 'start' | 'center' | 'end' | 'nearest' = 'start'): void {
-        if (index < 0 || index >= this.items.length) {
-            return;
-        }
-
-        // Refresh the height first — right after open() the container may not have been measured
-        // yet, and render() below sizes the window from viewportHeight.
-        this.updateViewportHeight();
-
-        // Core's box math (SPEC §12.15): the same block rules as scrollIntoContainer, the
-        // container's scroll-padding, clamped to the real scroll range; null = nothing moves.
-        // The rows sit inside the wrapper, so their content top includes its offset (the
-        // container's padding — `--ms-options-padding`).
-        const target = getScrollTopForBox(this.container, {
-            top: this.wrapperOffsetTop() + index * this.itemHeight,
-            height: this.itemHeight,
-        }, { block });
-        if (target === null) return;
-
-        // Set scrollTop AND sync our cached value + re-render synchronously, rather than waiting
-        // for the async 'scroll' event — so the correct rows are in place immediately.
-        this.container.scrollTop = target;
-        this.scrollTop = target;
-        this.render();
+        if (index < 0 || index >= this.items.length) return;
+        this.window.scrollToIndex(index, { block, behavior: 'auto' });
     }
 
-    /** The wrapper's top in the container's content (scrollTop) coordinates: it's the container's
-     *  only child, so that's the container's padding-top (`--ms-options-padding`). */
-    private wrapperOffsetTop(): number {
-        return parseFloat(getComputedStyle(this.container).paddingTop) || 0;
-    }
-
-    /**
-     * Get currently visible range
-     */
+    /** The rendered range (overscan included). */
     public getVisibleRange(): { start: number; end: number } {
-        return { start: this.visibleStart, end: this.visibleEnd };
+        return this.window.range;
     }
 
-    /**
-     * Get total number of items
-     */
     public getItemCount(): number {
         return this.items.length;
     }
 
-    /**
-     * Update item height and re-render
-     */
+    /** Change the row height (a presentation switch rescales it) and re-render. */
     public setItemHeight(height: number): void {
         this.itemHeight = height;
-        this.wrapper.style.height = `${this.items.length * height}px`;
-        this.visibleStart = -1;
-        this.visibleEnd = -1;
-        this.render();
+        this.window.refresh();
     }
 
-    /**
-     * Update buffer size
-     */
-    public setBufferSize(size: number): void {
-        this.bufferSize = size;
-        this.visibleStart = -1;
-        this.visibleEnd = -1;
-        this.render();
-    }
-
-    /**
-     * Refresh/force re-render
-     */
+    /** Force a re-render of the current range. */
     public refresh(): void {
-        this.visibleStart = -1;
-        this.visibleEnd = -1;
-        this.render();
+        this.window.refresh();
     }
 
-    /**
-     * Cleanup and remove event listeners
-     */
     public destroy(): void {
-        this.container.removeEventListener('scroll', this.scrollHandler);
-
-        this.stopObservingSize?.();
-        this.stopObservingSize = undefined;
-
-        // Clear container
+        this.window.destroy();
         this.container.innerHTML = '';
     }
 }
