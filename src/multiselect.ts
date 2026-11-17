@@ -4480,16 +4480,7 @@ export class MultiSelectEngine<T = any> {
      * variables are calc()s of --ms-rem. 0 when computed styles aren't readable (jsdom).
      */
     private measurePopoverLength(name: string): number {
-        // Not core `readCssLengthPx`: it measures the probe's layout box, and the popover is measured while
-        // still `display: none` (before it opens) — the computed value resolves there, a rect is 0.
-        // Core gap reported (readCssLengthPx could read the computed length instead).
-        if (typeof getComputedStyle !== 'function') return 0;
-        const probe = document.createElement('span');
-        probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:var(${name})`;
-        this.selectedPopover.appendChild(probe);
-        const px = parseFloat(getComputedStyle(probe).height);
-        probe.remove();
-        return Number.isFinite(px) ? px : 0;
+        return readCssLengthPx(this.selectedPopover, name); // resolves while the popover is still display:none
     }
 
     /**
