@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -163,8 +163,6 @@ export class MultiSelectEngine<T = any> {
     private isLoading = false;
     /** remove() handles of the loaders drawn into the current dropdown render (SPEC §12.14). */
     private loaderRemovers: Array<() => void> = [];
-    private searchDebounceTimer?: ReturnType<typeof setTimeout>;
-    private searchAbortController?: AbortController;
     private showSelectedPopover = false;
     private selectedPopoverPlacement: Placement | null = null;
     private dropdownPlacement: Placement | null = null;
@@ -2428,25 +2426,9 @@ export class MultiSelectEngine<T = any> {
                 return;
             }
 
-            // Debounce the (potentially network-backed) callback. A pending timer from a
-            // previous keystroke is always cancelled, so only the last input in a burst fires
-            // a request. searchDebounce defaults to 0 → callback runs immediately as before.
-            if (this.searchDebounceTimer) {
-                clearTimeout(this.searchDebounceTimer);
-                this.searchDebounceTimer = undefined;
-            }
-            const debounceMs = this.options.searchDebounce || 0;
-            if (debounceMs > 0) {
-                this.searchDebounceTimer = setTimeout(() => {
-                    this.searchDebounceTimer = undefined;
-                    // Drop this run if a newer keystroke superseded the value while we waited.
-                    if (this.typedTerm === value) {
-                        void this.performAsyncSearch(value, processedValue, callbackTerm);
-                    }
-                }, debounceMs);
-            } else {
-                await this.performAsyncSearch(value, processedValue, callbackTerm);
-            }
+            // Core `createAsyncRunner` (SPEC §12.22): debounced by `search-debounce`, a newer keystroke
+            // aborts the request in flight (the consumer's `signal`) and only the latest run lands.
+            this.runAsyncSearch(value, processedValue, callbackTerm);
         } else {
             // LOCAL SEARCH PATH
             if (this.isTreeMode()) {
@@ -2535,95 +2517,80 @@ export class MultiSelectEngine<T = any> {
      *  handed). Every path that drops the typed term calls this — otherwise the dropped
      *  request's results are discarded unseen and the loader stays up. */
     private abortInFlightSearch(): void {
-        if (this.searchDebounceTimer) {
-            clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = undefined;
-        }
-        if (this.searchAbortController) {
-            this.searchAbortController.abort();
-            this.searchAbortController = undefined;
-        }
+        this.searchRunner.cancel();
         this.isLoading = false;
     }
 
+    /** The async `searchCallback` source: one core runner per picker. */
+    private readonly searchRunner = createAsyncRunner({
+        debounceMs: () => this.options.searchDebounce || 0,
+        onLoadingChange: (isLoading) => {
+            this.isLoading = isLoading;
+            if (isLoading) this.renderDropdown();
+        },
+        onError: (error) => this.applySearchFailure(error),
+    });
+
     /**
-     * Invoke the async `searchCallback` and apply its results. Split out of `handleSearch`
-     * so it can be called immediately or after the debounce timer.
-     *
-     * Any request still in flight is aborted before a new one starts, so a slow earlier
-     * request can't overwrite a newer one — and consumers that wire the passed `AbortSignal`
-     * into their fetch get the request actually cancelled, not just ignored. The
-     * `aborted` / `searchTerm === value` guards drop superseded or out-of-order responses.
+     * Run the async `searchCallback` through {@link searchRunner}. Any request still in flight is
+     * aborted before a new one starts, so a slow earlier request can't overwrite a newer one — and
+     * consumers that wire the passed `AbortSignal` into their fetch get it actually cancelled.
      */
-    private async performAsyncSearch(value: string, processedValue: string, callbackTerm: unknown): Promise<void> {
-        // Cancel any previous in-flight request; only the latest query should win.
-        this.abortInFlightSearch();
-        const controller = new AbortController();
-        this.searchAbortController = controller;
-
-        this.isLoading = true;
-        this.renderDropdown();
+    private runAsyncSearch(value: string, processedValue: string, callbackTerm: unknown): void {
         dataLogger.debug(`[${this.instanceId}] Loading data for search term:`, processedValue);
-
-        try {
-            const self = this;
-            const context: MultiSelectSearchContext<T, unknown> = this.ctx({
+        const self = this;
+        this.searchRunner.run(
+            (signal) => this.options.searchCallback!(this.ctx({
                 term: callbackTerm,
-                signal: controller.signal,
+                signal,
                 get entries() { return self.getSearchEntries(); }
-            });
-            const results = await this.options.searchCallback!(context);
+            }) as MultiSelectSearchContext<T, unknown>),
+            (results) => {
+                // A term changed by a path that didn't start a new run: drop the stale results.
+                if (this.typedTerm !== value) return;
+                this.applySearchResults(results || []);
+            },
+        );
+    }
 
-            // Ignore results from a request that was aborted or superseded by a newer term.
-            if (controller.signal.aborted || this.typedTerm !== value) return;
-
-            const searchResults = results || [];
-
-            // Show the results. In tree mode, rebuild the hierarchy from the
-            // returned matches (adding ancestors) so external search renders as a
-            // coherent tree instead of a flat, mis-indexed list.
-            if (this.isTreeMode()) {
-                this.rebuildTreeVisibleFromMatches(searchResults);
-            } else {
-                this.filteredOptions = [...searchResults];
-            }
-            this.isLoading = false;
-            this.matchingIndices.clear(); // Async search doesn't use matching indices
-
-            // Auto-focus the first focusable result if search is enabled (disabled rows are skipped)
-            this.focusedIndex = this.options.isSearchEnabled ? this.firstFocusableIndex() : -1;
-            this.isFocusNavigated = false; // results replaced the list - the first row is auto-focused
-            this.renderDropdown();
-            // Results just replaced an empty/loading panel — its height changed, so
-            // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
-            this.repositionDropdown();
-            dataLogger.debug(`[${this.instanceId}] Loaded ${searchResults.length} results`);
-        } catch (error) {
-            // Aborted requests are expected — a newer request owns the state now, so bail quietly.
-            if (controller.signal.aborted) return;
-
-            dataLogger.error(`[${this.instanceId}] Error loading data:`, error);
-            this.isLoading = false;
-            if (this.options.shouldKeepOptionsOnSearch) {
-                // Show initial options on error (full tree in tree mode).
-                if (this.isTreeMode()) this.rebuildTreeVisibleFromMatches(this.allOptions);
-                else this.filteredOptions = [...this.allOptions];
-            } else {
-                this.filteredOptions = [];
-                if (this.isTreeMode()) this.treeNodes = [];
-            }
-            this.matchingIndices.clear();
-            this.renderDropdown();
-            // The error branch may have swapped in the full option list (keepOptionsOnSearch),
-            // which likewise changes the panel height — re-evaluate placement.
-            this.repositionDropdown();
-        } finally {
-            // Release the controller only if it's still the active one (a newer request may
-            // have already replaced it).
-            if (this.searchAbortController === controller) {
-                this.searchAbortController = undefined;
-            }
+    private applySearchResults(searchResults: T[]): void {
+        // Show the results. In tree mode, rebuild the hierarchy from the
+        // returned matches (adding ancestors) so external search renders as a
+        // coherent tree instead of a flat, mis-indexed list.
+        if (this.isTreeMode()) {
+            this.rebuildTreeVisibleFromMatches(searchResults);
+        } else {
+            this.filteredOptions = [...searchResults];
         }
+        this.isLoading = false;
+        this.matchingIndices.clear(); // Async search doesn't use matching indices
+
+        // Auto-focus the first focusable result if search is enabled (disabled rows are skipped)
+        this.focusedIndex = this.options.isSearchEnabled ? this.firstFocusableIndex() : -1;
+        this.isFocusNavigated = false; // results replaced the list - the first row is auto-focused
+        this.renderDropdown();
+        // Results just replaced an empty/loading panel — its height changed, so
+        // re-evaluate placement (a frozen 'bottom' may no longer fit; flip above).
+        this.repositionDropdown();
+        dataLogger.debug(`[${this.instanceId}] Loaded ${searchResults.length} results`);
+    }
+
+    private applySearchFailure(error: unknown): void {
+        dataLogger.error(`[${this.instanceId}] Error loading data:`, error);
+        this.isLoading = false;
+        if (this.options.shouldKeepOptionsOnSearch) {
+            // Show initial options on error (full tree in tree mode).
+            if (this.isTreeMode()) this.rebuildTreeVisibleFromMatches(this.allOptions);
+            else this.filteredOptions = [...this.allOptions];
+        } else {
+            this.filteredOptions = [];
+            if (this.isTreeMode()) this.treeNodes = [];
+        }
+        this.matchingIndices.clear();
+        this.renderDropdown();
+        // The error branch may have swapped in the full option list (keepOptionsOnSearch),
+        // which likewise changes the panel height — re-evaluate placement.
+        this.repositionDropdown();
     }
 
     private handleKeydown(e: KeyboardEvent): void {
