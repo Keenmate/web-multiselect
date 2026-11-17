@@ -586,8 +586,8 @@
   visibility: visible;
 }
 
-/* Truncated-label reveal fired from inside the fullscreen overlay — lift it above
-   the overlay (10001), which the plain option tooltip (10000) would sit behind. */
+/* Truncated-label reveal fired from inside the fullscreen overlay — the tooltip tier, above
+   the sheet (modal tier). */
 .ms__option-tooltip--fullscreen {
   z-index: var(--ms-z-index-fullscreen-tooltip);
 }

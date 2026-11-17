@@ -395,10 +395,11 @@
      environmentChanged hook on phones. Everything defaults to the dropdown's own
      theming so a fullscreen panel looks like the same component.
      ========================================================================== */
-  --ms-z-index-fullscreen: calc(var(--base-z-tooltip, 9000) + 1); /* the phone sheet covers everything */
-  /* The truncated-label reveal is triggered from INSIDE the fullscreen overlay, so it
-     must sit above it (the plain option tooltip at 10000 renders behind the 10001 panel). */
-  --ms-z-index-fullscreen-tooltip: calc(var(--ms-z-index-fullscreen) + 1);
+  /* The phone sheet is the MODAL tier (core Z_INDEX: dialogs, sheets, drawers — 7000), so the
+     page's toasts (8000) and tooltips (9000) stay visible above it. */
+  --ms-z-index-fullscreen: var(--base-z-modal, 7000);
+  /* The truncated-label reveal is triggered from INSIDE the fullscreen overlay: the tooltip tier. */
+  --ms-z-index-fullscreen-tooltip: var(--base-z-tooltip, 9000);
   /* Size of the phone view. Every size in the component is calc(N × --ms-rem), so the
      fullscreen panels override --ms-rem with this to scale rows, text, checkboxes,
      padding, header and search up together (~1.2× → comfortable ~44–48px touch rows).
@@ -846,7 +847,7 @@
   --ms-message-shadow: 0 4px 16px var(--ms-shadow-color);
   /* Gap from the bottom edge of the viewport in the fullscreen overlay. */
   --ms-message-fullscreen-offset: calc(2.4 * var(--ms-fullscreen-rem));
-  --ms-message-z-index: var(--ms-z-index-fullscreen-tooltip);
+  --ms-message-z-index: var(--base-z-toast, 8000); /* the toast tier, above a modal / sheet */
   /* Variants (bg + text). Info reuses the tooltip surface; the rest are status tones. */
   --ms-message-info-bg: var(--ms-tooltip-bg);
   --ms-message-info-color: var(--ms-tooltip-text-color);

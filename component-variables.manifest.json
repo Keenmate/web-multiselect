@@ -416,7 +416,17 @@
     {
       "name": "base-z-tooltip",
       "required": false,
-      "usage": "Stacking of tooltips; the phone fullscreen sheet sits one step above it"
+      "usage": "Stacking of tooltips (also the truncated-label reveal inside the phone sheet)"
+    },
+    {
+      "name": "base-z-modal",
+      "required": false,
+      "usage": "Stacking of the phone fullscreen sheet (--ms-z-index-fullscreen; dialogs and sheets are the modal tier)"
+    },
+    {
+      "name": "base-z-toast",
+      "required": false,
+      "usage": "Stacking of the showMessage() toast (--ms-message-z-index)"
     },
     {
       "name": "base-loader-icon",
@@ -2373,7 +2383,7 @@
     {
       "name": "ms-message-z-index",
       "category": "message",
-      "usage": "z-index of the message toast"
+      "usage": "z-index of the message toast (default --base-z-toast, 8000)"
     },
     {
       "name": "ms-option-min-height",
@@ -2473,12 +2483,12 @@
     {
       "name": "ms-z-index-fullscreen",
       "category": "layout",
-      "usage": "Phone fullscreen sheet z-index (one above --base-z-tooltip)"
+      "usage": "Phone fullscreen sheet z-index (default --base-z-modal, 7000: the modal tier)"
     },
     {
       "name": "ms-z-index-fullscreen-tooltip",
       "category": "layout",
-      "usage": "Tooltip / message z-index inside the phone sheet (one above the sheet)"
+      "usage": "Truncated-label reveal z-index inside the phone sheet (default --base-z-tooltip, 9000)"
     }
   ]
 }

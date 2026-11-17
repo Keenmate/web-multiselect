@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — the phone sheet is the modal tier (2026-11-17)
+- The fullscreen phone sheet stacks at `--base-z-modal` (7000; core `Z_INDEX`: dialogs, sheets and drawers) instead
+  of one above the tooltip tier (9001), so the page's toasts (8000) and tooltips (9000) stay visible over it. The
+  truncated-label reveal inside it uses the tooltip tier, the `showMessage()` toast the toast tier
+  (`--base-z-toast`, 8000). Standalone values: 7000 / 9000 / 8000.
+
 ### Changed — icons read by core `renderIcon` (2026-11-17)
 - **BREAKING (visible): option icons and action-button icons follow core's one icon rule.** Markup (a value
   starting with `<`: `<svg>`, `<img>`, `<i class="…">`) is inserted raw as before; an ASCII name (`star`,
