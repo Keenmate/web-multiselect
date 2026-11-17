@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -636,7 +636,7 @@ export class MultiSelectEngine<T = any> {
 
     constructor(element: HTMLElement, options: Partial<MultiSelectConfig<T>> = {}) {
         this.element = element;
-        this.instanceId = `MS-${Math.random().toString(36).slice(2, 11)}`;
+        this.instanceId = createId('MS');
 
         // Merge options with defaults (using internal naming with 'is' prefix for booleans)
         this.options = {
@@ -2301,24 +2301,6 @@ export class MultiSelectEngine<T = any> {
 
         this.dropdown.addEventListener('click', (e) => this.handleDropdownClick(e));
 
-        // Prevent page scroll when scrolling dropdown at boundaries
-        this.dropdownInner.addEventListener('wheel', (e: WheelEvent) => {
-            // In virtual scroll mode, the .ms__options container handles scrolling, not the dropdown
-            // Skip this handler to let wheel events reach the virtual scroll container
-            if (this.virtualScroll) {
-                return;
-            }
-
-            const target = e.currentTarget as HTMLElement;
-            const atTop = target.scrollTop === 0;
-            const atBottom = target.scrollTop + target.clientHeight >= target.scrollHeight;
-
-            // Prevent scroll propagation at boundaries
-            if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
-                e.preventDefault();
-            }
-            e.stopPropagation();
-        }, { passive: false });
 
         // Prevent click propagation for show-selected action (in badges container)
         this.badgesContainer.addEventListener('mousedown', (e) => {
@@ -3341,10 +3323,7 @@ export class MultiSelectEngine<T = any> {
 
     /** `--ms-scroll-behavior` read off the host (`smooth` when unset / not rendered). */
     private getScrollBehavior(): ScrollBehavior {
-        const value = typeof getComputedStyle === 'function'
-            ? getComputedStyle(this.hostEl()).getPropertyValue('--ms-scroll-behavior').trim()
-            : '';
-        return (value || 'smooth') as ScrollBehavior;
+        return readScrollBehavior(this.hostEl(), '--ms-scroll-behavior');
     }
 
     /**
@@ -3978,10 +3957,6 @@ export class MultiSelectEngine<T = any> {
             this.positionHint();
         }
 
-        // We're now open — dismiss every other participating overlay (other multiselects,
-        // datepickers, external popovers) except the ones we sit inside (the trigger's
-        // open ancestors). Our own onDismiss is skipped (we're the source).
-
         this.options.onOpen?.(this.ctx({}));
     }
 
@@ -4371,22 +4346,15 @@ export class MultiSelectEngine<T = any> {
      * CSS can't reach: the virtual/fixed option rows and the popover's virtual badges.
      * Returns 1 when floating (or when computed styles aren't readable, e.g. jsdom).
      *
-     * Both are measured as lengths on a probe, not parseFloat()-ed: `--ms-rem` is
+     * Both are resolved by core `readCssLengthPx` (a probe), not parseFloat()-ed: `--ms-rem` is
      * `var(--base-rem, 10px)`, which is `1rem` under base-css-variables (parseFloat → 1),
      * and `--ms-fullscreen-rem` is a calc().
      */
     private fullscreenScale(): number {
         if (this.presentationMode !== 'fullscreen') return 1;
-        if (typeof getComputedStyle !== 'function') return 1;
         const host = this.options.hostElement ?? this.element;
-        const probe = document.createElement('span');
-        probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;'
-            + 'width:var(--ms-rem);height:var(--ms-fullscreen-rem)';
-        (host.shadowRoot ?? host).appendChild(probe);
-        const cs = getComputedStyle(probe);
-        const rem = parseFloat(cs.width);
-        const fsRem = parseFloat(cs.height);
-        probe.remove();
+        const rem = readCssLengthPx(host, '--ms-rem');
+        const fsRem = readCssLengthPx(host, '--ms-fullscreen-rem');
         return rem > 0 && fsRem > 0 ? fsRem / rem : 1;
     }
 
@@ -4448,13 +4416,7 @@ export class MultiSelectEngine<T = any> {
      * variables are calc()s of --ms-rem. 0 when computed styles aren't readable (jsdom).
      */
     private measurePopoverLength(name: string): number {
-        if (typeof getComputedStyle !== 'function') return 0;
-        const probe = document.createElement('span');
-        probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:var(${name})`;
-        this.selectedPopover.appendChild(probe);
-        const px = parseFloat(getComputedStyle(probe).height);
-        probe.remove();
-        return Number.isFinite(px) ? px : 0;
+        return readCssLengthPx(this.selectedPopover, name);
     }
 
     /**
