@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — icons read by core `renderIcon` (2026-11-17)
+- **BREAKING (visible): option icons and action-button icons follow core's one icon rule.** Markup (a value
+  starting with `<`: `<svg>`, `<img>`, `<i class="…">`) is inserted raw as before; an ASCII name (`star`,
+  `chevron-right`) is now a glyph masked from the `--base-icon-<name>` token in `currentColor` (it used to show
+  the word); anything else (an emoji, `1 < 2`) is text — an option icon used to be inserted as HTML, an action
+  icon used to be escaped. `ICON_CSS` is adopted into the shadow root.
+
 ### Added — page-wide labels through core `/locale` (2026-11-17)
 - Labels resolve through core `createLabels`: instance `labels` → page-wide
   `window.components.locale.labels['web-multiselect']` → English. Assigning `window.components.locale` re-renders

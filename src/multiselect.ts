@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -1711,7 +1711,7 @@ export class MultiSelectEngine<T = any> {
 
             // Icon + label are text, never HTML.
             let inner = '';
-            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${escapeHtml(resolved.icon)}</span>`;
+            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${renderIcon(resolved.icon, { prefix: 'ms' })}</span>`;
             if (resolved.text) inner += `<span class="ms__action-btn-label">${escapeHtml(resolved.text)}</span>`;
 
             const rowNum = Math.max(1, Math.floor(item.row ?? 1));
@@ -1775,7 +1775,7 @@ export class MultiSelectEngine<T = any> {
         } else {
             // Default rendering
             if (icon) {
-                html += `<span class="ms__option-icon">${icon}</span>`;
+                html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
             } else if (this.options.shouldReserveIconSlot) {
                 // Reserve the fixed-width gutter so icon-less rows keep the same label
                 // start column as rows that have an icon.
@@ -1891,7 +1891,7 @@ export class MultiSelectEngine<T = any> {
             html += this.toHtml(this.options.renderOptionContentCallback(context));
         } else {
             if (icon) {
-                html += `<span class="ms__option-icon">${icon}</span>`;
+                html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
             } else if (this.options.shouldReserveIconSlot) {
                 // Reserve the fixed-width gutter so icon-less rows keep the same label
                 // start column as rows that have an icon (most visible in a tree, where

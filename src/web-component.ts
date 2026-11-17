@@ -36,6 +36,7 @@ import {
   getEnvironment,
   resolvePresentation,
   createControllerFacade,
+  ICON_CSS,
   type InputDef,
   type CustomStylesHandle,
   type EnvironmentSnapshot,
@@ -98,7 +99,7 @@ const INPUTS: readonly InputDef[] = [
   { configKey: 'valueMember',             attribute: 'value-member',                converter: toText({ isNullable: true, default: 'value' }), shouldReflect: true, on: 'reinit', description: 'Property name on an option object that holds its value. Default: `value`.' },
   { configKey: 'displayValueMember',      attribute: 'display-value-member',        converter: toText({ isNullable: true, default: 'label' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option display label. Default: `label`.' },
   { configKey: 'searchValueMember',       attribute: 'search-value-member',         converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name searched against (falls back to the display value).' },
-  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true, default: 'icon' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option icon. Default: `icon`.' },
+  { configKey: 'iconMember',              attribute: 'icon-member',                 converter: toText({ isNullable: true, default: 'icon' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option icon. Default: `icon`. Read by core `renderIcon`: markup (starts with `<`) is inserted raw, an ASCII name (`star`) is a glyph masked from `--base-icon-<name>` in `currentColor`, anything else (an emoji) is text.' },
   { configKey: 'subtitleMember',          attribute: 'subtitle-member',             converter: toText({ isNullable: true, default: 'subtitle' }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option subtitle. Default: `subtitle`.' },
   { configKey: 'fullTitleMember',         attribute: 'full-title-member',           converter: toText({ isNullable: true }), shouldReflect: true, on: 'reinit', description: 'Property name that holds an option full/long title.' },
   { configKey: 'groupMember',             attribute: 'group-member',                converter: toText({ isNullable: true, default: 'group' }), shouldReflect: true, on: 'reinit', description: 'Property name used to group options under headers. Default: `group`.' },
@@ -381,7 +382,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
     // §12.8: static shell CSS via one shared, cached CSSStyleSheet (per string),
     // replacing the per-instance inline <style>.
-    adoptStyles(this.#shadow, styles);
+    adoptStyles(this.#shadow, styles, ICON_CSS);  // ICON_CSS: named icons (core renderIcon) on options / action buttons
 
     // Reveal the input placeholder one frame after upgrade: `data-placeholder-ready`
     // gates ONLY the placeholder opacity fade-in (controls.css). Distinct from
