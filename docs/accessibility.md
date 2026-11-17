@@ -64,7 +64,7 @@ These are the ARIA keys; `labels` also holds every visible string — all keys a
 
 ## Other ARIA semantics
 
-- **Messages** (`el.controller.showMessage()` — e.g. called from a `beforeSelectCallback` / `beforeDeselectCallback` to explain a veto) are live regions: `role="status"` + `aria-live="polite"` for `info` / `success`, `role="alert"` + `aria-live="assertive"` for `warning` / `error`.
+- **Messages** (`el.controller.showMessage()` — e.g. called from a `beforeSelectCallback` / `beforeDeselectCallback` to explain a veto) are announced through core `announce()` (a page-level live region): politely for `info` / `success`, assertively for `warning` / `danger`. The visible toast itself carries no live region, so nothing is read twice.
 - **Tristate checkboxes** (tree `checkbox-mode="cascade"` branches, `group-select-mode="cascade"` headers) expose the partial state as `aria-checked="mixed"`.
 - **"Add new" prompt** is `role="button"`; while an async `beforeAddCallback` runs, the pending prompt carries `aria-busy="true"`.
 - **Fullscreen search-mode toggle** exposes the current mode with `aria-pressed` (`true` = navigate). Its `aria-label` is English-only for now.

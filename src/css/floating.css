@@ -626,6 +626,15 @@
   opacity: 1;
 }
 
+/* Closing (core animateOut): fade out, then the element is removed. */
+.ms__message--closing {
+  animation: ms-message-out var(--ms-transition-normal) var(--ms-easing-snappy) forwards;
+}
+
+@keyframes ms-message-out {
+  to { opacity: 0; }
+}
+
 .ms__message--info    { background: var(--ms-message-info-bg);    color: var(--ms-message-info-color); }
 .ms__message--warning { background: var(--ms-message-warning-bg); color: var(--ms-message-warning-color); }
 .ms__message--danger  { background: var(--ms-message-danger-bg);  color: var(--ms-message-danger-color); }

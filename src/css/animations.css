@@ -1,5 +1,6 @@
-/* animations.css — state transitions are inline on each rule; the only @keyframes is the
-   shared loader's (core SPEC §12.14 — the drawing contract from base-css-variables). */
+/* animations.css — state transitions are inline on each rule; the @keyframes here is the
+   shared loader's (core SPEC §12.14 — the drawing contract from base-css-variables). The message
+   toast's exit (`ms-message-out`, core animateOut) sits next to its rule in floating.css. */
 
 /* Default loader drawn by core renderLoader() (async search, add-new pending):
    <span class="ms__loader"> (core rc18+). */

@@ -106,3 +106,15 @@ test('showMessage / hideMessage / isMessageShown (element + controller)', async 
     await ms.evaluate((el: any) => el.controller.hideMessage());
     expect(await ms.evaluate((el: any) => el.isMessageShown)).toBe(false);
 });
+
+test('showMessage announces through core announce(); hideMessage fades it out, then removes it', async ({ page }) => {
+    const ms = page.locator('#ms');
+    await ms.evaluate((el: any) => el.showMessage('Saved', { variant: 'success', autoHideMs: 0 }));
+    await expect(page.locator('[data-km-announcer="polite"]')).toHaveText('Saved');
+    await expect(ms.locator('.ms__message')).not.toHaveAttribute('aria-live', /.+/);
+    await ms.evaluate((el: any) => el.showMessage('Nope', { variant: 'danger', autoHideMs: 0 }));
+    await expect(page.locator('[data-km-announcer="assertive"]')).toHaveText('Nope');
+    await ms.evaluate((el: any) => el.hideMessage());
+    await expect(ms.locator('.ms__message--closing')).toHaveCount(1);
+    await expect(ms.locator('.ms__message')).toHaveCount(0);
+});

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of re-created on every change), async `searchCallback` via core `createAsyncRunner` (a synchronous callback
   no longer flashes the loader), `el.controller` via core `createControllerFacade` (now frozen), instance ids via
   `createId`, CSS lengths / scroll behavior via `readCssLengthPx` / `readScrollBehavior`.
+- `showMessage()` is announced through core `announce()` (polite / assertive by variant) instead of a live region
+  on the toast itself (a freshly inserted `aria-live` element is often not read), and it fades out on hide (core
+  `animateOut`, `ms-message-out`; instant with motion off) instead of vanishing.
 - The JS wheel guard on the dropdown is gone — `overscroll-behavior: contain` already keeps the page from
   scrolling at the list's ends.
 - Typing is IME-safe (core `onTextInput` / `isImeEnter`): composing doesn't search, the Enter that confirms a

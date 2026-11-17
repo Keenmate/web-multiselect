@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
@@ -6002,11 +6002,11 @@ export class MultiSelectEngine<T = any> {
 
         const el = document.createElement('div');
         el.className = `ms__message ms__message--${variant}`;
-        // Announce to assistive tech; urgent tones interrupt, others are polite.
-        el.setAttribute('role', urgent ? 'alert' : 'status');
-        el.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
         if (typeof content === 'string') el.textContent = content;
         else el.appendChild(content);
+        // Screen readers hear it through core `announce()` (a page-level live region that exists before
+        // the text arrives — a fresh `aria-live` element is often not read); urgent tones interrupt.
+        announce(el.textContent?.trim() ?? '', { politeness: urgent ? 'assertive' : 'polite' });
         el.addEventListener('click', (e) => {
             const trigger = (e.target as HTMLElement).closest?.('[data-action]') as HTMLElement | null;
             if (trigger && el.contains(trigger)) this.activateActionTrigger(trigger, e);
@@ -6059,7 +6059,12 @@ export class MultiSelectEngine<T = any> {
     public hideMessage(): void {
         if (this.messageTimer !== null) { clearTimeout(this.messageTimer); this.messageTimer = null; }
         if (this.messageCleanup) { this.messageCleanup(); this.messageCleanup = null; }
-        if (this.messageEl) { this.messageEl.remove(); this.messageEl = null; }
+        if (this.messageEl) {
+            // Fade out (core `animateOut`: the closing keyframes, instant with motion off), then remove.
+            const el = this.messageEl;
+            this.messageEl = null;
+            animateOut(el, { className: 'ms__message--closing', onDone: () => el.remove() });
+        }
     }
 
     /**
