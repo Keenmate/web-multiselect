@@ -124,3 +124,30 @@ test('counts in labels are locale-grouped; page-wide formatLabelCallback gets th
     expect(seen.length).toBeGreaterThan(0);
     expect(seen[0]).toEqual({ type: 'number', value: 1234, locale: 'cs-CZ' });
 });
+
+/**
+ * Instance `locale` wins over the page per key (instance → page → `Intl`): `#lbl-loc-cs` has
+ * `locale="cs-CZ"`, its sibling `#lbl-loc-page` has none and follows `window.components.locale`.
+ * Both the `{count}` label and the group-header count chip (core `formatNumber`) are grouped.
+ */
+test('instance locale formats the label count and the group chip; a sibling follows the page', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    await page.evaluate(() => { (window as any).components.locale = { locale: 'en-US' }; });
+
+    const cs = page.locator('#lbl-loc-cs');
+    const pg = page.locator('#lbl-loc-page');
+    await expect(cs.locator('.ms__badge--counter .ms__badge-text')).toHaveText(/^1\s234 selected$/);
+    await expect(pg.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1,234 selected');
+
+    await cs.locator('.ms__input').click();
+    await expect(cs.locator('.ms__group-count').first()).toHaveText(/^\[1\s234\]$/);
+    await page.keyboard.press('Escape');
+
+    await pg.locator('.ms__input').click();
+    await expect(pg.locator('.ms__group-count').first()).toHaveText('[1,234]');
+    await page.keyboard.press('Escape');
+
+    // Removing the instance locale → it follows the page again.
+    await cs.evaluate((el) => el.removeAttribute('locale'));
+    await expect(cs.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1,234 selected');
+});

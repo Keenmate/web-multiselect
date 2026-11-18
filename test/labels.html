@@ -29,6 +29,18 @@
             value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">instance <code>locale="cs-CZ"</code> · one group of 1234, all selected</div>
+        <web-multiselect id="lbl-loc-cs" locale="cs-CZ" multiple badges-display-mode="count"
+            value-member="value" display-value-member="label" group-member="group"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">sibling without <code>locale</code> (follows the page) · same data</div>
+        <web-multiselect id="lbl-loc-page" multiple badges-display-mode="count"
+            value-member="value" display-value-member="label" group-member="group"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -51,6 +63,14 @@
             const bigItems = Array.from({ length: 1234 }, (_, i) => ({ value: `v${i}`, label: `Item ${i}` }));
             big.options = bigItems;
             big.setSelected(bigItems.map(o => o.value));
+
+            // Instance `locale` vs the page: one group of 1234, all selected → label + group chip.
+            for (const id of ['lbl-loc-cs', 'lbl-loc-page']) {
+                const loc = document.getElementById(id);
+                const locItems = Array.from({ length: 1234 }, (_, i) => ({ value: `g${i}`, label: `Item ${i}`, group: 'Big' }));
+                loc.options = locItems;
+                loc.setSelected(locItems.map(o => o.value));
+            }
         });
     </script>
 </body>

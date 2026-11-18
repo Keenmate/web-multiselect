@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — `locale` input (2026-11-18)
+- `locale` attribute / property (BCP-47, e.g. `cs-CZ`): the instance's locale for the numbers in labels and the
+  group count chip. Per key: instance → page-wide `window.components.locale` → the browser language (`Intl`).
+  A change re-renders the labels (selection kept), like a page-wide locale change.
+
 ### Changed — locale-formatted counts in labels (2026-11-18)
 - Counts in labels (`selectedCount`, `moreCount`, `selectedPopoverTitle`, `removeHiddenItems`, `groupSelected`,
   `andMore`, the fullscreen match counters) are locale-formatted by core `createLabels` (`1 234` in Czech,
-  `1,234` in en-US); a page-wide `formatLabelCallback` receives the raw number. The group count chip's default
-  `[N]` (not a label) stays ungrouped.
+  `1,234` in en-US); a page-wide `formatLabelCallback` receives the raw number.
+- The count chip's default `[N]` (group headers and the in-input counter) is locale-formatted too, through core
+  `formatNumber` (`[1 234]` in Czech); a `getCountLabelCallback` still receives the raw numbers.
 
 ### Changed — internals on core helpers (2026-11-17)
 - Virtual lists (options, selected-items popover) run on core `createVirtualWindow`: the rows sit in a

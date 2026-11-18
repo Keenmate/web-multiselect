@@ -994,6 +994,9 @@ export interface MultiSelectConfig<T = any> {
     /** ARIA labels / short UI strings for i18n (see {@link MultiSelectLabels}). Partial; unset
      *  keys fall back to their English defaults. */
     labels?: MultiSelectLabels;
+    /** BCP-47 locale for the numbers in labels and the group count chip (`cs-CZ` → `1 234`).
+     *  Unset = the page-wide `window.components.locale`, else the browser language. */
+    locale?: string | null;
     /**
      * Search behavior mode. Default: `filter`.
      *

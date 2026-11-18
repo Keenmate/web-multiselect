@@ -73,7 +73,7 @@ import {
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
-import { createLabels, getPageLocale, type Labels } from '@keenmate/web-components-core/locale';
+import { createLabels, formatNumber, getPageLocale, type Labels } from '@keenmate/web-components-core/locale';
 import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
@@ -1284,7 +1284,8 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Formats the small count chip shared by the in-input counter and the per-group header count.
-     * Default `[selected]` (matches the historical in-input `[N]`); a `getCountLabelCallback` can
+     * Default `[selected]` (matches the historical in-input `[N]`; the number locale-formatted via core
+     * `formatNumber`, `locale` → page → browser); a `getCountLabelCallback` (raw numbers) can
      * switch both to e.g. `selected/total`.
      */
     private formatCountLabel(selected: number, total: number, groupName?: string): string {
@@ -1293,7 +1294,7 @@ export class MultiSelectEngine<T = any> {
                 ? { selectedCount: selected, totalCount: total }
                 : { selectedCount: selected, totalCount: total, groupName }));
         }
-        return `[${selected}]`;
+        return `[${formatNumber(selected, { locale: this.options.locale ?? undefined })}]`;
     }
 
     /** Trailing count chip for a group header — any grouped list (rendered only when >0 selected). */
@@ -5015,7 +5016,8 @@ export class MultiSelectEngine<T = any> {
      *  attributes / `textContent` (escape it yourself inside an HTML string), `.html()` for markup
      *  (the template is HTML, the `{…}` values are escaped). */
     private get labels(): Labels<Required<MultiSelectLabels>> {
-        return this.labelsApi ??= createLabels(this.hostEl(), DEFAULT_LABELS, () => this.options.labels, { tag: 'web-multiselect' });
+        return this.labelsApi ??= createLabels(this.hostEl(), DEFAULT_LABELS, () => this.options.labels,
+            { tag: 'web-multiselect', getLocale: () => this.options.locale });
     }
     private labelsApi?: Labels<Required<MultiSelectLabels>>;
 
@@ -5439,7 +5441,8 @@ export class MultiSelectEngine<T = any> {
     public updateOptions(partial: Partial<MultiSelectConfig<T>>): boolean {
         // A `labels` change rebuilds: the hint element and the build-time ARIA labels / texts
         // are created by buildHTML (the element preserves the selection across a rebuild).
-        if ('labels' in partial) return false;
+        // `locale` likewise (the numbers in the labels / count chips) — the `localeChanged()` path.
+        if ('labels' in partial || 'locale' in partial) return false;
 
         Object.assign(this.options, partial);
 
