@@ -23,6 +23,12 @@
             badges-display-mode="partial" max-visible-badge-count="2"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">count mode · 1234 options, all selected (locale-grouped counts)</div>
+        <web-multiselect id="lbl-big" multiple badges-display-mode="count"
+            value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -39,6 +45,12 @@
             const el = document.getElementById('lbl-count');
             el.options = items;
             el.setSelected(preselect);
+
+            // 1234 options, all selected → "1234 selected" (≥ 1000 so thousands grouping shows).
+            const big = document.getElementById('lbl-big');
+            const bigItems = Array.from({ length: 1234 }, (_, i) => ({ value: `v${i}`, label: `Item ${i}` }));
+            big.options = bigItems;
+            big.setSelected(bigItems.map(o => o.value));
         });
     </script>
 </body>

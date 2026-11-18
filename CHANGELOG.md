@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — locale-formatted counts in labels (2026-11-18)
+- Counts in labels (`selectedCount`, `moreCount`, `selectedPopoverTitle`, `removeHiddenItems`, `groupSelected`,
+  `andMore`, the fullscreen match counters) are locale-formatted by core `createLabels` (`1 234` in Czech,
+  `1,234` in en-US); a page-wide `formatLabelCallback` receives the raw number. The group count chip's default
+  `[N]` (not a label) stays ungrouped.
+
 ### Changed — internals on core helpers (2026-11-17)
 - Virtual lists (options, selected-items popover) run on core `createVirtualWindow`: the rows sit in a
   `.km-virtual-spacer` → `.km-virtual-window.ms__virtual-scroll-viewport` (translateY) instead of an absolutely
