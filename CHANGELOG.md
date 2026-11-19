@@ -11,7 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING: every `labels` key is renamed** to the core `/locale` shape (rulebook D-NC-24): a flat
   `<elementType>.<name>` key, the element type chosen by where the text is shown. A string that fed both an
   `aria-label` and a tooltip / `title` is split into an `ariaLabels.*` and a `tooltips.*` key (same English
-  default) — set both to translate both. English defaults are unchanged.
+  default). The twin pairs share `<name>`, so core `/locale` lets an unset `tooltips.x` follow a customized
+  `ariaLabels.x` (and vice versa) — translating one translates both; set both only when they should differ.
+  English defaults are unchanged.
+- One text, one key: a control named by its visible text has no `ariaLabels.*` key and no `aria-label` — the
+  `select-all` / `clear-selection` action buttons are named by `buttons.selectAll` / `buttons.clearSelection`.
+  Every remaining `ariaLabels.*` key names an icon-only control (or the `[N]` group chip, whose visible text
+  is not its spoken name), so no key was removed.
 - **BREAKING: the page-wide dictionary is flat and keyed by the full key** —
   `window.components.locale.labels = { 'web-multiselect.messages.noResults': 'Nic' }` (the nested
   `labels: { 'web-multiselect': { … } }` shape is gone). The instance `labels` takes short keys

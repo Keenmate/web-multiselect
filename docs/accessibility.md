@@ -45,7 +45,9 @@ The component ships an `aria-label` on every icon-only control. All of them are 
 | Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `tooltips.andMore` |
 | Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `ariaLabels.switchToFilterMode` / `ariaLabels.switchToNavigateMode` (`title`: `tooltips.*`) |
 
-> **Tooltip vs. accessible name.** Each surface has its own key: `labels['ariaLabels.removeItem']` is the badge remove button's `aria-label`, `labels['tooltips.removeItem']` its hover tooltip (shown with `enable-badge-tooltips`; same English default); `getRemoveButtonTooltipCallback` overrides only the tooltip.
+> **Tooltip vs. accessible name.** Each surface has its own key: `labels['ariaLabels.removeItem']` is the badge remove button's `aria-label`, `labels['tooltips.removeItem']` its hover tooltip (shown with `enable-badge-tooltips`; same English default); `getRemoveButtonTooltipCallback` overrides only the tooltip. The pair shares `<name>`, so translating only one of them is enough: an unset `tooltips.x` follows a customized `ariaLabels.x` (and vice versa) — set both only when they should differ.
+
+> **Text buttons have no `aria-label`.** The `select-all` / `clear-selection` action buttons are named by their visible text (`buttons.selectAll` / `buttons.clearSelection`) — there is no `ariaLabels.*` twin to translate.
 
 ### Translating labels
 

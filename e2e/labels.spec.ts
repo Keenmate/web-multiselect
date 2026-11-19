@@ -155,3 +155,43 @@ test('instance locale formats the label count and the group chip; a sibling foll
     await cs.evaluate((el) => el.removeAttribute('locale'));
     await expect(cs.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1,234 selected');
 });
+
+/**
+ * One text, one key (rulebook D-NC-24): a text button is named by its visible text — the built-in
+ * `select-all` / `clear-selection` action buttons carry no `aria-label`, so the translated `buttons.*`
+ * text is also what a screen reader hears.
+ */
+test('text action buttons are named by their visible buttons.* text (no aria-label)', async ({ page }) => {
+    await page.goto('/test/action-buttons.html');
+    const p = page.locator('#builtins');
+    await p.evaluate((el: any) => { el.labels = { 'buttons.selectAll': 'Vybrat vše', 'buttons.clearSelection': 'Zrušit vše' }; });
+    await p.locator('.ms__input').click();
+
+    const selectAll = p.locator('.ms__action-btn[data-action="select-all"]');
+    const clear = p.locator('.ms__action-btn[data-action="clear-selection"]');
+    await expect(selectAll).not.toHaveAttribute('aria-label', /.*/);
+    await expect(clear).not.toHaveAttribute('aria-label', /.*/);
+    await expect(selectAll).toHaveAccessibleName('Vybrat vše');
+    await expect(clear).toHaveAccessibleName('Zrušit vše');
+});
+
+/**
+ * A twin pair shares `<name>`, so core `/locale` lets an unset `tooltips.x` follow a customized
+ * `ariaLabels.x`: translating only `ariaLabels.removeHiddenItems` translates the "+N more" remove
+ * button's tooltip too.
+ */
+test('an unset tooltips.x follows the customized ariaLabels.x twin', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    const p = page.locator('#lbl-count');
+    await p.evaluate((el: any) => {
+        el.isBadgeTooltipsEnabled = true;
+        el.labels = { 'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých' };
+    });
+
+    const removeHidden = p.locator('.ms__badge--more .ms__badge-remove');
+    await expect(removeHidden).toHaveAccessibleName('Odebrat 12 skrytých');
+    await removeHidden.hover();
+    const tooltip = page.locator('.ms__badge-tooltip.ms__badge-tooltip--visible');
+    await expect(tooltip).toBeVisible({ timeout: 2000 });
+    await expect(tooltip).toContainText('Odebrat 12 skrytých');
+});
