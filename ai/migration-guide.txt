@@ -22,7 +22,7 @@ $('#mySelect').select2({
 });
 
 Web Multiselect:
-<web-multiselect labels='{"searchPlaceholder": "Select options"}'>
+<web-multiselect labels='{"placeholders.search": "Select options"}'>
 </web-multiselect>
 
 <script>
@@ -63,7 +63,7 @@ const choices = new Choices('#mySelect', {
 });
 
 Web Multiselect:
-<web-multiselect labels='{"searchPlaceholder": "Select options"}'>
+<web-multiselect labels='{"placeholders.search": "Select options"}'>
 </web-multiselect>
 
 <script>
@@ -247,7 +247,7 @@ CONFIGURATION MAPPING
 Common config across libraries:
 
 Placeholder:
-placeholder → labels.searchPlaceholder
+placeholder → labels['placeholders.search']
 
 Multiple selection:
 multiple: true → multiple="true"
@@ -469,15 +469,18 @@ Attributes / properties (property / attribute):
 
 UI strings → labels (property = partial object, or JSON attribute):
     <web-multiselect search-placeholder="Search…" empty-message="Nothing">
-  → <web-multiselect labels='{"searchPlaceholder":"Search…","noResults":"Nothing"}'>
-    search-placeholder → searchPlaceholder     select-placeholder → selectPlaceholder
-    no-data-placeholder → noDataPlaceholder    empty-message → noResults (search miss) / noData (no options)
-    loading-message → searching                search-hint → searchHint
-    add-new-text → addNew ({value})            add-new-pending-text → addNewPending ({value})
-    remove-button-tooltip-text ({0}) → removeItem ({item})
-    selected-popover-title → selectedPopoverTitle ({count})
-    labels.groupSelectedLabel → groupSelected; labels.clearAll → clearSelection
-    (the old labels.clearSelection, the ✕ aria-label → clearAllSelections)
+  → <web-multiselect labels='{"placeholders.search":"Search…","messages.noResults":"Nothing"}'>
+    Keys are flat <elementType>.<name> (placeholders.*, messages.*, labels.*, headers.*, buttons.*,
+    ariaLabels.*, tooltips.*, errors.*):
+    search-placeholder → placeholders.search   select-placeholder → placeholders.select
+    no-data-placeholder → placeholders.noData  empty-message → messages.noResults (search miss) / messages.noData (no options)
+    loading-message → messages.searching       search-hint → labels.searchHint
+    add-new-text → labels.addNew ({value})     add-new-pending-text → messages.addNewPending ({value})
+    remove-button-tooltip-text ({0}) → tooltips.removeItem ({item}); its aria-label → ariaLabels.removeItem
+    selected-popover-title → headers.selectedPopover ({count})
+    labels.groupSelectedLabel → ariaLabels.groupSelected; labels.clearAll → buttons.clearSelection
+    (the old labels.clearSelection, the ✕ aria-label → ariaLabels.clearAllSelections)
+    Page-wide: window.components.locale.labels = { 'web-multiselect.messages.noResults': '…' } (flat, full keys).
   A label set to '' is deliberately empty; unset keys fall back to English.
 
 Initial selection and form value:

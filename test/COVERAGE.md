@@ -51,7 +51,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | Default filter mode hides non-matching options                | ✓      | `search.spec.ts`             | `search.html`             |
 | `search-mode="navigate"` keeps options visible, jumps to match | ✓     | `search.spec.ts`             | `search.html`             |
 | `enable-search="false"` disables search subsystem             | ✓      | `search.spec.ts`             | `search.html`             |
-| Empty result shows `labels.noResults` / no options `labels.noData` | ✓      | `search.spec.ts`             | `search.html`             |
+| Empty result shows `labels['messages.noResults']` / no options `labels['messages.noData']` | ✓      | `search.spec.ts`             | `search.html`             |
 | `min-search-length` defers search until threshold             | ✓      | `search.spec.ts`             | `search.html`             |
 | `searchCallback` async loading + loading message              | ✓      | `search.spec.ts`             | `search.html`             |
 | Shared loader: default + role/aria-label, page hook, instance `renderLoadingCallback`, add-new pending | ✓ | `loader.spec.ts` | `loader.html` |
@@ -156,7 +156,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `el.options` live after build (core `getLiveValue`)           | ✓      | `default-value.test.ts`      | —                         |
 | `value-format="array"` (multiple hidden inputs)               | ✓      | `form.spec.ts`               | `form.html`               |
 | `getValueFormatCallback` overrides serialization              | ✓      | `form.spec.ts`               | `form.html`               |
-| Throwing `getValueFormatCallback`: `''` submitted, host invalid (submit blocked / `invalid`), `novalidate` submits `''`, `value-format-error` + twin, recovery, `labels.valueFormatError` | ✓ | `form.spec.ts`, `default-value.test.ts` | — |
+| Throwing `getValueFormatCallback`: `''` submitted, host invalid (submit blocked / `invalid`), `novalidate` submits `''`, `value-format-error` + twin, recovery, `labels['errors.valueFormat']` | ✓ | `form.spec.ts`, `default-value.test.ts` | — |
 | Form `reset` restores `value` (or clears without them); no events; JS selection doesn't rewrite the attribute (formAssociated + formResetCallback) | ✓ | `form.spec.ts`               | `form.html`               |
 
 ## 12. Tooltips

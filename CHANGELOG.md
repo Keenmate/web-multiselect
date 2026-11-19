@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — label keys are flat `<elementType>.<name>` (2026-11-19)
+- **BREAKING: every `labels` key is renamed** to the core `/locale` shape (rulebook D-NC-24): a flat
+  `<elementType>.<name>` key, the element type chosen by where the text is shown. A string that fed both an
+  `aria-label` and a tooltip / `title` is split into an `ariaLabels.*` and a `tooltips.*` key (same English
+  default) — set both to translate both. English defaults are unchanged.
+- **BREAKING: the page-wide dictionary is flat and keyed by the full key** —
+  `window.components.locale.labels = { 'web-multiselect.messages.noResults': 'Nic' }` (the nested
+  `labels: { 'web-multiselect': { … } }` shape is gone). The instance `labels` takes short keys
+  (`messages.noResults`) or full ones (`web-multiselect.messages.noResults`).
+- **BREAKING: the page-wide `formatLabelCallback` is now `translateCallback({ component, key, template, params, locale })`**
+  (core rc25): `key` is the full key (`web-multiselect.labels.selectedCount`); return a string, or `null` /
+  `undefined` = not mine. It is never asked for a key the instance set.
+
+  | Old key | New key |
+  |---------|---------|
+  | `selectPlaceholder` | `placeholders.select` |
+  | `searchPlaceholder` | `placeholders.search` |
+  | `filterPlaceholder` | `placeholders.filter` |
+  | `navigatePlaceholder` | `placeholders.navigate` |
+  | `noDataPlaceholder` | `placeholders.noData` |
+  | `noData` | `messages.noData` |
+  | `noResults` | `messages.noResults` |
+  | `searching` | `messages.searching` |
+  | `addNewPending` | `messages.addNewPending` |
+  | `noDisplayValue` | `labels.noDisplayValue` |
+  | `searchHint` | `labels.searchHint` |
+  | `addNew` | `labels.addNew` |
+  | `selectedCount` | `labels.selectedCount` |
+  | `moreCount` | `labels.moreCount` |
+  | `matchPosition` | `labels.matchPosition` |
+  | `matchCount` | `labels.matchCount` |
+  | `matchCountOne` | `labels.matchCountOne` |
+  | `selectedPopoverTitle` | `headers.selectedPopover` |
+  | `selectAll` | `buttons.selectAll` |
+  | `clearSelection` | `buttons.clearSelection` |
+  | `close` | `ariaLabels.close` |
+  | `clearAllSelections` | `ariaLabels.clearAllSelections` |
+  | `clearSearch` | `ariaLabels.clearSearch` |
+  | `showFullLabel` | `ariaLabels.showFullLabel` |
+  | `groupSelected` | `ariaLabels.groupSelected` |
+  | `prevMatch` | `ariaLabels.prevMatch` |
+  | `nextMatch` | `ariaLabels.nextMatch` |
+  | `removeItem` | `ariaLabels.removeItem` + `tooltips.removeItem` (split) |
+  | `removeHiddenItems` | `ariaLabels.removeHiddenItems` + `tooltips.removeHiddenItems` (split) |
+  | `switchToFilterMode` | `ariaLabels.switchToFilterMode` + `tooltips.switchToFilterMode` (split) |
+  | `switchToNavigateMode` | `ariaLabels.switchToNavigateMode` + `tooltips.switchToNavigateMode` (split) |
+  | `andMore` | `tooltips.andMore` |
+  | `valueFormatError` | `errors.valueFormat` |
+
 ### Added — `locale` input (2026-11-18)
 - `locale` attribute / property (BCP-47, e.g. `cs-CZ`): the instance's locale for the numbers in labels and the
   group count chip. Per key: instance → page-wide `window.components.locale` → the browser language (`Intl`).
@@ -15,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed — locale-formatted counts in labels (2026-11-18)
 - Counts in labels (`selectedCount`, `moreCount`, `selectedPopoverTitle`, `removeHiddenItems`, `groupSelected`,
   `andMore`, the fullscreen match counters) are locale-formatted by core `createLabels` (`1 234` in Czech,
-  `1,234` in en-US); a page-wide `formatLabelCallback` receives the raw number.
+  `1,234` in en-US); a page-wide `translateCallback` receives the raw number.
 - The count chip's default `[N]` (group headers and the in-input counter) is locale-formatted too, through core
   `formatNumber` (`[1 234]` in Czech); a `getCountLabelCallback` still receives the raw numbers.
 
@@ -65,8 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — page-wide labels through core `/locale` (2026-11-17)
 - Labels resolve through core `createLabels`: instance `labels` → page-wide
-  `window.components.locale.labels['web-multiselect']` → English. Assigning `window.components.locale` re-renders
-  live pickers (core `localeChanged()`, selection kept); `formatLabelCallback` and
+  `window.components.locale.labels['web-multiselect.<key>']` (flat, see below) → English. Assigning
+  `window.components.locale` re-renders live pickers (core `localeChanged()`, selection kept); `translateCallback` and
   `window.components.security.shouldEscapeLabels` apply. The own `resolveLabel` seam is gone.
 
 ### Changed — the hidden form input has no `id` (2026-11-16)

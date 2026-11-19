@@ -46,7 +46,7 @@ describe('hidden form inputs', () => {
         await tick();
 
         el.setSelected(['a']);
-        el.labels = { noResults: 'x' }; // reinit key → the picker is rebuilt
+        el.labels = { 'messages.noResults': 'x' }; // reinit key → the picker is rebuilt
         await tick();
         el.setSelected(['b']);
 
@@ -78,7 +78,7 @@ describe('selection across a rebuild', () => {
         await tick();
         expect(el.selectedValue).toEqual(['a']);
 
-        el.labels = { noResults: 'x' };
+        el.labels = { 'messages.noResults': 'x' };
         await tick();
         expect(el.selectedValue).toEqual(['a']);
     });
@@ -91,7 +91,7 @@ describe('selection across a rebuild', () => {
         expect(el.selectedValue).toEqual(['a']);
 
         el.controller.clearSelection();
-        el.labels = { noResults: 'x' };
+        el.labels = { 'messages.noResults': 'x' };
         await tick();
         expect(el.selectedValue).toEqual([]);
     });
@@ -104,7 +104,7 @@ describe('selection across a rebuild', () => {
         el.setSelected(['b']);
 
         el.setAttribute('value', '["c"]');
-        el.labels = { noResults: 'x' };
+        el.labels = { 'messages.noResults': 'x' };
         await tick();
         expect(el.selectedValue).toEqual(['c']);
     });
@@ -121,7 +121,7 @@ describe('selection across a rebuild', () => {
         await tick();
         expect(el.selectedValue).toEqual(['zed']);
 
-        el.labels = { noResults: 'x' }; // rebuild re-parses data-options, which lacks "zed"
+        el.labels = { 'messages.noResults': 'x' }; // rebuild re-parses data-options, which lacks "zed"
         await tick();
         expect(el.selectedValue).toEqual(['zed']);
         expect(el.selectedOptions[0].label).toBe('ZED');

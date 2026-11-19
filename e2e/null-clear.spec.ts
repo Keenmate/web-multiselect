@@ -46,7 +46,7 @@ test.beforeEach(async ({ page }) => {
 // ── update path (on: 'update') — cleared null forwarded verbatim ────────────────
 
 test('clearing the labels attribute reverts the search placeholder to the default', async ({ page }) => {
-    const p = await makePicker(page, { 'labels': '{"searchPlaceholder":"Custom search text"}' }, FRUIT);
+    const p = await makePicker(page, { 'labels': '{"placeholders.search":"Custom search text"}' }, FRUIT);
     await expect.poll(() => placeholder(p)).toBe('Custom search text');
 
     await p.evaluate((el) => el.removeAttribute('labels'));
@@ -55,7 +55,7 @@ test('clearing the labels attribute reverts the search placeholder to the defaul
 });
 
 test('clearing the labels attribute drops the no-data placeholder', async ({ page }) => {
-    const p = await makePicker(page, { 'labels': '{"noDataPlaceholder":"Pick a category first"}' }, []);
+    const p = await makePicker(page, { 'labels': '{"placeholders.noData":"Pick a category first"}' }, []);
     await expect.poll(() => placeholder(p)).toBe('Pick a category first');
 
     await p.evaluate((el) => el.removeAttribute('labels'));
@@ -63,8 +63,8 @@ test('clearing the labels attribute drops the no-data placeholder', async ({ pag
     await expect.poll(() => placeholder(p)).toBe('Search…');
 });
 
-test('clearing labels.searchHint removes the hint element', async ({ page }) => {
-    const p = await makePicker(page, { 'labels': '{"searchHint":"Type to filter"}' }, FRUIT);
+test('clearing labels["labels.searchHint"] removes the hint element', async ({ page }) => {
+    const p = await makePicker(page, { 'labels': '{"labels.searchHint":"Type to filter"}' }, FRUIT);
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__hint')).toHaveText('Type to filter');
 

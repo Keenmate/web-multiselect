@@ -88,79 +88,89 @@ export interface MessageOptions {
 }
 
 /**
- * Every user-facing string of the component (rulebook D-NC-24), for internationalization: the
- * visible texts (placeholders, empty / loading messages, counters, popover title, "add new"
- * prompt) and the ARIA labels. Set a partial map via the `labels` property or the `labels`
- * JSON attribute (`labels='{"noResults":"Nic"}'`); any unset (`undefined`) key falls back to its English default, while `''` means deliberately empty (renders nothing).
+ * Every user-facing string of the component (rulebook D-NC-24), for internationalization. Keys are
+ * flat `<elementType>.<name>` (`placeholders.search`, `messages.noResults`, `ariaLabels.close`,
+ * `tooltips.removeItem`, …); a control with both an aria-label and a tooltip has one key of each.
+ * Set a partial map via the `labels` property or the `labels` JSON attribute
+ * (`labels='{"messages.noResults":"Nic"}'`) — short keys or full ones (`web-multiselect.messages.noResults`);
+ * page-wide: `window.components.locale.labels['web-multiselect.<key>']`. Any unset (`undefined`) key falls back to its English default, while `''` means deliberately empty (renders nothing).
  * Named placeholders are interpolated where noted (`{count}`, `{item}`, `{value}`, …).
  */
 export interface MultiSelectLabels {
     /** Closed-input placeholder when search is disabled (`enable-search="false"`, picker mode). Default: `Pick an option…`. */
-    selectPlaceholder?: string;
+    'placeholders.select'?: string;
     /** Search input placeholder. Default: `Search…`. Set it to pin one text in every search mode. */
-    searchPlaceholder?: string;
-    /** Search placeholder in `filter` mode while the fullscreen mode toggle is shown (`show-search-mode-toggle`) and `searchPlaceholder` is not set. Default: `Filter…`. */
-    filterPlaceholder?: string;
-    /** Search placeholder in `navigate` mode while the fullscreen mode toggle is shown and `searchPlaceholder` is not set. Default: `Search…`. */
-    navigatePlaceholder?: string;
+    'placeholders.search'?: string;
+    /** Search placeholder in `filter` mode while the fullscreen mode toggle is shown (`show-search-mode-toggle`) and `placeholders.search` is not set. Default: `Filter…`. */
+    'placeholders.filter'?: string;
+    /** Search placeholder in `navigate` mode while the fullscreen mode toggle is shown and `placeholders.search` is not set. Default: `Search…`. */
+    'placeholders.navigate'?: string;
     /** Closed-input placeholder when there are no options at all (e.g. an unresolved cascade parent). Default: empty = off (the normal placeholder shows). */
-    noDataPlaceholder?: string;
+    'placeholders.noData'?: string;
     /** Dropdown text when there are no options at all (nothing to search). HTML allowed. Default: `No data`. */
-    noData?: string;
+    'messages.noData'?: string;
     /** Dropdown text when options exist but the search matched nothing (also the fullscreen match counter's "none"). HTML allowed. Default: `No results found`. */
-    noResults?: string;
+    'messages.noResults'?: string;
     /** Dropdown text while an async `searchCallback` search is in flight. HTML allowed. Default: `Searching…`. */
-    searching?: string;
+    'messages.searching'?: string;
     /** Text shown for an option that has no display value (no display member / tuple slot / callback result). Default: `[N/A]`. */
-    noDisplayValue?: string;
+    'labels.noDisplayValue'?: string;
     /** Small hint under the search input while the dropdown is open. Default: empty = no hint. */
-    searchHint?: string;
+    'labels.searchHint'?: string;
     /** "Add new" prompt (`allow-add-new`). `{value}` → the typed text (escaped). Trusted HTML otherwise. `getAddNewTextCallback` wins. Default: `Add "{value}"`. */
-    addNew?: string;
+    'labels.addNew'?: string;
     /** Pending "add new" prompt while an async `beforeAddCallback` runs. `{value}` → the typed text. Default: `Adding "{value}"…`. */
-    addNewPending?: string;
+    'messages.addNewPending'?: string;
     /** Badges-area count text. `{count}` → selection count. `getCounterCallback` wins. Default: `{count} selected`. */
-    selectedCount?: string;
+    'labels.selectedCount'?: string;
     /** The "+X more" badge text. `{count}` → hidden count. `getCounterCallback` wins. Default: `+{count} more`. */
-    moreCount?: string;
+    'labels.moreCount'?: string;
     /** Selected-items popover header. `{count}` → selection count. Default: `Selected Items ({count})`. */
-    selectedPopoverTitle?: string;
+    'headers.selectedPopover'?: string;
     /** Fullscreen navigate-mode position. `{position}`, `{total}`. Default: `{position} of {total}`. */
-    matchPosition?: string;
+    'labels.matchPosition'?: string;
     /** Fullscreen navigate-mode match count (more than one). `{count}`. Default: `{count} matches`. */
-    matchCount?: string;
+    'labels.matchCount'?: string;
     /** Fullscreen navigate-mode match count (exactly one). `{count}`. Default: `{count} match`. */
-    matchCountOne?: string;
+    'labels.matchCountOne'?: string;
     /** Popover / fullscreen close button. Default: `Close`. */
-    close?: string;
+    'ariaLabels.close'?: string;
     /** Inline ✕ clear button (`show-clear`) and the count-mode clear (×) button. Default: `Clear all selections`. */
-    clearAllSelections?: string;
+    'ariaLabels.clearAllSelections'?: string;
     /** Fullscreen search clear (✕). Default: `Clear search`. */
-    clearSearch?: string;
+    'ariaLabels.clearSearch'?: string;
     /** Option info affordance that reveals a clipped label. Default: `Show full label`. */
-    showFullLabel?: string;
-    /** Badge remove (×) aria-label and tooltip. `{item}` → the item's label. `getRemoveButtonTooltipCallback` wins for the tooltip. Default: `Remove {item}`. */
-    removeItem?: string;
-    /** "+N more" badge remove (×). `{count}` → hidden count. Default: `Remove {count} hidden items`. */
-    removeHiddenItems?: string;
+    'ariaLabels.showFullLabel'?: string;
+    /** Badge remove (×) aria-label. `{item}` → the item's label. Default: `Remove {item}`. */
+    'ariaLabels.removeItem'?: string;
+    /** Badge remove (×) tooltip (`enable-badge-tooltips`). `{item}` → the item's label. `getRemoveButtonTooltipCallback` wins. Default: `Remove {item}`. */
+    'tooltips.removeItem'?: string;
+    /** "+N more" badge remove (×) aria-label. `{count}` → hidden count. Default: `Remove {count} hidden items`. */
+    'ariaLabels.removeHiddenItems'?: string;
+    /** "+N more" badge remove (×) tooltip (`enable-badge-tooltips`). `{count}` → hidden count. Default: `Remove {count} hidden items`. */
+    'tooltips.removeHiddenItems'?: string;
     /** Group-header selected-count chip aria-label. `{count}` → selected count. Default: `{count} selected`. */
-    groupSelected?: string;
+    'ariaLabels.groupSelected'?: string;
     /** Counter tooltip overflow tail (beyond 12 items). `{count}` → remaining count. Default: `…and {count} more`. */
-    andMore?: string;
+    'tooltips.andMore'?: string;
     /** Fullscreen navigate-mode "previous match" button. Default: `Previous match`. */
-    prevMatch?: string;
+    'ariaLabels.prevMatch'?: string;
     /** Fullscreen navigate-mode "next match" button. Default: `Next match`. */
-    nextMatch?: string;
-    /** Fullscreen search-mode toggle (`show-search-mode-toggle`) while in navigate mode. Default: `Switch to filter mode`. */
-    switchToFilterMode?: string;
-    /** Fullscreen search-mode toggle while in filter mode. Default: `Switch to navigate mode`. */
-    switchToNavigateMode?: string;
+    'ariaLabels.nextMatch'?: string;
+    /** Fullscreen search-mode toggle (`show-search-mode-toggle`) aria-label while in navigate mode. Default: `Switch to filter mode`. */
+    'ariaLabels.switchToFilterMode'?: string;
+    /** Fullscreen search-mode toggle `title` while in navigate mode. Default: `Switch to filter mode`. */
+    'tooltips.switchToFilterMode'?: string;
+    /** Fullscreen search-mode toggle aria-label while in filter mode. Default: `Switch to navigate mode`. */
+    'ariaLabels.switchToNavigateMode'?: string;
+    /** Fullscreen search-mode toggle `title` while in filter mode. Default: `Switch to navigate mode`. */
+    'tooltips.switchToNavigateMode'?: string;
     /** Text of the built-in `select-all` action button. Default: `Select all`. */
-    selectAll?: string;
+    'buttons.selectAll'?: string;
     /** Text of the built-in `clear-selection` action button. Default: `Clear all`. */
-    clearSelection?: string;
+    'buttons.clearSelection'?: string;
     /** Validation message when `getValueFormatCallback` throws (the host turns invalid, the form won't submit). Default: `The value could not be formatted.`. */
-    valueFormatError?: string;
+    'errors.valueFormat'?: string;
 }
 
 /**
@@ -760,8 +770,8 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Draw a loading state yourself (SPEC §12.14 shared loader). Called with
      * `{ component, context, containerElement, element, label }` — `context` is `'search'`
-     * (async `searchCallback` in flight, label `labels.searching`) or `'add-new'` (async
-     * `beforeAddCallback` in flight, label `labels.addNewPending`). Fill `containerElement`
+     * (async `searchCallback` in flight, label `labels['messages.searching']`) or `'add-new'` (async
+     * `beforeAddCallback` in flight, label `labels['messages.addNewPending']`). Fill `containerElement`
      * (it already carries `role="status"` + `aria-label`); optionally return a cleanup.
      * Beats the page-wide `window.components.renderLoadingCallback`; unset → the default
      * `.ms__loader` drawn from the `--ms-loader-*` tokens.
@@ -894,14 +904,14 @@ export interface MultiSelectConfig<T = any> {
     /**
      * Allow adding new options not in the list (internal: isAddNewAllowed).
      * When on and a search yields no matches, the empty dropdown shows a clickable
-     * "add new" prompt (text from `labels.addNew` / `getAddNewTextCallback`) instead of
-     * the `labels.noResults` text; choosing it (click or Enter) runs `beforeAddCallback` and fires
+     * "add new" prompt (text from `labels['labels.addNew']` / `getAddNewTextCallback`) instead of
+     * the `labels['messages.noResults']` text; choosing it (click or Enter) runs `beforeAddCallback` and fires
      * the `add` event.
      */
     isAddNewAllowed?: boolean;
     /**
      * Dynamically compute the "add new" prompt label from the typed text (`ctx.value`). Takes
-     * precedence over `labels.addNew`. Returns plain text (inserted as text, not HTML). Use it for
+     * precedence over `labels['labels.addNew']`. Returns plain text (inserted as text, not HTML). Use it for
      * i18n or context-aware wording, e.g. `({ value }) => \`Add new member: ${value}\``.
      */
     getAddNewTextCallback?: ((ctx: AddContext<T>) => string) | null;

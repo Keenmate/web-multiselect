@@ -61,7 +61,7 @@ describe('setAttributes — typed property batch', () => {
     });
 
     it('applies the change so the live placeholder updates (i18n switch via labels)', () => {
-        el.setAttributes({ labels: { searchPlaceholder: 'Buscar…' } });
+        el.setAttributes({ labels: { 'placeholders.search': 'Buscar…' } });
         expect(input().placeholder).toBe('Buscar…');
     });
 
@@ -76,7 +76,7 @@ describe('setAttributes — typed property batch', () => {
 describe('batch — attribute-string coalescing', () => {
     it('writes attribute strings and applies them in one flush', () => {
         el.batch(() => {
-            el.setAttribute('labels', '{"searchPlaceholder":"Search…","selectPlaceholder":"Pick…"}');
+            el.setAttribute('labels', '{"placeholders.search":"Search…","placeholders.select":"Pick…"}');
             el.setAttribute('max-height', '15rem');
         });
         expect(el.getAttribute('max-height')).toBe('15rem');
@@ -84,7 +84,7 @@ describe('batch — attribute-string coalescing', () => {
     });
 
     it('resets an input to its default when its attribute is removed', () => {
-        el.setAttribute('labels', '{"searchPlaceholder":"Search…"}');
+        el.setAttribute('labels', '{"placeholders.search":"Search…"}');
         el.batch(() => el.removeAttribute('labels'));
         // Absent attribute == the converter default.
         expect(input().placeholder).toBe('Search…');
@@ -93,7 +93,7 @@ describe('batch — attribute-string coalescing', () => {
     it('coalesces an emptied search + select placeholder together', () => {
         el.batch(() => {
             el.setAttribute('enable-search', 'false');
-            el.setAttribute('labels', '{"selectPlaceholder":"Choose"}');
+            el.setAttribute('labels', '{"placeholders.select":"Choose"}');
         });
         expect(input().placeholder).toBe('Choose');
     });

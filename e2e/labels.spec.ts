@@ -1,8 +1,8 @@
 import { test, expect } from './fixtures';
 
 /**
- * The `labels` property is a partial i18n map for the component's ARIA labels / short UI
- * strings (close, clear, remove, group count, "…and N more"). Unset keys fall back to their
+ * The `labels` property is a partial i18n map of flat `<elementType>.<name>` keys (`ariaLabels.close`,
+ * `tooltips.andMore`, …) for the component's UI strings. Unset keys fall back to their
  * English defaults; `{item}` / `{count}` placeholders are interpolated. Reuses the
  * floating-panels fixture (`#popover-picker` is count-mode with three pre-selected values).
  */
@@ -12,7 +12,8 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
     const p = page.locator('#popover-picker');
 
     await p.evaluate((el: any) => {
-        el.labels = { close: 'Zavřít', removeItem: 'Odebrat {item}', andMore: '…a {count} dalších' };
+        // Short keys and full (`web-multiselect.`-prefixed) keys both work on the instance.
+        el.labels = { 'web-multiselect.ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {item}', 'tooltips.andMore': '…a {count} dalších' };
     });
 
     // Open the selected-items popover (count mode).
@@ -27,16 +28,16 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
     await expect(firstRemove).toHaveAttribute('aria-label', /^Odebrat .+/);
 
     // Unset keys still fall back to English.
-    const label = await p.evaluate((el: any) => el.labels.clearSelection ?? '(unset)');
+    const label = await p.evaluate((el: any) => el.labels["buttons.clearSelection"] ?? '(unset)');
     expect(label).toBe('(unset)');
 });
 
 /**
  * {count} interpolation across the three labels that use it. The `#lbl-count` fixture is
  * built to surface all three at once (grouped data + partial badges + counter, 14 selected):
- *   - groupSelected      → the `.ms__group-count` header chip aria-label
- *   - removeHiddenItems  → the "+N more" badge's remove button aria-label
- *   - andMore            → the counter chip's native `title` (cap is 12, so 14 → "…and 2 more")
+ *   - ariaLabels.groupSelected      → the `.ms__group-count` header chip aria-label
+ *   - ariaLabels.removeHiddenItems  → the "+N more" badge's remove button aria-label
+ *   - tooltips.andMore              → the counter chip's native `title` (cap is 12, so 14 → "…and 2 more")
  */
 test('labels map interpolates {count} in group count, remove-hidden, and counter overflow', async ({ page }) => {
     await page.goto('/test/labels.html');
@@ -44,27 +45,27 @@ test('labels map interpolates {count} in group count, remove-hidden, and counter
 
     await p.evaluate((el: any) => {
         el.labels = {
-            groupSelected: '{count} vybráno',
-            removeHiddenItems: 'Odebrat {count} skrytých',
-            andMore: '…a {count} dalších',
+            'ariaLabels.groupSelected': '{count} vybráno',
+            'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých',
+            'tooltips.andMore': '…a {count} dalších',
         };
     });
 
-    // andMore — counter chip title. 14 selected, cap 12 → "…a 2 dalších".
+    // tooltips.andMore — counter chip title. 14 selected, cap 12 → "…a 2 dalších".
     await expect(p.locator('.ms__counter')).toHaveAttribute('title', /…a 2 dalších$/);
 
-    // removeHiddenItems — partial mode, max-visible 2 → 12 hidden.
+    // ariaLabels.removeHiddenItems — partial mode, max-visible 2 → 12 hidden.
     await expect(p.locator('.ms__badge--more .ms__badge-remove'))
         .toHaveAttribute('aria-label', 'Odebrat 12 skrytých');
 
-    // groupSelected — open the dropdown; Group A header has 10 selected.
+    // ariaLabels.groupSelected — open the dropdown; Group A header has 10 selected.
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__dropdown')).toBeVisible();
     await expect(p.locator('.ms__group-count').first()).toHaveAttribute('aria-label', '10 vybráno');
 });
 
 /**
- * Page-wide labels (core /locale): `window.components.locale.labels['web-multiselect']` sits between the
+ * Page-wide labels (core /locale): the flat `window.components.locale.labels['web-multiselect.<key>']` sits between the
  * instance `labels` and the English default, and assigning the page object re-renders live pickers
  * (core `localeChanged()` → rebuild, selection kept).
  */
@@ -75,14 +76,17 @@ test('page-wide window.components.locale labels apply live; the instance labels 
 
     await page.evaluate(() => {
         (window as any).components.locale = {
-            labels: { 'web-multiselect': { removeHiddenItems: 'Page: remove {count}', andMore: 'Page: +{count}' } },
+            labels: {
+                'web-multiselect.ariaLabels.removeHiddenItems': 'Page: remove {count}',
+                'web-multiselect.tooltips.andMore': 'Page: +{count}',
+            },
         };
     });
     await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Page: remove 12');
     await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
     expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(before);
 
-    await p.evaluate((el: any) => { el.labels = { removeHiddenItems: 'Mine {count}' }; });
+    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {count}' }; });
     await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Mine 12');
     await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
 
@@ -93,10 +97,10 @@ test('page-wide window.components.locale labels apply live; the instance labels 
 
 /**
  * Number params are shown locale-formatted by core `createLabels` (thousands grouped by the resolved
- * locale), while a page-wide `formatLabelCallback` receives the raw number. `#lbl-big` is count mode
- * with 1234 selected → the `selectedCount` badge.
+ * locale), while a page-wide `translateCallback` receives the raw number. `#lbl-big` is count mode
+ * with 1234 selected → the `labels.selectedCount` badge.
  */
-test('counts in labels are locale-grouped; page-wide formatLabelCallback gets the raw number', async ({ page }) => {
+test('counts in labels are locale-grouped; page-wide translateCallback gets the raw number', async ({ page }) => {
     await page.goto('/test/labels.html');
     const text = page.locator('#lbl-big .ms__badge--counter .ms__badge-text');
 
@@ -111,8 +115,8 @@ test('counts in labels are locale-grouped; page-wide formatLabelCallback gets th
         w.__seen = [];
         w.components.locale = {
             locale: 'cs-CZ',
-            formatLabelCallback: (ctx: any) => {
-                if (ctx.component === 'web-multiselect' && ctx.key === 'selectedCount') {
+            translateCallback: (ctx: any) => {
+                if (ctx.component === 'web-multiselect' && ctx.key === 'web-multiselect.labels.selectedCount') {
                     w.__seen.push({ type: typeof ctx.params.count, value: ctx.params.count, locale: ctx.locale });
                 }
                 return undefined; // keep the default formatting

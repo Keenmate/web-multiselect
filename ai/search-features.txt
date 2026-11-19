@@ -27,11 +27,11 @@ SEARCH PLACEHOLDER
 ------------------
 Customize search input placeholder:
 
-<web-multiselect labels='{"searchPlaceholder": "Search languages..."}'>
+<web-multiselect labels='{"placeholders.search": "Search languages..."}'>
 </web-multiselect>
 
 Programmatic:
-select.labels = { searchPlaceholder: 'Type to search...' };
+select.labels = { 'placeholders.search': 'Type to search...' };
 
 FILTER MODE (DEFAULT)
 ---------------------
@@ -135,7 +135,7 @@ Turn the field into a plain picker (no typing, no filtering):
 
 <web-multiselect enable-search="false">
 </web-multiselect>
-- Input shows labels.selectPlaceholder ("Pick an option…"); set it to '' for an empty field
+- Input shows labels['placeholders.select'] ("Pick an option…"); set it to '' for an empty field
 - Click / keyboard (arrows, Enter) still open and pick
 - No search field in the fullscreen header
 - Use for small lists
@@ -165,11 +165,11 @@ SEARCH HINT
 -----------
 Show hint text above search input:
 
-<web-multiselect labels='{"searchHint": "Type at least 3 characters"}'>
+<web-multiselect labels='{"labels.searchHint": "Type at least 3 characters"}'>
 </web-multiselect>
 
 Programmatic:
-select.labels = { searchHint: 'Start typing to search...' };
+select.labels = { 'labels.searchHint': 'Start typing to search...' };
 
 SEARCH VALUE CUSTOMIZATION
 ---------------------------
@@ -266,12 +266,12 @@ select.beforeSearchCallback = ({ term }) => {
 
 SEARCHING STATE
 ---------------
-Show a "searching" indicator during async search (labels.searching, default 'Searching…'):
+Show a "searching" indicator during async search (labels['messages.searching'], default 'Searching…'):
 
-select.labels = { searching: 'Looking up…' };
+select.labels = { 'messages.searching': 'Looking up…' };
 
 Or customize in HTML:
-<web-multiselect labels='{"searching": "Loading results…"}'>
+<web-multiselect labels='{"messages.searching": "Loading results…"}'>
 </web-multiselect>
 
 Component automatically shows loading state when:
@@ -279,7 +279,7 @@ Component automatically shows loading state when:
 - Promise is pending
 
 The spinner is the shared Keenmate loader (core renderLoader): the slot gets
-role="status" + aria-label = labels.searching (plain text). Change its look:
+role="status" + aria-label = labels['messages.searching'] (plain text). Change its look:
 - CSS tokens: --ms-loader-icon (mask shape), --ms-loader-rotate (0 = self-animating
   SVG), --ms-loader-duration, --ms-loader-size — chained to --base-loader-*, so a
   page-wide --base-loader-icon changes every Keenmate component at once.
@@ -294,11 +294,11 @@ EMPTY SEARCH RESULTS
 --------------------
 Customize the no-results message (options exist, search matched nothing):
 
-<web-multiselect labels='{"noResults": "No results found"}'>
+<web-multiselect labels='{"messages.noResults": "No results found"}'>
 </web-multiselect>
 
 Programmatic:
-select.labels = { noResults: 'No matching items', noData: 'Nothing to pick' };
+select.labels = { 'messages.noResults': 'No matching items', 'messages.noData': 'Nothing to pick' };
 // noData = there are no options at all (default 'No data')
 
 SEARCH PERFORMANCE
@@ -539,7 +539,7 @@ BEST PRACTICES
 COMMON PATTERNS
 ---------------
 Simple filter:
-<web-multiselect labels='{"searchPlaceholder": "Search..."}'>
+<web-multiselect labels='{"placeholders.search": "Search..."}'>
   <option value="1">Option 1</option>
 </web-multiselect>
 

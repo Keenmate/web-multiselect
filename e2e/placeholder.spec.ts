@@ -22,22 +22,22 @@ test('enable-search="false" shows the default select placeholder', async ({ page
     await expect(picker(page, 'ph-nosearch').locator('.ms__input')).toHaveAttribute('placeholder', 'Pick an option…');
 });
 
-test('custom labels.selectPlaceholder is honoured when search is disabled', async ({ page }) => {
+test('custom labels["placeholders.select"] is honoured when search is disabled', async ({ page }) => {
     await expect(picker(page, 'ph-custom-select').locator('.ms__input')).toHaveAttribute('placeholder', 'Choose a fruit');
 });
 
-test('labels.noDataPlaceholder is shown for an empty list without opening', async ({ page }) => {
+test('labels["placeholders.noData"] is shown for an empty list without opening', async ({ page }) => {
     await expect(picker(page, 'ph-nodata').locator('.ms__input'))
         .toHaveAttribute('placeholder', 'No data — pick a category first');
 });
 
-test('labels.noDataPlaceholder does not apply when the list has options', async ({ page }) => {
+test('labels["placeholders.noData"] does not apply when the list has options', async ({ page }) => {
     await expect(picker(page, 'ph-nodata-filled').locator('.ms__input')).toHaveAttribute('placeholder', 'Search…');
 });
 
 test('placeholder updates live when labels change (i18n)', async ({ page }) => {
     const p = picker(page, 'ph-search');
-    await p.evaluate((el: any) => { el.labels = { searchPlaceholder: 'Buscar…' }; });
+    await p.evaluate((el: any) => { el.labels = { 'placeholders.search': 'Buscar…' }; });
     await expect(p.locator('.ms__input')).toHaveAttribute('placeholder', 'Buscar…');
 });
 
@@ -58,8 +58,8 @@ test('repopulating the option list returns to the search placeholder', async ({ 
 test('the labels JSON attribute sets several placeholders at once', async ({ page }) => {
     const p = picker(page, 'ph-nosearch');
     await p.evaluate((el: any) => el.setAttribute('labels',
-        JSON.stringify({ searchPlaceholder: 'Search items', selectPlaceholder: 'Pick one please', noDataPlaceholder: 'Nothing here' })));
+        JSON.stringify({ 'placeholders.search': 'Search items', 'placeholders.select': 'Pick one please', 'placeholders.noData': 'Nothing here' })));
     // search is disabled on this instance → the select placeholder is what shows.
     await expect(p.locator('.ms__input')).toHaveAttribute('placeholder', 'Pick one please');
-    expect(await p.evaluate((el: any) => el.labels.noDataPlaceholder)).toBe('Nothing here');
+    expect(await p.evaluate((el: any) => el.labels["placeholders.noData"])).toBe('Nothing here');
 });

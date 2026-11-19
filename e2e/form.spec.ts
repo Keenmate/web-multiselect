@@ -130,11 +130,11 @@ test('throwing getValueFormatCallback: host invalid, submit blocked; novalidate 
     expect(r.recovered).toEqual({ submits: ['apple|banana'], valid: true, message: '' });
 });
 
-test('labels.valueFormatError sets the validation message', async ({ page }) => {
+test('labels["errors.valueFormat"] sets the validation message', async ({ page }) => {
     const message = await page.evaluate(async () => {
         const ms = document.createElement('web-multiselect') as any;
         ms.setAttribute('name', 'fmt-err-label');
-        ms.labels = { valueFormatError: 'Nelze naformátovat.' };
+        ms.labels = { 'errors.valueFormat': 'Nelze naformátovat.' };
         ms.options = [{ value: 'a', label: 'A' }];
         ms.getValueFormatCallback = () => { throw new Error('x'); };
         document.body.append(ms);

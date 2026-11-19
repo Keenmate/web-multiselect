@@ -65,10 +65,10 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Prepare search term | callback | `getSearchTermCallback({ term, target, behavior, match })` | — | Return a string / RegExp (internal) or anything (`searchCallback`, as `ctx.searchTerm`) | | |
 | Search normalization helper | export | `normalizeSearchText(text, behavior?)` | — | The standard normalization, for custom search | | |
 | Hybrid (keep options on search) | attr/prop | `keep-options-on-search` / `shouldKeepOptionsOnSearch` | `bool(true)` | Keep initial options while async active | | |
-| Searching message | labels | `labels.searching` | `'Searching…'` | Shown while an async search is in flight | | |
-| No-data message | labels | `labels.noData` | `'No data'` | Dropdown text when there are no options at all | | |
-| No-results message | labels | `labels.noResults` | `'No results found'` | Options exist but the search matched nothing | | |
-| Missing display value | labels | `labels.noDisplayValue` | `'[N/A]'` | Shown for an option without a display value | | |
+| Searching message | labels | `labels['messages.searching']` | `'Searching…'` | Shown while an async search is in flight | | |
+| No-data message | labels | `labels['messages.noData']` | `'No data'` | Dropdown text when there are no options at all | | |
+| No-results message | labels | `labels['messages.noResults']` | `'No results found'` | Options exist but the search matched nothing | | |
+| Missing display value | labels | `labels['labels.noDisplayValue']` | `'[N/A]'` | Shown for an option without a display value | | |
 
 ## 3. Search input & behavior
 
@@ -78,10 +78,10 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Search mode | attr/prop | `search-mode` / `searchMode` | `'filter'` | `filter` (hide non-matches) \| `navigate` (jump) | | |
 | Search behavior | attr/prop | `search-behavior` / `searchBehavior` | `'normalized'` | `normalized` (ignore case + diacritics) \| `case-insensitive` \| `exact`; internal search only | | |
 | Search match | attr/prop | `search-match` / `searchMatch` | `'contains'` | `contains` \| `equals` \| `starts-with` \| `word-starts-with` \| `ends-with` \| `word-ends-with` \| `regex` (raw value, no normalization) | | |
-| Search placeholder | labels | `labels.searchPlaceholder` | `'Search…'` | Shown while search is usable | | |
-| Select placeholder | labels | `labels.selectPlaceholder` | `'Pick an option…'` | Shown when search disabled (picker mode) | | |
-| No-data placeholder | labels | `labels.noDataPlaceholder` | — | Opt-in; shown when option list empty (cascades) | | |
-| Search hint | labels | `labels.searchHint` | — | Hint text above input while open | | |
+| Search placeholder | labels | `labels['placeholders.search']` | `'Search…'` | Shown while search is usable | | |
+| Select placeholder | labels | `labels['placeholders.select']` | `'Pick an option…'` | Shown when search disabled (picker mode) | | |
+| No-data placeholder | labels | `labels['placeholders.noData']` | — | Opt-in; shown when option list empty (cascades) | | |
+| Search hint | labels | `labels['labels.searchHint']` | — | Hint text above input while open | | |
 
 ## 4. Selection / display modes
 
@@ -111,7 +111,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Enable badge tooltips | attr/prop | `enable-badge-tooltips` / `isBadgeTooltipsEnabled` | `bool(false)` | | | |
 | Custom badge tooltip content | callback | `getBadgeTooltipCallback({ option, displayMode, isInPopover })` | — | string or HTMLElement | | |
 | Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ option })` | — | Per-item remove tooltip text | | |
-| Remove-button tooltip / aria-label | labels | `labels.removeItem` | `'Remove {item}'` | `{item}` = item name | | |
+| Remove-button aria-label / tooltip | labels | `labels['ariaLabels.removeItem']` / `labels['tooltips.removeItem']` | `'Remove {item}'` | `{item}` = item name | | |
 | Tooltip placement | attr/prop | `badge-tooltip-placement` / `badgeTooltipPlacement` | `'top'` | Floating-UI placements | | |
 | Tooltip delay | attr/prop | `badge-tooltip-delay` / `badgeTooltipDelay` | `100` | ms before show | | |
 | Tooltip offset | attr/prop | `badge-tooltip-offset` / `badgeTooltipOffset` | `8` | px gap from badge | | |
@@ -191,7 +191,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Value format | attr/prop | `value-format` / `valueFormat` | `'json'` | `json` \| `text` \| `array` | | |
 | Value separator | attr/prop | `value-separator` / `valueSeparator` | `','` | Joins the values in the `text` format | | |
 | Submitted value | prop | `value` | — | Get: exactly what the form submits (`string`; `string[]` for `array`). Set: same form, silent | | |
-| Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization; a throw submits `''`, marks the host invalid (`labels.valueFormatError`) and fires `value-format-error` | | |
+| Custom value format | callback | `getValueFormatCallback({ selectedValues, selectedOptions })` | — | Custom serialization; a throw submits `''`, marks the host invalid (`labels['errors.valueFormat']`) and fires `value-format-error` | | |
 
 ## 12. Events & selection interceptors
 

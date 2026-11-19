@@ -102,7 +102,7 @@ For dynamic data and advanced features:
 <!-- Multi-select -->
 <web-multiselect
   id="my-select"
-  value='["js","ts"]' labels='{"searchPlaceholder": "Search options..."}'>
+  value='["js","ts"]' labels='{"placeholders.search": "Search options..."}'>
 </web-multiselect>
 ```
 
@@ -439,7 +439,7 @@ multiselect.getOptionTooltipCallback = ({ option }) => {
 // source, sourceEvent, triggerElement, dataset) and runs for built-ins too
 // (before the built-in; the `action` event fires after it). Text and icon are plain text (not HTML).
 // Optional `row` (1-based) stacks buttons into multiple rows.
-multiselect.actionButtons = ['select-all', 'clear-selection']; // shorthand (text from labels.selectAll / labels.clearSelection)
+multiselect.actionButtons = ['select-all', 'clear-selection']; // shorthand (text from labels['buttons.selectAll'] / labels['buttons.clearSelection'])
 
 multiselect.actionButtons = [
   {
@@ -524,7 +524,7 @@ multiselect.getSelectedItemClassCallback = ({ option }) => option.isVip ? ['vip'
 multiselect.getCountLabelCallback = ({ selectedCount, totalCount }) => `${selectedCount}/${totalCount}`;
 
 // Badge remove-button hover tooltip (shown with enable-badge-tooltips; the
-// button's aria-label comes from labels.removeItem instead)
+// button's aria-label comes from labels['ariaLabels.removeItem'] instead)
 multiselect.getRemoveButtonTooltipCallback = ({ option }) => `Unassign ${option.name}`;
 
 // Custom rendering - Full HTML control. Every render*ContentCallback / renderBadgeCallback result is
@@ -610,66 +610,75 @@ multiselect.beforeAddCallback = async ({ value }) => {
   return newOption;
 };
 
-// "Add new" prompt label (plain text; wins over labels.addNew)
+// "Add new" prompt label (plain text; wins over labels['labels.addNew'])
 multiselect.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
 
 // i18n of every UI string — see "Labels (i18n)" below
-multiselect.labels = { removeItem: 'Odebrat {item}', close: 'Zavřít' };
+multiselect.labels = { 'ariaLabels.removeItem': 'Odebrat {item}', 'tooltips.removeItem': 'Odebrat {item}', 'ariaLabels.close': 'Zavřít' };
 ```
 
 ### Labels (i18n)
 
 `labels` is a partial `MultiSelectLabels` map holding **every** user-facing string — set it as a
-property (object) or as a JSON attribute (`labels='{"noResults":"Nic","searchPlaceholder":"Hledat…"}'`).
-Any key you leave unset falls back to its English default; a key set to `''` is deliberately empty
-(renders nothing). Labels shown inside the dropdown / badges (`noData`, `noResults`, `searching`,
-`addNew`, `addNewPending`, `selectedCount`, `moreCount`) may contain HTML (inserted as-is — sanitize
-untrusted text); ARIA labels and placeholders are plain text. `{value}` (the typed text) is escaped. Named placeholders (`{count}`,
-`{item}`, `{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the
-picker (the selection is kept).
+property (object) or as a JSON attribute (`labels='{"messages.noResults":"Nic","placeholders.search":"Hledat…"}'`).
+Keys are flat `<elementType>.<name>` (rulebook D-NC-24): `placeholders.*`, `messages.*` (empty / progress
+texts), `labels.*` (other visible text), `headers.*`, `buttons.*`, `ariaLabels.*` (screen-reader-only names),
+`tooltips.*` (hover titles), `errors.*`. A control with both an `aria-label` and a tooltip has one key of each
+(same English default). Any key you leave unset falls back to its English default; a key set to `''` is
+deliberately empty (renders nothing). Labels shown inside the dropdown / badges (`messages.noData`,
+`messages.noResults`, `messages.searching`, `labels.addNew`, `messages.addNewPending`, `labels.selectedCount`,
+`labels.moreCount`) may contain HTML (inserted as-is — sanitize untrusted text); ARIA labels, tooltips and
+placeholders are plain text. `{value}` (the typed text) is escaped. Named placeholders (`{count}`, `{item}`,
+`{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the picker (the selection is kept).
 
-Labels resolve per key through core `/locale` (`createLabels`): the instance `labels` → the page-wide
-`window.components.locale.labels['web-multiselect']` → the English default. Assigning
-`window.components.locale` re-renders every live picker (selection kept); a page-wide
-`formatLabelCallback` (ICU / i18next) formats every label, and `window.components.security =
+Labels resolve per key through core `/locale` (`createLabels`): the instance `labels` (short key, or the full
+`web-multiselect.<key>`) → the page-wide flat dictionary `window.components.locale.labels['web-multiselect.<key>']`
+→ the English default. Assigning `window.components.locale` re-renders every live picker (selection kept); a
+page-wide `translateCallback({ component, key, template, params, locale })` (i18next / ICU) gets the full key of
+every label the instance didn't set (return a string, or `null` = not mine), and `window.components.security =
 { shouldEscapeLabels: true }` turns the HTML labels above into plain text.
 
 ```js
 window.components.locale = {
-  labels: { 'web-multiselect': { noResults: 'Nic nenalezeno', removeItem: 'Odebrat {item}' } },
+  labels: {
+    'web-multiselect.messages.noResults': 'Nic nenalezeno',
+    'web-multiselect.ariaLabels.removeItem': 'Odebrat {item}',
+    'web-multiselect.tooltips.removeItem': 'Odebrat {item}',
+  },
 };
 ```
 
 | Key | Default | Used for |
 |-----|---------|----------|
-| `selectPlaceholder` | `Pick an option…` | Closed-input placeholder when search is not usable (picker mode) |
-| `searchPlaceholder` | `Search…` | Search input placeholder (pins one text in every mode) |
-| `filterPlaceholder` / `navigatePlaceholder` | `Filter…` / `Search…` | Mode-aware placeholder with `show-search-mode-toggle` when `searchPlaceholder` is unset |
-| `noDataPlaceholder` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
-| `noData` | `No data` | Dropdown text when there are no options at all |
-| `noResults` | `No results found` | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
-| `searching` | `Searching…` | Dropdown text while an async `searchCallback` search is in flight |
-| `noDisplayValue` | `[N/A]` | Shown for an option with no display value |
-| `searchHint` | (empty = no hint) | Hint under the search input while open |
-| `addNew` | `Add "{value}"` | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
-| `addNewPending` | `Adding "{value}"…` | Pending prompt while an async `beforeAddCallback` runs |
-| `selectedCount` | `{count} selected` | Badges-area count text (`getCounterCallback` wins) |
-| `moreCount` | `+{count} more` | The "+X more" badge (`getCounterCallback` wins) |
-| `selectedPopoverTitle` | `Selected Items ({count})` | Selected-items popover header |
-| `matchPosition` | `{position} of {total}` | Fullscreen navigate-mode position |
-| `matchCount` / `matchCountOne` | `{count} matches` / `{count} match` | Fullscreen navigate-mode match count |
-| `close` | `Close` | Selected-items popover / fullscreen close button |
-| `clearAllSelections` | `Clear all selections` | Inline ✕ clear button (`show-clear`) and the clear (×) on the count / compact badge |
-| `clearSearch` | `Clear search` | Fullscreen search clear (✕) |
-| `showFullLabel` | `Show full label` | Option info button that reveals a clipped label (fullscreen) |
-| `removeItem` | `Remove {item}` | Badge remove (×) aria-label and its tooltip; `{item}` = the item's label (`getRemoveButtonTooltipCallback` wins for the tooltip) |
-| `removeHiddenItems` | `Remove {count} hidden items` | "+N more" badge remove (×); `{count}` = hidden count |
-| `groupSelected` | `{count} selected` | Group-header selected-count chip |
-| `andMore` | `…and {count} more` | Counter tooltip overflow tail (beyond 12 items) |
-| `prevMatch` / `nextMatch` | `Previous match` / `Next match` | Fullscreen navigate-mode buttons |
-| `switchToFilterMode` / `switchToNavigateMode` | `Switch to filter mode` / `Switch to navigate mode` | Fullscreen search-mode toggle |
-| `selectAll` / `clearSelection` | `Select all` / `Clear all` | Built-in `select-all` / `clear-selection` action buttons |
-| `valueFormatError` | `The value could not be formatted.` | Validation message when `getValueFormatCallback` throws |
+| `placeholders.select` | `Pick an option…` | Closed-input placeholder when search is not usable (picker mode) |
+| `placeholders.search` | `Search…` | Search input placeholder (pins one text in every mode) |
+| `placeholders.filter` / `placeholders.navigate` | `Filter…` / `Search…` | Mode-aware placeholder with `show-search-mode-toggle` when `placeholders.search` is unset |
+| `placeholders.noData` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
+| `messages.noData` | `No data` | Dropdown text when there are no options at all |
+| `messages.noResults` | `No results found` | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
+| `messages.searching` | `Searching…` | Dropdown text (and the loader's accessible name) while an async `searchCallback` search is in flight |
+| `messages.addNewPending` | `Adding "{value}"…` | Pending prompt while an async `beforeAddCallback` runs |
+| `labels.noDisplayValue` | `[N/A]` | Shown for an option with no display value |
+| `labels.searchHint` | (empty = no hint) | Hint under the search input while open |
+| `labels.addNew` | `Add "{value}"` | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
+| `labels.selectedCount` | `{count} selected` | Badges-area count text (`getCounterCallback` wins) |
+| `labels.moreCount` | `+{count} more` | The "+X more" badge (`getCounterCallback` wins) |
+| `labels.matchPosition` | `{position} of {total}` | Fullscreen navigate-mode position |
+| `labels.matchCount` / `labels.matchCountOne` | `{count} matches` / `{count} match` | Fullscreen navigate-mode match count |
+| `headers.selectedPopover` | `Selected Items ({count})` | Selected-items popover header |
+| `buttons.selectAll` / `buttons.clearSelection` | `Select all` / `Clear all` | Built-in `select-all` / `clear-selection` action buttons |
+| `ariaLabels.close` | `Close` | Selected-items popover / fullscreen close button |
+| `ariaLabels.clearAllSelections` | `Clear all selections` | Inline ✕ clear button (`show-clear`) and the clear (×) on the count / compact badge |
+| `ariaLabels.clearSearch` | `Clear search` | Fullscreen search clear (✕) |
+| `ariaLabels.showFullLabel` | `Show full label` | Option info button that reveals a clipped label (fullscreen) |
+| `ariaLabels.removeItem` / `tooltips.removeItem` | `Remove {item}` | Badge remove (×) aria-label / its tooltip; `{item}` = the item's label (`getRemoveButtonTooltipCallback` wins for the tooltip) |
+| `ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems` | `Remove {count} hidden items` | "+N more" badge remove (×) aria-label / its tooltip; `{count}` = hidden count |
+| `ariaLabels.groupSelected` | `{count} selected` | Group-header selected-count chip |
+| `ariaLabels.prevMatch` / `ariaLabels.nextMatch` | `Previous match` / `Next match` | Fullscreen navigate-mode buttons |
+| `ariaLabels.switchToFilterMode` / `tooltips.switchToFilterMode` | `Switch to filter mode` | Fullscreen search-mode toggle (in navigate mode): aria-label / `title` |
+| `ariaLabels.switchToNavigateMode` / `tooltips.switchToNavigateMode` | `Switch to navigate mode` | Fullscreen search-mode toggle (in filter mode): aria-label / `title` |
+| `tooltips.andMore` | `…and {count} more` | Counter tooltip overflow tail (beyond 12 items) |
+| `errors.valueFormat` | `The value could not be formatted.` | Validation message when `getValueFormatCallback` throws |
 
 ### Reading back state after a write (v2)
 
@@ -767,7 +776,7 @@ document.querySelector('web-multiselect').controller.selectAll();
 | `ready` | `{ controller, element, presentation, … }` | Fired once, on the microtask after the first build (a listener added right after `createElement` still catches it) — at upgrade for a normal element, or when the `defer` gate is released for a deferred one. Twin: `onReady(detail)` |
 | `open` | `{ controller, element, presentation, … }` | The dropdown opened (user or `open()`). Twin: `onOpen(detail)` |
 | `close` | `{ reason, controller, element, presentation, … }` | The dropdown closed — any reason; `detail.reason` says which (`api`, `toggle`, `escape`, `tab`, `select`, `outside-click`, `scroll`, `reference-removed`, `overlay`, `parent`, `back`, `close-button`, `disabled`, `destroy`). Twin: `onClose(detail)` |
-| `value-format-error` | `{ error, value }` | `getValueFormatCallback` threw: the error is logged, `''` is written into the hidden input, and the host is marked invalid (`customError`, `validationMessage` = `labels.valueFormatError`) so the form won't submit (`<form novalidate>` submits `''`). `error` = what was thrown, `value` = the selected values the callback got. The next successful format clears it. Twin: `onValueFormatError(detail)` |
+| `value-format-error` | `{ error, value }` | `getValueFormatCallback` threw: the error is logged, `''` is written into the hidden input, and the host is marked invalid (`customError`, `validationMessage` = `labels['errors.valueFormat']`) so the form won't submit (`<form novalidate>` submits `''`). `error` = what was thrown, `value` = the selected values the callback got. The next successful format clears it. Twin: `onValueFormatError(detail)` |
 | `input-rejected` | `{ configKey, attribute?, value, reason?, kept, source }` | (Core, every Keenmate component.) An attribute or property write was refused — an invalid value (`badge-height="24px"`, an unknown enum value, …) warns and keeps the previous value (`kept`). Fired synchronously, so it has fired when the write returns; `setAttributes()` also returns the list. Twin: `onInputRejected(detail)` |
 
 All events bubble and are **not** composed (`composed: false`) — they are dispatched on the host, so listeners on the element or its light-DOM ancestors receive them. Every detail also carries `controller` (= `el.controller`) and `element` (the host) as non-enumerable properties, so `JSON.stringify(e.detail)` sees only the data. The `on*` property twins (`onSelect`, `onDeselect`, `onChange`, `onAdd`, `onAction`, `onReady`) receive the **detail** (not the CustomEvent): `el.onSelect = ({ option }) => …`. Detail types: `SelectEventDetail`, `DeselectEventDetail`, `ChangeEventDetail`, `AddEventDetail`, `MultiSelectActionEventDetail`, `ReadyEventDetail`, `ValueFormatErrorEventDetail` (and `InputRejection` for `input-rejected`).

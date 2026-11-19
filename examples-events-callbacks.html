@@ -39,7 +39,7 @@
                     <web-multiselect
                         id="events-select"
                         value-member="value"
-                        display-value-member="label" labels='{"searchPlaceholder": "Select skills..."}'>
+                        display-value-member="label" labels='{"placeholders.search": "Select skills..."}'>
                     </web-multiselect>
                     <small class="form-text legend">
                         [prop] = <code>on*</code> property handler &nbsp;·&nbsp;
@@ -92,7 +92,7 @@
                     <web-multiselect
                         id="exclusive-select"
                         value-member="value"
-                        display-value-member="label" labels='{"searchPlaceholder": "Choose availability..."}'>
+                        display-value-member="label" labels='{"placeholders.search": "Choose availability..."}'>
                     </web-multiselect>
                     <small class="form-text">Try selecting Full-time, then Part-time.</small>
                 </div>
@@ -143,7 +143,7 @@
                     <web-multiselect
                         id="required-select"
                         value-member="value"
-                        display-value-member="label" labels='{"searchPlaceholder": "Build the team..."}'>
+                        display-value-member="label" labels='{"placeholders.search": "Build the team..."}'>
                     </web-multiselect>
                     <small class="form-text">Team Lead can't be removed; the others can.</small>
                 </div>
@@ -192,7 +192,7 @@
             <kmwc-demo>
                 <div class="form-group">
                     <label>Pick something (or just fire a message)</label>
-                    <web-multiselect id="message-select" value-member="value" display-value-member="label" labels='{"searchPlaceholder": "Filter…"}'></web-multiselect>
+                    <web-multiselect id="message-select" value-member="value" display-value-member="label" labels='{"placeholders.search": "Filter…"}'></web-multiselect>
                     <small class="form-text">
                         The ⚠ / ⛔ / ✅ options fire a message from <code>beforeSelectCallback</code> — the same
                         toasts the buttons below fire imperatively. Turn on “fullscreen preview”, open the
@@ -271,7 +271,7 @@
                 With <code>allow-add-new</code> on, a search that finds nothing shows a clickable
                 <strong>“Add new …”</strong> prompt instead of the empty message. Choosing it (click or
                 <kbd>Enter</kbd>) fires the <code>add</code> event. The prompt label is set statically via
-                <code>labels.addNew</code> (the <code>{value}</code> placeholder is the typed text) or
+                <code>labels['labels.addNew']</code> (the <code>{value}</code> placeholder is the typed text) or
                 dynamically via <code>getAddNewTextCallback({ value })</code>. <code>beforeAddCallback({ value })</code> is
                 <strong>async and cancelable</strong> — return a rich option to create + select it,
                 <code>false</code> to abort (try adding a name that already exists, e.g. “Anna”), or nothing to just
@@ -284,7 +284,7 @@
                         id="create-select"
                         value-member="value"
                         display-value-member="label"
-                        allow-add-new labels='{"addNew": "Add new member: “{value}”", "searchPlaceholder": "Search or add a member..."}'>
+                        allow-add-new labels='{"labels.addNew": "Add new member: “{value}”", "placeholders.search": "Search or add a member..."}'>
                     </web-multiselect>
                     <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
                 </div>
@@ -317,7 +317,7 @@
                         log('[event] add', `value="${e.detail.value}" → now: ` +
                             JSON.stringify(e.detail.selectedValues), 'success'));
 
-                    // Dynamic prompt label instead of the labels.addNew {value} template:
+                    // Dynamic prompt label instead of the labels['labels.addNew'] {value} template:
                     // el.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
                 </script>
             </kmwc-demo>
@@ -344,7 +344,7 @@
                         display-value-member="label"
                         subtitle-member="subtitle"
                         icon-member="icon"
-                        allow-add-new labels='{"addNew": "➕ Add new member: “{value}”", "addNewPending": "Adding “{value}” to the project…", "searchPlaceholder": "Search or add a member..."}'>
+                        allow-add-new labels='{"labels.addNew": "➕ Add new member: “{value}”", "messages.addNewPending": "Adding “{value}” to the project…", "placeholders.search": "Search or add a member..."}'>
                     </web-multiselect>
                     <small class="form-text">
                         Seeded with the Hornes — Audrey, Benjamin &amp; Jerry.

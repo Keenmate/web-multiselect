@@ -71,7 +71,7 @@
                         document.getElementById(id).addEventListener('change', buildButtons));
                     buildButtons();
 
-                    // Built-ins only? The string shorthand takes the default text from labels.selectAll / labels.clearSelection:
+                    // Built-ins only? The string shorthand takes the default text from labels['buttons.selectAll'] / labels['buttons.clearSelection']:
                     // colors.actionButtons = ['select-all', 'clear-selection'];
                 </script>
             </kmwc-demo>
@@ -354,7 +354,7 @@
             <h3>Static Properties</h3>
             <div class="code-block" data-language="ts"><pre><code>action?: 'select-all' | 'clear-selection'             // Built-ins only (or the string shorthand 'select-all')
 id?: string                                     // Identifies a custom item (reported in the action event)
-text?: string                                   // Plain text (default for built-ins: labels.selectAll / clearSelection)
+text?: string                                   // Plain text (default for built-ins: labels['buttons.selectAll'] / clearSelection)
 icon?: string                                   // Plain-text glyph, rendered before the text
 row?: number                                    // Optional (default: 1) — which button row
 tooltip?: string                                // Optional

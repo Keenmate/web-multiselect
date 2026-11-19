@@ -15,7 +15,7 @@ BUILT-IN ACTIONS
 Select All and Clear All buttons — string shorthand:
 
 select.actionButtons = ['select-all', 'clear-selection'];
-// Default text comes from labels.selectAll / labels.clearSelection
+// Default text comes from labels['buttons.selectAll'] / labels['buttons.clearSelection']
 
 Object form (custom text / tooltip / row …):
 select.actionButtons = [

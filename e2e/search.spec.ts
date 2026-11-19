@@ -590,7 +590,7 @@ test.describe('enable-search="false"', () => {
     });
 });
 
-test.describe('labels.noResults', () => {
+test.describe('labels["messages.noResults"]', () => {
     test('custom empty message shown when no results', async ({ page }) => {
         const p = picker(page, 'empty-msg');
         await openDropdown(p);
@@ -615,7 +615,7 @@ async function makePicker(page: Page, attrs: Record<string, string>, options: un
     return page.locator('#' + id);
 }
 
-test.describe('empty states: labels.noData vs labels.noResults', () => {
+test.describe('empty states: labels["messages.noData"] vs labels["messages.noResults"]', () => {
     test('no options at all shows noData (default "No data")', async ({ page }) => {
         const p = await makePicker(page, {}, []);
         await openDropdown(p);
@@ -630,16 +630,16 @@ test.describe('empty states: labels.noData vs labels.noResults', () => {
     });
 
     test("an empty-string label renders nothing (L4: '' = deliberately empty)", async ({ page }) => {
-        const p = await makePicker(page, { labels: '{"noData":""}' }, []);
+        const p = await makePicker(page, { labels: '{"messages.noData":""}' }, []);
         await openDropdown(p);
         await expect(p.locator('.ms__empty')).toHaveText('');
     });
 
-    test('labels.noDisplayValue replaces the missing-display fallback (default "[N/A]")', async ({ page }) => {
+    test('labels["labels.noDisplayValue"] replaces the missing-display fallback (default "[N/A]")', async ({ page }) => {
         const p = await makePicker(page, {}, [{ value: 'a' }]);
         await openDropdown(p);
         await expect(visibleOptions(p).first()).toContainText('[N/A]');
-        const q = await makePicker(page, { labels: '{"noDisplayValue":"(unnamed)"}' }, [{ value: 'a' }]);
+        const q = await makePicker(page, { labels: '{"labels.noDisplayValue":"(unnamed)"}' }, [{ value: 'a' }]);
         await openDropdown(q);
         await expect(visibleOptions(q).first()).toContainText('(unnamed)');
     });

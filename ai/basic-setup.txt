@@ -82,7 +82,7 @@ Common HTML attributes:
 <web-multiselect
   multiple="false"              <!-- Single-select mode -->
   enable-search="true"           <!-- Enable search box (default) -->
-  labels='{"searchPlaceholder":"Search..."}'
+  labels='{"placeholders.search":"Search..."}'
   show-checkboxes="true"         <!-- Show checkboxes (default) -->
   close-on-select="false"        <!-- Keep open after selection -->
   max-height="20rem">            <!-- Dropdown height -->
@@ -179,7 +179,7 @@ Control search behavior:
 
 <web-multiselect
   enable-search="true"               <!-- Enable/disable search -->
-  labels='{"searchPlaceholder":"Type to search..."}'
+  labels='{"placeholders.search":"Type to search..."}'
   min-search-length="2"              <!-- Minimum chars to trigger -->
   search-mode="filter">              <!-- "filter" or "navigate" -->
 </web-multiselect>
@@ -253,7 +253,7 @@ EMPTY STATES
 ------------
 Customize messages:
 
-<web-multiselect labels='{"noData": "No options", "noResults": "No results found", "searching": "Searching…"}'>
+<web-multiselect labels='{"messages.noData": "No options", "messages.noResults": "No results found", "messages.searching": "Searching…"}'>
 </web-multiselect>
 
 FRAMEWORK INTEGRATION
@@ -365,7 +365,7 @@ Minimal (defaults):
 
 Single-select with search:
 <web-multiselect
-  multiple="false" labels='{"searchPlaceholder": "Select one..."}'>
+  multiple="false" labels='{"placeholders.search": "Select one..."}'>
   <option value="1">Option 1</option>
 </web-multiselect>
 

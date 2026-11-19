@@ -75,7 +75,7 @@ npm install @keenmate/web-multiselect
   import '@keenmate/web-multiselect';
 </script>
 
-<web-multiselect labels='{"selectPlaceholder": "Pick a country"}'>
+<web-multiselect labels='{"placeholders.select": "Pick a country"}'>
   <option value="cz">Czech Republic</option>
   <option value="sk">Slovakia</option>
   <option value="at">Austria</option>
@@ -85,7 +85,7 @@ npm install @keenmate/web-multiselect
 **Programmatic — dynamic data + events:**
 
 ```html
-<web-multiselect id="picker" labels='{"searchPlaceholder": "Search…"}'></web-multiselect>
+<web-multiselect id="picker" labels='{"placeholders.search": "Search…"}'></web-multiselect>
 
 <script type="module">
   import '@keenmate/web-multiselect';
@@ -192,9 +192,9 @@ markup. Sanitize any untrusted text before passing it in:
 
 | Input | Output used in |
 |---|---|
-| `labels.noData`, `labels.noResults`, `labels.searching` | Dropdown empty / searching text (innerHTML) |
-| `labels.addNew`, `labels.addNewPending` | "Add new" prompt (innerHTML; the `{value}` typed text is escaped) |
-| `labels.selectedCount`, `labels.moreCount` | Counter badge text (innerHTML) |
+| `labels['messages.noData']`, `labels['messages.noResults']`, `labels['messages.searching']` | Dropdown empty / searching text (innerHTML) |
+| `labels['labels.addNew']`, `labels['messages.addNewPending']` | "Add new" prompt (innerHTML; the `{value}` typed text is escaped) |
+| `labels['labels.selectedCount']`, `labels['labels.moreCount']` | Counter badge text (innerHTML) |
 | `renderOptionContentCallback`, `renderGroupLabelContentCallback`, `renderBadgeContentCallback`, `renderBadgeCallback`, `renderSelectedItemContentCallback` (string return) | Option rows, group headers, badges, selected panels (innerHTML) |
 | Display value (`displayValueMember` / `getDisplayValueCallback`) | Option title and badge text (innerHTML; search highlighting marks text runs only) |
 | `getBadgeDisplayCallback` | Badge text (innerHTML) |

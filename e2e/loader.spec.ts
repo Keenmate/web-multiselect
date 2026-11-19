@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => {
     await page.waitForFunction(() => customElements.get('web-multiselect'));
 });
 
-test('async search draws the default loader with role=status + labels.searching', async ({ page }) => {
+test('async search draws the default loader with role=status + labels["messages.searching"]', async ({ page }) => {
     const p = await startSearch(page);
     const slot = p.locator('.ms__loader-slot');
     await expect(slot).toHaveAttribute('role', 'status');
@@ -50,9 +50,9 @@ test('async search draws the default loader with role=status + labels.searching'
     await expect(p.locator('.ms__option')).toHaveCount(1);
 });
 
-test('aria-label is the plain text of an HTML labels.searching', async ({ page }) => {
+test('aria-label is the plain text of an HTML labels["messages.searching"]', async ({ page }) => {
     await page.evaluate(() => {
-        (document.getElementById('ms-search') as any).labels = { searching: '<b>Hledám</b>…' };
+        (document.getElementById('ms-search') as any).labels = { 'messages.searching': '<b>Hledám</b>…' };
     });
     const p = await startSearch(page);
     await expect(p.locator('.ms__loader-slot')).toHaveAttribute('aria-label', 'Hledám…');
@@ -97,7 +97,7 @@ test('the instance renderLoadingCallback beats the page hook', async ({ page }) 
     await expect(p.locator('.ms__loader')).toHaveCount(0);
 });
 
-test('async add-new pending draws the loader (context add-new, labels.addNewPending)', async ({ page }) => {
+test('async add-new pending draws the loader (context add-new, labels["messages.addNewPending"])', async ({ page }) => {
     await page.evaluate(() => {
         (window as any).__contexts = [];
         (window as any).components.renderLoadingCallback = (ctx: any) => {

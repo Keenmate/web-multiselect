@@ -18,12 +18,12 @@ This component is designed to be navigable from the keyboard alone and to work w
 
 Any key can be intercepted or overridden with `beforeKeydownCallback`, which runs before the built-in handling (return `false` to suppress the built-in handling of that key) — see [usage.md → Properties](./usage.md#properties).
 
-> 💡 To surface these shortcuts to your users, set `labels.searchHint` — the hint floats above the input when focused. Example:
+> 💡 To surface these shortcuts to your users, set `labels['labels.searchHint']` — the hint floats above the input when focused. Example:
 >
 > ```html
 > <web-multiselect
 >   search-mode="navigate"
->   labels='{"searchHint":"Ctrl/Cmd + ↓ / ↑ to jump between matches"}'>
+>   labels='{"labels.searchHint":"Ctrl/Cmd + ↓ / ↑ to jump between matches"}'>
 > </web-multiselect>
 > ```
 
@@ -33,19 +33,19 @@ The component ships an `aria-label` on every icon-only control. All of them are 
 
 | Control | Default label | `labels` key |
 |---------|---------------|--------------|
-| Per-badge remove button | `Remove {item}` | `removeItem` |
-| Hidden-items remove badge (partial mode "+N more") | `Remove {count} hidden items` | `removeHiddenItems` |
-| Clear-all button on the count / compact badge | `Clear all selections` | `clearAllSelections` |
-| Inline ✕ clear button (`show-clear`) | `Clear all selections` | `clearAllSelections` |
-| Selected-items popover close / fullscreen close | `Close` | `close` |
-| Fullscreen search clear (✕) | `Clear search` | `clearSearch` |
-| Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `prevMatch` / `nextMatch` |
-| Option info button revealing a clipped label (fullscreen) | `Show full label` | `showFullLabel` |
-| Group-header selected-count chip | `{count} selected` | `groupSelected` |
-| Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `andMore` |
-| Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `switchToFilterMode` / `switchToNavigateMode` |
+| Per-badge remove button | `Remove {item}` | `ariaLabels.removeItem` (tooltip: `tooltips.removeItem`) |
+| Hidden-items remove badge (partial mode "+N more") | `Remove {count} hidden items` | `ariaLabels.removeHiddenItems` (tooltip: `tooltips.removeHiddenItems`) |
+| Clear-all button on the count / compact badge | `Clear all selections` | `ariaLabels.clearAllSelections` |
+| Inline ✕ clear button (`show-clear`) | `Clear all selections` | `ariaLabels.clearAllSelections` |
+| Selected-items popover close / fullscreen close | `Close` | `ariaLabels.close` |
+| Fullscreen search clear (✕) | `Clear search` | `ariaLabels.clearSearch` |
+| Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `ariaLabels.prevMatch` / `ariaLabels.nextMatch` |
+| Option info button revealing a clipped label (fullscreen) | `Show full label` | `ariaLabels.showFullLabel` |
+| Group-header selected-count chip | `{count} selected` | `ariaLabels.groupSelected` |
+| Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `tooltips.andMore` |
+| Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `ariaLabels.switchToFilterMode` / `ariaLabels.switchToNavigateMode` (`title`: `tooltips.*`) |
 
-> **Tooltip vs. accessible name.** `labels.removeItem` is both the badge remove button's `aria-label` and its hover tooltip (shown with `enable-badge-tooltips`); `getRemoveButtonTooltipCallback` overrides only the tooltip.
+> **Tooltip vs. accessible name.** Each surface has its own key: `labels['ariaLabels.removeItem']` is the badge remove button's `aria-label`, `labels['tooltips.removeItem']` its hover tooltip (shown with `enable-badge-tooltips`; same English default); `getRemoveButtonTooltipCallback` overrides only the tooltip.
 
 ### Translating labels
 
@@ -53,10 +53,11 @@ Pass a partial map to the `labels` property; unset keys keep their English defau
 
 ```javascript
 multiselect.labels = {
-  removeItem: 'Odebrat {item}',
-  removeHiddenItems: 'Odebrat {count} skrytých položek',
-  clearAllSelections: 'Zrušit výběr',
-  close: 'Zavřít',
+  'ariaLabels.removeItem': 'Odebrat {item}',
+  'tooltips.removeItem': 'Odebrat {item}',
+  'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých položek',
+  'ariaLabels.clearAllSelections': 'Zrušit výběr',
+  'ariaLabels.close': 'Zavřít',
 };
 ```
 
@@ -106,5 +107,5 @@ Group headers (and their group-select checkbox) are not exposed as ARIA groups y
 
 ## See also
 
-- [Keyboard shortcuts as a search hint](./usage.md#attributes) — `labels.searchHint` reference.
+- [Keyboard shortcuts as a search hint](./usage.md#attributes) — `labels['labels.searchHint']` reference.
 - [`examples-basic.html`](../examples-basic.html) — interactive demos including keyboard navigation and focus behavior.

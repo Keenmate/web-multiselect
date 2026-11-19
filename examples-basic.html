@@ -40,7 +40,7 @@
                     id="ex-selection"
                     value-member="value"
                     display-value-member="label"
-                    icon-member="icon" labels='{"searchPlaceholder": "Search…"}'>
+                    icon-member="icon" labels='{"placeholders.search": "Search…"}'>
                 </web-multiselect>
             </div>
         </div>
@@ -94,7 +94,7 @@
                     value-member="value"
                     display-value-member="label"
                     icon-member="icon"
-                    subtitle-member="subtitle" labels='{"searchPlaceholder": "Search frameworks…"}'>
+                    subtitle-member="subtitle" labels='{"placeholders.search": "Search frameworks…"}'>
                 </web-multiselect>
             </div>
 
@@ -112,7 +112,7 @@
                     id="ex-reserve"
                     value-member="value"
                     display-value-member="label"
-                    icon-member="icon" labels='{"searchPlaceholder": "Mixed icon / no-icon rows — open me…"}'>
+                    icon-member="icon" labels='{"placeholders.search": "Mixed icon / no-icon rows — open me…"}'>
                 </web-multiselect>
             </div>
         </div>
@@ -154,7 +154,7 @@
                     display-value-member="label"
                     icon-member="icon"
                     group-member="group"
-                    show-counter labels='{"searchPlaceholder": "Search…"}'>
+                    show-counter labels='{"placeholders.search": "Search…"}'>
                 </web-multiselect>
             </div>
 
@@ -181,7 +181,7 @@
                 <div class="grid">
                     <div class="form-group">
                         <label>Simple choice (single-select)</label>
-                        <web-multiselect id="decl-single" multiple="false" labels='{"searchPlaceholder": "Select your answer…"}'>
+                        <web-multiselect id="decl-single" multiple="false" labels='{"placeholders.search": "Select your answer…"}'>
                             <option value="yes">Yes</option>
                             <option value="no">No</option>
                             <option value="maybe" selected>Maybe / I don't know</option>
@@ -192,7 +192,7 @@
                     <div class="form-group">
                         <label>Multiple fruits (icons + <code>custom-styles</code>)</label>
                         <web-multiselect id="decl-fruits"
-                            custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"searchPlaceholder": "Select fruits…"}'>
+                            custom-styles=".ms__badge { border-radius: 999px; font-weight: 600; }" labels='{"placeholders.search": "Select fruits…"}'>
                             <option value="apple" data-icon="🍎">Apple</option>
                             <option value="banana" data-icon="🍌" selected>Banana</option>
                             <option value="orange" data-icon="🍊" disabled>Orange</option>
@@ -206,7 +206,7 @@
                 <div class="grid mt-1">
                     <div class="form-group">
                         <label>Grouped options (<code>&lt;optgroup&gt;</code>)</label>
-                        <web-multiselect id="decl-grouped" labels='{"searchPlaceholder": "Select languages…"}'>
+                        <web-multiselect id="decl-grouped" labels='{"placeholders.search": "Select languages…"}'>
                             <optgroup label="Frontend">
                                 <option value="js" data-icon="🟨">JavaScript</option>
                                 <option value="ts" data-icon="🔷">TypeScript</option>
@@ -223,7 +223,7 @@
 
                     <div class="form-group">
                         <label>With subtitles (<code>data-subtitle</code>)</label>
-                        <web-multiselect id="decl-subtitles" labels='{"searchPlaceholder": "Select framework…"}'>
+                        <web-multiselect id="decl-subtitles" labels='{"placeholders.search": "Select framework…"}'>
                             <option value="react" data-icon="⚛️" data-subtitle="A JavaScript library for building UIs">React</option>
                             <option value="vue" data-icon="🖖" data-subtitle="The Progressive JavaScript Framework">Vue.js</option>
                             <option value="svelte" data-icon="🔥" data-subtitle="Cybernetically enhanced web apps" selected>Svelte</option>
@@ -382,7 +382,7 @@ el.scrollToValue('jp');</code></pre></div>
                     search-mode="filter"
                     value-member="id"
                     display-value-member="name"
-                    icon-member="flag" labels='{"searchPlaceholder": "Type to search countries…"}'>
+                    icon-member="flag" labels='{"placeholders.search": "Type to search countries…"}'>
                 </web-multiselect>
             </div>
 
@@ -468,7 +468,7 @@ el.scrollToValue('jp');</code></pre></div>
                 <web-multiselect
                     id="ex-search-match"
                     value-member="value"
-                    display-value-member="label" labels='{"searchPlaceholder": "Try zurich, PARIS, de, io, ^(San|Santa) …"}'>
+                    display-value-member="label" labels='{"placeholders.search": "Try zurich, PARIS, de, io, ^(San|Santa) …"}'>
                 </web-multiselect>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('ex-search-match');
@@ -531,7 +531,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
                     id="ex-part-numbers"
                     value-member="value"
                     display-value-member="label"
-                    subtitle-member="subtitle" labels='{"searchPlaceholder": "Try ha-324/56, xk 100 2, ha32…"}'>
+                    subtitle-member="subtitle" labels='{"placeholders.search": "Try ha-324/56, xk 100 2, ha32…"}'>
                 </web-multiselect>
                 <script type="module" data-kmwc-show>
                     const el = document.getElementById('ex-part-numbers');
@@ -605,9 +605,9 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
             <h2>BU11 · Page-wide labels — <code>window.components.locale</code></h2>
             <p>
                 Every UI string goes through core <code>/locale</code>: the instance <code>labels</code> win, then the
-                page-wide <code>window.components.locale.labels['web-multiselect']</code>, then English. Assigning the
+                page-wide flat dictionary <code>window.components.locale.labels['web-multiselect.&lt;key&gt;']</code>, then English. Assigning the
                 page object re-renders every live picker (the selection is kept). The second picker keeps its own
-                <code>searchPlaceholder</code>.
+                <code>placeholders.search</code>.
             </p>
 
             <kmwc-demo>
@@ -619,18 +619,21 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
                     <web-multiselect id="ex-locale-a" value='["js","ts","python"]' badges-display-mode="count"
                         value-member="value" display-value-member="label"></web-multiselect>
                     <web-multiselect id="ex-locale-b" value-member="value" display-value-member="label"
-                        labels='{"searchPlaceholder": "My own placeholder"}'></web-multiselect>
+                        labels='{"placeholders.search": "My own placeholder"}'></web-multiselect>
                 </div>
                 <script type="module" data-kmwc-show>
                     const langs = ['JavaScript', 'TypeScript', 'Python', 'Java', 'Go'].map((label) => ({ value: label.toLowerCase().replace('javascript', 'js').replace('typescript', 'ts'), label }));
                     for (const id of ['ex-locale-a', 'ex-locale-b']) document.getElementById(id).options = langs;
 
                     const CS = {
-                        searchPlaceholder: 'Hledat…', noResults: 'Nic nenalezeno', selectedCount: '{count} vybráno',
-                        selectedPopoverTitle: 'Vybrané položky ({count})', close: 'Zavřít', removeItem: 'Odebrat {item}',
+                        'placeholders.search': 'Hledat…', 'messages.noResults': 'Nic nenalezeno', 'labels.selectedCount': '{count} vybráno',
+                        'headers.selectedPopover': 'Vybrané položky ({count})', 'ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {item}',
+                        'tooltips.removeItem': 'Odebrat {item}',
                     };
+                    // The page-wide dictionary is flat and keyed by the FULL key: 'web-multiselect.<key>'.
+                    const pageLabels = Object.fromEntries(Object.entries(CS).map(([k, v]) => [`web-multiselect.${k}`, v]));
                     document.querySelectorAll('input[name="loc-lang"]').forEach((r) => r.addEventListener('change', () => {
-                        window.components.locale = r.value === 'cs' ? { labels: { 'web-multiselect': CS } } : null;
+                        window.components.locale = r.value === 'cs' ? { labels: pageLabels } : null;
                     }));
                     window.addEventListener('pagehide', () => { window.components.locale = null; });
                 </script>
@@ -936,7 +939,7 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
                 const text = !srchHint.checked ? ''
                     : isNavigate ? 'Ctrl/Cmd + ↓ / ↑ to jump between matches · Enter to select · Esc to clear'
                     : '↓ / ↑ to move · Enter to select · Esc to clear';
-                exSearch.labels = { ...exSearch.labels, searchHint: text };
+                exSearch.labels = { ...exSearch.labels, 'labels.searchHint': text };
             };
             document.querySelectorAll('input[name="srch-mode"]').forEach((r) =>
                 r.addEventListener('change', (e) => {

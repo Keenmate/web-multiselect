@@ -134,11 +134,11 @@ test('a value that looks like another tooltip id (`option-0`) does not take over
     await expect(visible.filter({ hasText: 'First row' })).toBeVisible({ timeout: 2000 });
 });
 
-test('the "+N more" remove tooltip uses labels.removeHiddenItems', async ({ page }) => {
+test('the "+N more" remove tooltip uses labels["tooltips.removeHiddenItems"]', async ({ page }) => {
     const p = await makeTooltipPicker(page,
         { 'badges-display-mode': 'partial', 'max-visible-badge-count': '1' },
         [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }],
-        { removeHiddenItems: 'Odebrat {count} skryté' });
+        { 'tooltips.removeHiddenItems': 'Odebrat {count} skryté' });
     await p.evaluate((el: any) => el.setSelected(['a', 'b', 'c']));
 
     await p.locator('.ms__badge--more .ms__badge-remove').hover();
