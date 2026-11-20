@@ -46,6 +46,8 @@ export type { ColorScheme, ThemeMode, ThemeSource } from '@keenmate/web-componen
 export type { LoaderRenderContext } from '@keenmate/web-components-core';
 // `renderIconCallback(name, ctx)` — the icon hook's context (core SPEC §12.33).
 export type { IconRenderContext, RenderIconCallback } from '@keenmate/web-components-core';
+// `translateCallback(ctx)` — the element's own label translator (core /locale).
+export type { TranslateCallback, LabelTranslateContext } from '@keenmate/web-components-core/locale';
 // `input-rejected` event detail (core: every refused attribute / property write).
 export type { InputRejection } from '@keenmate/web-components-core';
 export type {

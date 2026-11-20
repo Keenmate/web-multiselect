@@ -636,7 +636,13 @@ Labels resolve per key through core `/locale` (`createLabels`): the instance `la
 → the English default. Assigning `window.components.locale` re-renders every live picker (selection kept); a
 page-wide `translateCallback({ component, key, template, params, locale })` (i18next / ICU) gets the full key of
 every label the instance didn't set (return a string, or `null` = not mine), and `window.components.security =
-{ shouldEscapeLabels: true }` turns the HTML labels above into plain text.
+{ shouldEscapeLabels: true }` turns the HTML labels above into plain text. The element's own `translateCallback`
+property (same shape) is asked first — one multiselect needs no page setup; `null` passes the key on to the
+page-wide one, and the instance `labels` beat both. Changing it rebuilds the picker (selection kept).
+
+```js
+select.translateCallback = ({ key, params }) => (i18next.exists(key) ? i18next.t(key, params) : null);
+```
 
 ```js
 window.components.locale = {

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — `translateCallback` (2026-11-20)
+- **New input `translateCallback(ctx)`** (property, `on: 'update'`, core `TranslateCallback`): this element's own label
+  translator (core `/locale`). Asked for every label key this instance's `labels` did not set, BEFORE the page-wide
+  `window.components.locale.translateCallback` — one multiselect needs no page setup. Gets `{ component, key, template,
+  params, locale }` (full `web-multiselect.<elementType>.<name>` key, raw params); return the string, or `null` /
+  `undefined` = not mine (the page-wide callback decides). A change rebuilds the picker (selection kept), like a
+  `labels` change. The standalone engine reads it from its options. `TranslateCallback` / `LabelTranslateContext`
+  types re-exported.
+
 ### Added — `renderIconCallback` (2026-11-20)
 - **New input `renderIconCallback(name, ctx)`** (property, `on: 'update'`): this element's own icon hook (core
   `renderIcon`, SPEC §12.33). Asked for an option / action-button icon string that is not markup and not a built-in

@@ -1757,7 +1757,7 @@ export class MultiSelectEngine<T = any> {
             if (resolved.isToggled) attrs += ' aria-pressed="true"';
             if (!resolved.text && resolved.tooltip) attrs += ` aria-label="${escapeHtml(resolved.tooltip)}"`;
 
-            // Icon + label are text, never HTML.
+            // The label is text (escaped); the icon follows core renderIcon (markup / hook results are inserted raw).
             let inner = '';
             if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${renderIcon(resolved.icon, { prefix: 'ms', host: this.hostEl(), context: { item } })}</span>`;
             if (resolved.text) inner += `<span class="ms__action-btn-label">${escapeHtml(resolved.text)}</span>`;
@@ -5021,13 +5021,16 @@ export class MultiSelectEngine<T = any> {
     }
 
     /** The UI strings (core `/locale`, rulebook D-NC-24): flat `<elementType>.<name>` keys; instance
-     *  `labels` (short or full key) → page-wide `window.components.locale.labels['web-multiselect.<key>']`
-     *  → the English default. `.text()` for
+     *  `labels` (short or full key) → the element's `translateCallback` → the page-wide one
+     *  → page-wide `window.components.locale.labels['web-multiselect.<key>']` → the English default. `.text()` for
      *  attributes / `textContent` (escape it yourself inside an HTML string), `.html()` for markup
      *  (the template is HTML, the `{…}` values are escaped). */
     private get labels(): Labels<Required<MultiSelectLabels>> {
         return this.labelsApi ??= createLabels(this.hostEl(), DEFAULT_LABELS, () => this.options.labels,
-            { tag: 'web-multiselect', getLocale: () => this.options.locale });
+            { tag: 'web-multiselect', getLocale: () => this.options.locale,
+              // The element's `translateCallback` input (forwarded in the config) — also when the
+              // engine runs standalone, with no host element carrying the property.
+              getTranslateCallback: () => this.options.translateCallback });
     }
     private labelsApi?: Labels<Required<MultiSelectLabels>>;
 
@@ -5451,8 +5454,9 @@ export class MultiSelectEngine<T = any> {
     public updateOptions(partial: Partial<MultiSelectConfig<T>>): boolean {
         // A `labels` change rebuilds: the hint element and the build-time ARIA labels / texts
         // are created by buildHTML (the element preserves the selection across a rebuild).
-        // `locale` likewise (the numbers in the labels / count chips) — the `localeChanged()` path.
-        if ('labels' in partial || 'locale' in partial) return false;
+        // `locale` likewise (the numbers in the labels / count chips) — the `localeChanged()` path —
+        // and `translateCallback` (the element's own label translator).
+        if ('labels' in partial || 'locale' in partial || 'translateCallback' in partial) return false;
 
         Object.assign(this.options, partial);
 

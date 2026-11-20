@@ -195,3 +195,44 @@ test('an unset tooltips.x follows the customized ariaLabels.x twin', async ({ pa
     await expect(tooltip).toBeVisible({ timeout: 2000 });
     await expect(tooltip).toContainText('Odebrat 12 skrytých');
 });
+
+/**
+ * The element's own `translateCallback` (core `createLabels` reads `host.translateCallback`) is asked
+ * BEFORE the page-wide `window.components.locale.translateCallback`; `null` = not mine → the page one;
+ * the instance `labels` still beat both. A change rebuilds the picker (selection kept).
+ */
+test('element translateCallback beats the page one; null falls through; instance labels win', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    const p = page.locator('#lbl-count');
+    const removeHidden = p.locator('.ms__badge--more .ms__badge-remove');
+    const counter = p.locator('.ms__counter');
+    const before = await p.evaluate((el: any) => el.selectedOptions.length);
+
+    await page.evaluate(() => {
+        (window as any).components.locale = {
+            translateCallback: (ctx: any) => (ctx.component === 'web-multiselect' ? `Page ${ctx.key.split('.').pop()} ${ctx.params?.count ?? ''}`.trim() : null),
+        };
+    });
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Page removeHiddenItems 12');
+
+    // The element's callback wins; for a key it returns null, the page callback answers.
+    await p.evaluate((el: any) => {
+        el.translateCallback = (ctx: any) => (ctx.key === 'web-multiselect.ariaLabels.removeHiddenItems' ? `Own ${ctx.params.count}` : null);
+    });
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Own 12');
+    await expect(counter).toHaveAttribute('title', /Page andMore 2$/);
+    expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(before);
+
+    // Instance labels beat both callbacks.
+    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {count}' }; });
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Mine 12');
+
+    // One element needs no page setup.
+    await page.evaluate(() => { (window as any).components.locale = null; });
+    await p.evaluate((el: any) => { el.labels = undefined; });
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Own 12');
+    await expect(counter).toHaveAttribute('title', /…and 2 more$/);
+
+    await p.evaluate((el: any) => { el.translateCallback = null; });
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Remove 12 hidden items');
+});

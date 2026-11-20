@@ -4,6 +4,7 @@
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
 import type { PresentationContext, ComponentContext, RenderLoaderCallback, RenderIconCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
+import type { TranslateCallback } from '@keenmate/web-components-core/locale';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './utils/ltree-node';
 import type { OptionsFormat } from './option-formats';
@@ -786,6 +787,14 @@ export interface MultiSelectConfig<T = any> {
      * (an action button).
      */
     renderIconCallback?: RenderIconCallback | null;
+    /**
+     * This element's own label translator (core `/locale`). Asked for every label key this instance's
+     * `labels` did not set, BEFORE the page-wide `window.components.locale.translateCallback`. Gets
+     * `{ component, key, template, params, locale }` (`key` = the full `web-multiselect.<elementType>.<name>`,
+     * `params` raw); return the string, or `null` / `undefined` = not mine (the page-wide callback,
+     * then the page dictionary / English default). A change rebuilds the picker (selection kept).
+     */
+    translateCallback?: TranslateCallback | null;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */
     renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**

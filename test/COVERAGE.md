@@ -183,6 +183,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `customStylesCallback` injects styles into Shadow DOM         | ✓      | `custom-rendering.spec.ts`   | `custom-rendering.html`   |
 | `iconMember` / `subtitleMember` rendered in options           | ✓      | `custom-rendering.spec.ts`   | `custom-rendering.html`   |
 | Icon strings via core `renderIcon` (markup / built-in mask / class list `<i class="ms__icon …">` / text); element `renderIconCallback` beats the page hook, `null` falls through, built-ins never reach a hook; live hook change re-renders; action-button icons + `ctx.item` | ✓ | `icons.spec.ts` | `icons.html` |
+| Element `translateCallback` beats the page-wide `window.components.locale.translateCallback`; `null` falls through; instance `labels` beat both; a change rebuilds (selection kept) | ✓ | `labels.spec.ts` | `labels.html` |
 
 ## 14. Counter badge (in input)
 
