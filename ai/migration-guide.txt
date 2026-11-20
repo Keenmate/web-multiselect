@@ -436,7 +436,7 @@ CHANGELOG.md, section [3.0.0-rc01]. The essentials:
   beforeActionCallback.
 - el.controller is the public facade (selectAll, clearSelection, toggleValue, focusNext, showMessage…);
   showMessage(content, { variant, duration }) → { type, autoHideMs, placement }.
-- WebMultiSelect → MultiSelectEngine; MultiSelectKeyboardController → MultiSelectController;
+- WebMultiSelect → removed (use <web-multiselect> + el.controller); MultiSelectKeyboardController → MultiSelectController;
   MultiSelectKeydownContext → KeydownContext; ActionButton → MultiSelectActionItem;
   MultiSelectEventDetail → SelectEventDetail / ChangeEventDetail / ….
 - Internal controls use data-ms-action (show-selected, clear-count, remove-hidden, add-new);

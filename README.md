@@ -245,7 +245,7 @@ Follows the BlissFramework four-layer web-component layout:
 | Layer | File | Role |
 |-------|------|------|
 | Element | `src/web-component.ts` | `MultiSelectElement` — custom-element I/O wrapper, driven by the `INPUTS` table (attributes, properties, callbacks) and the events table |
-| Logic | `src/multiselect.ts` | `MultiSelectEngine<T>` — framework-agnostic core (search, selection, keyboard, rendering) |
+| Logic | `src/multiselect.ts` | `MultiSelectEngine<T>` — internal engine (search, selection, keyboard, rendering); not exported — the element is the API |
 | Service | `src/virtual-scroll.ts`, `src/tree/` | `VirtualScroll`; the ltree option model and checkbox cascade for tree mode |
 | Side | `src/types.ts`, `src/option-formats.ts`, `src/converters.ts`, `src/logger.ts`, `src/index.ts` | types, `data-options` parsers, component-local converters, logging shim, package entry |
 

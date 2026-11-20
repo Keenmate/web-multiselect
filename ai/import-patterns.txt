@@ -34,20 +34,6 @@ Use this when:
 - Building custom bundle configurations
 - Need finer-grained imports
 
-CORE CLASS IMPORT
------------------
-Import the dropdown engine without the Web Component wrapper (standalone use only — when
-you use <web-multiselect>, drive it through el.controller instead):
-
-✅ import { MultiSelectEngine } from '@keenmate/web-multiselect';
-
-Use for:
-- Custom element implementations
-- Testing core logic independently
-
-const engine = new MultiSelectEngine(containerElement, config);
-// engine options onSelect / onDeselect / onChange / onAdd / onAction receive the detail
-
 TYPESCRIPT IMPORTS
 ------------------
 Types are included automatically, no @types package needed:
@@ -146,9 +132,6 @@ Main (component + styles):
 
 Styles only:
 @keenmate/web-multiselect/style.css
-
-Core class:
-@keenmate/web-multiselect (exports MultiSelectEngine)
 
 Web Component:
 @keenmate/web-multiselect (exports MultiSelectElement)
@@ -455,7 +438,6 @@ QUICK REFERENCE
 Default import:     import '@keenmate/web-multiselect';
 Types:              import type { MultiSelectOption } from '...';
 Logging:            import { enableLogging } from '...';
-Core class:         import { MultiSelectEngine } from '...';
 Stylesheet:         import '@keenmate/web-multiselect/style.css';
 Global API:         window.components['web-multiselect']
 Version:            window.components['web-multiselect'].version()

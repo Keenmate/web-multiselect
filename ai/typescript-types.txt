@@ -32,7 +32,7 @@ import type {
 } from '@keenmate/web-multiselect';
 
 Renamed / removed in the interaction-model release (see CHANGELOG [3.0.0-rc01]):
-  WebMultiSelect                 → MultiSelectEngine (standalone engine; element users use el.controller)
+  WebMultiSelect                 → removed (use <web-multiselect>; drive it through el.controller)
   MultiSelectKeyboardController  → MultiSelectController
   MultiSelectKeydownContext      → KeydownContext
   ActionButton                   → MultiSelectActionItem

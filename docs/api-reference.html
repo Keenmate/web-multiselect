@@ -241,8 +241,8 @@
         </table>
 
         <!-- JAVASCRIPT OPTIONS -->
-        <h2>JavaScript Options (MultiSelectEngine)</h2>
-        <p class="section-intro">These options can be passed when instantiating the standalone engine, <code>new MultiSelectEngine(element, options)</code>. For the <code>&lt;web-multiselect&gt;</code> element, set them as properties and drive it through <code>el.controller</code>.</p>
+        <h2>JavaScript Properties</h2>
+        <p class="section-intro">Set these as properties on the <code>&lt;web-multiselect&gt;</code> element (or several at once with <code>el.setAttributes({ … })</code>) and drive it through <code>el.controller</code>.</p>
         <table>
             <thead>
                 <tr>
@@ -260,14 +260,8 @@
                     <td>Array of option objects to display in the dropdown.</td>
                 </tr>
                 <tr>
-                    <td><code>container</code></td>
-                    <td class="type">HTMLElement</td>
-                    <td class="default">null</td>
-                    <td>Container element for dropdown/hint/popover (for Shadow DOM support).</td>
-                </tr>
-                <tr>
                     <td colspan="4" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
-                        All attributes listed above are also available as JavaScript options with camelCase naming (e.g., isSearchEnabled, maxHeight, etc.)
+                        All attributes listed above are also available as JavaScript properties with camelCase naming (e.g., isSearchEnabled, maxHeight, etc.)
                     </td>
                 </tr>
             </tbody>

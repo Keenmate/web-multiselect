@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Removed — `MultiSelectEngine` export (2026-11-20)
+- **BREAKING: `MultiSelectEngine` is no longer exported: it only drew the same UI without the custom element.
+  Use `<web-multiselect>`** (drive it through `el.controller`; set config as properties or with
+  `el.setAttributes({ … })`). The config / option / context / event-detail types stay exported (rulebook C-CA-37).
+
 ### Added — `translateCallback` (2026-11-20)
 - **New input `translateCallback(ctx)`** (property, `on: 'update'`, core `TranslateCallback`): this element's own label
   translator (core `/locale`). Asked for every label key this instance's `labels` did not set, BEFORE the page-wide

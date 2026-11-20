@@ -8,9 +8,6 @@ import { logging } from './logger';
 // Export the web component
 export { MultiSelectElement };
 
-// The dropdown engine, for standalone use only — element consumers use `el.controller`.
-export { MultiSelectEngine } from './multiselect';
-
 // data-options authoring formats (data-options-format)
 export { parseOptionsData, OPTIONS_FORMATS } from './option-formats';
 export { normalizeSearchText } from '@keenmate/web-components-core/search';

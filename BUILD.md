@@ -199,14 +199,14 @@ dist/
 ## Code Organization
 
 ### Core Class (multiselect.ts)
-The `MultiSelectEngine` class contains all the logic:
+The internal `MultiSelectEngine` class (not exported — the element is the API) contains all the logic:
 - Option management
 - Search/filtering
 - Keyboard navigation
 - Dropdown positioning
 - Event handling
 
-It can be used standalone without the web component wrapper; when you use the element, drive it through `el.controller` instead.
+Drive it through the element — `el.controller` is the public facade.
 
 ### Web Component (web-component.ts)
 The `MultiSelectElement` class wraps the core class in a custom element:

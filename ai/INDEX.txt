@@ -266,7 +266,6 @@ Vite → import-patterns.txt, basic-setup.txt
 W
 -
 Web Component → basic-setup.txt, import-patterns.txt
-MultiSelectEngine → import-patterns.txt, typescript-types.txt
 Wildcards → data-handling.txt
 
 COMMON QUESTIONS

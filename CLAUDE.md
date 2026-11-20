@@ -75,7 +75,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A feature-rich multiselect web component with typeahead search, virtual scrolling, grouping, and extensive customization options. Published as `@keenmate/web-multiselect` on npm.
 
-Core logic lives in `src/multiselect.ts` (the generic `MultiSelectEngine<T>` class — search, selection, keyboard nav, virtual scrolling); `src/web-component.ts` wraps it as the `<web-multiselect>` custom element (Shadow DOM, attribute/property reflection, events, form integration); `src/types.ts` holds the config/callback interfaces. Data extraction uses a member/callback pattern (`valueMember` + `getValueCallback`), similar to svelte-treeview.
+Core logic lives in `src/multiselect.ts` (the generic `MultiSelectEngine<T>` class — INTERNAL, not exported (rulebook C-CA-37: it only draws the element's UI); search, selection, keyboard nav, virtual scrolling); `src/web-component.ts` wraps it as the `<web-multiselect>` custom element (Shadow DOM, attribute/property reflection, events, form integration); `src/types.ts` holds the config/callback interfaces. Data extraction uses a member/callback pattern (`valueMember` + `getValueCallback`), similar to svelte-treeview.
 
 ## Naming Conventions
 
