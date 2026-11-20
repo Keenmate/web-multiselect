@@ -51,9 +51,29 @@ Icons support multiple formats — emojis, SVG markup, Font Awesome, images, or 
 </script>
 ```
 
+### How an icon string is read
+
+Option `icon` / `getIconCallback` and action-button `icon` go through core `renderIcon` (one rule for every
+Keenmate component), first match wins:
+
+1. markup (starts with `<`) → inserted as is;
+2. a built-in name (`check`, `close`, `settings`, `delete`, `search`, … the `--base-icon-*` glyphs) → a masked
+   glyph in `currentColor` — reserved, no hook sees it;
+3. this element's `renderIconCallback(name, ctx)`, then the page-wide `window.components.renderIconCallback` →
+   markup, or `null` / `undefined` = not mine (the next step decides);
+4. class names (`fa-solid fa-flag`, `bi-gear`) → `<i class="ms__icon fa-solid fa-flag" aria-hidden="true">`;
+5. anything else (an emoji) → text.
+
+```javascript
+// This picker maps its own names; ctx = { component, element, prefix: 'ms', option } (or `item` on an action button).
+select.renderIconCallback = (name, ctx) => (name.startsWith('lucide-') ? lucideSvg(name.slice(7)) : null);
+// Every component on the page (asked after the element's own hook):
+window.components.renderIconCallback = (name) => (name === 'moon' ? moonSvg : null);
+```
+
 ### Icons in Shadow DOM — SVG vs. font icons
 
-The component renders in **Shadow DOM**, which changes how icons reach it. This applies anywhere you pass icon HTML: option `icon`, badge/option render callbacks, etc. (Action button `text` / `icon` are plain text, not HTML.)
+The component renders in **Shadow DOM**, which changes how icons reach it. This applies anywhere you pass icon HTML: option `icon`, badge/option render callbacks, etc. (Action-button `text` is plain text; its `icon` follows the icon rule above.)
 
 | Icon type | Works out of the box? | What's needed |
 |---|---|---|

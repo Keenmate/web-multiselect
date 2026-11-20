@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — `renderIconCallback` (2026-11-20)
+- **New input `renderIconCallback(name, ctx)`** (property, `on: 'update'`): this element's own icon hook (core
+  `renderIcon`, SPEC §12.33). Asked for an option / action-button icon string that is not markup and not a built-in
+  name, BEFORE the page-wide `window.components.renderIconCallback` — one multiselect needs no page setup. Return
+  markup (`''` = no icon), or `null` / `undefined` = not mine (the page hook decides). `ctx` = `{ component,
+  element, prefix: 'ms' }` + `option` (an option icon) or `item` (an action button); both hooks get it now (the
+  page hook used to get no `element` / item). Changing it re-renders the icons in place.
+- `.ms__icon` rule (`flex: none`, font size inherited) so an icon-font `<i>` sits like the masked built-in glyph.
+
+### Changed — the core icon order (2026-11-20)
+- **BREAKING: a one-word icon that is NOT a built-in name is now an icon-font class, not a mask** (core rc25).
+  Option `icon` / `getIconCallback` / action-button `icon` strings resolve: markup (`<…`) → raw; a built-in name
+  (`check`, `close`, `settings`, `delete`, … — core `BUILT_IN_ICON_NAMES`, the `--base-icon-*` glyphs) → masked
+  `.km-icon`, never sent to a hook; the element's `renderIconCallback`, then the page-wide one; ASCII class names
+  → `<i class="ms__icon fa-solid fa-flag" aria-hidden="true">`; anything else → escaped text. Before, `'star'`
+  rendered a `--base-icon-star` mask; now it renders `<i class="ms__icon star">`. Use a built-in name, markup, or
+  map the name in `renderIconCallback`.
+
 ### Changed — label keys are flat `<elementType>.<name>` (2026-11-19)
 - **BREAKING: every `labels` key is renamed** to the core `/locale` shape (rulebook D-NC-24): a flat
   `<elementType>.<name>` key, the element type chosen by where the text is shown. A string that fed both an

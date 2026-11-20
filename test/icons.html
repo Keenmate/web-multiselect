@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — icons (core renderIcon)</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>icons (core renderIcon)</h1>
+    <p>Targeted by <code>e2e/icons.spec.ts</code>. Option / action-button icon strings go through core
+    <code>renderIcon</code>: markup, built-in name (mask), the element's <code>renderIconCallback</code>,
+    the page-wide <code>window.components.renderIconCallback</code>, icon-font class list, text.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">option icons (options assigned by the spec)</div>
+        <web-multiselect id="ms-icons" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">action-button icons</div>
+        <web-multiselect id="ms-actions" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            document.getElementById('ms-actions').options = [
+                { value: 'a', label: 'A' },
+                { value: 'b', label: 'B' }
+            ];
+        });
+    </script>
+</body>
+</html>

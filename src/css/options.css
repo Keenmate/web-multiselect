@@ -431,6 +431,15 @@
   fill: currentColor;
 }
 
+/* An icon drawn by core renderIcon (options + action buttons): the masked built-in
+   `.km-icon` span or an icon-font `<i class="ms__icon fa-solid fa-flag">` — both sit
+   as one fixed glyph at the surrounding font size. */
+.ms__icon {
+  flex: none;
+  font-size: inherit;
+  line-height: 1;
+}
+
 /* Empty icon gutter — rendered on icon-less rows only when `reserve-icon-slot` is on,
    so a list mixing icon and icon-less rows keeps one label start column. It inherits the
    fixed box from .ms__option-icon (flex-shrink:0 + --ms-option-icon-size); the modifier

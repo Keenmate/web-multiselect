@@ -1759,7 +1759,7 @@ export class MultiSelectEngine<T = any> {
 
             // Icon + label are text, never HTML.
             let inner = '';
-            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${renderIcon(resolved.icon, { prefix: 'ms' })}</span>`;
+            if (resolved.icon) inner += `<span class="ms__action-btn-icon" aria-hidden="true">${renderIcon(resolved.icon, { prefix: 'ms', host: this.hostEl(), context: { item } })}</span>`;
             if (resolved.text) inner += `<span class="ms__action-btn-label">${escapeHtml(resolved.text)}</span>`;
 
             const rowNum = Math.max(1, Math.floor(item.row ?? 1));
@@ -1820,9 +1820,9 @@ export class MultiSelectEngine<T = any> {
                 isTreeNode: false
             });
             const callback = this.options.renderOptionContentCallback;
-            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(icon, displayValue, subtitle)).html;
+            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(option, icon, displayValue, subtitle)).html;
         } else {
-            html += this.defaultOptionContentHtml(icon, displayValue, subtitle);
+            html += this.defaultOptionContentHtml(option, icon, displayValue, subtitle);
         }
 
         html += this.renderOptionInfoButton();
@@ -1925,9 +1925,9 @@ export class MultiSelectEngine<T = any> {
                 isIndeterminate
             });
             const callback = this.options.renderOptionContentCallback;
-            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(icon, displayValue, subtitle)).html;
+            html += renderSlotHtml(() => callback(context), () => this.defaultOptionContentHtml(option, icon, displayValue, subtitle)).html;
         } else {
-            html += this.defaultOptionContentHtml(icon, displayValue, subtitle);
+            html += this.defaultOptionContentHtml(option, icon, displayValue, subtitle);
         }
 
         html += this.renderOptionInfoButton();
@@ -5107,10 +5107,10 @@ export class MultiSelectEngine<T = any> {
      * The built-in option content: icon (or the reserved gutter), the highlighted title and the subtitle.
      * Also what a `renderOptionContentCallback` returning `null` / `undefined` gets (core `renderSlotHtml`).
      */
-    private defaultOptionContentHtml(icon: string | undefined, displayValue: string, subtitle: string | undefined): string {
+    private defaultOptionContentHtml(option: T, icon: string | undefined, displayValue: string, subtitle: string | undefined): string {
         let html = '';
         if (icon) {
-            html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms' })}</span>`;
+            html += `<span class="ms__option-icon">${renderIcon(icon, { prefix: 'ms', host: this.hostEl(), context: { option } })}</span>`;
         } else if (this.options.shouldReserveIconSlot) {
             // Reserve the fixed-width gutter so icon-less rows keep the same label start column
             // as rows that have an icon (most visible in a tree, where depth indent offsets each row).

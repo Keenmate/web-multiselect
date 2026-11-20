@@ -3,7 +3,7 @@
  */
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
-import type { PresentationContext, ComponentContext, RenderLoaderCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
+import type { PresentationContext, ComponentContext, RenderLoaderCallback, RenderIconCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './utils/ltree-node';
 import type { OptionsFormat } from './option-formats';
@@ -777,6 +777,15 @@ export interface MultiSelectConfig<T = any> {
      * `.ms__loader` drawn from the `--ms-loader-*` tokens.
      */
     renderLoadingCallback?: RenderLoaderCallback | null;
+    /**
+     * This element's icon hook (core `renderIcon`, SPEC §12.33). Asked for an option / action-button
+     * icon string that is not markup and not a built-in name (built-ins are reserved, no hook sees
+     * them), BEFORE the page-wide `window.components.renderIconCallback`. Return markup (`''` = no
+     * icon), or `null` / `undefined` = not mine (the page hook, then the icon-font / text rule).
+     * `ctx` carries `{ component, element, prefix: 'ms' }` + `option` (an option icon) or `item`
+     * (an action button).
+     */
+    renderIconCallback?: RenderIconCallback | null;
     /** Custom renderer for badge content (main badges area) - return HTML string or HTMLElement */
     renderBadgeContentCallback?: (ctx: BadgeContentRenderContext<T>) => string | HTMLElement | null | undefined | false;
     /**

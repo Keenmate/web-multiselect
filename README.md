@@ -200,7 +200,7 @@ markup. Sanitize any untrusted text before passing it in:
 | `getBadgeDisplayCallback` | Badge text (innerHTML) |
 | Full title (`fullTitleMember` / `getFullTitleCallback`) | Badge text when `isBadgeFullTitleShown` (innerHTML) |
 | Subtitle (`subtitleMember` / `getSubtitleCallback`) | Option subtitle (innerHTML) |
-| Icon (`iconMember` / `getIconCallback`), action-button `icon` | Option / action-button icon when it starts with `<` (innerHTML); a name (`star`) is a `--base-icon-star` mask, anything else text |
+| Icon (`iconMember` / `getIconCallback`), action-button `icon` | Option / action-button icon when it starts with `<` (innerHTML); a built-in name (`check`) is a `--base-icon-check` mask, then `renderIconCallback` / the page-wide hook (their markup is innerHTML), class names (`fa-solid fa-flag`) an icon-font `<i>`, anything else text |
 
 All other labels (ARIA labels, tooltips, placeholders, popover title, action-button texts) are
 plain text, as are `showMessage()` strings and `renderSelectedContentCallback` (the closed input's value).
