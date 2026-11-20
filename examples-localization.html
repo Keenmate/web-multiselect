@@ -1,0 +1,358 @@
+<meta name="kmwc:title" content="Localization">
+<meta name="kmwc:subtitle" content="The shared localization page — instance <code>labels</code>, the page-wide dictionary, <code>translateCallback</code>, screen-reader / tooltip twins, <code>locale</code> number formatting and <code>shouldEscapeLabels</code>, in the same six sections every Keenmate component has.">
+
+    <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
+    <link rel="stylesheet" href="/src/css/main.css">
+
+        <div class="note">
+            Every UI string goes through core <code>/locale</code>. Keys are flat <code>&lt;elementType&gt;.&lt;name&gt;</code>
+            (<code>placeholders.search</code>, <code>labels.selectedCount</code>, <code>ariaLabels.removeItem</code>, …) — the full
+            list is the <code>labels</code> property in <code>docs/usage.md</code>. Per key: the instance <code>labels</code>
+            (short or full <code>web-multiselect.</code> key) → the element's own <code>translateCallback</code> → the page-wide
+            <code>translateCallback</code> → the page dictionary <code>window.components.locale.labels</code> → the built-in English.
+            The page-wide toggles (LO02, LO03, LO05, LO06) are <strong>page-wide</strong>: they change every picker on this page,
+            on purpose.
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO01 · Instance labels                                        -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO01 · Instance <code>labels</code></h2>
+            <p>
+                Override texts on ONE element with the <code>labels</code> property (or a JSON <code>labels</code> attribute).
+                A short key (<code>labels.selectedCount</code>, <code>buttons.clearSelection</code>) and a full key
+                (<code>web-multiselect.buttons.selectAll</code>) both work; every key you leave out stays English (open the
+                dropdown: the search placeholder is still <code>Search…</code>). The neighbour picker is untouched.
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="lo01-labels" checked> instance <code>labels</code> on the first picker</label>
+            </div>
+            <div class="demo-area">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="demo-label">With <code>labels</code></label>
+                        <web-multiselect id="lo01" class="lo-picker" multiple badges-display-mode="count"></web-multiselect>
+                    </div>
+                    <div class="form-group">
+                        <label class="demo-label">Without (English)</label>
+                        <web-multiselect id="lo01-plain" class="lo-picker" multiple badges-display-mode="count"></web-multiselect>
+                    </div>
+                </div>
+                <div class="output"><div class="output-label">rendered strings</div><pre id="lo01-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="js"><pre><code>el.labels = {
+  'labels.selectedCount': '{count} vybráno',          // short key
+  'buttons.clearSelection': 'Zrušit výběr',
+  'web-multiselect.buttons.selectAll': 'Vybrat vše',  // full key
+};
+// or declaratively
+&lt;web-multiselect labels='{"labels.selectedCount": "{count} vybráno"}'&gt;&lt;/web-multiselect&gt;</code></pre></div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO02 · Page-wide dictionary                                    -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO02 · Page-wide dictionary</h2>
+            <p>
+                One flat dictionary on <code>window.components.locale.labels</code> — the app's translation JSON as loaded,
+                full keys <code>'web-multiselect.&lt;elementType&gt;.&lt;name&gt;'</code>, other components' keys side by side —
+                translates every multiselect on the page at once. Assigning <code>window.components.locale</code> re-renders the
+                live pickers (selection kept). Keys an instance set itself (LO01) still win.
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="lo02-dict"> page dictionary (Czech)</label>
+            </div>
+            <div class="demo-area">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="demo-label">Count mode</label>
+                        <web-multiselect id="lo02a" class="lo-picker" multiple badges-display-mode="count"></web-multiselect>
+                    </div>
+                    <div class="form-group">
+                        <label class="demo-label">Partial badges</label>
+                        <web-multiselect id="lo02b" class="lo-picker" multiple badges-display-mode="partial" max-visible-badge-count="1"></web-multiselect>
+                    </div>
+                </div>
+                <div class="output"><div class="output-label">rendered strings</div><pre id="lo02-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="js"><pre><code>// e.g. const labels = await (await fetch('/i18n/cs.json')).json();
+window.components.locale = {
+  labels: {
+    'web-multiselect.placeholders.search': 'Hledat…',
+    'web-multiselect.labels.selectedCount': '{count} vybráno',
+    'web-multiselect.labels.moreCount': '+{count} další',
+    'web-multiselect.messages.noResults': 'Nic nenalezeno',
+    'web-multiselect.buttons.selectAll': 'Vybrat vše',
+    'web-multiselect.buttons.clearSelection': 'Zrušit výběr',
+    'web-daterangepicker.buttons.apply': 'Použít',          // other components share the same JSON
+  },
+};</code></pre></div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO03 · translateCallback                                       -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO03 · <code>translateCallback</code></h2>
+            <p>
+                An app with its own i18n (i18next, FormatJS, …) answers keys through a callback instead of a dictionary. It gets
+                <code>{ component, key, template, params, locale }</code> — <code>key</code> is the full
+                <code>web-multiselect.&lt;elementType&gt;.&lt;name&gt;</code> — and returns the text, or <code>null</code> = not mine.
+                The element's own <code>translateCallback</code> is asked first (German, only <code>labels.selectedCount</code>
+                here); its <code>null</code> passes the key on to the page-wide one (a small Slovak i18next-like lookup). A key
+                the instance <code>labels</code> set (the second picker's <code>labels.selectedCount</code>) is never sent to any
+                callback.
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="lo03-page"> page-wide <code>translateCallback</code> (Slovak)</label>
+                <label><input type="checkbox" id="lo03-own"> first picker's own <code>translateCallback</code> (German)</label>
+            </div>
+            <div class="demo-area">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="demo-label">Own callback</label>
+                        <web-multiselect id="lo03a" class="lo-picker" multiple badges-display-mode="count"></web-multiselect>
+                    </div>
+                    <div class="form-group">
+                        <label class="demo-label">Instance <code>labels.selectedCount</code></label>
+                        <web-multiselect id="lo03b" class="lo-picker" multiple badges-display-mode="count"
+                            labels='{"labels.selectedCount": "Instance wins: {count}"}'></web-multiselect>
+                    </div>
+                </div>
+                <div class="output"><div class="output-label">rendered strings</div><pre id="lo03-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="js"><pre><code>// an i18next-like lookup: a dictionary + t(key, params)
+const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
+const t = (key, params) =&gt; sk[key]?.replace(/\{\{(\w+)\}\}/g, (_, p) =&gt; params?.[p] ?? '');
+const exists = (key) =&gt; key in sk;
+
+// page-wide — every component on the page
+window.components.locale = { translateCallback: ({ key, params }) =&gt; (exists(key) ? t(key, params) : null) };
+
+// one element — asked BEFORE the page-wide callback; null = not mine
+el.translateCallback = ({ key, params }) =&gt;
+  key === 'web-multiselect.labels.selectedCount' ? `${params.count} ausgewählt` : null;</code></pre></div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO04 · Screen-reader name / tooltip follow                     -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO04 · Screen-reader name / tooltip follow</h2>
+            <p>
+                An <code>ariaLabels.x</code> / <code>tooltips.x</code> nobody set takes the first customized key of the same
+                <code>&lt;name&gt;</code>, so translating one string of a pair translates its twin. In multiselect no visible
+                caption has an aria / tooltip twin of the same name (the <code>buttons.*</code> action buttons are named by their
+                visible text), so the pair shown here is the badge remove (×) button: translate only
+                <code>tooltips.removeItem</code> (the hover tooltip, <code>enable-badge-tooltips</code>) and the button's
+                accessible name <code>ariaLabels.removeItem</code> — which nobody set — follows. The box below reads
+                <code>aria-label</code> from the shadow root.
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="lo04-tooltip"> translate <code>tooltips.removeItem</code> only</label>
+            </div>
+            <div class="demo-area">
+                <label class="demo-label">Hover a badge's × for the tooltip</label>
+                <web-multiselect id="lo04" class="lo-picker" multiple enable-badge-tooltips></web-multiselect>
+                <div class="output"><div class="output-label">accessible name of the first × button</div><pre id="lo04-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="js"><pre><code>el.labels = { 'tooltips.removeItem': 'Odebrat {item}' };
+// → tooltip "Odebrat Apple" AND aria-label "Odebrat Apple" (ariaLabels.removeItem was never set)
+// an explicitly set ariaLabels.removeItem always wins over the twin</code></pre></div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO05 · locale + formatting                                     -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO05 · <code>locale</code> + formatting</h2>
+            <p>
+                Numbers in labels (<code>{count}</code> in <code>labels.selectedCount</code>, the dropdown group-count chip) are
+                formatted for the element's language: the <code>locale</code> input → the page
+                <code>window.components.locale.locale</code> → the browser. 1,234 options are selected in each picker. Multiselect
+                formats no dates — numbers only.
+            </p>
+            <div class="controls"><strong class="muted">page locale</strong>
+                <label><input type="radio" name="lo05-locale" value="" checked> unset (browser)</label>
+                <label><input type="radio" name="lo05-locale" value="de-DE"> de-DE</label>
+                <label><input type="radio" name="lo05-locale" value="cs-CZ"> cs-CZ</label>
+                <label><input type="radio" name="lo05-locale" value="en-IN"> en-IN</label>
+            </div>
+            <div class="demo-area">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="demo-label"><code>locale="en-US"</code> (its own — ignores the page)</label>
+                        <web-multiselect id="lo05a" class="lo-picker lo-big" multiple badges-display-mode="count" locale="en-US"></web-multiselect>
+                    </div>
+                    <div class="form-group">
+                        <label class="demo-label">No <code>locale</code> (page → browser)</label>
+                        <web-multiselect id="lo05b" class="lo-picker lo-big" multiple badges-display-mode="count"></web-multiselect>
+                    </div>
+                </div>
+                <div class="output"><div class="output-label">rendered strings</div><pre id="lo05-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="html"><pre><code>&lt;web-multiselect locale="en-US"&gt;&lt;/web-multiselect&gt;   &lt;!-- "1,234 selected" --&gt;
+&lt;script&gt;
+  window.components.locale = { locale: 'de-DE' };       // every picker without its own locale: "1.234 selected"
+&lt;/script&gt;</code></pre></div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- LO06 · shouldEscapeLabels                                      -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO06 · <code>shouldEscapeLabels</code></h2>
+            <p>
+                Markup labels (<code>labels.addNew</code>, <code>messages.addNewPending</code>, <code>messages.searching</code>)
+                are HTML templates: the template's own <code>&lt;b&gt;</code> renders bold, while the <code>{value}</code> — the
+                user's typed text, DATA — is always escaped. That is why the typed <code>&lt;i&gt;Ann&lt;/i&gt;</code> shows its
+                tags as text instead of turning italic. With
+                <code>window.components.security.shouldEscapeLabels</code> the whole label is text: the template's
+                <code>&lt;b&gt;</code> shows as characters too (for apps whose translators must not inject markup).
+            </p>
+            <div class="controls">
+                <label><input type="checkbox" id="lo06-escape"> <code>shouldEscapeLabels</code></label>
+                <button type="button" id="lo06-type" class="btn-outline">Type <code>&lt;i&gt;Ann&lt;/i&gt;</code> into the search</button>
+            </div>
+            <div class="demo-area">
+                <label class="demo-label"><code>allow-add-new</code> + <code>labels.addNew</code> = <code>Add &lt;b&gt;{value}&lt;/b&gt;</code></label>
+                <web-multiselect id="lo06" class="lo-picker" multiple allow-add-new
+                    labels='{"labels.addNew": "Add <b>{value}</b>"}'></web-multiselect>
+                <div class="output"><div class="output-label">the add-new row: markup → shown text</div><pre id="lo06-out"></pre></div>
+            </div>
+            <div class="code-block" data-language="js"><pre><code>el.labels = { 'labels.addNew': 'Add &lt;b&gt;{value}&lt;/b&gt;' };
+// typed "&lt;i&gt;Ann&lt;/i&gt;" → Add &lt;b&gt;&amp;lt;i&amp;gt;Ann&amp;lt;/i&amp;gt;&lt;/b&gt;   (bold, tags of the data as text)
+window.components.security = { shouldEscapeLabels: true };
+// → Add &amp;lt;b&amp;gt;&amp;lt;i&amp;gt;Ann…   (the whole label is text)</code></pre></div>
+        </div>
+
+    <script type="module">
+        const $ = (id) => document.getElementById(id);
+        const FRUITS = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Kiwi', 'Lemon', 'Mango']
+            .map((label) => ({ value: label.toLowerCase(), label }));
+        const BIG = Array.from({ length: 1234 }, (_, i) => ({ value: `v${i}`, label: `Item ${i + 1}`, group: 'Items' }));
+
+        // ── Page-wide state: window.components.locale is ONE object (assigning replaces it), so every
+        //    page-wide toggle (LO02 dictionary, LO03 callback, LO05 locale) composes it from here.
+        const page = { labels: null, translateCallback: null, locale: '' };
+        const applyPage = () => {
+            const next = {};
+            if (page.labels) next.labels = page.labels;
+            if (page.translateCallback) next.translateCallback = page.translateCallback;
+            if (page.locale) next.locale = page.locale;
+            window.components.locale = next;
+            refreshAll();
+        };
+
+        // ── Readouts: what the shadow root actually renders.
+        const sr = (id) => $(id).shadowRoot;
+        const badgeText = (id) => [...(sr(id)?.querySelectorAll('.ms__badge') ?? [])].map((b) => b.textContent.trim()).filter(Boolean).join(' | ') || '(none)';
+        const buttons = (id) => [...(sr(id)?.querySelectorAll('.ms__action-btn') ?? [])].map((b) => b.textContent.trim()).join(' / ') || '(none)';
+        const removeName = (id) => sr(id)?.querySelector('.ms__badge-remove')?.getAttribute('aria-label') ?? '(none)';
+        const settle = async () => {
+            await Promise.all([...document.querySelectorAll('web-multiselect')].map((el) => el.whenSettled?.()));
+            await new Promise((r) => requestAnimationFrame(() => r()));
+        };
+        const write = (id, lines) => { $(id).textContent = lines.join('\n'); };
+
+        async function refreshAll() {
+            await settle();
+            write('lo01-out', [
+                `#lo01        badge: ${badgeText('lo01')}   buttons: ${buttons('lo01')}`,
+                `#lo01-plain  badge: ${badgeText('lo01-plain')}   buttons: ${buttons('lo01-plain')}`,
+            ]);
+            write('lo02-out', [
+                `#lo02a  badge: ${badgeText('lo02a')}   buttons: ${buttons('lo02a')}`,
+                `#lo02b  badges: ${badgeText('lo02b')}`,
+            ]);
+            write('lo03-out', [
+                `#lo03a  badge: ${badgeText('lo03a')}   buttons: ${buttons('lo03a')}`,
+                `#lo03b  badge: ${badgeText('lo03b')}   buttons: ${buttons('lo03b')}`,
+            ]);
+            write('lo04-out', [`aria-label: ${removeName('lo04')}`]);
+            write('lo05-out', [
+                `#lo05a (en-US)  badge: ${badgeText('lo05a')}`,
+                `#lo05b (page)   badge: ${badgeText('lo05b')}`,
+            ]);
+            const row = sr('lo06')?.querySelector('.ms__add-new');
+            write('lo06-out', row
+                ? [`markup: ${row.innerHTML.trim()}`, `text:   ${row.textContent.trim()}`]
+                : ['(click "Type <i>Ann</i>" — or type into the picker — to show the add-new row)']);
+        }
+
+        // ── Data.
+        for (const el of document.querySelectorAll('web-multiselect.lo-picker')) {
+            el.valueMember = 'value';
+            el.displayValueMember = 'label';
+            if (el.classList.contains('lo-big')) {
+                el.groupMember = 'group';
+                el.options = BIG;
+                el.setSelected(BIG.map((o) => o.value));
+            } else {
+                el.options = FRUITS;
+                if (el.id !== 'lo06') el.setSelected(['apple', 'banana', 'cherry']);
+            }
+        }
+        for (const id of ['lo01', 'lo01-plain', 'lo02a', 'lo03a', 'lo03b']) $(id).actionButtons = ['select-all', 'clear-selection'];
+
+        // ── LO01 · instance labels.
+        const LO01_LABELS = {
+            'labels.selectedCount': '{count} vybráno',
+            'buttons.clearSelection': 'Zrušit výběr',
+            'web-multiselect.buttons.selectAll': 'Vybrat vše',
+        };
+        const lo01 = () => { $('lo01').labels = $('lo01-labels').checked ? LO01_LABELS : undefined; refreshAll(); };
+        $('lo01-labels').addEventListener('change', lo01);
+        lo01();
+
+        // ── LO02 · page dictionary.
+        const CS = {
+            'web-multiselect.placeholders.search': 'Hledat…',
+            'web-multiselect.labels.selectedCount': '{count} vybráno',
+            'web-multiselect.labels.moreCount': '+{count} další',
+            'web-multiselect.messages.noResults': 'Nic nenalezeno',
+            'web-multiselect.buttons.selectAll': 'Vybrat vše',
+            'web-multiselect.buttons.clearSelection': 'Zrušit výběr',
+            'web-daterangepicker.buttons.apply': 'Použít',
+        };
+        $('lo02-dict').addEventListener('change', (e) => { page.labels = e.target.checked ? CS : null; applyPage(); });
+
+        // ── LO03 · translateCallback.
+        const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
+        const t = (key, params) => sk[key].replace(/\{\{(\w+)\}\}/g, (_, p) => String(params?.[p] ?? ''));
+        const pageTranslate = ({ key, params }) => (key in sk ? t(key, params) : null);
+        const ownTranslate = ({ key, params }) => (key === 'web-multiselect.labels.selectedCount' ? `${params.count} ausgewählt` : null);
+        $('lo03-page').addEventListener('change', (e) => { page.translateCallback = e.target.checked ? pageTranslate : null; applyPage(); });
+        $('lo03-own').addEventListener('change', (e) => { $('lo03a').translateCallback = e.target.checked ? ownTranslate : undefined; refreshAll(); });
+
+        // ── LO04 · twin follow.
+        $('lo04-tooltip').addEventListener('change', (e) => {
+            $('lo04').labels = e.target.checked ? { 'tooltips.removeItem': 'Odebrat {item}' } : undefined;
+            refreshAll();
+        });
+
+        // ── LO05 · page locale.
+        for (const radio of document.querySelectorAll('input[name="lo05-locale"]')) {
+            radio.addEventListener('change', (e) => { page.locale = e.target.value; applyPage(); });
+        }
+
+        // ── LO06 · shouldEscapeLabels.
+        let hasTyped = false;   // the checkbox click closes the dropdown — re-show the row after the toggle
+        const typeAnn = async () => {
+            hasTyped = true;
+            await settle();
+            $('lo06').open();
+            $('lo06').search('<i>Ann</i>');
+            refreshAll();
+        };
+        $('lo06-escape').addEventListener('change', async (e) => {
+            window.components.security = { shouldEscapeLabels: e.target.checked };
+            if (hasTyped) await typeAnn(); else refreshAll();
+        });
+        $('lo06-type').addEventListener('click', typeAnn);
+        $('lo06').addEventListener('input', () => setTimeout(refreshAll, 50));
+
+        refreshAll();
+    </script>

@@ -118,3 +118,55 @@ test.describe('Builder playground (examples-builder.html)', () => {
         await expect(page.locator('#ctl-selected-order-member')).toBeVisible();
     });
 });
+
+test.describe('Localization page (examples-localization.html)', () => {
+    /** The shared LO01–LO06 page: no console errors, every toggle changes the text its readout shows. */
+    test('every toggle changes the shown text', async ({ page }) => {
+        const consoleErrors: string[] = [];
+        page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+        await page.goto('/examples-localization.html');
+        const out = (id: string) => page.locator(`#${id}`);
+
+        // LO01 — instance labels (on by default), off → English.
+        await expect(out('lo01-out')).toContainText('#lo01        badge: 3 vybráno');
+        await expect(out('lo01-out')).toContainText('buttons: Vybrat vše / Zrušit výběr');
+        await page.locator('#lo01-labels').uncheck();
+        await expect(out('lo01-out')).toContainText('#lo01        badge: 3 selected');
+
+        // LO02 — page dictionary translates every picker.
+        await expect(out('lo02-out')).toContainText('#lo02a  badge: 3 selected');
+        await page.locator('#lo02-dict').check();
+        await expect(out('lo02-out')).toContainText('#lo02a  badge: 3 vybráno');
+        await expect(out('lo02-out')).toContainText('+2 další');
+        await page.locator('#lo02-dict').uncheck();
+        await expect(out('lo02-out')).toContainText('#lo02a  badge: 3 selected');
+
+        // LO03 — page callback, then the element's own one first; instance labels still win.
+        await page.locator('#lo03-page').check();
+        await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 vybraté');
+        await expect(out('lo03-out')).toContainText('#lo03b  badge: Instance wins: 3');
+        await page.locator('#lo03-own').check();
+        await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 ausgewählt   buttons: Vybrať všetko / Clear all');
+        await page.locator('#lo03-page').uncheck();
+        await page.locator('#lo03-own').uncheck();
+        await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 selected');
+
+        // LO04 — tooltips.removeItem only → the aria-label twin follows.
+        await expect(out('lo04-out')).toHaveText('aria-label: Remove Apple');
+        await page.locator('#lo04-tooltip').check();
+        await expect(out('lo04-out')).toHaveText('aria-label: Odebrat Apple');
+
+        // LO05 — the page locale reaches the picker without its own locale only.
+        await page.locator('input[name="lo05-locale"][value="de-DE"]').check();
+        await expect(out('lo05-out')).toContainText('(page)   badge: 1.234 selected');
+        await expect(out('lo05-out')).toContainText('(en-US)  badge: 1,234 selected');
+
+        // LO06 — data escaped, template markup raw; shouldEscapeLabels → all text.
+        await page.locator('#lo06-type').click();
+        await expect(out('lo06-out')).toContainText('text:   Add <i>Ann</i>');
+        await page.locator('#lo06-escape').check();
+        await expect(out('lo06-out')).toContainText('text:   Add <b><i>Ann</i></b>');
+
+        expect(consoleErrors).toEqual([]);
+    });
+});

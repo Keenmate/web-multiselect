@@ -8,6 +8,7 @@ Working examples and recipes for `@keenmate/web-multiselect`. For the runnable d
 | [`examples-data-api.html`](../examples-data-api.html) | Data feeding (objects, tuples, callbacks, async, cascading) + public API, forms, events |
 | [`examples-custom-rendering.html`](../examples-custom-rendering.html) | Custom rendering callbacks |
 | [`examples-action-buttons.html`](../examples-action-buttons.html) | Select All / Clear All / custom actions |
+| [`examples-localization.html`](../examples-localization.html) | Localization — `labels`, page dictionary, `translateCallback`, twins, `locale`, `shouldEscapeLabels` |
 | [`examples-theming.html`](../examples-theming.html) | Full `--ms-*` theming surface |
 | [`examples-positioning.html`](../examples-positioning.html) | Floating UI positioning edge cases |
 | [`examples-virtual-scrolling.html`](../examples-virtual-scrolling.html) | Virtual scroll with 15,000 items |

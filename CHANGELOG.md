@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Docs — localization page (2026-11-21)
+- `examples-localization.html` — the shared localization page (LO01–LO06: instance `labels`, page-wide dictionary,
+  `translateCallback`, aria-label / tooltip twin follow, `locale` number formatting, `shouldEscapeLabels`).
+
 ### Removed — `MultiSelectEngine` export (2026-11-20)
 - **BREAKING: `MultiSelectEngine` is no longer exported: it only drew the same UI without the custom element.
   Use `<web-multiselect>`** (drive it through `el.controller`; set config as properties or with
