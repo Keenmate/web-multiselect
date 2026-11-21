@@ -41,7 +41,7 @@ The component ships an `aria-label` on every icon-only control. All of them are 
 | Fullscreen search clear (✕) | `Clear search` | `ariaLabels.clearSearch` |
 | Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `ariaLabels.prevMatch` / `ariaLabels.nextMatch` |
 | Option info button revealing a clipped label (fullscreen) | `Show full label` | `ariaLabels.showFullLabel` |
-| Group-header selected-count chip | `{count} selected` | `ariaLabels.groupSelected` |
+| Group-header selected-count chip (visually hidden text; the visible `[N]` is `aria-hidden`) | `{count} selected` | `ariaLabels.groupSelected` |
 | Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `tooltips.andMore` |
 | Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `ariaLabels.switchToFilterMode` / `ariaLabels.switchToNavigateMode` (`title`: `tooltips.*`) |
 

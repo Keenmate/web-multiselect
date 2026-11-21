@@ -45,7 +45,7 @@ test('per-group selected-count chip shows in a plain (non-cascade) grouped list'
     await openDropdown(p);
 
     const fruits = p.locator('.ms__group-label[data-group="Fruits"]');
-    const fruitsCount = fruits.locator('.ms__group-count');
+    const fruitsCount = fruits.locator('.ms__group-count-text');
 
     // No checkbox (not cascade) and no chip yet (nothing selected).
     await expect(fruits.locator('.ms__checkbox')).toHaveCount(0);
@@ -74,7 +74,7 @@ test('group header height does not shift when the count chip appears/disappears'
     const empty = (await fruits.boundingBox())!.height;
 
     await p.locator('.ms__option[data-value="a1"]').click();
-    await expect(fruits.locator('.ms__group-count')).toHaveText('[1]'); // chip now shown
+    await expect(fruits.locator('.ms__group-count-text')).toHaveText('[1]'); // chip now shown
     const withChip = (await fruits.boundingBox())!.height;
 
     // The chip shares the header font size and adds no vertical padding, so the row height holds.
@@ -94,7 +94,7 @@ test('getCountLabelCallback formats both the in-input counter and the group coun
     await p.locator('.ms__option[data-value="a2"]').click(); // Banana (Fruits)
 
     // Group count: 2 of 3 Fruits — the group's total is its member count.
-    await expect(p.locator('.ms__group-label[data-group="Fruits"] .ms__group-count')).toHaveText('2/3');
+    await expect(p.locator('.ms__group-label[data-group="Fruits"] .ms__group-count-text')).toHaveText('2/3');
     // In-input counter: 2 of 6 total options — same formatter, whole-list total.
     await expect(p.locator('.ms__counter')).toHaveText('2/6');
 });

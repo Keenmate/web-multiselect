@@ -35,7 +35,7 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
 /**
  * {count} interpolation across the three labels that use it. The `#lbl-count` fixture is
  * built to surface all three at once (grouped data + partial badges + counter, 14 selected):
- *   - ariaLabels.groupSelected      → the `.ms__group-count` header chip aria-label
+ *   - ariaLabels.groupSelected      → the `.ms__group-count` header chip's visually hidden spoken text
  *   - ariaLabels.removeHiddenItems  → the "+N more" badge's remove button aria-label
  *   - tooltips.andMore              → the counter chip's native `title` (cap is 12, so 14 → "…and 2 more")
  */
@@ -61,7 +61,15 @@ test('labels map interpolates {count} in group count, remove-hidden, and counter
     // ariaLabels.groupSelected — open the dropdown; Group A header has 10 selected.
     await p.locator('.ms__input').click();
     await expect(p.locator('.ms__dropdown')).toBeVisible();
-    await expect(p.locator('.ms__group-count').first()).toHaveAttribute('aria-label', '10 vybráno');
+    // The chip is a generic <span> (an aria-label there is ignored): the visible `[10]` is aria-hidden and the
+    // spoken text is a visually hidden sibling — so the header reads "<group> 10 vybráno", not "[10]".
+    const chip = p.locator('.ms__group-count').first();
+    await expect(chip).not.toHaveAttribute('aria-label', /.*/);
+    await expect(chip.locator('.ms__group-count-text')).toHaveText('[10]');
+    await expect(chip.locator('.ms__group-count-text')).toHaveAttribute('aria-hidden', 'true');
+    const header = p.locator('.ms__group-label').first();
+    expect(await header.ariaSnapshot()).toMatch(/10 vybráno/);
+    expect(await header.ariaSnapshot()).not.toMatch(/\[10\]/);
 });
 
 /**
@@ -144,11 +152,11 @@ test('instance locale formats the label count and the group chip; a sibling foll
     await expect(pg.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1,234 selected');
 
     await cs.locator('.ms__input').click();
-    await expect(cs.locator('.ms__group-count').first()).toHaveText(/^\[1\s234\]$/);
+    await expect(cs.locator('.ms__group-count-text').first()).toHaveText(/^\[1\s234\]$/);
     await page.keyboard.press('Escape');
 
     await pg.locator('.ms__input').click();
-    await expect(pg.locator('.ms__group-count').first()).toHaveText('[1,234]');
+    await expect(pg.locator('.ms__group-count-text').first()).toHaveText('[1,234]');
     await page.keyboard.press('Escape');
 
     // Removing the instance locale → it follows the page again.

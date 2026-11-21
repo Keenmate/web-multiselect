@@ -1301,11 +1301,17 @@ export class MultiSelectEngine<T = any> {
         return `[${formatNumber(selected, { locale: this.options.locale ?? undefined })}]`;
     }
 
-    /** Trailing count chip for a group header — any grouped list (rendered only when >0 selected). */
+    /**
+     * Trailing count chip for a group header — any grouped list (rendered only when >0 selected).
+     * The chip is a generic `<span>` (ARIA ignores an `aria-label` there), so the visible `[N]` is
+     * `aria-hidden` and the spoken text (`ariaLabels.groupSelected`) is a visually hidden sibling.
+     */
     private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
         const label = this.formatCountLabel(selectedCount, total, groupName);
-        return `<span class="ms__group-count" aria-label="${escapeHtml(this.labels.text('ariaLabels.groupSelected', { count: selectedCount }))}">${escapeHtml(label)}</span>`;
+        const spoken = this.labels.text('ariaLabels.groupSelected', { count: selectedCount });
+        return `<span class="ms__group-count"><span class="ms__group-count-text" aria-hidden="true">${escapeHtml(label)}</span>`
+            + `<span class="ms__visually-hidden">${escapeHtml(spoken)}</span></span>`;
     }
 
     /**

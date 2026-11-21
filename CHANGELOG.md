@@ -98,6 +98,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `andMore` | `tooltips.andMore` |
   | `valueFormatError` | `errors.valueFormat` |
 
+### Fixed — the group count chip is spoken (2026-11-22)
+- The group-header count chip's `ariaLabels.groupSelected` text (`{count} selected`) was an `aria-label` on a
+  role-less `<span>`, which ARIA ignores, so a screen reader read `[10]`. The chip now holds the visible
+  `<span class="ms__group-count-text" aria-hidden="true">[10]</span>` plus a visually hidden
+  `<span class="ms__visually-hidden">10 selected</span>`; it looks the same. A test / style that read the chip's
+  text should target `.ms__group-count-text`.
+
 ### Fixed — a key cancelled by `beforeKeydownCallback` is left alone (2026-11-17)
 - A key a `beforeKeydownCallback` cancels (returns `false`) is no longer `preventDefault`'ed: the combobox ARIA runs
   on core `createActiveDescendant` with `shouldHandleKeys: false` (ARIA only), so the helper no longer handled the

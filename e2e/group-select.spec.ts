@@ -152,7 +152,7 @@ test('cascade coexists with a custom group-label renderer', async ({ page }) => 
     expect(await val(p)).toEqual(['a1', 'a2', 'a3']);
 });
 
-const groupCount = (p: Locator, name: string) => groupLabel(p, name).locator('.ms__group-count');
+const groupCount = (p: Locator, name: string) => groupLabel(p, name).locator('.ms__group-count-text');
 
 test('cascade header shows a live selected-count chip (hidden at 0)', async ({ page }) => {
     const p = picker(page, 'group-cascade');

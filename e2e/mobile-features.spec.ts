@@ -45,7 +45,7 @@ test('cascade group header (checkbox + count) works inside the fullscreen overla
 
     const header = fsGroupLabel(p, 'Fruits');
     const box = header.locator('.ms__checkbox');
-    const count = header.locator('.ms__group-count');
+    const count = header.locator('.ms__group-count-text');
 
     // Nothing selected → no count chip.
     await expect(count).toHaveCount(0);
@@ -63,7 +63,7 @@ test('count chip updates on individual taps in the overlay (indeterminate → ch
     await openFullscreen(p);
 
     const box = fsGroupLabel(p, 'Fruits').locator('.ms__checkbox');
-    const count = fsGroupLabel(p, 'Fruits').locator('.ms__group-count');
+    const count = fsGroupLabel(p, 'Fruits').locator('.ms__group-count-text');
 
     await fsOption(p, 'a1').click();
     await expect(count).toHaveText('[1]');
