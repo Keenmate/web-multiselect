@@ -98,10 +98,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `andMore` | `tooltips.andMore` |
   | `valueFormatError` | `errors.valueFormat` |
 
+### Fixed — a key cancelled by `beforeKeydownCallback` is left alone (2026-11-17)
+- A key a `beforeKeydownCallback` cancels (returns `false`) is no longer `preventDefault`'ed: the combobox ARIA runs
+  on core `createActiveDescendant` with `shouldHandleKeys: false` (ARIA only), so the helper no longer handled the
+  arrow / Enter / Home / End keys itself — the picker's own keyboard model is the only one.
+
 ### Added — `locale` input (2026-11-18)
 - `locale` attribute / property (BCP-47, e.g. `cs-CZ`): the instance's locale for the numbers in labels and the
   group count chip. Per key: instance → page-wide `window.components.locale` → the browser language (`Intl`).
-  A change re-renders the labels (selection kept), like a page-wide locale change.
+  A change re-renders the labels (selection kept), like a page-wide locale change. `'auto'` (or no attribute) =
+  unset: the element follows the page-wide / browser locale (core `resolveLocale`), not an invalid value.
 
 ### Changed — locale-formatted counts in labels (2026-11-18)
 - Counts in labels (`selectedCount`, `moreCount`, `selectedPopoverTitle`, `removeHiddenItems`, `groupSelected`,
