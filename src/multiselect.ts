@@ -5613,6 +5613,24 @@ export class MultiSelectEngine<T = any> {
         this.updateHiddenInput();
     }
 
+    /**
+     * Re-render every icon (option rows + action buttons) in place — the element's `iconsChanged()`
+     * path (the page-wide `renderIconCallback` changed). Keeps the selection, search term, highlight,
+     * scroll and an open dropdown.
+     */
+    public repaintIcons(): void {
+        // A virtual list builds its action block once (with the container) — swap it in place.
+        if (this.virtualScroll) {
+            const actions = this.dropdownInner.querySelector(':scope > .ms__actions');
+            if (actions) {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = this.renderActionsHTML();
+                actions.replaceWith(...Array.from(tmp.childNodes));
+            }
+        }
+        this.renderDropdown({ preserveScroll: true });
+    }
+
     /** The first selected option (the only one in single-select), or null. */
     public get selectedOption(): T | null {
         if (this.selectedByValue.size === 0) return null;

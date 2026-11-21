@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — page-wide icon hook repaint (2026-11-22)
+- Changing `window.components.renderIconCallback` after the picker rendered repaints the option / action-button icons
+  in place (core `iconsChanged()`, rulebook C-CA-40) — selection, search term, scroll and an open dropdown are kept, so
+  the page hook may load after the components.
+
 ### Docs — localization page (2026-11-21)
 - `examples-localization.html` — the shared localization page (LO01–LO06: instance `labels`, page-wide dictionary,
   `translateCallback`, aria-label / tooltip twin follow, `locale` number formatting, `shouldEscapeLabels`).

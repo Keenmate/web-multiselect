@@ -482,6 +482,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if (this.#picker) this.#rebuildPicker();
   }
 
+  /** The page-wide `window.components.renderIconCallback` changed (core): repaint the option / action
+   *  icons in place — selection, search, scroll and an open dropdown are kept (C-CA-40). */
+  protected override iconsChanged(): void {
+    this.#picker?.repaintIcons();
+  }
+
   /** `disabled` input or ancestor `<fieldset disabled>` flipped (core): apply it in place. */
   protected override disabledChanged(isDisabled: boolean): void {
     this.#picker?.setDisabled(isDisabled);

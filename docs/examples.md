@@ -72,6 +72,9 @@ select.renderIconCallback = (name, ctx) => (name.startsWith('lucide-') ? lucideS
 window.components.renderIconCallback = (name) => (name === 'moon' ? moonSvg : null);
 ```
 
+Changing `window.components.renderIconCallback` later repaints the icons (selection, search and an open dropdown
+are kept). A class-list icon (step 4) needs the icon font's CSS inside the shadow root — see below.
+
 ### Icons in Shadow DOM — SVG vs. font icons
 
 The component renders in **Shadow DOM**, which changes how icons reach it. This applies anywhere you pass icon HTML: option `icon`, badge/option render callbacks, etc. (Action-button `text` is plain text; its `icon` follows the icon rule above.)

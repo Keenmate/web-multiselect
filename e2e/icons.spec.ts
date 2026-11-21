@@ -92,3 +92,37 @@ test('action-button icons go through the element hook with ctx.item', async ({ p
     await expect(p.locator('.ms__action-btn[data-action="select-all"] .ms__action-btn-icon b.act-select-all')).toHaveCount(1);
     await expect(p.locator('.ms__action-btn[data-action="clear-selection"] .km-icon.ms__icon--close')).toHaveCount(1);
 });
+
+for (const mode of ['standard', 'virtual'] as const) {
+    test(`changing the PAGE renderIconCallback repaints option + action icons, state kept (${mode}, C-CA-40)`, async ({ page }) => {
+        const p = page.locator('#ms-icons');
+        await p.evaluate((el: any, { options, isVirtual }) => {
+            if (isVirtual) el.virtualScrollThreshold = 2;
+            el.actionButtons = [{ action: 'select-all', text: 'All', icon: 'my-all' }];
+            el.options = options;
+        }, { options: OPTIONS, isVirtual: mode === 'virtual' });
+        await p.locator('.ms__input').click();
+        await p.locator('.ms__option[data-value="word"]').click();
+        await p.locator('.ms__input').fill('o');
+        await expect(icon(page, 'word').locator('i.ms__icon.star')).toHaveCount(1);
+        await expect(p.locator('.ms__action-btn .ms__action-btn-icon i.ms__icon.my-all')).toHaveCount(1);
+
+        // Assigned AFTER the render (load order can't be ensured) → repaint in place.
+        await page.evaluate(() => {
+            (window as any).components.renderIconCallback = (name: string) =>
+                name === 'star' || name === 'my-all' ? '<b data-test-icon>x</b>' : null;
+        });
+        await expect(icon(page, 'word').locator('b[data-test-icon]')).toHaveCount(1);
+        await expect(p.locator('.ms__action-btn .ms__action-btn-icon b[data-test-icon]')).toHaveCount(1);
+        // State kept: still open, search term, selection.
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        await expect(p.locator('.ms__input')).toHaveValue('o');
+        expect(await p.evaluate((el: any) => el.value)).toBe('["word"]');
+        await expect(p.locator('.ms__option[data-value="word"]')).toHaveAttribute('aria-selected', 'true');
+
+        // Clearing the page hook repaints back.
+        await page.evaluate(() => { (window as any).components.renderIconCallback = null; });
+        await expect(icon(page, 'word').locator('i.ms__icon.star')).toHaveCount(1);
+        await expect(p.locator('.ms__action-btn .ms__action-btn-icon i.ms__icon.my-all')).toHaveCount(1);
+    });
+}
