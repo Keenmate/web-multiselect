@@ -41,7 +41,7 @@
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo01-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js"><pre><code>el.labels = {
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = {
   'labels.selectedCount': '{count} vybráno',          // short key
   'buttons.clearSelection': 'Zrušit výběr',
   'web-multiselect.buttons.selectAll': 'Vybrat vše',  // full key
@@ -77,7 +77,7 @@
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo02-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js"><pre><code>// e.g. const labels = await (await fetch('/i18n/cs.json')).json();
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// e.g. const labels = await (await fetch('/i18n/cs.json')).json();
 window.components.locale = {
   labels: {
     'web-multiselect.placeholders.search': 'Hledat…',
@@ -123,7 +123,7 @@ window.components.locale = {
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo03-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js"><pre><code>// an i18next-like lookup: a dictionary + t(key, params)
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// an i18next-like lookup: a dictionary + t(key, params)
 const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
 const t = (key, params) =&gt; sk[key]?.replace(/\{\{(\w+)\}\}/g, (_, p) =&gt; params?.[p] ?? '');
 const exists = (key) =&gt; key in sk;
@@ -158,7 +158,7 @@ el.translateCallback = ({ key, params }) =&gt;
                 <web-multiselect id="lo04" class="lo-picker" multiple enable-badge-tooltips></web-multiselect>
                 <div class="output"><div class="output-label">accessible name of the first × button</div><pre id="lo04-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js"><pre><code>el.labels = { 'tooltips.removeItem': 'Odebrat {item}' };
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'tooltips.removeItem': 'Odebrat {item}' };
 // → tooltip "Odebrat Apple" AND aria-label "Odebrat Apple" (ariaLabels.removeItem was never set)
 // an explicitly set ariaLabels.removeItem always wins over the twin</code></pre></div>
         </div>
@@ -199,7 +199,7 @@ el.translateCallback = ({ key, params }) =&gt;
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo05-out"></pre></div>
             </div>
-            <div class="code-block" data-language="html"><pre><code>&lt;web-multiselect locale="en-US"&gt;&lt;/web-multiselect&gt;   &lt;!-- "1,234 selected" --&gt;
+            <div class="code-block" data-language="html" data-kmwc-snippet><pre><code>&lt;web-multiselect locale="en-US"&gt;&lt;/web-multiselect&gt;   &lt;!-- "1,234 selected" --&gt;
 &lt;script&gt;
   window.components.locale = { locale: 'de-DE' };       // every picker without its own locale: "1.234 selected"
 &lt;/script&gt;</code></pre></div>
@@ -228,7 +228,7 @@ el.translateCallback = ({ key, params }) =&gt;
                     labels='{"labels.addNew": "Add <b>{value}</b>"}'></web-multiselect>
                 <div class="output"><div class="output-label">the add-new row: markup → shown text</div><pre id="lo06-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js"><pre><code>el.labels = { 'labels.addNew': 'Add &lt;b&gt;{value}&lt;/b&gt;' };
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'labels.addNew': 'Add &lt;b&gt;{value}&lt;/b&gt;' };
 // typed "&lt;i&gt;Ann&lt;/i&gt;" → Add &lt;b&gt;&amp;lt;i&amp;gt;Ann&amp;lt;/i&amp;gt;&lt;/b&gt;   (bold, tags of the data as text)
 window.components.security = { shouldEscapeLabels: true };
 // → Add &amp;lt;b&amp;gt;&amp;lt;i&amp;gt;Ann…   (the whole label is text)</code></pre></div>
