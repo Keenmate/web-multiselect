@@ -157,6 +157,29 @@ test('instance locale formats the label count and the group chip; a sibling foll
 });
 
 /**
+ * `locale="auto"` is accepted as unset (core `resolveLocale`): no rejection, the element follows the
+ * page locale, and a page-locale change still re-renders it.
+ */
+test('locale="auto" is unset — follows the page locale, no rejection', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    await page.evaluate(() => { (window as any).components.locale = { locale: 'en-US' }; });
+
+    const cs = page.locator('#lbl-loc-cs');
+    const rejected = await cs.evaluate((el: any) => {
+        const seen: unknown[] = [];
+        el.addEventListener('input-rejected', (e: any) => seen.push(e.detail));
+        el.setAttribute('locale', 'auto');
+        return seen.length;
+    });
+    expect(rejected).toBe(0);
+    expect(await cs.evaluate((el: any) => el.locale)).toBe('auto');
+    await expect(cs.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1,234 selected');
+
+    await page.evaluate(() => { (window as any).components.locale = { locale: 'de-DE' }; });
+    await expect(cs.locator('.ms__badge--counter .ms__badge-text')).toHaveText('1.234 selected');
+});
+
+/**
  * One text, one key (rulebook D-NC-24): a text button is named by its visible text — the built-in
  * `select-all` / `clear-selection` action buttons carry no `aria-label`, so the translated `buttons.*`
  * text is also what a screen reader hears.

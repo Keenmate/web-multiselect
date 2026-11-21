@@ -180,10 +180,16 @@ el.translateCallback = ({ key, params }) =&gt;
                 <label><input type="radio" name="lo05-locale" value="cs-CZ"> cs-CZ</label>
                 <label><input type="radio" name="lo05-locale" value="en-IN"> en-IN</label>
             </div>
+            <div class="controls"><strong class="muted">element <code>locale</code> (#lo05a)</strong>
+                <label><input type="radio" name="lo05-own" value=""> unset (page → browser)</label>
+                <label><input type="radio" name="lo05-own" value="en-US" checked> en-US</label>
+                <label><input type="radio" name="lo05-own" value="de-DE"> de-DE</label>
+                <label><input type="radio" name="lo05-own" value="cs-CZ"> cs-CZ</label>
+            </div>
             <div class="demo-area">
                 <div class="grid grid-2">
                     <div class="form-group">
-                        <label class="demo-label"><code>locale="en-US"</code> (its own — ignores the page)</label>
+                        <label class="demo-label">Its own <code>locale</code> (<code id="lo05a-locale">locale="en-US"</code> — wins over the page)</label>
                         <web-multiselect id="lo05a" class="lo-picker lo-big" multiple badges-display-mode="count" locale="en-US"></web-multiselect>
                     </div>
                     <div class="form-group">
@@ -273,7 +279,7 @@ window.components.security = { shouldEscapeLabels: true };
             ]);
             write('lo04-out', [`aria-label: ${removeName('lo04')}`]);
             write('lo05-out', [
-                `#lo05a (en-US)  badge: ${badgeText('lo05a')}`,
+                `#lo05a (${$('lo05a').locale ?? 'unset'})  badge: ${badgeText('lo05a')}`,
                 `#lo05b (page)   badge: ${badgeText('lo05b')}`,
             ]);
             const row = sr('lo06')?.querySelector('.ms__add-new');
@@ -336,6 +342,15 @@ window.components.security = { shouldEscapeLabels: true };
         // ── LO05 · page locale.
         for (const radio of document.querySelectorAll('input[name="lo05-locale"]')) {
             radio.addEventListener('change', (e) => { page.locale = e.target.value; applyPage(); });
+        }
+        // ── LO05 · element locale (unset = follows the page locale, then the browser).
+        for (const radio of document.querySelectorAll('input[name="lo05-own"]')) {
+            radio.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (value) $('lo05a').setAttribute('locale', value); else $('lo05a').removeAttribute('locale');
+                $('lo05a-locale').textContent = value ? `locale="${value}"` : 'unset';
+                refreshAll();
+            });
         }
 
         // ── LO06 · shouldEscapeLabels.
