@@ -682,6 +682,10 @@ flag, so `validity` tells "empty" from "too few" / "too many":
   `ctx.count` = `missing` while the minimum isn't met), but a placeholder stays visible once the minimum is met
   ("Select 0 more") — give it a count that always reads right (`{ctx.selectedCount}`), or a `translateCallback`
   whose plural forms include a zero form.
+- In a tree (`checkbox-mode="cascade"`) both counts are the values the picker submits, so they follow
+  `cascade-select-policy`: under `rolled-up` (default) a fully checked branch is ONE value, under `leaves` it is
+  its checked leaves, under `all` every fully checked node — checking "Fruit" (2 branches, 4 leaves) counts 1 /
+  4 / 7. A branch click that would push the count past `max-selected-count` is blocked as a whole.
 
 ```html
 <form>

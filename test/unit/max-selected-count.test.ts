@@ -147,3 +147,54 @@ describe('maxSelectedCount — tree cascade (counts the emitted values)', () => 
         expect(selected().sort()).toEqual(['1.1.1', '1.2.1', '1.2.2']);
     });
 });
+
+describe('minSelectedCount / maxSelectedCount — tree cascade: the count follows cascadeSelectPolicy', () => {
+    const ROWS = [
+        { value: '1', label: 'Fruit', path: '1' },
+        { value: '1.1', label: 'Pome', path: '1.1' },
+        { value: '1.1.1', label: 'Apple', path: '1.1.1' },
+        { value: '1.1.2', label: 'Pear', path: '1.1.2' },
+        { value: '1.2', label: 'Citrus', path: '1.2' },
+        { value: '1.2.1', label: 'Orange', path: '1.2.1' },
+        { value: '1.2.2', label: 'Lemon', path: '1.2.2' },
+    ];
+    const TREE: Partial<MultiSelectConfig<any>> = { options: ROWS, pathMember: 'path' };
+    const validity = () => engine!.getCountValidity();
+
+    it('rolled-up (default): a fully checked branch is ONE value — Fruit alone is under a minimum of 2', () => {
+        make({ ...TREE, minSelectedCount: 2 });
+        engine!.getController().toggleValue('1');
+        expect(selected()).toEqual(['1']);
+        expect(validity().rangeUnderflow).not.toBeNull();
+    });
+
+    it('leaves: the same click is 4 values — the minimum of 2 is met', () => {
+        make({ ...TREE, cascadeSelectPolicy: 'leaves', minSelectedCount: 2 });
+        engine!.getController().toggleValue('1');
+        expect(selected().length).toBe(4);
+        expect(validity().rangeUnderflow).toBeNull();
+    });
+
+    it('leaves: one leaf under a minimum of 3 is rangeUnderflow; a second branch meets it', () => {
+        make({ ...TREE, cascadeSelectPolicy: 'leaves', minSelectedCount: 3 });
+        const c = engine!.getController();
+        c.toggleValue('1.1.1');
+        expect(validity().rangeUnderflow).not.toBeNull();
+        c.toggleValue('1.2');
+        expect(selected().length).toBe(3);
+        expect(validity().rangeUnderflow).toBeNull();
+    });
+
+    it('all: every fully checked node — the same click is 7 values', () => {
+        make({ ...TREE, cascadeSelectPolicy: 'all', maxSelectedCount: 6 });
+        engine!.getController().toggleValue('1');
+        expect(selected()).toEqual([]);   // 7 > 6: blocked as a whole
+    });
+
+    it('rolled-up: max 1 still lets the user check the whole tree (one emitted value)', () => {
+        make({ ...TREE, maxSelectedCount: 1 });
+        engine!.getController().toggleValue('1');
+        expect(selected()).toEqual(['1']);
+        expect(validity().rangeOverflow).toBeNull();
+    });
+});
