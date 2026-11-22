@@ -219,11 +219,12 @@ select.getBadgeTooltipCallback = ({ option }) => {
 };
 
 Tooltip for count/compact badge:
-select.getCounterCallback = ({ count, moreCount }) => {
+// ctx.count = the number the noun agrees with: moreCount for "+X more", else selectedCount
+select.getCounterCallback = ({ selectedCount, moreCount }) => {
   if (moreCount) {
-    return `${count} total (${moreCount} more)`;
+    return `${selectedCount} total (${moreCount} more)`;
   }
-  return `${count} selected`;
+  return `${selectedCount} selected`;
 };
 
 BADGE POPOVER

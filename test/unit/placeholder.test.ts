@@ -112,3 +112,37 @@ describe('placeholder — live updates (cascade / i18n)', () => {
         expect(input.placeholder).toBe('Search…');
     });
 });
+
+describe('placeholder — key by mode + {ctx.*} (PlaceholderContext)', () => {
+    it('toggle shown → placeholders.filter / .navigate by mode, even with an instance placeholders.search', () => {
+        const input = make({ options: ITEMS, isSearchModeToggleShown: true, labels: { 'placeholders.search': 'Pinned' } });
+        expect(input.placeholder).toBe('Filter…');
+        instance!.destroy();
+        const nav = make({ options: ITEMS, isSearchModeToggleShown: true, searchMode: 'navigate', labels: { 'placeholders.navigate': 'Jump to…' } });
+        expect(nav.placeholder).toBe('Jump to…');
+    });
+
+    it('templates read the placeholder context (count = selection count)', () => {
+        const input = make({
+            options: ITEMS, isMultiple: true,
+            labels: { 'placeholders.search': '{ctx.key}: {ctx.count}/{ctx.totalCount} ({ctx.searchMode}, open={ctx.isOpen})' },
+        });
+        expect(input.placeholder).toBe('placeholders.search: 0/2 (filter, open=false)');
+        instance!.setSelected(['apple']);
+        expect(input.placeholder).toBe('placeholders.search: 1/2 (filter, open=false)');
+    });
+
+    it('translateCallback gets the context raw as params.ctx', () => {
+        const seen: any[] = [];
+        const input = make({
+            options: ITEMS, isSearchEnabled: false,
+            translateCallback: ({ key, params }: any) => {
+                if (key !== 'web-multiselect.placeholders.select') return null;
+                seen.push(params.ctx);
+                return `Vyberte (${params.ctx.count})`;
+            },
+        });
+        expect(input.placeholder).toBe('Vyberte (0)');
+        expect(seen[0]).toMatchObject({ key: 'placeholders.select', selectedCount: 0, totalCount: 2, count: 0, isOpen: false });
+    });
+});

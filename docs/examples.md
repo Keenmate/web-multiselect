@@ -369,9 +369,9 @@ Perfect for different use cases and space constraints:
 **Display mode behavior:**
 
 - **`badges`** (default) — individual removable badges for each selected item. Calls `getBadgeDisplayCallback` for each item.
-- **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback({ count })`.
-- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback({ option: firstItem, … })` and `getCounterCallback({ count, moreCount })`.
-- **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback({ count, moreCount })` for badge.
+- **`count`** — shows "X selected" text with clear button. Calls `getCounterCallback({ selectedCount, count })` (else `labels['labels.selectedCount']`, same ctx).
+- **`compact`** — shows first item + count in single badge (e.g., "JavaScript (+2 more)"). Calls `getBadgeDisplayCallback({ option: firstItem, … })` and `getCounterCallback({ selectedCount, moreCount, count })` (`count` = `moreCount`).
+- **`partial`** — shows first N badges + "+X more" badge. Calls `getBadgeDisplayCallback` for visible items and `getCounterCallback({ selectedCount, moreCount, count })` for badge (`count` = `moreCount`).
 - **`none`** — no display in badges area. No callbacks invoked. Use with `show-counter="true"` for minimal UI.
 
 **Badge styling:**
@@ -458,10 +458,13 @@ Customize counter text for proper pluralization and localization:
   const select = document.getElementById('i18n-select');
 
   // Spanish pluralization example
+  // ctx.count = the number the text's noun agrees with: the hidden items for "+X more", else the selection.
+  // (The labels route — labels.moreCount / labels.selectedCount + a translateCallback reading params.ctx.count —
+  // does the same without a callback.)
   select.getCounterCallback = ({ count, moreCount }) => {
     if (moreCount !== undefined) {
-      // Partial mode: "+X more" badge
-      return moreCount === 1 ? '+1 más' : `+${moreCount} más`;
+      // Partial mode: "+X more" badge (count === moreCount)
+      return count === 1 ? '+1 más' : `+${count} más`;
     }
     // Count mode: total count
     return count === 1 ? '1 elemento seleccionado' : `${count} elementos seleccionados`;

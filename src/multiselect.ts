@@ -14,10 +14,10 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, RemoveItemContext, AddContext } from './types';
 
-/** English fallbacks for the i18n `labels` map (every UI string). Named `{…}` placeholders are
- *  interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
+/** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
+ *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
 const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     'placeholders.select': 'Pick an option…',
     'placeholders.search': 'Search…',
@@ -29,24 +29,23 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     'messages.searching': 'Searching…',
     'labels.noDisplayValue': '[N/A]',
     'labels.searchHint': '',
-    'labels.addNew': 'Add "{value}"',
-    'messages.addNewPending': 'Adding "{value}"…',
-    'labels.selectedCount': '{count} selected',
-    'labels.moreCount': '+{count} more',
-    'headers.selectedPopover': 'Selected Items ({count})',
-    'labels.matchPosition': '{position} of {total}',
-    'labels.matchCount': '{count} matches',
-    'labels.matchCountOne': '{count} match',
+    'labels.addNew': 'Add "{ctx.value}"',
+    'messages.addNewPending': 'Adding "{ctx.value}"…',
+    'labels.selectedCount': '{ctx.count} selected',
+    'labels.moreCount': '+{ctx.count} more',
+    'headers.selectedPopover': 'Selected Items ({ctx.count})',
+    'labels.matchPosition': '{ctx.position} of {ctx.total}',
+    'labels.matchCount': 'Matches: {ctx.count}',
     'ariaLabels.close': 'Close',
     'ariaLabels.clearAllSelections': 'Clear all selections',
     'ariaLabels.clearSearch': 'Clear search',
     'ariaLabels.showFullLabel': 'Show full label',
-    'ariaLabels.removeItem': 'Remove {item}',
-    'tooltips.removeItem': 'Remove {item}',
-    'ariaLabels.removeHiddenItems': 'Remove {count} hidden items',
-    'tooltips.removeHiddenItems': 'Remove {count} hidden items',
-    'ariaLabels.groupSelected': '{count} selected',
-    'tooltips.andMore': '…and {count} more',
+    'ariaLabels.removeItem': 'Remove {ctx.displayValue}',
+    'tooltips.removeItem': 'Remove {ctx.displayValue}',
+    'ariaLabels.removeHiddenItems': 'Remove hidden items: {ctx.count}',
+    'tooltips.removeHiddenItems': 'Remove hidden items: {ctx.count}',
+    'ariaLabels.groupSelected': '{ctx.count} selected',
+    'tooltips.andMore': '…and {ctx.count} more',
     'ariaLabels.prevMatch': 'Previous match',
     'ariaLabels.switchToFilterMode': 'Switch to filter mode',
     'tooltips.switchToFilterMode': 'Switch to filter mode',
@@ -77,7 +76,7 @@ import {
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
-import { createLabels, formatNumber, getPageLocale, type Labels } from '@keenmate/web-components-core/locale';
+import { createLabels, formatNumber, type Labels } from '@keenmate/web-components-core/locale';
 import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
@@ -882,7 +881,11 @@ export class MultiSelectEngine<T = any> {
     private buildCounterTooltip(items: T[]): string {
         const MAX = 12;
         const labels = items.slice(0, MAX).map(o => this.getItemBadgeDisplayValue(o));
-        if (items.length > MAX) labels.push(this.labels.text('tooltips.andMore', { count: items.length - MAX }));
+        if (items.length > MAX) {
+            const remainingCount = items.length - MAX;
+            const ctx: CounterTooltipContext<T> = this.ctx({ shownCount: MAX, totalCount: items.length, remainingCount, count: remainingCount });
+            labels.push(this.labels.text('tooltips.andMore', { ctx }));
+        }
         return labels.join('\n');
     }
 
@@ -1292,13 +1295,16 @@ export class MultiSelectEngine<T = any> {
      * `formatNumber`, `locale` → page → browser); a `getCountLabelCallback` (raw numbers) can
      * switch both to e.g. `selected/total`.
      */
-    private formatCountLabel(selected: number, total: number, groupName?: string): string {
-        if (this.options.getCountLabelCallback) {
-            return this.options.getCountLabelCallback(this.ctx(groupName === undefined
-                ? { selectedCount: selected, totalCount: total }
-                : { selectedCount: selected, totalCount: total, groupName }));
-        }
+    private formatCountLabel(selected: number, total: number, groupName?: string, ctx = this.countLabelCtx(selected, total, groupName)): string {
+        if (this.options.getCountLabelCallback) return this.options.getCountLabelCallback(ctx);
         return `[${formatNumber(selected, { locale: this.options.locale ?? undefined })}]`;
+    }
+
+    /** The {@link CountLabelContext} of a count chip — `getCountLabelCallback`'s ctx and the `ariaLabels.groupSelected` label ctx. */
+    private countLabelCtx(selected: number, total: number, groupName?: string): CountLabelContext<T> {
+        return this.ctx(groupName === undefined
+            ? { selectedCount: selected, totalCount: total, count: selected }
+            : { selectedCount: selected, totalCount: total, groupName, count: selected });
     }
 
     /**
@@ -1308,8 +1314,9 @@ export class MultiSelectEngine<T = any> {
      */
     private groupCountHtml(selectedCount: number, total: number, groupName: string): string {
         if (selectedCount <= 0) return '';
-        const label = this.formatCountLabel(selectedCount, total, groupName);
-        const spoken = this.labels.text('ariaLabels.groupSelected', { count: selectedCount });
+        const ctx = this.countLabelCtx(selectedCount, total, groupName);
+        const label = this.formatCountLabel(selectedCount, total, groupName, ctx);
+        const spoken = this.labels.text('ariaLabels.groupSelected', { ctx });
         return `<span class="ms__group-count"><span class="ms__group-count-text" aria-hidden="true">${escapeHtml(label)}</span>`
             + `<span class="ms__visually-hidden">${escapeHtml(spoken)}</span></span>`;
     }
@@ -1989,10 +1996,11 @@ export class MultiSelectEngine<T = any> {
      * only the `{value}` substitution is escaped) → the default `Add "{value}"`.
      */
     private getAddNewText(value: string): string {
+        const ctx: AddContext<T> = this.ctx({ value });
         if (this.options.getAddNewTextCallback) {
-            return escapeHtml(String(this.options.getAddNewTextCallback(this.ctx({ value }))));
+            return escapeHtml(String(this.options.getAddNewTextCallback(ctx)));
         }
-        return this.labels.html('labels.addNew', { value });
+        return this.labels.html('labels.addNew', { ctx });
     }
 
     /**
@@ -2032,7 +2040,8 @@ export class MultiSelectEngine<T = any> {
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
-        return this.labels.html('messages.addNewPending', { value });
+        const ctx: AddContext<T> = this.ctx({ value });
+        return this.labels.html('messages.addNewPending', { ctx });
     }
 
     /**
@@ -2074,37 +2083,44 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Resolve the closed-state input placeholder for the current data/search state.
-     * Priority: explicit no-data placeholder (when the list is empty) → "pick" prompt when
-     * search is unusable → the search placeholder.
+     * The input placeholder for the current data / search state — a `placeholders.*` label with its
+     * {@link PlaceholderContext} as `{ ctx }`. The key: no options at all and a non-empty
+     * `placeholders.noData` → that; search disabled → `placeholders.select` (`''` = deliberately
+     * empty, L4); the search-mode toggle shown → `placeholders.filter` / `.navigate` by mode;
+     * otherwise `placeholders.search`. No label layer is special — the whole chain resolves the key.
      */
     private getPlaceholderText(): string {
-        const noDataPlaceholder = this.labels.text('placeholders.noData');
-        if (noDataPlaceholder && this.allOptions.length === 0) {
-            return noDataPlaceholder;
+        if (this.allOptions.length === 0) {
+            const noData = this.labels.text('placeholders.noData', { ctx: this.placeholderCtx('placeholders.noData') });
+            if (noData) return noData;
         }
-        if (!this.options.isSearchEnabled) {
-            // `''` = deliberately empty (L4) — no fallback to the search placeholder.
-            return this.labels.text('placeholders.select');
-        }
-        return this.getSearchPlaceholder();
+        const key = this.placeholderKey();
+        return this.labels.text(key, { ctx: this.placeholderCtx(key) });
     }
 
-    /**
-     * The search field placeholder: `labels['placeholders.search']`. When the in-overlay mode toggle
-     * is enabled (`isSearchModeToggleShown`) and no `searchPlaceholder` label was set, it is
-     * mode-aware so the field labels the current behavior: `labels['placeholders.filter']` in filter
-     * mode, `labels['placeholders.navigate']` in navigate mode. Refreshed on a live mode switch (see
-     * setSearchModeLive → refreshSearchPlaceholder).
-     */
-    private getSearchPlaceholder(): string {
-        if (this.options.isSearchModeToggleShown && !this.hasLabel('placeholders.search')) {
-            return this.labels.text((this.options.searchMode || 'filter') === 'navigate' ? 'placeholders.navigate' : 'placeholders.filter');
+    /** The placeholder key outside the no-data case (see {@link getPlaceholderText}). */
+    private placeholderKey(): PlaceholderKey {
+        if (!this.options.isSearchEnabled) return 'placeholders.select';
+        if (this.options.isSearchModeToggleShown) {
+            return (this.options.searchMode || 'filter') === 'navigate' ? 'placeholders.navigate' : 'placeholders.filter';
         }
-        return this.labels.text('placeholders.search');
+        return 'placeholders.search';
     }
 
-    /** Re-apply the (possibly mode-aware) placeholder to the live inputs after a mode switch. */
+    /** The {@link PlaceholderContext} for `key`. */
+    private placeholderCtx(key: PlaceholderKey): PlaceholderContext<T> {
+        const selectedCount = this.selectedValues.size;
+        return this.ctx({
+            key,
+            searchMode: this.options.searchMode || 'filter',
+            isOpen: this.#isOpen,
+            selectedCount,
+            totalCount: this.allOptions.length,
+            count: selectedCount,
+        });
+    }
+
+    /** Re-apply the placeholder to the live inputs (selection change, mode switch, open / close). */
     private refreshSearchPlaceholder(): void {
         const ph = this.getPlaceholderText();
         if (this.input) this.input.placeholder = ph;
@@ -2140,6 +2156,8 @@ export class MultiSelectEngine<T = any> {
             } else if (!this.#isOpen) {
                 this.input.value = '';
             }
+            // The placeholder reads the selection (`{ctx.selectedCount}`) — keep it current.
+            this.refreshSearchPlaceholder();
             return;
         }
 
@@ -2151,12 +2169,12 @@ export class MultiSelectEngine<T = any> {
             effectiveMode = this.options.badgesThresholdMode || 'count';
         }
 
-        if (!this.#isOpen) {
-            if (count > 0 && effectiveMode === 'count') {
-                this.input.placeholder = this.counterText(count);
-            } else {
-                this.input.placeholder = this.getPlaceholderText();
-            }
+        // Closed count mode shows the count in the placeholder; otherwise the placeholder label, which
+        // reads the selection (`{ctx.selectedCount}`), so it is refreshed on every change — open or closed.
+        if (!this.#isOpen && count > 0 && effectiveMode === 'count') {
+            this.input.placeholder = this.counterText(count);
+        } else {
+            this.refreshSearchPlaceholder();
         }
 
         if (this.options.isCounterShown && count > 0) {
@@ -2198,12 +2216,13 @@ export class MultiSelectEngine<T = any> {
 
             let moreBadgeHtml = '';
             if (remainingCount > 0) {
-                const moreText = this.counterText(count, remainingCount);
+                const moreCtx = this.counterCtx(count, remainingCount);
+                const moreText = this.counterText(count, remainingCount, moreCtx);
 
                 moreBadgeHtml = `
                     <div class="ms__badge ms__badge--counter ms__badge--more" data-ms-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeHiddenItems', { count: remainingCount }))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeHiddenItems', { ctx: moreCtx }))}"></button>
                     </div>
                 `;
             }
@@ -4753,9 +4772,8 @@ export class MultiSelectEngine<T = any> {
             } else {
                 const matched = Array.from(this.matchingIndices).sort((a, b) => a - b);
                 const pos = matched.indexOf(this.focusedIndex);
-                this.fullscreenNavCount.textContent = pos >= 0
-                    ? this.labels.text('labels.matchPosition', { position: pos + 1, total })
-                    : this.labels.text(total === 1 ? 'labels.matchCountOne' : 'labels.matchCount', { count: total });
+                const ctx: MatchCountContext<T> = this.ctx({ position: pos >= 0 ? pos + 1 : null, total, count: total });
+                this.fullscreenNavCount.textContent = this.labels.text(pos >= 0 ? 'labels.matchPosition' : 'labels.matchCount', { ctx });
             }
         }
 
@@ -5017,15 +5035,6 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.querySelector('.ms__selected-popover-close')?.classList.toggle('km-sheet-close', isSheet);
     }
 
-    /** Whether the instance (short or full key) or the page-wide flat dictionary
-     *  (`window.components.locale.labels['web-multiselect.<key>']`) set `key`. */
-    private hasLabel(key: keyof MultiSelectLabels): boolean {
-        const full = `web-multiselect.${key}`;
-        const own = this.options.labels as Record<string, unknown> | undefined;
-        return typeof own?.[key] === 'string' || typeof own?.[full] === 'string'
-            || typeof getPageLocale()?.labels?.[full] === 'string';
-    }
-
     /** The UI strings (core `/locale`, rulebook D-NC-24): flat `<elementType>.<name>` keys; instance
      *  `labels` (short or full key) → the element's `translateCallback` → the page-wide one
      *  → page-wide `window.components.locale.labels['web-multiselect.<key>']` → the English default. `.text()` for
@@ -5040,9 +5049,10 @@ export class MultiSelectEngine<T = any> {
     }
     private labelsApi?: Labels<Required<MultiSelectLabels>>;
 
-    /** The selected-items popover header text (`labels['headers.selectedPopover']`, `{count}` = selection count). */
+    /** The selected-items popover header text (`labels['headers.selectedPopover']`, ctx: {@link SelectionCountContext}). */
     private selectedPopoverTitleText(count: number): string {
-        return this.labels.text('headers.selectedPopover', { count });
+        const ctx: SelectionCountContext<T> = this.ctx({ selectedCount: count, count });
+        return this.labels.text('headers.selectedPopover', { ctx });
     }
 
     private renderSelectedPopoverVirtual(selectedOptions: T[], count: number): void {
@@ -5155,13 +5165,18 @@ export class MultiSelectEngine<T = any> {
         return this.ctx({ option, ...(info ?? this.badgeRenderContext(false)) });
     }
 
-    /** Badges-area count text ("N selected" / "+X more") — `getCounterCallback(ctx)` or the default. */
-    private counterText(count: number, moreCount?: number): string {
+    /** Badges-area count text ("N selected" / "+X more") — `getCounterCallback(ctx)` or the label with the same ctx. */
+    private counterText(count: number, moreCount?: number, ctx = this.counterCtx(count, moreCount)): string {
         const callback = this.options.getCounterCallback;
-        if (callback) return callback(this.ctx(moreCount === undefined ? { count } : { count, moreCount }));
-        return moreCount !== undefined
-            ? this.labels.text('labels.moreCount', { count: moreCount })
-            : this.labels.text('labels.selectedCount', { count });
+        if (callback) return callback(ctx);
+        return this.labels.text(moreCount !== undefined ? 'labels.moreCount' : 'labels.selectedCount', { ctx });
+    }
+
+    /** The {@link CounterContext}: `count` = `moreCount` for the "+X more" text, else the selection count. */
+    private counterCtx(selectedCount: number, moreCount?: number): CounterContext<T> {
+        return this.ctx(moreCount === undefined
+            ? { selectedCount, count: selectedCount }
+            : { selectedCount, moreCount, count: moreCount });
     }
 
     /**
@@ -5218,11 +5233,11 @@ export class MultiSelectEngine<T = any> {
             if (extra) badgeClasses += ' ' + extra;
         }
 
-        const removeLabel = this.getItemBadgeDisplayValue(option, ctx);
+        const removeCtx: RemoveItemContext<T> = this.ctx({ ...renderCtx, displayValue: this.getItemBadgeDisplayValue(option, ctx) });
         return `
             <div class="${escapeHtml(badgeClasses)}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeItem', { item: removeLabel }))}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeItem', { ctx: removeCtx }))}"></button>
             </div>
         `;
     }
@@ -5751,10 +5766,11 @@ export class MultiSelectEngine<T = any> {
         return subtitle ? `${displayValue}\n${subtitle}` : displayValue;
     }
 
-    /** Build the remove-button tooltip text (callback > `labels['tooltips.removeItem']`). */
-    private buildRemoveButtonTooltipText(itemName: string, option?: T, info?: BadgeRenderInfo): string {
-        if (option && this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(this.badgeCtx(option, info));
-        return this.labels.text('tooltips.removeItem', { item: itemName });
+    /** Build the remove-button tooltip text (callback > `labels['tooltips.removeItem']`, one {@link RemoveItemContext}). */
+    private buildRemoveButtonTooltipText(displayValue: string, option: T, info?: BadgeRenderInfo): string {
+        const ctx: RemoveItemContext<T> = this.ctx({ ...this.badgeCtx(option, info), displayValue });
+        if (this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(ctx);
+        return this.labels.text('tooltips.removeItem', { ctx });
     }
 
     private attachBadgeTooltips(container?: HTMLElement): void {
@@ -5808,11 +5824,12 @@ export class MultiSelectEngine<T = any> {
             if (removeBtn && removeBtn.dataset.msAction === 'remove-hidden') {
                 const maxVisible = this.options.maxVisibleBadgeCount || 3;
                 const hiddenCount = this.selectedByValue.size - maxVisible;
+                const moreCtx = this.counterCtx(this.selectedByValue.size, hiddenCount);
                 this.spawnTooltip({
                     id: 'badge-more-remove',
                     trigger: removeBtn,
                     // The tooltip twin of the button's aria-label (`labels['tooltips.removeHiddenItems']`).
-                    content: this.labels.text('tooltips.removeHiddenItems', { count: hiddenCount })
+                    content: this.labels.text('tooltips.removeHiddenItems', { ctx: moreCtx })
                 });
             }
         }

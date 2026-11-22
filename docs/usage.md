@@ -136,7 +136,7 @@ multiselect.setSelected(['js', 'ts']);
 |-----------|------|---------|-------------|
 | `multiple` | `boolean` | `true` | Allow multiple selections |
 | `labels` | `JSON object` | - | Every UI string (placeholders, empty / loading text, hint, counters, "add new" prompt, popover title, ARIA labels) — partial map, unset keys stay English. See [Labels (i18n)](#labels-i18n) |
-| `locale` | `string` | - | BCP-47 locale for the numbers in labels (`{count}`) and the group count chip, or unset (the page-wide `window.components.locale`, else the browser language). UI strings are `labels`. |
+| `locale` | `string` | - | BCP-47 locale for the numbers in labels (`{ctx.count}`) and the group count chip, or unset (the page-wide `window.components.locale`, else the browser language). UI strings are `labels`. |
 | `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted; calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. An ancestor `<fieldset disabled>` disables it too. Reflects |
 | `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): the user can't change the selection and the dropdown doesn't open; still focusable, copyable and submitted. Calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. Reflects |
 | `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `release()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `ready` attribute after building |
@@ -478,11 +478,12 @@ multiselect.actionButtons = [
 ];
 
 // Counter i18n/pluralization
-multiselect.getCounterCallback = ({ count, moreCount }) => {
+// (a label template does the same: labels['labels.moreCount'] = '+{ctx.count} more' — prefer labels + translateCallback)
+multiselect.getCounterCallback = ({ selectedCount, moreCount }) => {
   if (moreCount !== undefined) {
     return `+${moreCount} more`; // Partial mode badge
   }
-  return `${count} selected`; // Count mode display
+  return `${selectedCount} selected`; // Count mode display
 };
 
 // Data extraction - Member properties (for simple property names)
@@ -614,7 +615,7 @@ multiselect.beforeAddCallback = async ({ value }) => {
 multiselect.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
 
 // i18n of every UI string — see "Labels (i18n)" below
-multiselect.labels = { 'ariaLabels.removeItem': 'Odebrat {item}', 'tooltips.removeItem': 'Odebrat {item}', 'ariaLabels.close': 'Zavřít' };
+multiselect.labels = { 'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}', 'tooltips.removeItem': 'Odebrat {ctx.displayValue}', 'ariaLabels.close': 'Zavřít' };
 ```
 
 ### Labels (i18n)
@@ -628,8 +629,22 @@ texts), `labels.*` (other visible text), `headers.*`, `buttons.*`, `ariaLabels.*
 deliberately empty (renders nothing). Labels shown inside the dropdown / badges (`messages.noData`,
 `messages.noResults`, `messages.searching`, `labels.addNew`, `messages.addNewPending`, `labels.selectedCount`,
 `labels.moreCount`) may contain HTML (inserted as-is — sanitize untrusted text); ARIA labels, tooltips and
-placeholders are plain text. `{value}` (the typed text) is escaped. Named placeholders (`{count}`, `{item}`,
-`{value}`, `{position}`, `{total}`) are interpolated. A `labels` change rebuilds the picker (the selection is kept).
+placeholders are plain text. A `labels` change rebuilds the picker (the selection is kept).
+
+**Templates read the text spot's context — `{ctx.<path>}`.** A dynamic text hands its context to the label as
+`{ ctx }`: the SAME object the spot's callback gets, where it has one (`labels.selectedCount` / `labels.moreCount`
+read the `CounterContext` that `getCounterCallback` gets; `labels.addNew` the `AddContext` of
+`getAddNewTextCallback`). So `'Add "{ctx.value}"'`, `'+{ctx.count} more'`, `'Remove {ctx.displayValue}'`,
+`'Picked {ctx.selectedCount} of {ctx.totalCount}'` (a placeholder). Numbers are locale-formatted, the values in an
+HTML label are escaped (the typed `{ctx.value}` included). Each key's context type is in the table below and in the
+`MultiSelectLabels` JSDoc.
+
+**`ctx.count` = the number the text's noun agrees with** — the selection count for `labels.selectedCount`, but the
+HIDDEN items for `labels.moreCount` ("+3 more" agrees with 3), the matches for `labels.matchPosition` ("2 of 12"
+agrees with 12). Texts with no countable noun (`labels.addNew`, `ariaLabels.removeItem`) have no `count`. The English
+defaults put no plural noun after a number (`Matches: {ctx.count}`, `Remove hidden items: {ctx.count}`), so one
+template fits every count; real plurals come from your i18n library through `translateCallback`, which gets the
+context RAW as `params.ctx` — one generic bridge pluralizes every key:
 
 Labels resolve per key through core `/locale` (`createLabels`): the instance `labels` (short key, or the full
 `web-multiselect.<key>`) → the page-wide flat dictionary `window.components.locale.labels['web-multiselect.<key>']`
@@ -641,50 +656,58 @@ property (same shape) is asked first — one multiselect needs no page setup; `n
 page-wide one, and the instance `labels` beat both. Changing it rebuilds the picker (selection kept).
 
 ```js
-select.translateCallback = ({ key, params }) => (i18next.exists(key) ? i18next.t(key, params) : null);
+select.translateCallback = ({ key, params }) =>
+  i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null;
 ```
 
 ```js
 window.components.locale = {
   labels: {
     'web-multiselect.messages.noResults': 'Nic nenalezeno',
-    'web-multiselect.ariaLabels.removeItem': 'Odebrat {item}',
-    'web-multiselect.tooltips.removeItem': 'Odebrat {item}',
+    'web-multiselect.ariaLabels.removeItem': 'Odebrat {ctx.displayValue}',
+    'web-multiselect.tooltips.removeItem': 'Odebrat {ctx.displayValue}',
   },
 };
 ```
 
-| Key | Default | Used for |
-|-----|---------|----------|
-| `placeholders.select` | `Pick an option…` | Closed-input placeholder when search is not usable (picker mode) |
-| `placeholders.search` | `Search…` | Search input placeholder (pins one text in every mode) |
-| `placeholders.filter` / `placeholders.navigate` | `Filter…` / `Search…` | Mode-aware placeholder with `show-search-mode-toggle` when `placeholders.search` is unset |
-| `placeholders.noData` | (empty = off) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
-| `messages.noData` | `No data` | Dropdown text when there are no options at all |
-| `messages.noResults` | `No results found` | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
-| `messages.searching` | `Searching…` | Dropdown text (and the loader's accessible name) while an async `searchCallback` search is in flight |
-| `messages.addNewPending` | `Adding "{value}"…` | Pending prompt while an async `beforeAddCallback` runs |
-| `labels.noDisplayValue` | `[N/A]` | Shown for an option with no display value |
-| `labels.searchHint` | (empty = no hint) | Hint under the search input while open |
-| `labels.addNew` | `Add "{value}"` | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
-| `labels.selectedCount` | `{count} selected` | Badges-area count text (`getCounterCallback` wins) |
-| `labels.moreCount` | `+{count} more` | The "+X more" badge (`getCounterCallback` wins) |
-| `labels.matchPosition` | `{position} of {total}` | Fullscreen navigate-mode position |
-| `labels.matchCount` / `labels.matchCountOne` | `{count} matches` / `{count} match` | Fullscreen navigate-mode match count |
-| `headers.selectedPopover` | `Selected Items ({count})` | Selected-items popover header |
-| `buttons.selectAll` / `buttons.clearSelection` | `Select all` / `Clear all` | Built-in `select-all` / `clear-selection` action buttons |
-| `ariaLabels.close` | `Close` | Selected-items popover / fullscreen close button |
-| `ariaLabels.clearAllSelections` | `Clear all selections` | Inline ✕ clear button (`show-clear`) and the clear (×) on the count / compact badge |
-| `ariaLabels.clearSearch` | `Clear search` | Fullscreen search clear (✕) |
-| `ariaLabels.showFullLabel` | `Show full label` | Option info button that reveals a clipped label (fullscreen) |
-| `ariaLabels.removeItem` / `tooltips.removeItem` | `Remove {item}` | Badge remove (×) aria-label / its tooltip; `{item}` = the item's label (`getRemoveButtonTooltipCallback` wins for the tooltip) |
-| `ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems` | `Remove {count} hidden items` | "+N more" badge remove (×) aria-label / its tooltip; `{count}` = hidden count |
-| `ariaLabels.groupSelected` | `{count} selected` | Group-header selected-count chip |
-| `ariaLabels.prevMatch` / `ariaLabels.nextMatch` | `Previous match` / `Next match` | Fullscreen navigate-mode buttons |
-| `ariaLabels.switchToFilterMode` / `tooltips.switchToFilterMode` | `Switch to filter mode` | Fullscreen search-mode toggle (in navigate mode): aria-label / `title` |
-| `ariaLabels.switchToNavigateMode` / `tooltips.switchToNavigateMode` | `Switch to navigate mode` | Fullscreen search-mode toggle (in filter mode): aria-label / `title` |
-| `tooltips.andMore` | `…and {count} more` | Counter tooltip overflow tail (beyond 12 items) |
-| `errors.valueFormat` | `The value could not be formatted.` | Validation message when `getValueFormatCallback` throws |
+The placeholder key: search disabled → `placeholders.select`; `show-search-mode-toggle` on → `placeholders.filter` /
+`placeholders.navigate` by mode; otherwise `placeholders.search`; no options at all and a non-empty
+`placeholders.noData` → that. Every `placeholders.*` key gets a `PlaceholderContext` (`key`, `searchMode`, `isOpen`,
+`selectedCount`, `totalCount`, `count` = `selectedCount`) and is recomputed on every selection change (open or
+closed), mode switch, open / close and labels / locale change. The closed count-mode text
+(`badgesThresholdMode: 'count'`) is `labels.selectedCount`, not a placeholder key.
+
+| Key | Default | ctx (`ctx.count`) | Used for |
+|-----|---------|-------------------|----------|
+| `placeholders.select` | `Pick an option…` | `PlaceholderContext` (selection count) | Closed-input placeholder when search is not usable (picker mode) |
+| `placeholders.search` | `Search…` | `PlaceholderContext` (selection count) | Search input placeholder (the mode toggle hidden) |
+| `placeholders.filter` / `placeholders.navigate` | `Filter…` / `Search…` | `PlaceholderContext` (selection count) | Placeholder by mode while `show-search-mode-toggle` is on |
+| `placeholders.noData` | (empty = off) | `PlaceholderContext` (selection count) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
+| `messages.noData` | `No data` | — | Dropdown text when there are no options at all |
+| `messages.noResults` | `No results found` | — | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
+| `messages.searching` | `Searching…` | — | Dropdown text (and the loader's accessible name) while an async `searchCallback` search is in flight |
+| `messages.addNewPending` | `Adding "{ctx.value}"…` | `AddContext` (no count) | Pending prompt while an async `beforeAddCallback` runs |
+| `labels.noDisplayValue` | `[N/A]` | — | Shown for an option with no display value |
+| `labels.searchHint` | (empty = no hint) | — | Hint under the search input while open |
+| `labels.addNew` | `Add "{ctx.value}"` | `AddContext` (no count) | "Add new" prompt (`allow-add-new`); `getAddNewTextCallback` wins |
+| `labels.selectedCount` | `{ctx.count} selected` | `CounterContext` (selection count) | Badges-area count text (`getCounterCallback` wins) |
+| `labels.moreCount` | `+{ctx.count} more` | `CounterContext` (`moreCount`, the hidden items) | The "+X more" badge (`getCounterCallback` wins) |
+| `labels.matchPosition` | `{ctx.position} of {ctx.total}` | `MatchCountContext` (`total`) | Fullscreen navigate-mode position |
+| `labels.matchCount` | `Matches: {ctx.count}` | `MatchCountContext` (`total`) | Fullscreen navigate-mode match count (no match focused) |
+| `headers.selectedPopover` | `Selected Items ({ctx.count})` | `SelectionCountContext` (selection count) | Selected-items popover header |
+| `buttons.selectAll` / `buttons.clearSelection` | `Select all` / `Clear all` | — | Built-in `select-all` / `clear-selection` action buttons |
+| `ariaLabels.close` | `Close` | — | Selected-items popover / fullscreen close button |
+| `ariaLabels.clearAllSelections` | `Clear all selections` | — | Inline ✕ clear button (`show-clear`) and the clear (×) on the count / compact badge |
+| `ariaLabels.clearSearch` | `Clear search` | — | Fullscreen search clear (✕) |
+| `ariaLabels.showFullLabel` | `Show full label` | — | Option info button that reveals a clipped label (fullscreen) |
+| `ariaLabels.removeItem` / `tooltips.removeItem` | `Remove {ctx.displayValue}` | `RemoveItemContext` (no count) | Badge remove (×) aria-label / its tooltip; `{ctx.displayValue}` = the badge text (`getRemoveButtonTooltipCallback` wins for the tooltip, same ctx) |
+| `ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems` | `Remove hidden items: {ctx.count}` | `CounterContext` (`moreCount`, the hidden items) | "+N more" badge remove (×) aria-label / its tooltip |
+| `ariaLabels.groupSelected` | `{ctx.count} selected` | `CountLabelContext` (`selectedCount`) | Group-header selected-count chip |
+| `ariaLabels.prevMatch` / `ariaLabels.nextMatch` | `Previous match` / `Next match` | — | Fullscreen navigate-mode buttons |
+| `ariaLabels.switchToFilterMode` / `tooltips.switchToFilterMode` | `Switch to filter mode` | — | Fullscreen search-mode toggle (in navigate mode): aria-label / `title` |
+| `ariaLabels.switchToNavigateMode` / `tooltips.switchToNavigateMode` | `Switch to navigate mode` | — | Fullscreen search-mode toggle (in filter mode): aria-label / `title` |
+| `tooltips.andMore` | `…and {ctx.count} more` | `CounterTooltipContext` (`remainingCount`) | Counter tooltip overflow tail (beyond 12 items) |
+| `errors.valueFormat` | `The value could not be formatted.` | — | Validation message when `getValueFormatCallback` throws |
 
 ### Reading back state after a write (v2)
 

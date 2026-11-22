@@ -475,9 +475,12 @@ UI strings → labels (property = partial object, or JSON attribute):
     search-placeholder → placeholders.search   select-placeholder → placeholders.select
     no-data-placeholder → placeholders.noData  empty-message → messages.noResults (search miss) / messages.noData (no options)
     loading-message → messages.searching       search-hint → labels.searchHint
-    add-new-text → labels.addNew ({value})     add-new-pending-text → messages.addNewPending ({value})
-    remove-button-tooltip-text ({0}) → tooltips.removeItem ({item}); its aria-label → ariaLabels.removeItem
-    selected-popover-title → headers.selectedPopover ({count})
+    add-new-text → labels.addNew ({ctx.value})     add-new-pending-text → messages.addNewPending ({ctx.value})
+    remove-button-tooltip-text ({0}) → tooltips.removeItem ({ctx.displayValue}); its aria-label → ariaLabels.removeItem
+    selected-popover-title → headers.selectedPopover ({ctx.count})
+    Templates read the text's context: {ctx.<path>}; ctx.count = the number the noun agrees with;
+    translateCallback gets it raw as params.ctx (i18next: t(key, { ...params, count: params.ctx?.count })).
+    labels.matchCountOne is gone (labels.matchCount = 'Matches: {ctx.count}').
     labels.groupSelectedLabel → ariaLabels.groupSelected; labels.clearAll → buttons.clearSelection
     (the old labels.clearSelection, the ✕ aria-label → ariaLabels.clearAllSelections)
     Page-wide: window.components.locale.labels = { 'web-multiselect.messages.noResults': '…' } (flat, full keys).

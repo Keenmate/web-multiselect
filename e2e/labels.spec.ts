@@ -3,17 +3,17 @@ import { test, expect } from './fixtures';
 /**
  * The `labels` property is a partial i18n map of flat `<elementType>.<name>` keys (`ariaLabels.close`,
  * `tooltips.andMore`, …) for the component's UI strings. Unset keys fall back to their
- * English defaults; `{item}` / `{count}` placeholders are interpolated. Reuses the
+ * English defaults; `{ctx.<path>}` placeholders read the text spot's context (`{ctx.displayValue}`, `{ctx.count}`). Reuses the
  * floating-panels fixture (`#popover-picker` is count-mode with three pre-selected values).
  */
 
-test('labels map overrides aria-labels with {item} interpolation', async ({ page }) => {
+test('labels map overrides aria-labels with {ctx.displayValue} interpolation', async ({ page }) => {
     await page.goto('/test/floating-panels.html');
     const p = page.locator('#popover-picker');
 
     await p.evaluate((el: any) => {
         // Short keys and full (`web-multiselect.`-prefixed) keys both work on the instance.
-        el.labels = { 'web-multiselect.ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {item}', 'tooltips.andMore': '…a {count} dalších' };
+        el.labels = { 'web-multiselect.ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}', 'tooltips.andMore': '…a {ctx.count} dalších' };
     });
 
     // Open the selected-items popover (count mode).
@@ -23,7 +23,7 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
     // Close button aria-label translated.
     await expect(p.locator('.ms__selected-popover-close')).toHaveAttribute('aria-label', 'Zavřít');
 
-    // Badge remove aria-label uses the {item} template.
+    // Badge remove aria-label uses the {ctx.displayValue} template.
     const firstRemove = p.locator('.ms__selected-popover .ms__badge-remove').first();
     await expect(firstRemove).toHaveAttribute('aria-label', /^Odebrat .+/);
 
@@ -33,21 +33,21 @@ test('labels map overrides aria-labels with {item} interpolation', async ({ page
 });
 
 /**
- * {count} interpolation across the three labels that use it. The `#lbl-count` fixture is
+ * {ctx.count} interpolation across the three labels that use it. The `#lbl-count` fixture is
  * built to surface all three at once (grouped data + partial badges + counter, 14 selected):
  *   - ariaLabels.groupSelected      → the `.ms__group-count` header chip's visually hidden spoken text
  *   - ariaLabels.removeHiddenItems  → the "+N more" badge's remove button aria-label
  *   - tooltips.andMore              → the counter chip's native `title` (cap is 12, so 14 → "…and 2 more")
  */
-test('labels map interpolates {count} in group count, remove-hidden, and counter overflow', async ({ page }) => {
+test('labels map interpolates {ctx.count} in group count, remove-hidden, and counter overflow', async ({ page }) => {
     await page.goto('/test/labels.html');
     const p = page.locator('#lbl-count');
 
     await p.evaluate((el: any) => {
         el.labels = {
-            'ariaLabels.groupSelected': '{count} vybráno',
-            'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých',
-            'tooltips.andMore': '…a {count} dalších',
+            'ariaLabels.groupSelected': '{ctx.count} vybráno',
+            'ariaLabels.removeHiddenItems': 'Odebrat {ctx.count} skrytých',
+            'tooltips.andMore': '…a {ctx.count} dalších',
         };
     });
 
@@ -85,8 +85,8 @@ test('page-wide window.components.locale labels apply live; the instance labels 
     await page.evaluate(() => {
         (window as any).components.locale = {
             labels: {
-                'web-multiselect.ariaLabels.removeHiddenItems': 'Page: remove {count}',
-                'web-multiselect.tooltips.andMore': 'Page: +{count}',
+                'web-multiselect.ariaLabels.removeHiddenItems': 'Page: remove {ctx.count}',
+                'web-multiselect.tooltips.andMore': 'Page: +{ctx.count}',
             },
         };
     });
@@ -94,13 +94,13 @@ test('page-wide window.components.locale labels apply live; the instance labels 
     await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
     expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(before);
 
-    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {count}' }; });
+    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {ctx.count}' }; });
     await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Mine 12');
     await expect(p.locator('.ms__counter')).toHaveAttribute('title', /Page: \+2$/);
 
     await page.evaluate(() => { (window as any).components.locale = null; });
     await p.evaluate((el: any) => { el.labels = undefined; });
-    await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Remove 12 hidden items');
+    await expect(p.locator('.ms__badge--more .ms__badge-remove')).toHaveAttribute('aria-label', 'Remove hidden items: 12');
 });
 
 /**
@@ -108,7 +108,7 @@ test('page-wide window.components.locale labels apply live; the instance labels 
  * locale), while a page-wide `translateCallback` receives the raw number. `#lbl-big` is count mode
  * with 1234 selected → the `labels.selectedCount` badge.
  */
-test('counts in labels are locale-grouped; page-wide translateCallback gets the raw number', async ({ page }) => {
+test('counts in labels are locale-grouped; page-wide translateCallback gets the raw number in params.ctx', async ({ page }) => {
     await page.goto('/test/labels.html');
     const text = page.locator('#lbl-big .ms__badge--counter .ms__badge-text');
 
@@ -125,7 +125,7 @@ test('counts in labels are locale-grouped; page-wide translateCallback gets the 
             locale: 'cs-CZ',
             translateCallback: (ctx: any) => {
                 if (ctx.component === 'web-multiselect' && ctx.key === 'web-multiselect.labels.selectedCount') {
-                    w.__seen.push({ type: typeof ctx.params.count, value: ctx.params.count, locale: ctx.locale });
+                    w.__seen.push({ type: typeof ctx.params.ctx?.count, value: ctx.params.ctx?.count, selected: ctx.params.ctx?.selectedCount, locale: ctx.locale });
                 }
                 return undefined; // keep the default formatting
             },
@@ -134,7 +134,7 @@ test('counts in labels are locale-grouped; page-wide translateCallback gets the 
     await expect(text).toHaveText(/^1\s234 selected$/);
     const seen = await page.evaluate(() => (window as any).__seen);
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen[0]).toEqual({ type: 'number', value: 1234, locale: 'cs-CZ' });
+    expect(seen[0]).toEqual({ type: 'number', value: 1234, selected: 1234, locale: 'cs-CZ' });
 });
 
 /**
@@ -216,7 +216,7 @@ test('an unset tooltips.x follows the customized ariaLabels.x twin', async ({ pa
     const p = page.locator('#lbl-count');
     await p.evaluate((el: any) => {
         el.isBadgeTooltipsEnabled = true;
-        el.labels = { 'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých' };
+        el.labels = { 'ariaLabels.removeHiddenItems': 'Odebrat {ctx.count} skrytých' };
     });
 
     const removeHidden = p.locator('.ms__badge--more .ms__badge-remove');
@@ -241,21 +241,21 @@ test('element translateCallback beats the page one; null falls through; instance
 
     await page.evaluate(() => {
         (window as any).components.locale = {
-            translateCallback: (ctx: any) => (ctx.component === 'web-multiselect' ? `Page ${ctx.key.split('.').pop()} ${ctx.params?.count ?? ''}`.trim() : null),
+            translateCallback: (ctx: any) => (ctx.component === 'web-multiselect' ? `Page ${ctx.key.split('.').pop()} ${ctx.params?.ctx?.count ?? ''}`.trim() : null),
         };
     });
     await expect(removeHidden).toHaveAttribute('aria-label', 'Page removeHiddenItems 12');
 
     // The element's callback wins; for a key it returns null, the page callback answers.
     await p.evaluate((el: any) => {
-        el.translateCallback = (ctx: any) => (ctx.key === 'web-multiselect.ariaLabels.removeHiddenItems' ? `Own ${ctx.params.count}` : null);
+        el.translateCallback = (ctx: any) => (ctx.key === 'web-multiselect.ariaLabels.removeHiddenItems' ? `Own ${ctx.params.ctx.count}` : null);
     });
     await expect(removeHidden).toHaveAttribute('aria-label', 'Own 12');
     await expect(counter).toHaveAttribute('title', /Page andMore 2$/);
     expect(await p.evaluate((el: any) => el.selectedOptions.length)).toBe(before);
 
     // Instance labels beat both callbacks.
-    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {count}' }; });
+    await p.evaluate((el: any) => { el.labels = { 'ariaLabels.removeHiddenItems': 'Mine {ctx.count}' }; });
     await expect(removeHidden).toHaveAttribute('aria-label', 'Mine 12');
 
     // One element needs no page setup.
@@ -265,5 +265,26 @@ test('element translateCallback beats the page one; null falls through; instance
     await expect(counter).toHaveAttribute('title', /…and 2 more$/);
 
     await p.evaluate((el: any) => { el.translateCallback = null; });
-    await expect(removeHidden).toHaveAttribute('aria-label', 'Remove 12 hidden items');
+    await expect(removeHidden).toHaveAttribute('aria-label', 'Remove hidden items: 12');
+});
+
+/**
+ * `ctx.count` (rulebook D-NC-24) = the number the text's noun agrees with — the one generic i18n bridge
+ * (`i18next.t(key, { ...params, count: params.ctx?.count })`) pluralizes every key. For the "+X more"
+ * badge that is the hidden items (`ctx.moreCount`), not the whole selection (`ctx.selectedCount`).
+ */
+test('a translateCallback pluralizes on params.ctx.count (the hidden items for "+X more")', async ({ page }) => {
+    await page.goto('/test/labels.html');
+    const p = page.locator('#lbl-count');
+    await p.evaluate((el: any) => {
+        el.translateCallback = ({ key, params }: any) => {
+            if (key !== 'web-multiselect.labels.moreCount') return null;
+            const { count, selectedCount } = params.ctx;
+            return `+${count} ${count === 1 ? 'item' : 'items'} (of ${selectedCount})`;
+        };
+    });
+    const more = p.locator('.ms__badge--more .ms__badge-text');
+    await expect(more).toHaveText('+12 items (of 14)');
+    await p.evaluate((el: any) => el.setSelected(['a1', 'a2', 'a3']));
+    await expect(more).toHaveText('+1 item (of 3)');
 });

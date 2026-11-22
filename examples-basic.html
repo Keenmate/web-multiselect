@@ -626,9 +626,9 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
                     for (const id of ['ex-locale-a', 'ex-locale-b']) document.getElementById(id).options = langs;
 
                     const CS = {
-                        'placeholders.search': 'Hledat…', 'messages.noResults': 'Nic nenalezeno', 'labels.selectedCount': '{count} vybráno',
-                        'headers.selectedPopover': 'Vybrané položky ({count})', 'ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {item}',
-                        'tooltips.removeItem': 'Odebrat {item}',
+                        'placeholders.search': 'Hledat…', 'messages.noResults': 'Nic nenalezeno', 'labels.selectedCount': '{ctx.count} vybráno',
+                        'headers.selectedPopover': 'Vybrané položky ({ctx.count})', 'ariaLabels.close': 'Zavřít', 'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}',
+                        'tooltips.removeItem': 'Odebrat {ctx.displayValue}',
                     };
                     // The page-wide dictionary is flat and keyed by the FULL key: 'web-multiselect.<key>'.
                     const pageLabels = Object.fromEntries(Object.entries(CS).map(([k, v]) => [`web-multiselect.${k}`, v]));

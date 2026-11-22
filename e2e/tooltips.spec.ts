@@ -138,7 +138,7 @@ test('the "+N more" remove tooltip uses labels["tooltips.removeHiddenItems"]', a
     const p = await makeTooltipPicker(page,
         { 'badges-display-mode': 'partial', 'max-visible-badge-count': '1' },
         [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }],
-        { 'tooltips.removeHiddenItems': 'Odebrat {count} skryté' });
+        { 'tooltips.removeHiddenItems': 'Odebrat {ctx.count} skryté' });
     await p.evaluate((el: any) => el.setSelected(['a', 'b', 'c']));
 
     await p.locator('.ms__badge--more .ms__badge-remove').hover();

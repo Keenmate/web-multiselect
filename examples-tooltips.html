@@ -113,7 +113,7 @@
                 <code>enable-badge-tooltips</code>; place them with <code>badge-tooltip-placement</code>, customize
                 content with <code>getBadgeTooltipCallback</code> (the <strong>custom content</strong> toggle: here an element with
                 the name, the description and the badge's place in the selection), and
-                set the remove-button text with <code>labels['tooltips.removeItem']</code> (<code>{item}</code> = the
+                set the remove-button text with <code>labels['tooltips.removeItem']</code> (<code>{ctx.displayValue}</code> = the
                 item name) and its aria-label with <code>labels['ariaLabels.removeItem']</code> (the field below sets both).
             </p>
 
@@ -129,14 +129,14 @@
                 <label title="Tooltip to the end (right) side of the badge."><input type="radio" name="bdg-place" value="right"> right</label>
             </div>
             <div class="controls">
-                <label title="Template for the × remove-button tooltip and aria-label; {item} is replaced with the item name (labels['tooltips.removeItem'] + labels['ariaLabels.removeItem'])."><code>labels['tooltips.removeItem']</code>:
-                    <input type="text" id="bdg-remove" value="Remove {item}" class="w-lg"></label>
+                <label title="Template for the × remove-button tooltip and aria-label; {ctx.displayValue} is replaced with the badge text (labels['tooltips.removeItem'] + labels['ariaLabels.removeItem'])."><code>labels['tooltips.removeItem']</code>:
+                    <input type="text" id="bdg-remove" value="Remove {ctx.displayValue}" class="w-lg"></label>
             </div>
 
             <div class="demo-area">
                 <label class="demo-label">Hover a badge (or its × button):</label>
                 <web-multiselect id="tt-badge" multiple="true"
-                    enable-badge-tooltips="true" labels='{"tooltips.removeItem": "Remove {item}", "ariaLabels.removeItem": "Remove {item}"}'></web-multiselect>
+                    enable-badge-tooltips="true" labels='{"tooltips.removeItem": "Remove {ctx.displayValue}", "ariaLabels.removeItem": "Remove {ctx.displayValue}"}'></web-multiselect>
             </div>
         </div>
 
@@ -172,7 +172,7 @@ el.getOptionTooltipCallback = ({ option }) =&gt; string | HTMLElement
 badge-tooltip-placement    // 'top' | 'bottom' | 'left' | 'right' (default 'top')
 badge-tooltip-delay        // ms before show (default 100)
 badge-tooltip-offset       // px gap (default 8)
-labels='{"tooltips.removeItem":"Remove {item}","ariaLabels.removeItem":"Remove {item}"}' // × tooltip, aria-label
+labels='{"tooltips.removeItem":"Remove {ctx.displayValue}","ariaLabels.removeItem":"Remove {ctx.displayValue}"}' // × tooltip, aria-label
 el.getBadgeTooltipCallback        = ({ option }) =&gt; string | HTMLElement
 el.getRemoveButtonTooltipCallback = ({ option }) =&gt; string</code></pre></div>
 

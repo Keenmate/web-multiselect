@@ -271,7 +271,7 @@
                 With <code>allow-add-new</code> on, a search that finds nothing shows a clickable
                 <strong>“Add new …”</strong> prompt instead of the empty message. Choosing it (click or
                 <kbd>Enter</kbd>) fires the <code>add</code> event. The prompt label is set statically via
-                <code>labels['labels.addNew']</code> (the <code>{value}</code> placeholder is the typed text) or
+                <code>labels['labels.addNew']</code> (the <code>{ctx.value}</code> placeholder is the typed text) or
                 dynamically via <code>getAddNewTextCallback({ value })</code>. <code>beforeAddCallback({ value })</code> is
                 <strong>async and cancelable</strong> — return a rich option to create + select it,
                 <code>false</code> to abort (try adding a name that already exists, e.g. “Anna”), or nothing to just
@@ -284,7 +284,7 @@
                         id="create-select"
                         value-member="value"
                         display-value-member="label"
-                        allow-add-new labels='{"labels.addNew": "Add new member: “{value}”", "placeholders.search": "Search or add a member..."}'>
+                        allow-add-new labels='{"labels.addNew": "Add new member: “{ctx.value}”", "placeholders.search": "Search or add a member..."}'>
                     </web-multiselect>
                     <small class="form-text">Try typing “Dana”, then click the prompt (or press Enter).</small>
                 </div>
@@ -317,7 +317,7 @@
                         log('[event] add', `value="${e.detail.value}" → now: ` +
                             JSON.stringify(e.detail.selectedValues), 'success'));
 
-                    // Dynamic prompt label instead of the labels['labels.addNew'] {value} template:
+                    // Dynamic prompt label instead of the labels['labels.addNew'] {ctx.value} template (same ctx):
                     // el.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
                 </script>
             </kmwc-demo>
@@ -344,7 +344,7 @@
                         display-value-member="label"
                         subtitle-member="subtitle"
                         icon-member="icon"
-                        allow-add-new labels='{"labels.addNew": "➕ Add new member: “{value}”", "messages.addNewPending": "Adding “{value}” to the project…", "placeholders.search": "Search or add a member..."}'>
+                        allow-add-new labels='{"labels.addNew": "➕ Add new member: “{ctx.value}”", "messages.addNewPending": "Adding “{ctx.value}” to the project…", "placeholders.search": "Search or add a member..."}'>
                     </web-multiselect>
                     <small class="form-text">
                         Seeded with the Hornes — Audrey, Benjamin &amp; Jerry.

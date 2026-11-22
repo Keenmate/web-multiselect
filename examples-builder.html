@@ -250,7 +250,7 @@
             'selected-order': "Order selected items are displayed in (badges / popover). Display-only. 'member' needs selected-order-member; 'custom' needs a JS comparator (wired here for the demo).",
             'selected-order-member': "Property used as the sort key when selected-order=\"member\" (e.g. label).",
             '--ms-rem': "Global scale unit (default 10px) — everything sizes off it. Try 8px or 12px.",
-            'labels': "Every UI string as JSON, flat <elementType>.<name> keys (partial; unset keys stay English): placeholders.search, placeholders.select, placeholders.noData, messages.noData, messages.noResults, messages.searching, labels.noDisplayValue, labels.searchHint, labels.addNew ({value}), headers.selectedPopover ({count}), labels.selectedCount, labels.moreCount, ariaLabels.removeItem / tooltips.removeItem ({item}), …",
+            'labels': "Every UI string as JSON, flat <elementType>.<name> keys (partial; unset keys stay English): placeholders.search, placeholders.select, placeholders.noData, messages.noData, messages.noResults, messages.searching, labels.noDisplayValue, labels.searchHint, labels.addNew ({ctx.value}), headers.selectedPopover ({ctx.count}), labels.selectedCount / labels.moreCount ({ctx.count}), ariaLabels.removeItem / tooltips.removeItem ({ctx.displayValue}), placeholders read {ctx.selectedCount} / {ctx.totalCount}, …",
             'max-height': "Max dropdown list height before it scrolls (any CSS length).",
             'dropdown-min-width': "Minimum dropdown panel width (any CSS length).",
             'dropdown-max-width': "Maximum dropdown panel width (any CSS length).",

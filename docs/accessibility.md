@@ -29,20 +29,20 @@ Any key can be intercepted or overridden with `beforeKeydownCallback`, which run
 
 ## ARIA labels
 
-The component ships an `aria-label` on every icon-only control. All of them are translatable through the `labels` property (see [Translating labels](#translating-labels)); `{item}` / `{count}` placeholders are interpolated.
+The component ships an `aria-label` on every icon-only control. All of them are translatable through the `labels` property (see [Translating labels](#translating-labels)); templates read the text spot's context (`{ctx.displayValue}`, `{ctx.count}` — the number the noun agrees with).
 
 | Control | Default label | `labels` key |
 |---------|---------------|--------------|
-| Per-badge remove button | `Remove {item}` | `ariaLabels.removeItem` (tooltip: `tooltips.removeItem`) |
-| Hidden-items remove badge (partial mode "+N more") | `Remove {count} hidden items` | `ariaLabels.removeHiddenItems` (tooltip: `tooltips.removeHiddenItems`) |
+| Per-badge remove button | `Remove {ctx.displayValue}` | `ariaLabels.removeItem` (tooltip: `tooltips.removeItem`) |
+| Hidden-items remove badge (partial mode "+N more") | `Remove hidden items: {ctx.count}` | `ariaLabels.removeHiddenItems` (tooltip: `tooltips.removeHiddenItems`) |
 | Clear-all button on the count / compact badge | `Clear all selections` | `ariaLabels.clearAllSelections` |
 | Inline ✕ clear button (`show-clear`) | `Clear all selections` | `ariaLabels.clearAllSelections` |
 | Selected-items popover close / fullscreen close | `Close` | `ariaLabels.close` |
 | Fullscreen search clear (✕) | `Clear search` | `ariaLabels.clearSearch` |
 | Fullscreen navigate-mode previous / next match buttons | `Previous match` / `Next match` | `ariaLabels.prevMatch` / `ariaLabels.nextMatch` |
 | Option info button revealing a clipped label (fullscreen) | `Show full label` | `ariaLabels.showFullLabel` |
-| Group-header selected-count chip (visually hidden text; the visible `[N]` is `aria-hidden`) | `{count} selected` | `ariaLabels.groupSelected` |
-| Counter tooltip overflow tail (beyond 12 items) | `…and {count} more` | `tooltips.andMore` |
+| Group-header selected-count chip (visually hidden text; the visible `[N]` is `aria-hidden`) | `{ctx.count} selected` | `ariaLabels.groupSelected` |
+| Counter tooltip overflow tail (beyond 12 items) | `…and {ctx.count} more` | `tooltips.andMore` |
 | Fullscreen search-mode toggle (`show-search-mode-toggle`) | `Switch to filter mode` / `Switch to navigate mode` | `ariaLabels.switchToFilterMode` / `ariaLabels.switchToNavigateMode` (`title`: `tooltips.*`) |
 
 > **Tooltip vs. accessible name.** Each surface has its own key: `labels['ariaLabels.removeItem']` is the badge remove button's `aria-label`, `labels['tooltips.removeItem']` its hover tooltip (shown with `enable-badge-tooltips`; same English default); `getRemoveButtonTooltipCallback` overrides only the tooltip. The pair shares `<name>`, so translating only one of them is enough: an unset `tooltips.x` follows a customized `ariaLabels.x` (and vice versa) — set both only when they should differ.
@@ -55,9 +55,9 @@ Pass a partial map to the `labels` property; unset keys keep their English defau
 
 ```javascript
 multiselect.labels = {
-  'ariaLabels.removeItem': 'Odebrat {item}',
-  'tooltips.removeItem': 'Odebrat {item}',
-  'ariaLabels.removeHiddenItems': 'Odebrat {count} skrytých položek',
+  'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}',
+  'tooltips.removeItem': 'Odebrat {ctx.displayValue}',
+  'ariaLabels.removeHiddenItems': 'Odebrat skryté položky: {ctx.count}',
   'ariaLabels.clearAllSelections': 'Zrušit výběr',
   'ariaLabels.close': 'Zavřít',
 };

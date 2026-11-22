@@ -11,7 +11,7 @@
 <body>
     <h1>labels / i18n</h1>
     <p>Targeted by <code>e2e/labels.spec.ts</code>. The <code>#lbl-count</code> picker is built to
-       surface every <code>{count}</code>-interpolated label at once: grouped data
+       surface every <code>{ctx.count}</code>-interpolated label at once: grouped data
        (<code>ariaLabels.groupSelected</code> on headers), partial badges with a low max-visible
        (<code>ariaLabels.removeHiddenItems</code> on the “+N more” badge), and <code>show-counter</code> with
        &gt;12 selected (<code>tooltips.andMore</code> in the counter chip’s native title).</p>
@@ -51,7 +51,7 @@
         const preselect = [
             ...items.filter(o => o.group === 'Group A').map(o => o.value),          // 10
             ...items.filter(o => o.group === 'Group B').slice(0, 4).map(o => o.value) // 4
-        ]; // 14 total → counter tooltip ("…and {count} more") kicks in above 12
+        ]; // 14 total → counter tooltip ("…and {ctx.count} more") kicks in above 12
 
         customElements.whenDefined('web-multiselect').then(() => {
             const el = document.getElementById('lbl-count');

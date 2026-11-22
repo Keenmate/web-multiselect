@@ -95,18 +95,22 @@ export interface MessageOptions {
  * Set a partial map via the `labels` property or the `labels` JSON attribute
  * (`labels='{"messages.noResults":"Nic"}'`) — short keys or full ones (`web-multiselect.messages.noResults`);
  * page-wide: `window.components.locale.labels['web-multiselect.<key>']`. Any unset (`undefined`) key falls back to its English default, while `''` means deliberately empty (renders nothing).
- * Named placeholders are interpolated where noted (`{count}`, `{item}`, `{value}`, …).
+ * A dynamic text gets its text spot's context as `{ ctx }` (rulebook D-NC-24): a template reads `{ctx.<path>}`
+ * (`{ctx.count}`, `{ctx.value}`), numbers locale-formatted; a `translateCallback` gets the same object as
+ * `params.ctx` (numbers raw). Each key below names its context type and what `ctx.count` is — the number the
+ * text's noun agrees with, for an i18n library's plural rules. English defaults put no plural noun after a
+ * number (`Matches: {ctx.count}`), so one template fits every count.
  */
 export interface MultiSelectLabels {
-    /** Closed-input placeholder when search is disabled (`enable-search="false"`, picker mode). Default: `Pick an option…`. */
+    /** Closed-input placeholder when search is disabled (`enable-search="false"`, picker mode). ctx: `PlaceholderContext` — `ctx.count` = the selection count. Default: `Pick an option…`. */
     'placeholders.select'?: string;
-    /** Search input placeholder. Default: `Search…`. Set it to pin one text in every search mode. */
+    /** Search input placeholder while the search-mode toggle is hidden. ctx: `PlaceholderContext` — `{ctx.selectedCount}`, `{ctx.totalCount}`, …; `ctx.count` = the selection count. Default: `Search…`. */
     'placeholders.search'?: string;
-    /** Search placeholder in `filter` mode while the fullscreen mode toggle is shown (`show-search-mode-toggle`) and `placeholders.search` is not set. Default: `Filter…`. */
+    /** Search placeholder in `filter` mode while the search-mode toggle is shown (`show-search-mode-toggle`). ctx: `PlaceholderContext` — `ctx.count` = the selection count. Default: `Filter…`. */
     'placeholders.filter'?: string;
-    /** Search placeholder in `navigate` mode while the fullscreen mode toggle is shown and `placeholders.search` is not set. Default: `Search…`. */
+    /** Search placeholder in `navigate` mode while the search-mode toggle is shown. ctx: `PlaceholderContext` — `ctx.count` = the selection count. Default: `Search…`. */
     'placeholders.navigate'?: string;
-    /** Closed-input placeholder when there are no options at all (e.g. an unresolved cascade parent). Default: empty = off (the normal placeholder shows). */
+    /** Closed-input placeholder when there are no options at all (e.g. an unresolved cascade parent). ctx: `PlaceholderContext` — `ctx.count` = the selection count. Default: empty = off (the normal placeholder shows). */
     'placeholders.noData'?: string;
     /** Dropdown text when there are no options at all (nothing to search). HTML allowed. Default: `No data`. */
     'messages.noData'?: string;
@@ -118,22 +122,20 @@ export interface MultiSelectLabels {
     'labels.noDisplayValue'?: string;
     /** Small hint under the search input while the dropdown is open. Default: empty = no hint. */
     'labels.searchHint'?: string;
-    /** "Add new" prompt (`allow-add-new`). `{value}` → the typed text (escaped). Trusted HTML otherwise. `getAddNewTextCallback` wins. Default: `Add "{value}"`. */
+    /** "Add new" prompt (`allow-add-new`). ctx: `AddContext` (`getAddNewTextCallback` wins) — `{ctx.value}` = the typed text (escaped); no `ctx.count`. Trusted HTML otherwise. Default: `Add "{ctx.value}"`. */
     'labels.addNew'?: string;
-    /** Pending "add new" prompt while an async `beforeAddCallback` runs. `{value}` → the typed text. Default: `Adding "{value}"…`. */
+    /** Pending "add new" prompt while an async `beforeAddCallback` runs. ctx: `AddContext` — `{ctx.value}` = the typed text; no `ctx.count`. Default: `Adding "{ctx.value}"…`. */
     'messages.addNewPending'?: string;
-    /** Badges-area count text. `{count}` → selection count. `getCounterCallback` wins. Default: `{count} selected`. */
+    /** Badges-area count text. ctx: `CounterContext` (`getCounterCallback` wins) — `ctx.count` = `ctx.selectedCount` (the selection count). Default: `{ctx.count} selected`. */
     'labels.selectedCount'?: string;
-    /** The "+X more" badge text. `{count}` → hidden count. `getCounterCallback` wins. Default: `+{count} more`. */
+    /** The "+X more" badge text. ctx: `CounterContext` (`getCounterCallback` wins) — `ctx.count` = `ctx.moreCount` (the hidden items); `{ctx.selectedCount}` = all selected. Default: `+{ctx.count} more`. */
     'labels.moreCount'?: string;
-    /** Selected-items popover header. `{count}` → selection count. Default: `Selected Items ({count})`. */
+    /** Selected-items popover header. ctx: `SelectionCountContext` — `ctx.count` = `ctx.selectedCount`. Default: `Selected Items ({ctx.count})`. */
     'headers.selectedPopover'?: string;
-    /** Fullscreen navigate-mode position. `{position}`, `{total}`. Default: `{position} of {total}`. */
+    /** Fullscreen navigate-mode position. ctx: `MatchCountContext` — `{ctx.position}`, `{ctx.total}`; `ctx.count` = `ctx.total` (the matches). Default: `{ctx.position} of {ctx.total}`. */
     'labels.matchPosition'?: string;
-    /** Fullscreen navigate-mode match count (more than one). `{count}`. Default: `{count} matches`. */
+    /** Fullscreen navigate-mode match count (no match focused). ctx: `MatchCountContext` — `ctx.count` = `ctx.total` (the matches; `ctx.position` is `null`). Default: `Matches: {ctx.count}`. */
     'labels.matchCount'?: string;
-    /** Fullscreen navigate-mode match count (exactly one). `{count}`. Default: `{count} match`. */
-    'labels.matchCountOne'?: string;
     /** Popover / fullscreen close button. Default: `Close`. */
     'ariaLabels.close'?: string;
     /** Inline ✕ clear button (`show-clear`) and the count-mode clear (×) button. Default: `Clear all selections`. */
@@ -142,17 +144,17 @@ export interface MultiSelectLabels {
     'ariaLabels.clearSearch'?: string;
     /** Option info affordance that reveals a clipped label. Default: `Show full label`. */
     'ariaLabels.showFullLabel'?: string;
-    /** Badge remove (×) aria-label. `{item}` → the item's label. Default: `Remove {item}`. */
+    /** Badge remove (×) aria-label. ctx: `RemoveItemContext` — `{ctx.displayValue}` = the badge text; no `ctx.count`. Default: `Remove {ctx.displayValue}`. */
     'ariaLabels.removeItem'?: string;
-    /** Badge remove (×) tooltip (`enable-badge-tooltips`). `{item}` → the item's label. `getRemoveButtonTooltipCallback` wins. Default: `Remove {item}`. */
+    /** Badge remove (×) tooltip (`enable-badge-tooltips`). ctx: `RemoveItemContext` (`getRemoveButtonTooltipCallback` wins) — `{ctx.displayValue}`; no `ctx.count`. Default: `Remove {ctx.displayValue}`. */
     'tooltips.removeItem'?: string;
-    /** "+N more" badge remove (×) aria-label. `{count}` → hidden count. Default: `Remove {count} hidden items`. */
+    /** "+N more" badge remove (×) aria-label. ctx: `CounterContext` (the "+X more" badge's) — `ctx.count` = `ctx.moreCount` (the hidden items). Default: `Remove hidden items: {ctx.count}`. */
     'ariaLabels.removeHiddenItems'?: string;
-    /** "+N more" badge remove (×) tooltip (`enable-badge-tooltips`). `{count}` → hidden count. Default: `Remove {count} hidden items`. */
+    /** "+N more" badge remove (×) tooltip (`enable-badge-tooltips`). ctx: `CounterContext` (the "+X more" badge's) — `ctx.count` = `ctx.moreCount` (the hidden items). Default: `Remove hidden items: {ctx.count}`. */
     'tooltips.removeHiddenItems'?: string;
-    /** Group-header selected-count chip aria-label. `{count}` → selected count. Default: `{count} selected`. */
+    /** Group-header selected-count chip aria-label. ctx: `CountLabelContext` (the chip's, as `getCountLabelCallback` gets it) — `ctx.count` = `ctx.selectedCount`; `{ctx.groupName}`, `{ctx.totalCount}`. Default: `{ctx.count} selected`. */
     'ariaLabels.groupSelected'?: string;
-    /** Counter tooltip overflow tail (beyond 12 items). `{count}` → remaining count. Default: `…and {count} more`. */
+    /** Counter tooltip overflow tail (beyond 12 items). ctx: `CounterTooltipContext` — `ctx.count` = `ctx.remainingCount` (the items not listed). Default: `…and {ctx.count} more`. */
     'tooltips.andMore'?: string;
     /** Fullscreen navigate-mode "previous match" button. Default: `Previous match`. */
     'ariaLabels.prevMatch'?: string;
@@ -257,6 +259,15 @@ export interface BadgeContentRenderContext<T = any> extends ItemContext<T> {
     isInPopover: boolean;
 }
 
+/**
+ * `ctx` of `getRemoveButtonTooltipCallback` and the label context of `ariaLabels.removeItem` /
+ * `tooltips.removeItem`: the badge's {@link BadgeContentRenderContext} plus the text the badge shows.
+ */
+export interface RemoveItemContext<T = any> extends BadgeContentRenderContext<T> {
+    /** The badge text (`getBadgeDisplayCallback` / the display value). */
+    displayValue: string;
+}
+
 /** `ctx` of `renderSelectedContentCallback` (the single-select selected-value display). */
 export type SelectedContentRenderContext<T = any> = ItemContext<T>;
 
@@ -284,12 +295,27 @@ export interface GroupLabelRenderContext<T = any> extends MultiSelectContext<T> 
     checkState: 'checked' | 'indeterminate' | 'unchecked';
 }
 
-/** `ctx` of `getCounterCallback` — the badges-area "N selected" / "+X more" text. */
-export interface CounterContext<T = any> extends MultiSelectContext<T> {
+/**
+ * A text about the selection size — the label context of `headers.selectedPopover` (the
+ * selected-items popover header). Base of {@link CounterContext}.
+ */
+export interface SelectionCountContext<T = any> extends MultiSelectContext<T> {
     /** Number of selected items. */
+    selectedCount: number;
+    /** The number the text's noun agrees with (plural rules): `selectedCount`. */
     count: number;
+}
+
+/**
+ * `ctx` of `getCounterCallback` — the badges-area "N selected" / "+X more" text — and the label context
+ * of `labels.selectedCount`, `labels.moreCount` and the "+X more" badge's remove (×) labels
+ * (`ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems`).
+ */
+export interface CounterContext<T = any> extends SelectionCountContext<T> {
     /** Partial / compact mode: the number of items behind the "+X more" badge. Absent for the plain count. */
     moreCount?: number;
+    /** The number the text's noun agrees with: `moreCount` when set (the "+X more" items), else `selectedCount`. */
+    count: number;
 }
 
 /** `ctx` of `getCountLabelCallback` — the small count chip (in-input counter, group headers). */
@@ -300,6 +326,55 @@ export interface CountLabelContext<T = any> extends MultiSelectContext<T> {
     totalCount: number;
     /** Set when the chip belongs to a group header. */
     groupName?: string;
+    /** The number the text's noun agrees with: `selectedCount`. */
+    count: number;
+}
+
+/** Label context of `tooltips.andMore` — the tail of the counter chip's tooltip list (capped at 12 items). */
+export interface CounterTooltipContext<T = any> extends MultiSelectContext<T> {
+    /** Items listed in the tooltip. */
+    shownCount: number;
+    /** All items behind the counter. */
+    totalCount: number;
+    /** Items not listed (`totalCount - shownCount`). */
+    remainingCount: number;
+    /** The number the text's noun agrees with: `remainingCount`. */
+    count: number;
+}
+
+/** Label context of the fullscreen navigate-mode match counter (`labels.matchPosition` / `labels.matchCount`). */
+export interface MatchCountContext<T = any> extends MultiSelectContext<T> {
+    /** 1-based position of the focused match; `null` when no match is focused (`labels.matchCount`). */
+    position: number | null;
+    /** Number of matches. */
+    total: number;
+    /** The number the text's noun agrees with: `total` (the matches — "3 of 12" agrees with 12). */
+    count: number;
+}
+
+/** The `placeholders.*` label key a {@link PlaceholderContext} is about. */
+export type PlaceholderKey = 'placeholders.search' | 'placeholders.filter' | 'placeholders.navigate' | 'placeholders.select' | 'placeholders.noData';
+
+/**
+ * The label context of every `placeholders.*` key (`{ctx.selectedCount}`, …; a `translateCallback` gets it
+ * as `params.ctx`): which placeholder is about to show and the state it describes. Recomputed on every
+ * selection change (open or closed), search-mode switch, open / close and labels / locale change.
+ */
+export interface PlaceholderContext<T = any> extends MultiSelectContext<T> {
+    /** The label key the component picked: search disabled → `placeholders.select`; the search-mode toggle
+     *  shown → `placeholders.filter` / `.navigate` by mode; otherwise `placeholders.search`; no options at all
+     *  and a non-empty `placeholders.noData` → `placeholders.noData`. */
+    key: PlaceholderKey;
+    /** The current search mode. */
+    searchMode: SearchMode;
+    /** Whether the dropdown is open. */
+    isOpen: boolean;
+    /** Number of selected items. */
+    selectedCount: number;
+    /** Number of options (the whole list). */
+    totalCount: number;
+    /** The number the text's noun agrees with: `selectedCount`. */
+    count: number;
 }
 
 /** `ctx` of `getValueFormatCallback` — serialize the selection for the hidden form input. */
@@ -1236,8 +1311,8 @@ export interface MultiSelectConfig<T = any> {
      * {@link BadgeContentRenderContext} — the same one {@link renderBadgeContentCallback} gets.
      */
     getBadgeTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string | HTMLElement) | null;
-    /** Callback to generate custom tooltip text for a remove button (`ctx`: the badge's {@link BadgeContentRenderContext}). */
-    getRemoveButtonTooltipCallback?: ((ctx: BadgeContentRenderContext<T>) => string) | null;
+    /** Callback to generate custom tooltip text for a badge remove button (`ctx`: {@link RemoveItemContext} — the badge's context plus `displayValue`). */
+    getRemoveButtonTooltipCallback?: ((ctx: RemoveItemContext<T>) => string) | null;
     /**
      * Tooltip placement relative to the badge (Floating UI `Placement`). Default: `top`.
      *

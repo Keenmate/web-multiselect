@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — BREAKING: label templates read the text's context (`{ctx.*}`, `ctx.count`) (2026-11-22)
+- **BREAKING: every dynamic label passes its text spot's context as `{ ctx }`** (core rc25 dotted-path labels,
+  rulebook D-NC-24) — templates read `{ctx.<path>}`, numbers locale-formatted, values in HTML labels escaped; a
+  `translateCallback` gets the context raw as `params.ctx`. The context is the SAME object the spot's callback gets:
+  `labels.selectedCount` / `labels.moreCount` / `ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems` →
+  `CounterContext` (`getCounterCallback`); `ariaLabels.groupSelected` → `CountLabelContext` (`getCountLabelCallback`);
+  `labels.addNew` / `messages.addNewPending` → `AddContext` (`getAddNewTextCallback`); `ariaLabels.removeItem` /
+  `tooltips.removeItem` → new `RemoveItemContext` (the badge context + `displayValue`; `getRemoveButtonTooltipCallback`
+  gets it too); `headers.selectedPopover` → new `SelectionCountContext`; `tooltips.andMore` → new
+  `CounterTooltipContext`; `labels.matchPosition` / `labels.matchCount` → new `MatchCountContext`; every
+  `placeholders.*` key → new `PlaceholderContext` (`key`, `searchMode`, `isOpen`, `selectedCount`, `totalCount`).
+  No aliases for the old `{count}` / `{item}` / `{value}` / `{position}` / `{total}` templates.
+- **`ctx.count` = the number the text's noun agrees with** (for an i18n library's plurals:
+  `i18next.t(key, { ...params, count: params.ctx?.count })`): the selection (`selectedCount`) for
+  `labels.selectedCount` / `headers.selectedPopover` / `ariaLabels.groupSelected` / the placeholders; the hidden items
+  (`moreCount`) for `labels.moreCount` and the "+N more" remove labels; the matches (`total`) for
+  `labels.matchPosition` / `labels.matchCount`; the unlisted items (`remainingCount`) for `tooltips.andMore`. No
+  countable noun (add-new, remove-item) → no `count`. **BREAKING:** `getCounterCallback`'s `ctx.count` for the "+X more"
+  badge is now the hidden items (was the selection — read `ctx.selectedCount`, new); `CountLabelContext` gains `count`.
+- **English defaults put no plural noun after a number:** `ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems`
+  `Remove {count} hidden items` → `Remove hidden items: {ctx.count}`; `labels.matchCount` `{count} matches` →
+  `Matches: {ctx.count}`. **BREAKING:** `labels.matchCountOne` is removed — `labels.matchCount` covers every count
+  (plurals via `translateCallback`).
+- **BREAKING: the placeholder key follows the mode toggle, no layer is special:** with `show-search-mode-toggle` the
+  placeholder is `placeholders.filter` / `placeholders.navigate` by mode (a set `placeholders.search` no longer pins
+  one text over them — the private "was it set" check is gone, so a page dictionary / `translateCallback` behave like
+  the instance `labels`); otherwise `placeholders.search`. The placeholder is recomputed on every selection change
+  (open or closed — it was refreshed only while closed), mode switch, open / close and labels / locale change. The
+  closed count-mode text (`badgesThresholdMode: 'count'`) is unchanged.
+- Docs: usage guide "Labels (i18n)" (the `{ctx.*}` rule, the per-key context table, the i18next bridge), README
+  What's New, release notes, accessibility guide, example pages; CEM regenerated.
+
 ### Changed — runtime CSS variables are private (2026-11-22)
 - **BREAKING:** the four custom properties the component writes from JS as internal state are now private
   (`--_ms-*`, the core `--_km-*` convention): `--ms-input-current-width` → `--_ms-input-current-width` (the live field

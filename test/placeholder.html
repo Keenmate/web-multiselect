@@ -10,7 +10,7 @@
 </head>
 <body>
     <h1>placeholders</h1>
-    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels['placeholders.select']</code>), the empty-list <code>labels['placeholders.noData']</code>, and live updates via <code>setAttributes()</code>.</p>
+    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels['placeholders.select']</code>), the empty-list <code>labels['placeholders.noData']</code>, the mode-toggle keys, <code>{ctx.*}</code> placeholder templates, and live updates via <code>setAttributes()</code>.</p>
 
     <div class="fixture">
         <div class="fixture-label">default (search enabled)</div>
@@ -37,6 +37,15 @@
         <web-multiselect id="ph-nodata-filled" value-member="value" display-value-member="label" labels='{"placeholders.noData": "No data"}'></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">show-search-mode-toggle → placeholders.filter / .navigate by mode</div>
+        <web-multiselect id="ph-toggle" show-search-mode-toggle value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+    <div class="fixture">
+        <div class="fixture-label">multiple · labels['placeholders.search'] reads {ctx.selectedCount} / {ctx.totalCount}</div>
+        <web-multiselect id="ph-ctx" multiple value-member="value" display-value-member="label"
+            labels='{"placeholders.search": "Picked {ctx.selectedCount} of {ctx.totalCount}"}'></web-multiselect>
+    </div>
     <script type="module">
         import '/src/index.ts';
 
@@ -48,7 +57,7 @@
 
         customElements.whenDefined('web-multiselect').then(() => {
             // Everything except the cascade-child example gets data.
-            for (const id of ['ph-search', 'ph-nosearch', 'ph-custom-select', 'ph-nodata-filled']) {
+            for (const id of ['ph-search', 'ph-nosearch', 'ph-custom-select', 'ph-nodata-filled', 'ph-toggle', 'ph-ctx']) {
                 document.getElementById(id).options = items;
             }
             // ph-nodata intentionally stays empty to show the no-data placeholder.

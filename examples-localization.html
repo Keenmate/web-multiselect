@@ -42,12 +42,12 @@
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo01-out"></pre></div>
             </div>
             <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = {
-  'labels.selectedCount': '{count} vybráno',          // short key
+  'labels.selectedCount': '{ctx.count} vybráno',          // short key
   'buttons.clearSelection': 'Zrušit výběr',
   'web-multiselect.buttons.selectAll': 'Vybrat vše',  // full key
 };
 // or declaratively
-&lt;web-multiselect labels='{"labels.selectedCount": "{count} vybráno"}'&gt;&lt;/web-multiselect&gt;</code></pre></div>
+&lt;web-multiselect labels='{"labels.selectedCount": "{ctx.count} vybráno"}'&gt;&lt;/web-multiselect&gt;</code></pre></div>
         </div>
 
         <!-- ============================================================= -->
@@ -81,8 +81,8 @@
 window.components.locale = {
   labels: {
     'web-multiselect.placeholders.search': 'Hledat…',
-    'web-multiselect.labels.selectedCount': '{count} vybráno',
-    'web-multiselect.labels.moreCount': '+{count} další',
+    'web-multiselect.labels.selectedCount': '{ctx.count} vybráno',
+    'web-multiselect.labels.moreCount': '+{ctx.count} další',
     'web-multiselect.messages.noResults': 'Nic nenalezeno',
     'web-multiselect.buttons.selectAll': 'Vybrat vše',
     'web-multiselect.buttons.clearSelection': 'Zrušit výběr',
@@ -118,22 +118,23 @@ window.components.locale = {
                     <div class="form-group">
                         <label class="demo-label">Instance <code>labels.selectedCount</code></label>
                         <web-multiselect id="lo03b" class="lo-picker" multiple badges-display-mode="count"
-                            labels='{"labels.selectedCount": "Instance wins: {count}"}'></web-multiselect>
+                            labels='{"labels.selectedCount": "Instance wins: {ctx.count}"}'></web-multiselect>
                     </div>
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo03-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// an i18next-like lookup: a dictionary + t(key, params)
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// an i18next-like lookup: a dictionary + t(key, options); the label's context arrives as params.ctx,
+// ctx.count = the number the text's noun agrees with (the i18next bridge passes it as `count`)
 const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
 const t = (key, params) =&gt; sk[key]?.replace(/\{\{(\w+)\}\}/g, (_, p) =&gt; params?.[p] ?? '');
 const exists = (key) =&gt; key in sk;
 
 // page-wide — every component on the page
-window.components.locale = { translateCallback: ({ key, params }) =&gt; (exists(key) ? t(key, params) : null) };
+window.components.locale = { translateCallback: ({ key, params }) =&gt; (exists(key) ? t(key, { ...params, count: params.ctx?.count }) : null) };
 
 // one element — asked BEFORE the page-wide callback; null = not mine
 el.translateCallback = ({ key, params }) =&gt;
-  key === 'web-multiselect.labels.selectedCount' ? `${params.count} ausgewählt` : null;</code></pre></div>
+  key === 'web-multiselect.labels.selectedCount' ? `${params.ctx.count} ausgewählt` : null;</code></pre></div>
         </div>
 
         <!-- ============================================================= -->
@@ -158,7 +159,7 @@ el.translateCallback = ({ key, params }) =&gt;
                 <web-multiselect id="lo04" class="lo-picker" multiple enable-badge-tooltips></web-multiselect>
                 <div class="output"><div class="output-label">accessible name of the first × button</div><pre id="lo04-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'tooltips.removeItem': 'Odebrat {item}' };
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'tooltips.removeItem': 'Odebrat {ctx.displayValue}' };
 // → tooltip "Odebrat Apple" AND aria-label "Odebrat Apple" (ariaLabels.removeItem was never set)
 // an explicitly set ariaLabels.removeItem always wins over the twin</code></pre></div>
         </div>
@@ -169,7 +170,7 @@ el.translateCallback = ({ key, params }) =&gt;
         <div class="card">
             <h2>LO05 · <code>locale</code> + formatting</h2>
             <p>
-                Numbers in labels (<code>{count}</code> in <code>labels.selectedCount</code>, the dropdown group-count chip) are
+                Numbers in labels (<code>{ctx.count}</code> in <code>labels.selectedCount</code>, the dropdown group-count chip) are
                 formatted for the element's language: the <code>locale</code> input → the page
                 <code>window.components.locale.locale</code> → the browser. 1,234 options are selected in each picker. Multiselect
                 formats no dates — numbers only.
@@ -212,7 +213,7 @@ el.translateCallback = ({ key, params }) =&gt;
             <h2>LO06 · <code>shouldEscapeLabels</code></h2>
             <p>
                 Markup labels (<code>labels.addNew</code>, <code>messages.addNewPending</code>, <code>messages.searching</code>)
-                are HTML templates: the template's own <code>&lt;b&gt;</code> renders bold, while the <code>{value}</code> — the
+                are HTML templates: the template's own <code>&lt;b&gt;</code> renders bold, while the <code>{ctx.value}</code> — the
                 user's typed text, DATA — is always escaped. That is why the typed <code>&lt;i&gt;Ann&lt;/i&gt;</code> shows its
                 tags as text instead of turning italic. With
                 <code>window.components.security.shouldEscapeLabels</code> the whole label is text: the template's
@@ -223,12 +224,12 @@ el.translateCallback = ({ key, params }) =&gt;
                 <button type="button" id="lo06-type" class="btn-outline">Type <code>&lt;i&gt;Ann&lt;/i&gt;</code> into the search</button>
             </div>
             <div class="demo-area">
-                <label class="demo-label"><code>allow-add-new</code> + <code>labels.addNew</code> = <code>Add &lt;b&gt;{value}&lt;/b&gt;</code></label>
+                <label class="demo-label"><code>allow-add-new</code> + <code>labels.addNew</code> = <code>Add &lt;b&gt;{ctx.value}&lt;/b&gt;</code></label>
                 <web-multiselect id="lo06" class="lo-picker" multiple allow-add-new
-                    labels='{"labels.addNew": "Add <b>{value}</b>"}'></web-multiselect>
+                    labels='{"labels.addNew": "Add <b>{ctx.value}</b>"}'></web-multiselect>
                 <div class="output"><div class="output-label">the add-new row: markup → shown text</div><pre id="lo06-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'labels.addNew': 'Add &lt;b&gt;{value}&lt;/b&gt;' };
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.labels = { 'labels.addNew': 'Add &lt;b&gt;{ctx.value}&lt;/b&gt;' };
 // typed "&lt;i&gt;Ann&lt;/i&gt;" → Add &lt;b&gt;&amp;lt;i&amp;gt;Ann&amp;lt;/i&amp;gt;&lt;/b&gt;   (bold, tags of the data as text)
 window.components.security = { shouldEscapeLabels: true };
 // → Add &amp;lt;b&amp;gt;&amp;lt;i&amp;gt;Ann…   (the whole label is text)</code></pre></div>
@@ -305,7 +306,7 @@ window.components.security = { shouldEscapeLabels: true };
 
         // ── LO01 · instance labels.
         const LO01_LABELS = {
-            'labels.selectedCount': '{count} vybráno',
+            'labels.selectedCount': '{ctx.count} vybráno',
             'buttons.clearSelection': 'Zrušit výběr',
             'web-multiselect.buttons.selectAll': 'Vybrat vše',
         };
@@ -316,8 +317,8 @@ window.components.security = { shouldEscapeLabels: true };
         // ── LO02 · page dictionary.
         const CS = {
             'web-multiselect.placeholders.search': 'Hledat…',
-            'web-multiselect.labels.selectedCount': '{count} vybráno',
-            'web-multiselect.labels.moreCount': '+{count} další',
+            'web-multiselect.labels.selectedCount': '{ctx.count} vybráno',
+            'web-multiselect.labels.moreCount': '+{ctx.count} další',
             'web-multiselect.messages.noResults': 'Nic nenalezeno',
             'web-multiselect.buttons.selectAll': 'Vybrat vše',
             'web-multiselect.buttons.clearSelection': 'Zrušit výběr',
@@ -328,14 +329,14 @@ window.components.security = { shouldEscapeLabels: true };
         // ── LO03 · translateCallback.
         const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
         const t = (key, params) => sk[key].replace(/\{\{(\w+)\}\}/g, (_, p) => String(params?.[p] ?? ''));
-        const pageTranslate = ({ key, params }) => (key in sk ? t(key, params) : null);
-        const ownTranslate = ({ key, params }) => (key === 'web-multiselect.labels.selectedCount' ? `${params.count} ausgewählt` : null);
+        const pageTranslate = ({ key, params }) => (key in sk ? t(key, { ...params, count: params.ctx?.count }) : null);
+        const ownTranslate = ({ key, params }) => (key === 'web-multiselect.labels.selectedCount' ? `${params.ctx.count} ausgewählt` : null);
         $('lo03-page').addEventListener('change', (e) => { page.translateCallback = e.target.checked ? pageTranslate : null; applyPage(); });
         $('lo03-own').addEventListener('change', (e) => { $('lo03a').translateCallback = e.target.checked ? ownTranslate : undefined; refreshAll(); });
 
         // ── LO04 · twin follow.
         $('lo04-tooltip').addEventListener('change', (e) => {
-            $('lo04').labels = e.target.checked ? { 'tooltips.removeItem': 'Odebrat {item}' } : undefined;
+            $('lo04').labels = e.target.checked ? { 'tooltips.removeItem': 'Odebrat {ctx.displayValue}' } : undefined;
             refreshAll();
         });
 

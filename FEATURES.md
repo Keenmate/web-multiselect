@@ -110,8 +110,8 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 |---|---|---|---|---|---|---|
 | Enable badge tooltips | attr/prop | `enable-badge-tooltips` / `isBadgeTooltipsEnabled` | `bool(false)` | | | |
 | Custom badge tooltip content | callback | `getBadgeTooltipCallback({ option, displayMode, isInPopover })` | — | string or HTMLElement | | |
-| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ option })` | — | Per-item remove tooltip text | | |
-| Remove-button aria-label / tooltip | labels | `labels['ariaLabels.removeItem']` / `labels['tooltips.removeItem']` | `'Remove {item}'` | `{item}` = item name | | |
+| Custom remove-button tooltip | callback | `getRemoveButtonTooltipCallback({ option, displayValue })` | — | Per-item remove tooltip text | | |
+| Remove-button aria-label / tooltip | labels | `labels['ariaLabels.removeItem']` / `labels['tooltips.removeItem']` | `'Remove {ctx.displayValue}'` | ctx: `RemoveItemContext` (`{ctx.displayValue}` = badge text) | | |
 | Tooltip placement | attr/prop | `badge-tooltip-placement` / `badgeTooltipPlacement` | `'top'` | Floating-UI placements | | |
 | Tooltip delay | attr/prop | `badge-tooltip-delay` / `badgeTooltipDelay` | `100` | ms before show | | |
 | Tooltip offset | attr/prop | `badge-tooltip-offset` / `badgeTooltipOffset` | `8` | px gap from badge | | |
