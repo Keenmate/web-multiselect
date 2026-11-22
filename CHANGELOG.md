@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Internal — base-variables sweep (C-BV-3 / C-BV-6 / C-BV-9) (2026-11-22)
+- `component-variables.manifest.json`: the 31 unset-by-design knobs are marked `"input": true` — the 19 `--ms-sheet-*`
+  phone sheet overrides (mapped onto core's `--_km-sheet-*` with no fallback, so the page-wide `--km-sheet-*` still
+  reaches them), the hover / selected / focused colour refinements, `--ms-font-family`,
+  `--ms-fullscreen-mode-toggle-icon` and `--ms-tree-indent` / `--ms-tree-base-indent` (each falls back in the rule).
+- The effective sheet geometry locals (`--_ms-sheet-*`, the only `--base-*` reads in `floating.css`) moved onto
+  `:host` in `variables.css`. No visual change (screenshots pixel-identical, light + dark, desktop + phone sheet).
+
 ### Changed — tooltip motion from core (2026-11-22)
 - Badge and option tooltips (`.ms__badge-tooltip` / `.ms__option-tooltip`) now take their motion from core
   `createTooltip`: a short fade + slide toward the anchor on show AND on hide (was a fade-in only, then gone at once),

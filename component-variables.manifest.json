@@ -968,6 +968,7 @@
     {
       "name": "ms-option-color-selected-focused",
       "category": "option",
+      "input": true,
       "usage": "Text color of a selected option while keyboard-focused (unset: falls back to --ms-option-color-selected)"
     },
     {
@@ -993,6 +994,7 @@
     {
       "name": "ms-option-color-focused-hover",
       "category": "option",
+      "input": true,
       "usage": "Text color of the focused option on hover (unset: falls back to --ms-option-color-focused)"
     },
     {
@@ -1008,6 +1010,7 @@
     {
       "name": "ms-option-color-matched-hover",
       "category": "option",
+      "input": true,
       "usage": "Text color of a search-matched option on hover (unset: falls back to --ms-option-color-matched)"
     },
     {
@@ -1078,6 +1081,7 @@
     {
       "name": "ms-option-title-color-hover",
       "category": "option-content",
+      "input": true,
       "usage": "Option title color on hover (unset: falls back to --ms-option-title-color)"
     },
     {
@@ -1093,6 +1097,7 @@
     {
       "name": "ms-option-title-color-selected-hover",
       "category": "option",
+      "input": true,
       "usage": "Title color of a selected option on hover (unset: falls back to --ms-option-title-color-selected)"
     },
     {
@@ -1118,16 +1123,19 @@
     {
       "name": "ms-option-subtitle-color-hover",
       "category": "option-content",
+      "input": true,
       "usage": "Option subtitle color on hover (unset: falls back to --ms-option-subtitle-color)"
     },
     {
       "name": "ms-option-subtitle-color-selected",
       "category": "option-content",
+      "input": true,
       "usage": "Subtitle color of a selected option (unset: falls back to --ms-option-subtitle-color)"
     },
     {
       "name": "ms-option-subtitle-color-selected-hover",
       "category": "option-content",
+      "input": true,
       "usage": "Subtitle color of a selected option on hover (unset: falls back to --ms-option-subtitle-color-selected)"
     },
     {
@@ -1793,6 +1801,7 @@
     {
       "name": "ms-font-family",
       "category": "typography",
+      "input": true,
       "usage": "Component font family (unset by default: falls back to --base-font-family, then inherit)"
     },
     {
@@ -1958,96 +1967,115 @@
     {
       "name": "ms-sheet-header-gap",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: gap between the bar items (search / title, close). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-gap (then --km-sheet-header-gap, then the --base-* default)"
     },
     {
       "name": "ms-sheet-header-padding-block",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: block (top / bottom) padding of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-padding-block (then --km-sheet-header-padding-block, then the --base-* default)"
     },
     {
       "name": "ms-sheet-header-padding-inline",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: inline (start / end) padding of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-padding-inline (then --km-sheet-header-padding-inline, then the --base-* default)"
     },
     {
       "name": "ms-sheet-header-min-height",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: minimum height of the bar. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-min-height (then --km-sheet-header-min-height, then the --base-* default)"
     },
     {
       "name": "ms-sheet-header-bg",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: bar background. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-bg (then --km-sheet-header-bg, then the --base-* default)"
     },
     {
       "name": "ms-sheet-header-border",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: bar bottom border. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-header-border (then --km-sheet-header-border, then the --base-* default)"
     },
     {
       "name": "ms-sheet-title-color",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: title text colour (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-color (then --km-sheet-title-color, then the --base-* default)"
     },
     {
       "name": "ms-sheet-title-font-size",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: title font size (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-font-size (then --km-sheet-title-font-size, then the --base-* default)"
     },
     {
       "name": "ms-sheet-title-font-weight",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: title font weight (selected-items sheet). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-title-font-weight (then --km-sheet-title-font-weight, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-size",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip size (default 44px touch target). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-size (then --km-sheet-close-size, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-icon-size",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: ✕ icon size. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-icon-size (then --km-sheet-close-icon-size, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-icon",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: ✕ glyph (any url(...)). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-icon (then --km-sheet-close-icon, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-color",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: ✕ colour. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-color (then --km-sheet-close-color, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-bg",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip background. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-bg (then --km-sheet-close-bg, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-bg-hover",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip background on hover. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-bg-hover (then --km-sheet-close-bg-hover, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-border",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip border (e.g. 1px solid … for a bordered \"button\" close). A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-border (then --km-sheet-close-border, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-border-radius",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip border radius. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-border-radius (then --km-sheet-close-border-radius, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-edge-nudge",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: how far the close slides toward the trailing edge. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-edge-nudge (then --km-sheet-close-edge-nudge, then the --base-* default)"
     },
     {
       "name": "ms-sheet-close-focus-color",
       "category": "sheet",
+      "input": true,
       "usage": "Phone sheet bar: close chip focus outline colour. A sheet is a panel that covers the page on a phone (the fullscreen dropdown / selected-items popover). Unset by default; maps onto core's --_km-sheet-close-focus-color (then --km-sheet-close-focus-color, then the --base-* default)"
     },
     {
@@ -2093,7 +2121,8 @@
     {
       "name": "ms-fullscreen-mode-toggle-icon",
       "category": "fullscreen",
-      "usage": "Fullscreen search-mode toggle icon (url)"
+      "input": true,
+      "usage": "Fullscreen search-mode toggle icon (url). Unset by default: falls back to --ms-icon-search"
     },
     {
       "name": "ms-fullscreen-mode-toggle-icon-size",
@@ -2473,12 +2502,14 @@
     {
       "name": "ms-tree-base-indent",
       "category": "tree",
-      "usage": "Base indent for tree options in the floating dropdown"
+      "input": true,
+      "usage": "Base indent for tree options. Unset by default: falls back to calc(0.75 * --ms-rem); the fullscreen panel sets it from --ms-fullscreen-tree-base-indent"
     },
     {
       "name": "ms-tree-indent",
       "category": "tree",
-      "usage": "Per-level indent for tree options in the floating dropdown (default calc(var(--base-tree-indent, 1.6) * var(--ms-rem)) = 16px)"
+      "input": true,
+      "usage": "Per-level indent for tree options. Unset by default: falls back to calc(var(--base-tree-indent, 1.6) * var(--ms-rem)) = 16px; the fullscreen panel sets it from --ms-fullscreen-tree-indent"
     },
     {
       "name": "ms-z-index-fullscreen",
