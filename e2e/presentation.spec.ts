@@ -162,14 +162,25 @@ test.describe('closing the fullscreen sheet keeps the page scroll (core claimBac
         expect(before).toBeGreaterThan(1000);
         // Every scroll position the page passes through from the close on (a jump to the top
         // and back is a visible flash even when the final position is right).
-        const watch = () => page.evaluate(() => {
-            const w = window as unknown as { __scrolls: number[] };
-            w.__scrolls = [];
-            window.addEventListener('scroll', () => w.__scrolls.push(Math.round(window.scrollY)));
-        });
+        // Two frames first: scroll events dispatch at the next rendering step, so the open's scroll
+        // lock (window scroll 0) would otherwise land in the close's tracker under load.
+        const frames = () => page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
+        const watch = async () => {
+            await frames();
+            await page.evaluate(() => {
+                const w = window as unknown as { __scrolls: number[] };
+                w.__scrolls = [];
+                window.addEventListener('scroll', () => w.__scrolls.push(Math.round(window.scrollY)));
+            });
+        };
+        // No sheet history entry left (core claimBackEntry: a deferred history.back(), its popstate,
+        // then the page's scrollRestoration one task later).
+        const historySettled = () => page.evaluate(() =>
+            !(history.state as { kmBackEntry?: boolean } | null)?.kmBackEntry && history.scrollRestoration === 'auto');
         const closedAt = async () => {
             await expect(fullscreen(p)).toHaveCount(0);
-            await page.waitForTimeout(300); // the history.back() and its traversal
+            await expect.poll(historySettled).toBe(true);
+            await frames(); // any scroll the traversal caused is dispatched by now
             const seen = await page.evaluate(() => (window as unknown as { __scrolls: number[] }).__scrolls);
             return [...new Set([...seen, await scrollY()])];
         };
