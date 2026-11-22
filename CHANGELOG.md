@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — `maxSelectedCount`: a limit on user picks (2026-11-22)
+- **`max-selected-count` / `maxSelectedCount`** (positive integer, unset = no limit; multiple mode only — single mode
+  ignores it; not reflected, like the other numeric inputs). At the limit every unselected option is not selectable by
+  the user — click, Enter / Space, a group checkbox, "add new" (the prompt hides), `controller.selectValue()` /
+  `toggleValue()` — and renders `aria-disabled="true"` + `ms__option--limit` (styled like a disabled option through the
+  existing `--ms-disabled-opacity` / `--ms-option-disabled-bg`; still reachable with the arrow keys, the focus outline
+  kept). Deselecting frees a slot. **Select All (and a group checkbox) picks only up to the limit, in display order**;
+  the `select-all` button is disabled at the limit. A cascade tree counts the emitted values (`selectedValue`): a node
+  toggle whose projection would pass the limit is blocked, Select All stops before it.
+- Reaching the limit by a user pick is announced once through core `announce()` — new label `messages.limitReached`
+  (`Limit reached: {ctx.max}`, ctx `LimitContext` = `{ max, selectedCount, count: max }`).
+- **A programmatic value is not truncated** (`el.value`, `setSelected()`, the `value` attribute — the app's call);
+  lowering the limit below the current selection keeps the selection and only blocks adding. No form validity.
+- `PlaceholderContext` gains `maxSelectedCount` (null without a limit) and `remaining` (null without one); with a limit
+  `ctx.count` = `remaining` — `labels: { 'placeholders.search': 'Select up to {ctx.remaining} more' }`, plurals via
+  `translateCallback` on `params.ctx.count`. Example page: localization LO07–LO09 (the instance label, Czech plurals
+  with `Intl.PluralRules('cs')`, the element's own `translateCallback` at the limit). Docs: usage guide "Selection
+  limit", accessibility guide, README What's New, release notes; e2e `max-selected-count.spec.ts`, unit
+  `max-selected-count.test.ts`; CEM regenerated.
+
 ### Changed — BREAKING: label templates read the text's context (`{ctx.*}`, `ctx.count`) (2026-11-22)
 - **BREAKING: every dynamic label passes its text spot's context as `{ ctx }`** (core rc25 dotted-path labels,
   rulebook D-NC-24) — templates read `{ctx.<path>}`, numbers locale-formatted, values in HTML labels escaped; a

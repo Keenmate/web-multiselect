@@ -98,7 +98,9 @@ For best results, wrap the component with a `<label>` so the label's text become
 
 The search field (and the phone sheet's own search field) is a `role="combobox"` with `aria-autocomplete="list"`,
 `aria-expanded` and `aria-controls` pointing at the options `role="listbox"` (`aria-multiselectable` in multi-select).
-Each option row is a `role="option"` with `aria-selected` (and `aria-disabled`; tree rows add `aria-level`,
+Each option row is a `role="option"` with `aria-selected` (and `aria-disabled` — a disabled option, or an unselected
+one while `max-selected-count` is reached, which stays reachable with the arrow keys and is announced via core
+`announce()` when the limit is hit; tree rows add `aria-level`,
 non-selectable tree nodes are `role="presentation"`). Focus never leaves the field: `aria-activedescendant` follows
 the keyboard highlight (core `/a11y` `createActiveDescendant`), also across virtual-list recycling. The row
 checkboxes are decorative (`aria-hidden`, not focusable) — `aria-selected` carries the state.

@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, RemoveItemContext, AddContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, RemoveItemContext, AddContext } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
  *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
@@ -27,6 +27,7 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     'messages.noData': 'No data',
     'messages.noResults': 'No results found',
     'messages.searching': 'Searching…',
+    'messages.limitReached': 'Limit reached: {ctx.max}',
     'labels.noDisplayValue': '[N/A]',
     'labels.searchHint': '',
     'labels.addNew': 'Add "{ctx.value}"',
@@ -593,6 +594,29 @@ export class MultiSelectEngine<T = any> {
         return node ? node.isSelectable !== false : true;
     }
 
+    /** The active pick limit — a positive `maxSelectedCount` in multiple mode — or null. */
+    private selectionLimit(): number | null {
+        const max = this.options.maxSelectedCount;
+        return this.options.isMultiple && typeof max === 'number' && max > 0 ? max : null;
+    }
+
+    /** Picks left under the limit (0 at / over it — a programmatic value is not truncated), or null without one. */
+    private remainingPicks(): number | null {
+        const max = this.selectionLimit();
+        return max === null ? null : Math.max(0, max - this.selectedValues.size);
+    }
+
+    /** True when the limit is set and reached: the user can't add another option. */
+    private isAtSelectionLimit(): boolean {
+        return this.remainingPicks() === 0;
+    }
+
+    /** `options` capped to the picks left under the limit (display order kept); all of them without a limit. */
+    private capToLimit(options: T[]): T[] {
+        const remaining = this.remainingPicks();
+        return remaining === null || options.length <= remaining ? options : options.slice(0, remaining);
+    }
+
     /**
      * Whether the keyboard highlight may land on the visible row at `index`: the option isn't
      * disabled and (tree mode) the node is selectable. Arrow keys, Home/End, PageUp/PageDown,
@@ -807,6 +831,24 @@ export class MultiSelectEngine<T = any> {
      * checked atoms to emitted values under the active policy, and commit the diff
      * so badges / form / change events reflect the policy (rolled-up branches, etc.).
      */
+    /**
+     * Cascade mode + a pick limit: whether checking `node`'s subtree would project to more emitted
+     * values than the limit allows (and more than today — a toggle that doesn't grow the list passes).
+     */
+    private cascadeToggleExceedsLimit(node: LTreeNode<T>): boolean {
+        const max = this.selectionLimit();
+        if (max === null || !this.cascadeIndex) return false;
+        const index = this.cascadeIndex;
+        const { checkedAtoms } = toggleNodeCascade(index, node, expandToAtoms(index, this.selectedValues));
+        const size = this.projectCascade(checkedAtoms).length;
+        return size > max && size > this.selectedValues.size;
+    }
+
+    /** The emitted values of a checked-atom set under the active policy. */
+    private projectCascade(checkedAtoms: Set<string>): string[] {
+        return projectSelection(this.cascadeIndex!, checkedAtoms, this.cascadePolicy(), (d) => String(this.getItemValue(d)));
+    }
+
     private toggleTreeCascade(node: LTreeNode<T>): void {
         const index = this.cascadeIndex!;
         const before = expandToAtoms(index, this.selectedValues);
@@ -1706,7 +1748,7 @@ export class MultiSelectEngine<T = any> {
      * Built-in state of `select-all` / `clear-selection` — the `defaults` layer under the consumer's
      * static fields and `get*Callback`s (core `resolveActionItem`):
      * - `select-all` is disabled when it would add nothing (every selectable, non-disabled filtered
-     *   option is already selected — this also covers an empty list).
+     *   option is already selected — this also covers an empty list — or the pick limit is reached).
      * - `clear-selection` is disabled when nothing is selected.
      * Text defaults come from `labels['buttons.selectAll']` / `labels['buttons.clearSelection']`.
      */
@@ -1714,7 +1756,7 @@ export class MultiSelectEngine<T = any> {
         if (action === 'select-all') {
             return {
                 text: this.labels.text('buttons.selectAll'),
-                isDisabled: !this.filteredOptions.some(option =>
+                isDisabled: this.isAtSelectionLimit() || !this.filteredOptions.some(option =>
                     !this.getItemDisabled(option) && !this.selectedValues.has(String(this.getItemValue(option)))),
             };
         }
@@ -1803,20 +1845,24 @@ export class MultiSelectEngine<T = any> {
         const isFocused = index === this.focusedIndex;
         const isMatched = this.matchingIndices.has(index);
 
+        // At the pick limit an unselected row can't be added: dimmed like a disabled one, still focusable.
+        const isLimited = !isSelected && !disabled && this.isAtSelectionLimit();
+
         const classes = ['ms__option'];
         if (isSelected) classes.push('ms__option--selected');
         if (isFocused) classes.push('ms__option--focused');
         if (isMatched) classes.push('ms__option--matched');
         if (disabled) classes.push('ms__option--disabled');
+        if (isLimited) classes.push('ms__option--limit');
 
         const checkboxAlignAttr = this.options.checkboxAlign && this.options.checkboxAlign !== 'center'
             ? ` data-checkbox-align="${this.options.checkboxAlign}"`
             : '';
 
-        let html = `<div class="${classes.join(' ')}" role="option" aria-selected="${isSelected}"${disabled ? ' aria-disabled="true"' : ''} data-value="${escapeHtml(String(value))}" data-index="${index}"${checkboxAlignAttr}>`;
+        let html = `<div class="${classes.join(' ')}" role="option" aria-selected="${isSelected}"${disabled || isLimited ? ' aria-disabled="true"' : ''} data-value="${escapeHtml(String(value))}" data-index="${index}"${checkboxAlignAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple) {
-            html += this.checkboxHtml({ checked: isSelected, disabled });
+            html += this.checkboxHtml({ checked: isSelected, disabled: disabled || isLimited });
         }
 
         html += '<div class="ms__option-content">';
@@ -1897,6 +1943,9 @@ export class MultiSelectEngine<T = any> {
         if (isFocused) classes.push('ms__option--focused');
         if (isMatched) classes.push('ms__option--matched');
         if (disabled) classes.push('ms__option--disabled');
+        // At the pick limit a node that isn't fully checked can't be added (see renderOption).
+        const isLimited = selectable && !isSelected && !disabled && this.isAtSelectionLimit();
+        if (isLimited) classes.push('ms__option--limit');
         // Non-selectable nodes look normal (NOT greyed like disabled) but carry a
         // hook class and drop their checkbox so they read as structure, not choices.
         if (!selectable) classes.push('ms__option--tree-unselectable');
@@ -1907,12 +1956,12 @@ export class MultiSelectEngine<T = any> {
 
         const selectableAttr = selectable ? '' : ' data-selectable="false"';
         const ariaOption = selectable
-            ? ` role="option" aria-selected="${isSelected}" aria-level="${level}"${disabled ? ' aria-disabled="true"' : ''}`
+            ? ` role="option" aria-selected="${isSelected}" aria-level="${level}"${disabled || isLimited ? ' aria-disabled="true"' : ''}`
             : ' role="presentation"';
         let html = `<div class="${classes.join(' ')}"${ariaOption} data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--_ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple && selectable) {
-            html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
+            html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled: disabled || isLimited });
         }
 
         html += '<div class="ms__option-content">';
@@ -1986,6 +2035,7 @@ export class MultiSelectEngine<T = any> {
     /** True when the empty dropdown is currently showing the clickable "add new" prompt. */
     private isAddNewPromptShown(): boolean {
         return !!this.options.isAddNewAllowed
+            && !this.isAtSelectionLimit()
             && this.filteredOptions.length === 0
             && !!(this.typedTerm || '').trim();
     }
@@ -2110,13 +2160,16 @@ export class MultiSelectEngine<T = any> {
     /** The {@link PlaceholderContext} for `key`. */
     private placeholderCtx(key: PlaceholderKey): PlaceholderContext<T> {
         const selectedCount = this.selectedValues.size;
+        const remaining = this.remainingPicks();
         return this.ctx({
             key,
             searchMode: this.options.searchMode || 'filter',
             isOpen: this.#isOpen,
             selectedCount,
             totalCount: this.allOptions.length,
-            count: selectedCount,
+            maxSelectedCount: this.selectionLimit(),
+            remaining,
+            count: remaining ?? selectedCount,
         });
     }
 
@@ -3525,6 +3578,11 @@ export class MultiSelectEngine<T = any> {
                 // checked, else a select (the cascade then flips the whole subtree).
                 const checked = new Set(expandToAtoms(index, this.selectedValues));
                 const isChecked = nodeCheckState(index, node, checked) === 'checked';
+                // The pick limit: a select that would grow the emitted value list past it is blocked.
+                if (!isChecked && this.cascadeToggleExceedsLimit(node)) {
+                    interactionLogger.debug(`[${this.instanceId}] toggleOption ignored — maxSelectedCount reached`);
+                    return;
+                }
                 void then(this.vetoOne(isChecked ? 'deselect' : 'select', option, 'option'), (isAllowed) => {
                     if (!isAllowed) return;
                     // An async veto: the subtree may have flipped meanwhile (a second click) —
@@ -3532,6 +3590,7 @@ export class MultiSelectEngine<T = any> {
                     if (this.cascadeIndex !== index) return;
                     const isCheckedNow = nodeCheckState(index, node, new Set(expandToAtoms(index, this.selectedValues))) === 'checked';
                     if (isCheckedNow !== isChecked) return;
+                    if (!isChecked && this.cascadeToggleExceedsLimit(node)) return; // the selection grew meanwhile
                     this.toggleTreeCascade(node);
                     if (this.options.shouldCloseOnSelect) this.closeWith('select');
                 });
@@ -3549,6 +3608,12 @@ export class MultiSelectEngine<T = any> {
         // mode — there's no checkbox). Just close on the confirming click.
         if (wasSelected && !this.options.isMultiple) {
             this.closeWith('select');
+            return;
+        }
+
+        // The pick limit (multiple mode): no new option once it's reached; deselecting still works.
+        if (!wasSelected && this.isAtSelectionLimit()) {
+            interactionLogger.debug(`[${this.instanceId}] toggleOption ignored — maxSelectedCount reached`);
             return;
         }
 
@@ -3609,8 +3674,8 @@ export class MultiSelectEngine<T = any> {
         return then(this.vetoOne('select', option, source), (isAllowed) => {
             if (!isAllowed) return false;
             const valueKey = String(this.getItemValue(option));
-            // An async veto may resolve after the state moved on.
-            if (this.selectedValues.has(valueKey)) return false;
+            // An async veto may resolve after the state moved on (selected meanwhile, or the limit filled).
+            if (this.selectedValues.has(valueKey) || this.isAtSelectionLimit()) return false;
             // Single-select replaces the current value. Clearing directly (rather
             // than via deselectOption) preserves the documented replacement
             // semantics: a replace fires select + change, but no deselect.
@@ -3645,7 +3710,8 @@ export class MultiSelectEngine<T = any> {
      */
     private async handleAddNew(value: string): Promise<void> {
         // One creation at a time: Enter on the pending prompt must not run the hook again.
-        if (this.isInteractionBlocked() || this.addNewPending) return;
+        // At the pick limit the new option couldn't be selected — the prompt is hidden then, too.
+        if (this.isInteractionBlocked() || this.addNewPending || this.isAtSelectionLimit()) return;
         try {
             let newOption: T | undefined;
 
@@ -3759,6 +3825,7 @@ export class MultiSelectEngine<T = any> {
     /**
      * The `select-all` gesture (action button, `controller.selectAll()`): every selectable,
      * non-disabled visible option, each through `beforeSelectCallback` (a vetoed one is skipped).
+     * With `maxSelectedCount` only up to the limit, in display order.
      * Cascade mode checks the allowed atoms and projects through the policy — so Select All emits
      * the same rolled-up shape a click would.
      */
@@ -3772,14 +3839,25 @@ export class MultiSelectEngine<T = any> {
                 .map(node => node.data as T);
             return then(this.vetoMany('select', candidates, 'select-all'), (allowed) => {
                 const checkedAtoms = new Set(expandToAtoms(index, this.selectedValues));
-                for (const option of allowed) checkedAtoms.add(String(this.getItemValue(option)));
+                const max = this.selectionLimit();
+                for (const option of allowed) {
+                    const atom = String(this.getItemValue(option));
+                    checkedAtoms.add(atom);
+                    // The pick limit: stop (display order) before the projection outgrows it.
+                    if (max !== null && this.projectCascade(checkedAtoms).length > max) {
+                        checkedAtoms.delete(atom);
+                        break;
+                    }
+                }
                 this.commitCascadeAtoms(checkedAtoms);
             });
         }
 
-        const candidates = this.filteredOptions.filter((option, index) =>
+        // The pick limit caps the candidates in display order (before the veto, so a
+        // beforeSelectCallback only hears about the options that would be added).
+        const candidates = this.capToLimit(this.filteredOptions.filter((option, index) =>
             !this.getItemDisabled(option) && this.isIndexSelectable(index)
-            && !this.selectedValues.has(String(this.getItemValue(option))));
+            && !this.selectedValues.has(String(this.getItemValue(option)))));
         return then(this.vetoMany('select', candidates, 'select-all'), (allowed) => this.addOptions(allowed));
     }
 
@@ -3793,12 +3871,13 @@ export class MultiSelectEngine<T = any> {
         return then(this.vetoMany('deselect', options, source), (allowed) => this.removeOptions(allowed));
     }
 
-    /** Add `options` to the selection in one commit (skipping ones already selected). */
+    /** Add `options` to the selection in one commit (skipping ones already selected; stops at the pick limit). */
     private addOptions(options: T[]): void {
         const added: T[] = [];
         for (const option of options) {
             const valueKey = String(this.getItemValue(option));
             if (this.selectedValues.has(valueKey)) continue;
+            if (this.isAtSelectionLimit()) break; // an async veto may resolve after the limit filled
             this.selectedValues.add(valueKey);
             this.selectedByValue.set(valueKey, option);
             added.push(option);
@@ -3857,7 +3936,7 @@ export class MultiSelectEngine<T = any> {
         if (this.groupCheckState(members) === 'checked') {
             void this.bulkDeselect(members.filter(o => this.selectedValues.has(String(this.getItemValue(o)))), 'group');
         } else {
-            const candidates = members.filter(o => !this.getItemDisabled(o) && !this.selectedValues.has(String(this.getItemValue(o))));
+            const candidates = this.capToLimit(members.filter(o => !this.getItemDisabled(o) && !this.selectedValues.has(String(this.getItemValue(o)))));
             void then(this.vetoMany('select', candidates, 'group'), (allowed) => this.addOptions(allowed));
         }
     }
@@ -3908,6 +3987,7 @@ export class MultiSelectEngine<T = any> {
         const added = delta.added ?? [];
         const removed = delta.removed ?? [];
         if (added.length === 0 && removed.length === 0) return;
+        this.announceLimitReached(added.length - removed.length);
 
         // One selection snapshot for every detail of this change (each detail gets the context).
         const selectedOptions = this.selectedOptions;
@@ -3919,6 +3999,20 @@ export class MultiSelectEngine<T = any> {
             for (const option of removed) this.options.onDeselect(this.ctx({ option, selectedOptions, selectedValues }));
         }
         this.options.onChange?.(this.ctx({ selectedOptions, selectedValues }));
+    }
+
+    /**
+     * Announce (core `announce()`, `labels['messages.limitReached']`) when a user pick just brought the
+     * selection to the `maxSelectedCount` limit — once per reaching it (`grown` = values added by this
+     * commit); a programmatic value never comes through here.
+     */
+    private announceLimitReached(grown: number): void {
+        const max = this.selectionLimit();
+        if (max === null || grown <= 0) return;
+        const size = this.selectedValues.size;
+        if (size < max || size - grown >= max) return;
+        const ctx: LimitContext<T> = this.ctx({ max, selectedCount: size, count: max });
+        announce(this.labels.text('messages.limitReached', { ctx }));
     }
 
     /**

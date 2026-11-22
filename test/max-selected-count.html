@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — max-selected-count</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>max-selected-count</h1>
+    <p>Targeted by <code>e2e/max-selected-count.spec.ts</code>. A limit on user picks: blocked picks (click / keyboard),
+        <code>aria-disabled</code> + <code>ms__option--limit</code>, Select All capped, the placeholder's <code>{ctx.remaining}</code>,
+        Czech plural forms through a <code>translateCallback</code> on <code>params.ctx.count</code>, a custom text at the limit.</p>
+
+    <div class="fixture">
+        <div class="fixture-label">max-selected-count="5" · labels['placeholders.search'] = "Select up to {ctx.remaining} more" · select-all</div>
+        <web-multiselect id="limit" multiple max-selected-count="5" value-member="value" display-value-member="label"
+            labels='{"placeholders.search": "Select up to {ctx.remaining} more"}'></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">max-selected-count="5" · Czech plural via translateCallback (Intl.PluralRules)</div>
+        <web-multiselect id="limit-cs" multiple max-selected-count="5" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <div class="fixture">
+        <div class="fixture-label">max-selected-count="2" · translateCallback: custom text at the limit</div>
+        <web-multiselect id="limit-full" multiple max-selected-count="2" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']
+            .map(label => ({ value: label.toLowerCase(), label }));
+
+        const plural = new Intl.PluralRules('cs');
+        const cs = { one: 'položku', few: 'položky', many: 'položky', other: 'položek' };
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['limit', 'limit-cs', 'limit-full']) document.getElementById(id).options = items;
+            document.getElementById('limit').actionButtons = ['select-all', 'clear-selection'];
+            document.getElementById('limit-cs').translateCallback = ({ key, params }) =>
+                key === 'web-multiselect.placeholders.search'
+                    ? `Vyberte ještě ${params.ctx.count} ${cs[plural.select(params.ctx.count)]}`
+                    : null;
+            document.getElementById('limit-full').translateCallback = ({ key, params }) =>
+                key === 'web-multiselect.placeholders.search' && params.ctx.remaining === 0
+                    ? `All ${params.ctx.maxSelectedCount} picked — remove one to change`
+                    : null;
+        });
+    </script>
+</body>
+</html>

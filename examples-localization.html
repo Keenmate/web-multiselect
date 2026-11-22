@@ -1,5 +1,5 @@
 <meta name="kmwc:title" content="Localization">
-<meta name="kmwc:subtitle" content="The shared localization page — instance <code>labels</code>, the page-wide dictionary, <code>translateCallback</code>, screen-reader / tooltip twins, <code>locale</code> number formatting and <code>shouldEscapeLabels</code>, in the same six sections every Keenmate component has.">
+<meta name="kmwc:subtitle" content="The shared localization page — instance <code>labels</code>, the page-wide dictionary, <code>translateCallback</code>, screen-reader / tooltip twins, <code>locale</code> number formatting and <code>shouldEscapeLabels</code>, in the same six sections every Keenmate component has — plus a dynamic placeholder (LO07–LO09, <code>max-selected-count</code> + <code>{ctx.remaining}</code>).">
 
     <!-- Light-DOM pre-upgrade rule (= dist/style.css): reserves the input height before the JS defines the element -->
     <link rel="stylesheet" href="/src/css/main.css">
@@ -235,6 +235,66 @@ window.components.security = { shouldEscapeLabels: true };
 // → Add &amp;lt;b&amp;gt;&amp;lt;i&amp;gt;Ann…   (the whole label is text)</code></pre></div>
         </div>
 
+        <!-- ============================================================= -->
+        <!-- LO07–LO09 · Dynamic placeholder (max-selected-count)          -->
+        <!-- ============================================================= -->
+        <div class="card">
+            <h2>LO07 · Dynamic placeholder</h2>
+            <p>
+                A label reads its text spot's context: the placeholder's <code>PlaceholderContext</code> carries
+                <code>{ctx.remaining}</code> — the picks left under <code>max-selected-count</code> — and updates on every pick.
+                At the limit the other options turn <code>aria-disabled</code> (dimmed), Select All picks only up to the limit,
+                and a screen reader hears <code>messages.limitReached</code>. A programmatic value (<code>el.value</code>,
+                <code>setSelected()</code>) is not truncated — that is the app's call.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label"><code>max-selected-count="5"</code> + <code>placeholders.search</code></label>
+                <web-multiselect id="lo07" multiple max-selected-count="5"
+                    labels='{"placeholders.search": "Select up to {ctx.remaining} more"}'></web-multiselect>
+            </div>
+            <div class="code-block" data-language="html" data-kmwc-snippet><pre><code>&lt;web-multiselect multiple max-selected-count="5"
+  labels='{"placeholders.search": "Select up to {ctx.remaining} more"}'&gt;&lt;/web-multiselect&gt;</code></pre></div>
+        </div>
+
+        <div class="card">
+            <h2>LO08 · Dynamic placeholder in Czech (plural rules)</h2>
+            <p>
+                The same element, translated by its own <code>translateCallback</code>. <code>params.ctx.count</code> is the number
+                the noun agrees with — here the remaining picks — so <code>Intl.PluralRules('cs')</code> picks the form:
+                "1 položku / 2 položky / 5 položek". No i18n library needed; with i18next it is the one-liner in the comment.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label"><code>max-selected-count="5"</code> + <code>translateCallback</code></label>
+                <web-multiselect id="lo08" multiple max-selected-count="5"></web-multiselect>
+            </div>
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>const plural = new Intl.PluralRules('cs');
+const forms = { one: 'položku', few: 'položky', many: 'položky', other: 'položek' };
+
+el.translateCallback = ({ key, params }) =&gt;
+  key === 'web-multiselect.placeholders.search'
+    ? `Vyberte ještě ${params.ctx.count} ${forms[plural.select(params.ctx.count)]}`
+    : null;   // null = not mine → the next layer / English
+
+// i18next: ({ key, params }) =&gt; i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null</code></pre></div>
+        </div>
+
+        <div class="card">
+            <h2>LO09 · A custom text at the limit</h2>
+            <p>
+                The element's own <code>translateCallback</code> answers only one state: when <code>params.ctx.remaining</code> is
+                <code>0</code> it returns its own text; otherwise <code>null</code> passes the key on, and the default
+                <code>Search…</code> shows.
+            </p>
+            <div class="demo-area">
+                <label class="demo-label"><code>max-selected-count="5"</code> + <code>translateCallback</code> at the limit</label>
+                <web-multiselect id="lo09" multiple max-selected-count="5"></web-multiselect>
+            </div>
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>el.translateCallback = ({ key, params }) =&gt;
+  key === 'web-multiselect.placeholders.search' &amp;&amp; params.ctx.remaining === 0
+    ? 'All 5 picked — remove one to change'
+    : null;</code></pre></div>
+        </div>
+
     <script type="module">
         const $ = (id) => document.getElementById(id);
         const FRUITS = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Kiwi', 'Lemon', 'Mango']
@@ -369,6 +429,25 @@ window.components.security = { shouldEscapeLabels: true };
         });
         $('lo06-type').addEventListener('click', typeAnn);
         $('lo06').addEventListener('input', () => setTimeout(refreshAll, 50));
+
+        // ── LO07–LO09 · dynamic placeholder (max-selected-count).
+        for (const id of ['lo07', 'lo08', 'lo09']) {
+            $(id).valueMember = 'value';
+            $(id).displayValueMember = 'label';
+            $(id).options = FRUITS;
+        }
+        $('lo07').actionButtons = ['select-all', 'clear-selection'];
+        const csPlural = new Intl.PluralRules('cs');
+        const csForms = { one: 'položku', few: 'položky', many: 'položky', other: 'položek' };
+        // i18next: ({ key, params }) => i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null
+        $('lo08').translateCallback = ({ key, params }) =>
+            key === 'web-multiselect.placeholders.search'
+                ? `Vyberte ještě ${params.ctx.count} ${csForms[csPlural.select(params.ctx.count)]}`
+                : null;
+        $('lo09').translateCallback = ({ key, params }) =>
+            key === 'web-multiselect.placeholders.search' && params.ctx.remaining === 0
+                ? 'All 5 picked — remove one to change'
+                : null;
 
         refreshAll();
     </script>

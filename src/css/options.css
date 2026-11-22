@@ -272,6 +272,20 @@
   background: var(--ms-option-bg-disabled-selected);
 }
 
+/* At the pick limit (max-selected-count): an unselected row can't be added — dimmed like a
+   disabled one. It stays keyboard-reachable (aria-disabled), so its focus outline is kept. */
+.ms__option--limit,
+.ms__option--limit:hover,
+.ms__option--limit.ms__option--matched:hover {
+  opacity: var(--ms-disabled-opacity);
+  cursor: not-allowed;
+  background: var(--ms-option-disabled-bg);
+}
+
+.ms__option--limit .ms__checkbox {
+  cursor: not-allowed;
+}
+
 /* Disabled + Focused (prevents focus outline on disabled items) */
 .ms__option--disabled.ms__option--focused {
   outline: none;

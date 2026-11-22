@@ -99,6 +99,7 @@ export type {
   MatchCountContext,
   PlaceholderKey,
   PlaceholderContext,
+  LimitContext,
   RemoveItemContext,
   ValueFormatContext,
   AddContext,

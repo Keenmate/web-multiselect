@@ -154,6 +154,7 @@ multiselect.setSelected(['js', 'ts']);
 | `badges-threshold` | `number` | - | Auto-switch mode when exceeded (see `badges-threshold-mode`) |
 | `badges-threshold-mode` | `'count' \| 'partial'` | `'count'` | Mode after threshold: `count` shows badge, `partial` shows limited badges + more badge |
 | `max-visible-badge-count` | `number` | `3` | Max badges shown in partial mode |
+| `max-selected-count` | `number` | - (no limit) | Multiple mode: the most options the **user** may pick (a positive integer; single mode ignores it). See [Selection limit](#selection-limit-max-selected-count) |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
 | `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
 | `badge-height` | `number` | — (`--ms-badge-height`) | Row height in px of the selected-items popover in virtual-scroll mode (100+ selected). Unset, the rows use `--ms-badge-height` like every other badge |
@@ -618,6 +619,41 @@ multiselect.getAddNewTextCallback = ({ value }) => `Create "${value}"`;
 multiselect.labels = { 'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}', 'tooltips.removeItem': 'Odebrat {ctx.displayValue}', 'ariaLabels.close': 'Zavřít' };
 ```
 
+### Selection limit (`max-selected-count`)
+
+`max-selected-count="5"` (property `maxSelectedCount`) caps what the **user** can pick in multiple mode (single mode
+ignores it; unset / removing the attribute = no limit):
+
+- At the limit every unselected option is not selectable — click, Enter / Space, a group checkbox, "add new" (the
+  prompt hides) and `controller.selectValue()` / `toggleValue()` alike. Those rows get `aria-disabled="true"` and the
+  `ms__option--limit` class (dimmed like a disabled option, still reachable with the arrow keys). Deselecting frees a
+  slot.
+- **Select All picks only up to the limit**, in display order (a group checkbox too); with the limit reached the
+  `select-all` button is disabled. In a cascade tree the limit counts the emitted values (`selectedValue`).
+- Reaching the limit is announced once to screen readers (core `announce()`, `labels['messages.limitReached']`,
+  default `Limit reached: {ctx.max}`).
+- **A programmatic value is not truncated** — `el.value`, `setSelected()` and the `value` attribute set whatever the
+  app passes (the app's call). Lowering the limit below the current selection keeps the selection and only blocks
+  adding. It is not a form constraint (no validity / `required`-style blocking).
+
+The placeholder reads the picks left as `{ctx.remaining}` (`PlaceholderContext`; `ctx.count` = the remaining picks, so
+plural rules agree with it):
+
+```html
+<web-multiselect multiple max-selected-count="5"
+  labels='{"placeholders.search": "Select up to {ctx.remaining} more"}'></web-multiselect>
+```
+
+```js
+// a different text at the limit: the element's own translateCallback, null = not mine
+el.translateCallback = ({ key, params }) =>
+  key === 'web-multiselect.placeholders.search' && params.ctx.remaining === 0
+    ? 'All 5 picked — remove one to change'
+    : null;
+```
+
+Live demo: `examples-localization.html` LO07–LO09 (incl. Czech plurals via `Intl.PluralRules`).
+
 ### Labels (i18n)
 
 `labels` is a partial `MultiSelectLabels` map holding **every** user-facing string — set it as a
@@ -673,19 +709,21 @@ window.components.locale = {
 The placeholder key: search disabled → `placeholders.select`; `show-search-mode-toggle` on → `placeholders.filter` /
 `placeholders.navigate` by mode; otherwise `placeholders.search`; no options at all and a non-empty
 `placeholders.noData` → that. Every `placeholders.*` key gets a `PlaceholderContext` (`key`, `searchMode`, `isOpen`,
-`selectedCount`, `totalCount`, `count` = `selectedCount`) and is recomputed on every selection change (open or
+`selectedCount`, `totalCount`, `maxSelectedCount`, `remaining`; `count` = `remaining` when `max-selected-count` is set,
+else `selectedCount`) and is recomputed on every selection change (open or
 closed), mode switch, open / close and labels / locale change. The closed count-mode text
 (`badgesThresholdMode: 'count'`) is `labels.selectedCount`, not a placeholder key.
 
 | Key | Default | ctx (`ctx.count`) | Used for |
 |-----|---------|-------------------|----------|
 | `placeholders.select` | `Pick an option…` | `PlaceholderContext` (selection count) | Closed-input placeholder when search is not usable (picker mode) |
-| `placeholders.search` | `Search…` | `PlaceholderContext` (selection count) | Search input placeholder (the mode toggle hidden) |
+| `placeholders.search` | `Search…` | `PlaceholderContext` (selection count; the remaining picks with `max-selected-count`) | Search input placeholder (the mode toggle hidden) |
 | `placeholders.filter` / `placeholders.navigate` | `Filter…` / `Search…` | `PlaceholderContext` (selection count) | Placeholder by mode while `show-search-mode-toggle` is on |
 | `placeholders.noData` | (empty = off) | `PlaceholderContext` (selection count) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
 | `messages.noData` | `No data` | — | Dropdown text when there are no options at all |
 | `messages.noResults` | `No results found` | — | Dropdown text when options exist but the search matched nothing (also the fullscreen "no matches" counter) |
 | `messages.searching` | `Searching…` | — | Dropdown text (and the loader's accessible name) while an async `searchCallback` search is in flight |
+| `messages.limitReached` | `Limit reached: {ctx.max}` | `LimitContext` (`max`) | Screen-reader announcement when a pick reaches `max-selected-count` |
 | `messages.addNewPending` | `Adding "{ctx.value}"…` | `AddContext` (no count) | Pending prompt while an async `beforeAddCallback` runs |
 | `labels.noDisplayValue` | `[N/A]` | — | Shown for an option with no display value |
 | `labels.searchHint` | (empty = no hint) | — | Hint under the search input while open |

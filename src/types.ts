@@ -118,6 +118,8 @@ export interface MultiSelectLabels {
     'messages.noResults'?: string;
     /** Dropdown text while an async `searchCallback` search is in flight. HTML allowed. Default: `Searching…`. */
     'messages.searching'?: string;
+    /** Screen-reader announcement (core `announce()`) when a pick brings the selection to the `maxSelectedCount` limit. ctx: `LimitContext` — `{ctx.max}`, `{ctx.selectedCount}`; `ctx.count` = `ctx.max`. Default: `Limit reached: {ctx.max}`. */
+    'messages.limitReached'?: string;
     /** Text shown for an option that has no display value (no display member / tuple slot / callback result). Default: `[N/A]`. */
     'labels.noDisplayValue'?: string;
     /** Small hint under the search input while the dropdown is open. Default: empty = no hint. */
@@ -373,7 +375,25 @@ export interface PlaceholderContext<T = any> extends MultiSelectContext<T> {
     selectedCount: number;
     /** Number of options (the whole list). */
     totalCount: number;
-    /** The number the text's noun agrees with: `selectedCount`. */
+    /** The pick limit (`maxSelectedCount`, multiple mode), or `null` when there is none. */
+    maxSelectedCount: number | null;
+    /** Picks left under the limit (`0` at / over it), or `null` when there is no limit. */
+    remaining: number | null;
+    /** The number the text's noun agrees with: `remaining` when a limit is set (`Select up to {ctx.remaining} more`),
+     *  otherwise `selectedCount`. */
+    count: number;
+}
+
+/**
+ * The label context of `messages.limitReached` — announced (core `announce()`) when a pick brings the
+ * selection to the `maxSelectedCount` limit.
+ */
+export interface LimitContext<T = any> extends MultiSelectContext<T> {
+    /** The limit (`maxSelectedCount`). */
+    max: number;
+    /** Number of selected items (the limit or more — a programmatic value is not truncated). */
+    selectedCount: number;
+    /** The number the text's noun agrees with: `max`. */
     count: number;
 }
 
@@ -1173,6 +1193,18 @@ export interface MultiSelectConfig<T = any> {
     badgesThreshold?: number | null;
     /** Maximum number of badges to show in partial mode (used with thresholdMode='partial') */
     maxVisibleBadgeCount?: number | null;
+    /**
+     * Multiple mode: the most options the USER may pick (a positive integer; `null` / unset = no limit;
+     * single mode ignores it). At the limit the unselected options are not selectable — click, Enter /
+     * Space, a group checkbox, "add new", `controller.selectValue()` / `toggleValue()` — they render
+     * `aria-disabled="true"` + `ms__option--limit`; deselecting frees a slot. Select All (and a group
+     * checkbox) picks only up to the limit, in display order. Reaching the limit is announced once
+     * (`labels['messages.limitReached']`). A programmatic value (`el.value`, `setSelected()`)
+     * is NOT truncated — that is the app's call; lowering the limit below the current selection keeps the
+     * selection and only blocks adding. Not a form constraint (no validity). Placeholders read the
+     * remaining picks as `{ctx.remaining}` (`PlaceholderContext`). Attribute `max-selected-count`.
+     */
+    maxSelectedCount?: number | null;
     /** Minimum search length before loading data */
     minSearchLength?: number;
     /**

@@ -95,6 +95,7 @@ Legend for defaults: `bool(true)` = boolean, defaults on (only `="false"` disabl
 | Badges threshold | attr/prop | `badges-threshold` / `badgesThreshold` | — | Auto-switch display when exceeded | | |
 | Badges threshold mode | attr/prop | `badges-threshold-mode` / `badgesThresholdMode` | `'count'` | `count` \| `partial` after threshold | | |
 | Max visible badges (partial) | attr/prop | `max-visible-badge-count` / `maxVisibleBadgeCount` | — | Limit before "+X more" badge | | |
+| Selection limit (multiple) | attr/prop | `max-selected-count` / `maxSelectedCount` | — (no limit) | User picks capped; at the limit rows `aria-disabled` + `ms__option--limit`; Select All caps in display order; announced; programmatic value not truncated; placeholder `{ctx.remaining}` | | ✓ `max-selected-count` |
 | In-input counter badge | attr/prop | `show-counter` / `isCounterShown` | `bool(false)` | `[3]` next to toggle | | |
 | Counter text callback (i18n) | callback | `getCounterCallback({ count, moreCount })` | — | Pluralization / "+X more" text | | |
 | Read selected options | method | `selectedOptions` | — | Returns option objects | | |

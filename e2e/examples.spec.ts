@@ -167,6 +167,13 @@ test.describe('Localization page (examples-localization.html)', () => {
         await page.locator('#lo06-escape').check();
         await expect(out('lo06-out')).toContainText('text:   Add <b><i>Ann</i></b>');
 
+        // LO07–LO09 — the dynamic placeholder (max-selected-count + {ctx.remaining} / params.ctx).
+        const ph = (id: string) => page.locator(`#${id} .ms__input`);
+        await expect(ph('lo07')).toHaveAttribute('placeholder', 'Select up to 5 more');
+        await expect(ph('lo08')).toHaveAttribute('placeholder', 'Vyberte ještě 5 položek');
+        await page.locator('#lo09').evaluate((el: any) => el.controller.selectAll());
+        await expect(ph('lo09')).toHaveAttribute('placeholder', 'All 5 picked — remove one to change');
+
         expect(consoleErrors).toEqual([]);
     });
 });
