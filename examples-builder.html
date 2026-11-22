@@ -159,6 +159,7 @@
                         full-title-member="fullTitle"
                         is-disabled-member="disabled"></web-multiselect>
                 </div>
+                <div class="data-status" id="validity-status"></div>
 
                 <div class="builder__data">
                     <label class="demo-label" for="data-input">Options data (JSON array) — paste your own:</label>
@@ -260,6 +261,16 @@
             'virtual-scroll-overscan': "Extra rows rendered above / below the viewport for smooth scrolling.",
             'enable-badge-tooltips': "Show hover tooltips on selected badges.",
             'enable-option-tooltips': "Show hover tooltips on dropdown options.",
+            'search-match': "Where the term must match: contains, equals (whole value), starts-with / ends-with (whole value), word-starts-with / word-ends-with (any word), regex.",
+            'search-behavior': "How text is compared: normalized ignores case and diacritics, case-insensitive ignores case only, exact matches both.",
+            'tab-behavior': "What Tab does while the dropdown is open: select-focused, select-navigated (only a row the user moved to), close. Unset = the default for the mode.",
+            'dropdown-width': "Fixed dropdown panel width (any CSS length); unset = the input's width within min / max.",
+            'disabled': "No interaction, not focusable, not submitted (presence attribute).",
+            'readonly': "Focusable and navigable, but the selection can't change; never invalid (presence attribute).",
+            'required': "An empty selection is invalid (validity.valueMissing) — the form won't submit. Watch the validity line under the picker.",
+            'min-selected-count': "Multiple mode: fewer picks (but at least one) are invalid (validity.rangeUnderflow). Try 3, then a placeholder label with {ctx.missing}.",
+            'max-selected-count': "Multiple mode: the most the user may pick; at the limit the other rows turn aria-disabled. The placeholder can read {ctx.remaining}.",
+            'locale': "BCP-47 locale for numbers in labels and the [N] counter (e.g. cs-CZ → 1 234); unset = the page locale, then the browser.",
             'presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
             'fullscreen-autofocus': "Auto-focus the search field when the fullscreen overlay opens.",
         };
@@ -319,6 +330,17 @@
                 { attr: 'min-search-length', type: 'int', def: '0' },
                 { attr: 'search-debounce', type: 'int', def: '0' },
                 { attr: 'show-search-mode-toggle', type: 'bool', def: false },
+                { attr: 'search-match', type: 'enum', opts: ['contains','equals','starts-with','word-starts-with','ends-with','word-ends-with','regex'], def: 'contains' },
+                { attr: 'search-behavior', type: 'enum', opts: ['normalized','case-insensitive','exact'], def: 'normalized' },
+                { attr: 'tab-behavior', type: 'enum', opts: ['','select-focused','select-navigated','close'], def: '' },
+            ]},
+            { name: 'Form & limits', props: [
+                { attr: 'required', type: 'presence', def: false },
+                { attr: 'min-selected-count', type: 'int', def: '' },
+                { attr: 'max-selected-count', type: 'int', def: '' },
+                { attr: 'readonly', type: 'presence', def: false },
+                { attr: 'disabled', type: 'presence', def: false },
+                { attr: 'locale', type: 'text', def: '', ph: 'e.g. cs-CZ' },
             ]},
             { name: 'Selected & popover', props: [
                 { attr: 'enable-selected-popover', type: 'bool', def: true },
@@ -333,6 +355,7 @@
                 { attr: 'max-height', type: 'text', def: '20rem' },
                 { attr: 'dropdown-min-width', type: 'text', def: '' },
                 { attr: 'dropdown-max-width', type: 'text', def: '' },
+                { attr: 'dropdown-width', type: 'text', def: '' },
                 { attr: 'virtual-scroll-item-height', type: 'int', def: '50' },
             ]},
             { name: 'Virtual scroll', props: [
@@ -368,12 +391,12 @@
                 row.className = 'prop-row';
 
                 const label = document.createElement('label');
-                const defHint = p.type === 'bool' ? '' : (p.def ? ` <span class="def">(${p.def})</span>` : '');
+                const defHint = p.type === 'bool' || p.type === 'presence' ? '' : (p.def ? ` <span class="def">(${p.def})</span>` : '');
                 label.innerHTML = `${p.attr}${defHint}`;
                 row.appendChild(label);
 
                 let input;
-                if (p.type === 'bool') {
+                if (p.type === 'bool' || p.type === 'presence') {
                     input = document.createElement('input');
                     input.type = 'checkbox';
                     input.checked = !!p.def;
@@ -381,7 +404,7 @@
                     input = document.createElement('select');
                     for (const o of p.opts) {
                         const opt = document.createElement('option');
-                        opt.value = o; opt.textContent = o;
+                        opt.value = o; opt.textContent = o || '(default)';
                         input.appendChild(opt);
                     }
                     input.value = p.def;
@@ -394,7 +417,7 @@
                 label.htmlFor = input.id = `ctl-${p.attr}`;
 
                 // The control's starting value — used to flag "changed from initial".
-                const init = p.type === 'bool' ? !!p.def
+                const init = p.type === 'bool' || p.type === 'presence' ? !!p.def
                     : p.type === 'enum' ? p.def
                     : p.type === 'cssvar' ? ''
                     : (p.val ?? '');
@@ -430,6 +453,10 @@
             if (type === 'bool') {
                 // Set explicitly ("true"/"false") so it works regardless of the attribute's default.
                 el.setAttribute(attr, input.checked ? 'true' : 'false');
+                rec.row.classList.toggle('dirty', input.checked !== init);
+            } else if (type === 'presence') {
+                // disabled / readonly / required: any value means on, so off = no attribute.
+                el.toggleAttribute(attr, input.checked);
                 rec.row.classList.toggle('dirty', input.checked !== init);
             } else if (type === 'cssvar') {
                 const v = input.value.trim();
@@ -469,7 +496,7 @@
 
         // ── Generated markup ─────────────────────────────────────────────────
         const markupEl = document.getElementById('markup');
-        const RUNTIME_ATTRS = new Set(['id', 'ready', 'data-placeholder-ready', 'class', 'style']);
+        const RUNTIME_ATTRS = new Set(['id', 'ready', 'data-placeholder-ready', 'data-context-theme', 'data-motion', 'class', 'style']);
         function renderMarkup() {
             const attrs = el.getAttributeNames()
                 .filter(n => !RUNTIME_ATTRS.has(n))
@@ -487,10 +514,22 @@
                 notes.push('<!-- selected-order="custom" needs a JS comparator: -->');
                 notes.push('<!-- el.selectedOrderCompareCallback = ({ a, b }) => a.label.localeCompare(b.label); -->');
             }
+            el.whenSettled().then(renderValidity);   // attribute writes apply on a microtask
             markupEl.textContent =
                 `<web-multiselect\n${lines.join('\n')}>\n</web-multiselect>\n\n` +
                 notes.join('\n');
         }
+
+        // ── Validity (required / min / max) ──────────────────────────────────
+        const validityEl = document.getElementById('validity-status');
+        function renderValidity() {
+            const v = el.validity;
+            if (!v) return;
+            const flags = ['valueMissing', 'rangeUnderflow', 'rangeOverflow', 'customError'].filter((f) => v[f]);
+            validityEl.textContent = flags.length ? `✗ validity: ${flags.join(', ')} — ${el.validationMessage}` : '✓ validity: valid';
+            validityEl.className = 'data-status ' + (flags.length ? 'data-status--err' : 'data-status--ok');
+        }
+        el.addEventListener('change', () => el.whenSettled().then(renderValidity));
 
         // ── Toolbar ──────────────────────────────────────────────────────────
         document.getElementById('reset-btn').addEventListener('click', () => location.reload());
