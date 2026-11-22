@@ -188,3 +188,53 @@ test.describe('closing the fullscreen sheet keeps the page scroll (core claimBac
         expect(await page.evaluate(() => history.scrollRestoration)).toBe('auto');
     });
 });
+
+test.describe('fullscreen truncated-label reveal (info button → createPopover panel)', () => {
+    // The reveal panel is created hidden (opacity 0 / visibility hidden) and gets
+    // `.ms__option-tooltip--visible` one frame after its first (async) placement, so it never
+    // paints at the 0,0 origin (a51f731 moved that fade-in under `.ms__option-tooltip--fullscreen`).
+    test('a clipped row shows the info button; tapping it reveals the full label at the button, tapping again hides it', async ({ page }) => {
+        const LONG = 'Elderberry — a very long option label that cannot fit on one line of a phone-width sheet';
+        const p = picker(page, 'fullscreen');
+        await p.evaluate((el: any, long: string) => {
+            el.style.setProperty('--ms-option-title-white-space', 'nowrap');
+            el.style.setProperty('--ms-option-title-overflow', 'hidden');
+            el.style.setProperty('--ms-option-title-text-overflow', 'ellipsis');
+            el.options = [{ value: 'apple', label: 'Apple' }, { value: 'long', label: long }];
+        }, LONG);
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+
+        const longRow = fullscreen(p).locator('.ms__option[data-value="long"]');
+        const shortRow = fullscreen(p).locator('.ms__option[data-value="apple"]');
+        await expect(longRow).toHaveClass(/ms__option--truncated/);
+        await expect(shortRow).not.toHaveClass(/ms__option--truncated/);
+        const info = longRow.locator('.ms__option-info');
+        await expect(info).toBeVisible();
+        await expect(shortRow.locator('.ms__option-info')).toBeHidden();
+
+        const panel = p.locator('.ms__option-tooltip--fullscreen');
+        await info.click();
+        await expect(panel).toHaveCount(1);
+        await expect(panel).toHaveClass(/ms__option-tooltip--visible/);
+        await expect(panel).toHaveText(LONG);
+        // Faded in (the CSS transition finishes) — opaque and visible.
+        await expect.poll(() => panel.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
+        await expect(panel).toBeVisible();
+        // The tap toggles the reveal only — the row's selection is untouched.
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
+
+        // Placed at the button (placement top-end), not at the 0,0 origin.
+        const btn = (await info.boundingBox())!;
+        const box = (await panel.boundingBox())!;
+        expect(box.x + box.y).toBeGreaterThan(20);
+        expect(box.y + box.height).toBeLessThanOrEqual(btn.y + 1);       // above the button
+        expect(btn.y - (box.y + box.height)).toBeLessThan(40);           // …close to it (offset 8)
+        expect(Math.abs(box.x + box.width - (btn.x + btn.width))).toBeLessThan(16); // trailing edges align (shift ≤ 8)
+
+        // A second tap on the same button hides it (panel removed).
+        await info.click();
+        await expect(panel).toHaveCount(0);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
+    });
+});
