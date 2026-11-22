@@ -677,13 +677,16 @@ flag, so `validity` tells "empty" from "too few" / "too many":
   `required` / the counts / `readonly` / `disabled` / `labels`.
 - `required` also sets `aria-required` (on the element internals) and `:state(required)` (the native `:required`
   doesn't match a custom element): `web-multiselect:state(required)` / `web-multiselect[required]`.
-- `min-selected-count` blocks nothing — it's a submit rule. The placeholder can count down with `{ctx.missing}`
-  (`PlaceholderContext`; `ctx.count` = `missing` while the minimum isn't met).
+- `min-selected-count` blocks nothing — it's a submit rule. `{ctx.missing}` (the picks still missing) belongs in
+  `errors.minSelected`, which shows only while it is 1 or more. The placeholder has it too (`PlaceholderContext`;
+  `ctx.count` = `missing` while the minimum isn't met), but a placeholder stays visible once the minimum is met
+  ("Select 0 more") — give it a count that always reads right (`{ctx.selectedCount}`), or a `translateCallback`
+  whose plural forms include a zero form.
 
 ```html
 <form>
   <web-multiselect name="team" required min-selected-count="3" max-selected-count="5"
-    labels='{"placeholders.search": "Select {ctx.missing} more"}'></web-multiselect>
+    labels='{"placeholders.search": "{ctx.selectedCount} of 3–5 picked"}'></web-multiselect>
   <button>Submit</button>
 </form>
 ```

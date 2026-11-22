@@ -25,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {ctx.min}.`, new `MinSelectedContext` = `{ min, selectedCount, missing, count: min }`), `errors.maxSelected`
   (`Select at most {ctx.max}.`, new `MaxSelectedContext` = `{ max, selectedCount, excess, count: max }`).
 - `PlaceholderContext` gains `minSelectedCount` and `missing` (both null without a minimum); `ctx.count` = `missing`
-  while the minimum isn't met, else `remaining` with a max, else `selectedCount` — `'Select {ctx.missing} more'`.
+  while the minimum isn't met, else `remaining` with a max, else `selectedCount` (`missing` is `0` once the minimum is
+  met, so it suits `errors.minSelected` better than an always-visible placeholder).
 - Example page: data-api API11 "Required + validation" (a form, the native bubble on submit, a live
   `validity` / `validationMessage` line). Docs: usage guide "Required and validation", accessibility guide; e2e
   `required-validity.spec.ts` (fixture `test/required-validity.html`), unit `required-validity.test.ts`; CEM regenerated.

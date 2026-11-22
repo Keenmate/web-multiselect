@@ -328,14 +328,17 @@
                 <code>validity</code> tells "empty" from "too few" / "too many". The form won't submit while invalid:
                 Submit shows the browser's validation bubble at the input. Messages are labels
                 (<code>errors.required</code>, <code>errors.minSelected</code>, <code>errors.maxSelected</code>, with
-                <code>{ctx.*}</code>); the placeholder reads <code>{ctx.missing}</code>. Readonly / disabled are never invalid.
+                <code>{ctx.*}</code>) — the message here reads <code>{ctx.missing}</code>, which is always 1 or more while it shows. A
+                placeholder is visible in every state, so it reads a count that always makes sense
+                (<code>{ctx.selectedCount}</code>), not <code>{ctx.missing}</code> ("Select 0 more" once the minimum is met).
+                Readonly / disabled are never invalid.
             </p>
 
             <kmwc-demo>
                 <form id="form-required" onsubmit="event.preventDefault(); document.getElementById('output-form-required').textContent = 'Submitted: ' + new FormData(this).get('team');">
                     <label class="demo-label">Pick 3 – 5 team members:</label>
                     <web-multiselect id="form-required-select" name="team" required min-selected-count="3" max-selected-count="5"
-                        labels='{"placeholders.search": "Select {ctx.missing} more"}'></web-multiselect>
+                        labels='{"placeholders.search": "{ctx.selectedCount} of 3–5 picked"}'></web-multiselect>
 
                     <div class="form-actions">
                         <button type="submit">Submit Form</button>
@@ -356,9 +359,9 @@
                         ['ada', 'Ada'], ['grace', 'Grace'], ['linus', 'Linus'], ['margaret', 'Margaret'],
                         ['ken', 'Ken'], ['barbara', 'Barbara'], ['dennis', 'Dennis'],
                     ];
-                    // labels: the placeholder counts down with {ctx.missing} (ctx.count = missing while the
-                    // minimum isn't met). errors.* are labels too, e.g.
-                    // el.labels = { 'errors.minSelected': 'Pick at least {ctx.min} ({ctx.missing} to go).' };
+                    // errors.* are labels: the min message shows only while picks are missing, so {ctx.missing} is
+                    // always ≥ 1 there (the placeholder above stays visible, so it reads {ctx.selectedCount}).
+                    el.labels = { ...el.labels, 'errors.minSelected': 'Pick at least {ctx.min} ({ctx.missing} to go).' };
 
                     const FLAGS = ['valueMissing', 'rangeUnderflow', 'rangeOverflow', 'customError'];
                     const show = () => {

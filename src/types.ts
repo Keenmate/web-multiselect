@@ -387,8 +387,9 @@ export interface PlaceholderContext<T = any> extends MultiSelectContext<T> {
     remaining: number | null;
     /** The minimum (`minSelectedCount`, multiple mode), or `null` when there is none. */
     minSelectedCount: number | null;
-    /** Picks still missing to reach the minimum (`0` once it is met), or `null` when there is no minimum
-     *  (`Select {ctx.missing} more`). */
+    /** Picks still missing to reach the minimum (`0` once it is met), or `null` when there is no minimum.
+     *  The placeholder stays visible once the minimum is met ("Select 0 more"), so prefer it in
+     *  `errors.minSelected` (shown only while ≥ 1) or behind a `translateCallback` zero form. */
     missing: number | null;
     /** The number the text's noun agrees with: `missing` while the minimum isn't met, else `remaining` when a
      *  limit is set (`Select up to {ctx.remaining} more`), otherwise `selectedCount`. */
@@ -1253,8 +1254,8 @@ export interface MultiSelectConfig<T = any> {
      * no minimum; single mode ignores it). A form constraint, not a pick block: while 1 … min−1 options are
      * selected the host is invalid (`validity.rangeUnderflow`, `labels['errors.minSelected']`) and the form
      * won't submit. An EMPTY selection is not checked (like a native min rule on an empty field) — add
-     * `required` for that (`valueMissing`). Placeholders read the picks still missing as `{ctx.missing}`
-     * (`PlaceholderContext`). Attribute `min-selected-count`.
+     * `required` for that (`valueMissing`). The picks still missing are `{ctx.missing}` in
+     * `errors.minSelected` (`MinSelectedContext`) and in the placeholder (`PlaceholderContext`, `0` once met). Attribute `min-selected-count`.
      */
     minSelectedCount?: number | null;
     /** Minimum search length before loading data */

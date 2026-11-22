@@ -268,7 +268,7 @@
             'disabled': "No interaction, not focusable, not submitted (presence attribute).",
             'readonly': "Focusable and navigable, but the selection can't change; never invalid (presence attribute).",
             'required': "An empty selection is invalid (validity.valueMissing) — the form won't submit. Watch the validity line under the picker.",
-            'min-selected-count': "Multiple mode: fewer picks (but at least one) are invalid (validity.rangeUnderflow). Try 3, then a placeholder label with {ctx.missing}.",
+            'min-selected-count': "Multiple mode: fewer picks (but at least one) are invalid (validity.rangeUnderflow). Try 3 with required — the validity line shows the errors.minSelected message ({ctx.min}, {ctx.missing}).",
             'max-selected-count': "Multiple mode: the most the user may pick; at the limit the other rows turn aria-disabled. The placeholder can read {ctx.remaining}.",
             'locale': "BCP-47 locale for numbers in labels and the [N] counter (e.g. cs-CZ → 1 234); unset = the page locale, then the browser.",
             'presentation': "Phone layout: auto, always floating, or always fullscreen overlay.",
