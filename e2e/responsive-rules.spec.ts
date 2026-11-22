@@ -107,7 +107,7 @@ test.describe('desktop viewport', () => {
     test('a narrowed desktop window hits the breakpoint axis, not the device axis', async ({ page }) => {
         await page.setViewportSize({ width: 700, height: 800 });
         await page.goto(PAGE);
-        expect(await prop(page, 'axes', 'badgesDisplayMode')).toBe('compact');
+        await expect.poll(() => prop(page, 'axes', 'badgesDisplayMode')).toBe('compact');
         // device stays desktop → the device.mobile page rule does not apply
         expect(await prop(page, 'page', 'presentation')).toBe('auto');
 

@@ -194,18 +194,15 @@ test.describe('anchor stability', () => {
 
         // Scroll the ancestor.
         await page.locator('#anchor-scroll').evaluate(el => el.scrollTo(0, 200));
-        // Give autoUpdate one frame to reposition.
-        await page.waitForTimeout(50);
-
-        const inputBoxAfter = await p.locator('.ms__input').boundingBox();
-        const dropdownBoxAfter = await dropdown.boundingBox();
-
-        // Either both moved together (dropdown follows input) OR dropdown closed.
-        // We're testing the "follows" path; assert the relative offset is preserved.
-        if (await dropdown.isVisible()) {
-            const finalGap = dropdownBoxAfter!.y - inputBoxAfter!.y;
-            expect(Math.abs(finalGap - initialGap)).toBeLessThan(8);
-        }
+        // autoUpdate repositions on a later frame (one frame under load is not guaranteed):
+        // wait until the relative offset is back. Either both moved together (dropdown follows
+        // input) OR the dropdown closed; we're testing the "follows" path.
+        await expect.poll(async () => {
+            const inputBoxAfter = await p.locator('.ms__input').boundingBox();
+            const dropdownBoxAfter = await dropdown.boundingBox();
+            if (!dropdownBoxAfter || !inputBoxAfter) return 0; // closed meanwhile: the accepted path
+            return Math.abs(dropdownBoxAfter.y - inputBoxAfter.y - initialGap);
+        }).toBeLessThan(8);
     });
 });
 
