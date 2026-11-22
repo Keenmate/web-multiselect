@@ -692,8 +692,10 @@ property (same shape) is asked first — one multiselect needs no page setup; `n
 page-wide one, and the instance `labels` beat both. Changing it rebuilds the picker (selection kept).
 
 ```js
-select.translateCallback = ({ key, params }) =>
-  i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null;
+select.translateCallback = ({ key, params }) => {
+  const options = { ...params, count: params.ctx?.count };   // ctx.count → i18next's plural count
+  return i18next.exists(key, options) ? i18next.t(key, options) : null;   // exists() needs count too (plural keys)
+};
 ```
 
 ```js

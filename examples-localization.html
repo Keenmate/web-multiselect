@@ -101,7 +101,9 @@ window.components.locale = {
                 <code>{ component, key, template, params, locale }</code> — <code>key</code> is the full
                 <code>web-multiselect.&lt;elementType&gt;.&lt;name&gt;</code> — and returns the text, or <code>null</code> = not mine.
                 The element's own <code>translateCallback</code> is asked first (German, only <code>labels.selectedCount</code>
-                here); its <code>null</code> passes the key on to the page-wide one (a small Slovak i18next-like lookup). A key
+                here); its <code>null</code> passes the key on to the page-wide one — the app's i18next (Slovak, with plural forms: the
+                bridge hands i18next <code>params.ctx.count</code> as its <code>count</code>). The page itself runs without i18next:
+                the same forms are picked with <code>Intl.PluralRules('sk')</code>. A key
                 the instance <code>labels</code> set (the second picker's <code>labels.selectedCount</code>) is never sent to any
                 callback.
             </p>
@@ -123,14 +125,30 @@ window.components.locale = {
                 </div>
                 <div class="output"><div class="output-label">rendered strings</div><pre id="lo03-out"></pre></div>
             </div>
-            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// an i18next-like lookup: a dictionary + t(key, options); the label's context arrives as params.ctx,
-// ctx.count = the number the text's noun agrees with (the i18next bridge passes it as `count`)
-const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
-const t = (key, params) =&gt; sk[key]?.replace(/\{\{(\w+)\}\}/g, (_, p) =&gt; params?.[p] ?? '');
-const exists = (key) =&gt; key in sk;
+            <div class="code-block" data-language="js" data-kmwc-snippet><pre><code>// the app's own i18next — its JSON, plural forms as i18next's _one / _few / _other suffixes
+i18next.init({
+  lng: 'sk',
+  interpolation: { escapeValue: false },   // the component escapes what goes into HTML
+  resources: { sk: { translation: {
+    'web-multiselect': {
+      labels: {
+        selectedCount_one: '{{count}} vybratá položka',
+        selectedCount_few: '{{count}} vybraté položky',
+        selectedCount_other: '{{count}} vybratých položiek',
+      },
+      buttons: { selectAll: 'Vybrať všetko' },
+    },
+  } } },
+});
 
-// page-wide — every component on the page
-window.components.locale = { translateCallback: ({ key, params }) =&gt; (exists(key) ? t(key, { ...params, count: params.ctx?.count }) : null) };
+// page-wide — ONE generic bridge for every key of every component. params.ctx = the label's context;
+// ctx.count = the number the text's noun agrees with → i18next's `count` (exists() needs it too)
+window.components.locale = {
+  translateCallback: ({ key, params }) =&gt; {
+    const options = { ...params, count: params.ctx?.count };
+    return i18next.exists(key, options) ? i18next.t(key, options) : null;   // null = not mine
+  },
+};
 
 // one element — asked BEFORE the page-wide callback; null = not mine
 el.translateCallback = ({ key, params }) =&gt;
@@ -275,7 +293,7 @@ el.translateCallback = ({ key, params }) =&gt;
     ? `Vyberte ještě ${params.ctx.count} ${forms[plural.select(params.ctx.count)]}`
     : null;   // null = not mine → the next layer / English
 
-// i18next: ({ key, params }) =&gt; i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null</code></pre></div>
+// with i18next: the one generic bridge of LO03 (placeholders.search_one / _few / _other in the app's JSON)</code></pre></div>
         </div>
 
         <div class="card">
@@ -387,9 +405,19 @@ el.translateCallback = ({ key, params }) =&gt;
         $('lo02-dict').addEventListener('change', (e) => { page.labels = e.target.checked ? CS : null; applyPage(); });
 
         // ── LO03 · translateCallback.
-        const sk = { 'web-multiselect.labels.selectedCount': '{{count}} vybraté', 'web-multiselect.buttons.selectAll': 'Vybrať všetko' };
-        const t = (key, params) => sk[key].replace(/\{\{(\w+)\}\}/g, (_, p) => String(params?.[p] ?? ''));
-        const pageTranslate = ({ key, params }) => (key in sk ? t(key, { ...params, count: params.ctx?.count }) : null);
+        // The snippet's i18next setup without loading i18next: the same Slovak forms, picked with Intl.PluralRules.
+        const skPlural = new Intl.PluralRules('sk');
+        const SK = {
+            'web-multiselect.labels.selectedCount': { one: '{n} vybratá položka', few: '{n} vybraté položky', other: '{n} vybratých položiek' },
+            'web-multiselect.buttons.selectAll': 'Vybrať všetko',
+        };
+        const pageTranslate = ({ key, params }) => {
+            const entry = SK[key];
+            if (entry === undefined) return null;   // not mine
+            if (typeof entry === 'string') return entry;
+            const n = params.ctx?.count;
+            return (entry[skPlural.select(n)] ?? entry.other).replace('{n}', String(n));
+        };
         const ownTranslate = ({ key, params }) => (key === 'web-multiselect.labels.selectedCount' ? `${params.ctx.count} ausgewählt` : null);
         $('lo03-page').addEventListener('change', (e) => { page.translateCallback = e.target.checked ? pageTranslate : null; applyPage(); });
         $('lo03-own').addEventListener('change', (e) => { $('lo03a').translateCallback = e.target.checked ? ownTranslate : undefined; refreshAll(); });
@@ -439,7 +467,7 @@ el.translateCallback = ({ key, params }) =&gt;
         $('lo07').actionButtons = ['select-all', 'clear-selection'];
         const csPlural = new Intl.PluralRules('cs');
         const csForms = { one: 'položku', few: 'položky', many: 'položky', other: 'položek' };
-        // i18next: ({ key, params }) => i18next.exists(key) ? i18next.t(key, { ...params, count: params.ctx?.count }) : null
+        // With i18next: the generic bridge shown in LO03.
         $('lo08').translateCallback = ({ key, params }) =>
             key === 'web-multiselect.placeholders.search'
                 ? `Vyberte ještě ${params.ctx.count} ${csForms[csPlural.select(params.ctx.count)]}`

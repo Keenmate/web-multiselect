@@ -143,7 +143,7 @@ test.describe('Localization page (examples-localization.html)', () => {
 
         // LO03 — page callback, then the element's own one first; instance labels still win.
         await page.locator('#lo03-page').check();
-        await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 vybraté');
+        await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 vybraté položky');
         await expect(out('lo03-out')).toContainText('#lo03b  badge: Instance wins: 3');
         await page.locator('#lo03-own').check();
         await expect(out('lo03-out')).toContainText('#lo03a  badge: 3 ausgewählt   buttons: Vybrať všetko / Clear all');
