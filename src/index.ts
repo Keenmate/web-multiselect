@@ -100,6 +100,8 @@ export type {
   PlaceholderKey,
   PlaceholderContext,
   LimitContext,
+  MinSelectedContext,
+  MaxSelectedContext,
   RemoveItemContext,
   ValueFormatContext,
   AddContext,

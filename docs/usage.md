@@ -138,6 +138,7 @@ multiselect.setSelected(['js', 'ts']);
 | `labels` | `JSON object` | - | Every UI string (placeholders, empty / loading text, hint, counters, "add new" prompt, popover title, ARIA labels) — partial map, unset keys stay English. See [Labels (i18n)](#labels-i18n) |
 | `locale` | `string` | - | BCP-47 locale for the numbers in labels (`{ctx.count}`) and the group count chip, or unset (the page-wide `window.components.locale`, else the browser language). UI strings are `labels`. |
 | `disabled` | `boolean` | `false` | Disabled control (`isDisabled`): no interaction, not focusable, value not submitted; calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. An ancestor `<fieldset disabled>` disables it too. Reflects |
+| `required` | `boolean` | `false` | A selection is required (`isRequired`): nothing selected → `validity.valueMissing`, the form won't submit. Never missing while readonly / disabled. See [Required and validation](#required-and-validation). Reflects |
 | `readonly` | `boolean` | `false` | Read-only control (`isReadonly`): the user can't change the selection and the dropdown doesn't open; still focusable, copyable and submitted. Calls from code (`setSelected()`, `el.controller.selectValue()`, …) still work. Reflects |
 | `defer` | `boolean` | `false` | Hold the first render. When present, the component builds nothing on upgrade (reserves space only) — wire `options`, callbacks (e.g. `getCustomStylesCallback`) and listeners first, then release with `release()` (or by removing the attribute) so the picker builds once, flash-free. See [examples.md → Deferred initialization](./examples.md#deferred-initialization-defer--ready). Latched — once released it never re-closes; the element reflects an `ready` attribute after building |
 | `allow-groups` | `boolean` | `true` | Enable option grouping |
@@ -154,7 +155,8 @@ multiselect.setSelected(['js', 'ts']);
 | `badges-threshold` | `number` | - | Auto-switch mode when exceeded (see `badges-threshold-mode`) |
 | `badges-threshold-mode` | `'count' \| 'partial'` | `'count'` | Mode after threshold: `count` shows badge, `partial` shows limited badges + more badge |
 | `max-visible-badge-count` | `number` | `3` | Max badges shown in partial mode |
-| `max-selected-count` | `number` | - (no limit) | Multiple mode: the most options the **user** may pick (a positive integer; single mode ignores it). See [Selection limit](#selection-limit-max-selected-count) |
+| `max-selected-count` | `number` | - (no limit) | Multiple mode: the most options the **user** may pick (a positive integer; single mode ignores it); a programmatic value above it is `rangeOverflow`. See [Selection limit](#selection-limit-max-selected-count) |
+| `min-selected-count` | `number` | - (no minimum) | Multiple mode: the fewest options a submitted selection may hold (1 … min−1 selected → `rangeUnderflow`, the form won't submit; empty is not checked). See [Required and validation](#required-and-validation) |
 | `badges-position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Position of badges container |
 | `collapse-badges-below` | `number` | - | Container-responsive opt-in: a px width. While the control's **own** box is narrower than this, `badges-display-mode` collapses to `count`; widening past it restores the configured mode. Watches the element, not the window |
 | `badge-height` | `number` | — (`--ms-badge-height`) | Row height in px of the selected-items popover in virtual-scroll mode (100+ selected). Unset, the rows use `--ms-badge-height` like every other badge |
@@ -634,7 +636,8 @@ ignores it; unset / removing the attribute = no limit):
   default `Limit reached: {ctx.max}`).
 - **A programmatic value is not truncated** — `el.value`, `setSelected()` and the `value` attribute set whatever the
   app passes (the app's call). Lowering the limit below the current selection keeps the selection and only blocks
-  adding. It is not a form constraint (no validity / `required`-style blocking).
+  adding; while the selection is above the limit the host is invalid (`validity.rangeOverflow`, see
+  [Required and validation](#required-and-validation)).
 
 The placeholder reads the picks left as `{ctx.remaining}` (`PlaceholderContext`; `ctx.count` = the remaining picks, so
 plural rules agree with it):
@@ -653,6 +656,49 @@ el.translateCallback = ({ key, params }) =>
 ```
 
 Live demo: `examples-localization.html` LO07–LO09 (incl. Czech plurals via `Intl.PluralRules`).
+
+### Required and validation
+
+The element is form-associated and validates through core (`ElementInternals`): `el.validity`,
+`el.validationMessage`, `el.checkValidity()`, `el.reportValidity()`, `:invalid` / `:valid`. Each rule sets its own
+flag, so `validity` tells "empty" from "too few" / "too many":
+
+| Rule | Flag | When | Message label (default) |
+|------|------|------|-------------------------|
+| `required` (`isRequired`) | `valueMissing` | nothing is selected | `errors.required` (`Select an item.`) |
+| `min-selected-count` (`minSelectedCount`, multiple mode) | `rangeUnderflow` | 1 … min−1 selected — an **empty** selection is not checked (like a native min rule on an empty field); add `required` for that | `errors.minSelected` (`Select at least {ctx.min}.`) |
+| `max-selected-count` (`maxSelectedCount`, multiple mode) | `rangeOverflow` | more than max selected — only a programmatic value gets there (user picks stop at the limit) | `errors.maxSelected` (`Select at most {ctx.max}.`) |
+| a throwing `getValueFormatCallback` | `customError` | the value can't be formatted | `errors.valueFormat` |
+
+- While invalid the form won't submit (unless `<form novalidate>`); a submit attempt shows the browser's validation
+  bubble at the control's input (as `reportValidity()` does).
+- **Readonly and disabled are never invalid** (native semantics) — neither missing nor out of range.
+- Re-evaluated on every value change — user picks, `setSelected()`, `el.value`, form reset — and on a change of
+  `required` / the counts / `readonly` / `disabled` / `labels`.
+- `required` also sets `aria-required` (on the element internals) and `:state(required)` (the native `:required`
+  doesn't match a custom element): `web-multiselect:state(required)` / `web-multiselect[required]`.
+- `min-selected-count` blocks nothing — it's a submit rule. The placeholder can count down with `{ctx.missing}`
+  (`PlaceholderContext`; `ctx.count` = `missing` while the minimum isn't met).
+
+```html
+<form>
+  <web-multiselect name="team" required min-selected-count="3" max-selected-count="5"
+    labels='{"placeholders.search": "Select {ctx.missing} more"}'></web-multiselect>
+  <button>Submit</button>
+</form>
+```
+
+```js
+el.labels = {
+  'errors.required': 'Pick your team.',
+  'errors.minSelected': 'Pick at least {ctx.min} ({ctx.missing} to go).',   // MinSelectedContext: min, selectedCount, missing; count = min
+  'errors.maxSelected': 'At most {ctx.max}: remove {ctx.excess}.',          // MaxSelectedContext: max, selectedCount, excess; count = max
+};
+el.validity.rangeUnderflow;   // too few
+el.validationMessage;         // the label text
+```
+
+Live demo: `examples-data-api.html` API11 · Required + validation.
 
 ### Labels (i18n)
 
@@ -711,15 +757,15 @@ window.components.locale = {
 The placeholder key: search disabled → `placeholders.select`; `show-search-mode-toggle` on → `placeholders.filter` /
 `placeholders.navigate` by mode; otherwise `placeholders.search`; no options at all and a non-empty
 `placeholders.noData` → that. Every `placeholders.*` key gets a `PlaceholderContext` (`key`, `searchMode`, `isOpen`,
-`selectedCount`, `totalCount`, `maxSelectedCount`, `remaining`; `count` = `remaining` when `max-selected-count` is set,
-else `selectedCount`) and is recomputed on every selection change (open or
+`selectedCount`, `totalCount`, `maxSelectedCount`, `remaining`, `minSelectedCount`, `missing`; `count` = `missing` while
+`min-selected-count` isn't met, else `remaining` when `max-selected-count` is set, else `selectedCount`) and is recomputed on every selection change (open or
 closed), mode switch, open / close and labels / locale change. The closed count-mode text
 (`badgesThresholdMode: 'count'`) is `labels.selectedCount`, not a placeholder key.
 
 | Key | Default | ctx (`ctx.count`) | Used for |
 |-----|---------|-------------------|----------|
 | `placeholders.select` | `Pick an option…` | `PlaceholderContext` (selection count) | Closed-input placeholder when search is not usable (picker mode) |
-| `placeholders.search` | `Search…` | `PlaceholderContext` (selection count; the remaining picks with `max-selected-count`) | Search input placeholder (the mode toggle hidden) |
+| `placeholders.search` | `Search…` | `PlaceholderContext` (selection count; the missing picks with `min-selected-count` until met, then the remaining picks with `max-selected-count`) | Search input placeholder (the mode toggle hidden) |
 | `placeholders.filter` / `placeholders.navigate` | `Filter…` / `Search…` | `PlaceholderContext` (selection count) | Placeholder by mode while `show-search-mode-toggle` is on |
 | `placeholders.noData` | (empty = off) | `PlaceholderContext` (selection count) | Closed-input placeholder when the option list is empty (e.g. an unresolved cascade parent) |
 | `messages.noData` | `No data` | — | Dropdown text when there are no options at all |
@@ -748,6 +794,9 @@ closed), mode switch, open / close and labels / locale change. The closed count-
 | `ariaLabels.switchToNavigateMode` / `tooltips.switchToNavigateMode` | `Switch to navigate mode` | — | Fullscreen search-mode toggle (in filter mode): aria-label / `title` |
 | `tooltips.andMore` | `…and {ctx.count} more` | `CounterTooltipContext` (`remainingCount`) | Counter tooltip overflow tail (beyond 12 items) |
 | `errors.valueFormat` | `The value could not be formatted.` | — | Validation message when `getValueFormatCallback` throws |
+| `errors.required` | `Select an item.` | `MultiSelectContext` (no count) | Validation message (`valueMissing`) while `required` and nothing is selected |
+| `errors.minSelected` | `Select at least {ctx.min}.` | `MinSelectedContext` (`min`) | Validation message (`rangeUnderflow`) while 1 … `min-selected-count`−1 are selected |
+| `errors.maxSelected` | `Select at most {ctx.max}.` | `MaxSelectedContext` (`max`) | Validation message (`rangeOverflow`) while more than `max-selected-count` are selected |
 
 ### Reading back state after a write (v2)
 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test — required + validation</title>
+    <link rel="stylesheet" href="test-fixtures.css">
+    <style>
+        web-multiselect { display: block; max-width: 320px; }
+    </style>
+</head>
+<body>
+    <h1>required + min / max-selected-count</h1>
+    <p>Targeted by <code>e2e/required-validity.spec.ts</code>. <code>required</code> → <code>valueMissing</code>,
+        <code>min-selected-count</code> → <code>rangeUnderflow</code>, <code>max-selected-count</code> above the limit
+        (programmatic) → <code>rangeOverflow</code>; readonly / disabled are valid; <code>:state(required)</code>; form submit
+        blocked; form reset re-evaluates.</p>
+
+    <form id="form">
+        <div class="fixture">
+            <div class="fixture-label">required · min-selected-count="3" · max-selected-count="5"</div>
+            <web-multiselect id="req" name="fruits" required multiple min-selected-count="3" max-selected-count="5"
+                value-member="value" display-value-member="label"
+                labels='{"placeholders.search": "Select {ctx.missing} more"}'></web-multiselect>
+        </div>
+        <div class="fixture">
+            <div class="fixture-label">min-selected-count="2" (not required)</div>
+            <web-multiselect id="min" name="min" multiple min-selected-count="2" value-member="value" display-value-member="label"></web-multiselect>
+        </div>
+        <div class="fixture">
+            <div class="fixture-label">required · readonly</div>
+            <web-multiselect id="ro" name="ro" required readonly multiple value-member="value" display-value-member="label"></web-multiselect>
+        </div>
+        <fieldset id="fs">
+            <div class="fixture">
+                <div class="fixture-label">required · in a fieldset (disabled by the test)</div>
+                <web-multiselect id="fsreq" name="fsreq" required multiple value-member="value" display-value-member="label"></web-multiselect>
+            </div>
+        </fieldset>
+        <button type="submit" id="submit">Submit</button>
+        <button type="reset" id="reset">Reset</button>
+    </form>
+    <div id="submitted"></div>
+
+    <script type="module">
+        import '/src/index.ts';
+
+        const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']
+            .map(label => ({ value: label.toLowerCase(), label }));
+
+        customElements.whenDefined('web-multiselect').then(() => {
+            for (const id of ['req', 'min', 'ro', 'fsreq']) document.getElementById(id).options = items;
+        });
+        document.getElementById('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('submitted').textContent = 'submitted';
+        });
+    </script>
+</body>
+</html>

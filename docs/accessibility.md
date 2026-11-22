@@ -105,6 +105,15 @@ non-selectable tree nodes are `role="presentation"`). Focus never leaves the fie
 the keyboard highlight (core `/a11y` `createActiveDescendant`), also across virtual-list recycling. The row
 checkboxes are decorative (`aria-hidden`, not focusable) — `aria-selected` carries the state.
 
+## Required and validation
+
+`required` sets `aria-required="true"` on the element (core, through `ElementInternals.ariaRequired` — no attribute
+is written) and `:state(required)`. An invalid control (`required` + empty → `valueMissing`, `min-selected-count` →
+`rangeUnderflow`, above `max-selected-count` → `rangeOverflow`) reports through the platform: a submit attempt or
+`reportValidity()` shows the browser's validation bubble at the control's input and focuses it, and assistive tech
+reads the element as invalid with the `errors.*` label as its message. Readonly / disabled controls are never invalid.
+See [usage.md → Required and validation](./usage.md#required-and-validation).
+
 ## Known gaps
 
 Group headers (and their group-select checkbox) are not exposed as ARIA groups yet.

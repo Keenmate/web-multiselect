@@ -176,6 +176,12 @@ export interface MultiSelectLabels {
     'buttons.clearSelection'?: string;
     /** Validation message when `getValueFormatCallback` throws (the host turns invalid, the form won't submit). Default: `The value could not be formatted.`. */
     'errors.valueFormat'?: string;
+    /** Validation message while `required` and nothing is selected (`validity.valueMissing`; the form won't submit). ctx: `MultiSelectContext` (no count). Default: `Select an item.`. */
+    'errors.required'?: string;
+    /** Validation message while fewer than `minSelectedCount` options are selected (at least one; `validity.rangeUnderflow`). ctx: `MinSelectedContext` — `{ctx.min}`, `{ctx.selectedCount}`, `{ctx.missing}`; `ctx.count` = `ctx.min`. Default: `Select at least {ctx.min}.`. */
+    'errors.minSelected'?: string;
+    /** Validation message while more than `maxSelectedCount` options are selected (only a programmatic value can get there; `validity.rangeOverflow`). ctx: `MaxSelectedContext` — `{ctx.max}`, `{ctx.selectedCount}`, `{ctx.excess}`; `ctx.count` = `ctx.max`. Default: `Select at most {ctx.max}.`. */
+    'errors.maxSelected'?: string;
 }
 
 /**
@@ -379,8 +385,43 @@ export interface PlaceholderContext<T = any> extends MultiSelectContext<T> {
     maxSelectedCount: number | null;
     /** Picks left under the limit (`0` at / over it), or `null` when there is no limit. */
     remaining: number | null;
-    /** The number the text's noun agrees with: `remaining` when a limit is set (`Select up to {ctx.remaining} more`),
-     *  otherwise `selectedCount`. */
+    /** The minimum (`minSelectedCount`, multiple mode), or `null` when there is none. */
+    minSelectedCount: number | null;
+    /** Picks still missing to reach the minimum (`0` once it is met), or `null` when there is no minimum
+     *  (`Select {ctx.missing} more`). */
+    missing: number | null;
+    /** The number the text's noun agrees with: `missing` while the minimum isn't met, else `remaining` when a
+     *  limit is set (`Select up to {ctx.remaining} more`), otherwise `selectedCount`. */
+    count: number;
+}
+
+/**
+ * The label context of `errors.minSelected` — the `minSelectedCount` constraint (`validity.rangeUnderflow`),
+ * set while 1 … min−1 options are selected.
+ */
+export interface MinSelectedContext<T = any> extends MultiSelectContext<T> {
+    /** The minimum (`minSelectedCount`). */
+    min: number;
+    /** Number of selected items. */
+    selectedCount: number;
+    /** Picks missing to reach the minimum (`min − selectedCount`). */
+    missing: number;
+    /** The number the text's noun agrees with: `min`. */
+    count: number;
+}
+
+/**
+ * The label context of `errors.maxSelected` — the `maxSelectedCount` constraint (`validity.rangeOverflow`),
+ * set while more options are selected than the limit (only a programmatic value gets there).
+ */
+export interface MaxSelectedContext<T = any> extends MultiSelectContext<T> {
+    /** The maximum (`maxSelectedCount`). */
+    max: number;
+    /** Number of selected items. */
+    selectedCount: number;
+    /** Selected items above the maximum (`selectedCount − max`). */
+    excess: number;
+    /** The number the text's noun agrees with: `max`. */
     count: number;
 }
 
@@ -945,7 +986,8 @@ export interface MultiSelectConfig<T = any> {
     /**
      * @internal Element bridge: called after every hidden-input write with the format failure
      * (`null` = formatted fine; boxed so a thrown `null` still counts) and the `valueFormatError`
-     * label; the element maps it onto its form validity (core `setFormatError`).
+     * label; the element maps it onto its form validity (core `setFormatError`) and, the write being a
+     * value change, re-evaluates `required` and the count rules (core `refreshRequired`).
      */
     onFormatValidity?: ((failure: { error: unknown } | null, message?: string) => void) | null;
 
@@ -1201,10 +1243,20 @@ export interface MultiSelectConfig<T = any> {
      * checkbox) picks only up to the limit, in display order. Reaching the limit is announced once
      * (`labels['messages.limitReached']`). A programmatic value (`el.value`, `setSelected()`)
      * is NOT truncated — that is the app's call; lowering the limit below the current selection keeps the
-     * selection and only blocks adding. Not a form constraint (no validity). Placeholders read the
+     * selection and only blocks adding; while the selection is above the limit the host is invalid
+     * (`validity.rangeOverflow`, `labels['errors.maxSelected']`). Placeholders read the
      * remaining picks as `{ctx.remaining}` (`PlaceholderContext`). Attribute `max-selected-count`.
      */
     maxSelectedCount?: number | null;
+    /**
+     * Multiple mode: the fewest options a submitted selection may hold (a positive integer; `null` / unset =
+     * no minimum; single mode ignores it). A form constraint, not a pick block: while 1 … min−1 options are
+     * selected the host is invalid (`validity.rangeUnderflow`, `labels['errors.minSelected']`) and the form
+     * won't submit. An EMPTY selection is not checked (like a native min rule on an empty field) — add
+     * `required` for that (`valueMissing`). Placeholders read the picks still missing as `{ctx.missing}`
+     * (`PlaceholderContext`). Attribute `min-selected-count`.
+     */
+    minSelectedCount?: number | null;
     /** Minimum search length before loading data */
     minSearchLength?: number;
     /**
@@ -1441,6 +1493,8 @@ export interface MultiSelectElementConfig<T = any> extends Omit<MultiSelectConfi
     collapseBadgesBelow?: number;
     /** The initial selection (native `defaultValue`, the form-reset target). Attribute `value` (parsed per `value-format`). */
     defaultValue?: ReadonlyArray<string | number> | string;
+    /** A selection is required: while nothing is selected the host is invalid (`validity.valueMissing`, `labels['errors.required']`) and the form won't submit; readonly / disabled are never missing. Attribute `required` (reflects). */
+    isRequired?: boolean;
     /** HTML-authoring option source, parsed per `optionsFormat`. Attribute `data-options`. */
     optionsSource?: string | null;
     /** How `data-options` is parsed. Default `json`. Attribute `data-options-format`. */

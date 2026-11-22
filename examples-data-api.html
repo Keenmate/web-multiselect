@@ -317,6 +317,67 @@
             </kmwc-demo>
         </section>
 
+        <!-- Required + validation -->
+        <section class="example-section">
+            <h2>API11 · Required + validation</h2>
+            <p class="description">
+                <code>required</code> → <code>validity.valueMissing</code> while nothing is selected;
+                <code>min-selected-count</code> → <code>rangeUnderflow</code> while 1 … min−1 are selected (an empty
+                selection is <code>required</code>'s business); above <code>max-selected-count</code> (only a programmatic
+                value gets there — the user can't pick past it) → <code>rangeOverflow</code>. Each is its own flag, so
+                <code>validity</code> tells "empty" from "too few" / "too many". The form won't submit while invalid:
+                Submit shows the browser's validation bubble at the input. Messages are labels
+                (<code>errors.required</code>, <code>errors.minSelected</code>, <code>errors.maxSelected</code>, with
+                <code>{ctx.*}</code>); the placeholder reads <code>{ctx.missing}</code>. Readonly / disabled are never invalid.
+            </p>
+
+            <kmwc-demo>
+                <form id="form-required" onsubmit="event.preventDefault(); document.getElementById('output-form-required').textContent = 'Submitted: ' + new FormData(this).get('team');">
+                    <label class="demo-label">Pick 3 – 5 team members:</label>
+                    <web-multiselect id="form-required-select" name="team" required min-selected-count="3" max-selected-count="5"
+                        labels='{"placeholders.search": "Select {ctx.missing} more"}'></web-multiselect>
+
+                    <div class="form-actions">
+                        <button type="submit">Submit Form</button>
+                        <button type="button" id="form-required-six">Set 6 (programmatic)</button>
+                        <button type="reset">Reset</button>
+                    </div>
+
+                    <div class="output">
+                        <div class="output-label">validity + validationMessage:</div>
+                        <pre id="output-form-required-validity"></pre>
+                        <div class="output-label">Submit:</div>
+                        <pre id="output-form-required">Not submitted yet</pre>
+                    </div>
+                </form>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('form-required-select');
+                    el.options = [
+                        ['ada', 'Ada'], ['grace', 'Grace'], ['linus', 'Linus'], ['margaret', 'Margaret'],
+                        ['ken', 'Ken'], ['barbara', 'Barbara'], ['dennis', 'Dennis'],
+                    ];
+                    // labels: the placeholder counts down with {ctx.missing} (ctx.count = missing while the
+                    // minimum isn't met). errors.* are labels too, e.g.
+                    // el.labels = { 'errors.minSelected': 'Pick at least {ctx.min} ({ctx.missing} to go).' };
+
+                    const FLAGS = ['valueMissing', 'rangeUnderflow', 'rangeOverflow', 'customError'];
+                    const show = () => {
+                        const set = FLAGS.filter((f) => el.validity[f]);
+                        document.getElementById('output-form-required-validity').textContent =
+                            `validity: ${set.join(' / ') || 'valid'}\nvalidationMessage: ${el.validationMessage || '—'}`;
+                    };
+                    el.addEventListener('change', show);
+                    document.getElementById('form-required-six').addEventListener('click', async () => {
+                        el.setSelected(['ada', 'grace', 'linus', 'margaret', 'ken', 'barbara']); // not truncated
+                        await el.whenSettled();
+                        show();
+                    });
+                    document.getElementById('form-required').addEventListener('reset', () => setTimeout(show));
+                    el.whenReady().then(show);
+                </script>
+            </kmwc-demo>
+        </section>
+
         <!-- Example 7: New selectedValue API -->
         <section class="example-section">
             <h2>API04 · Public API Methods</h2>

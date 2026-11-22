@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Added — `required` + count constraints through core validity (C-CA-41) (2026-11-22)
+- **`required` / `isRequired`** (`toBool('presence')`, reflects, like native): while nothing is selected the host is
+  invalid — `validity.valueMissing`, `:invalid`, the form won't submit (unless `novalidate`), a submit attempt /
+  `reportValidity()` shows the browser bubble at the control's input. Core (rc25, SPEC §6.6) owns the flag, plus
+  `aria-required` on the internals and `:state(required)`; the element implements `isValueEmpty()` (nothing selected),
+  `getRequiredMessage()` and `getValidityAnchor()`, and re-evaluates on every value change (user, programmatic, form
+  reset). Readonly / disabled (own attribute or a `<fieldset disabled>`) are never missing.
+- **`min-selected-count` / `minSelectedCount`** (positive integer, unset = no minimum; multiple mode only; not
+  reflected, like `maxSelectedCount`): 1 … min−1 selected → `validity.rangeUnderflow`; an EMPTY selection is not
+  checked (native min semantics — add `required`). A submit rule only: it blocks no pick.
+- **`max-selected-count` above the limit → `validity.rangeOverflow`** — only a programmatic value gets there (user picks
+  stay blocked at the limit as before). Replaces "no form validity" from the entry below.
+- Count rules are separate flags (core `setValidityFlag`), so `validity` tells "empty" from "too few" / "too many";
+  readonly / disabled suspend them like `valueMissing`.
+- New labels (`{ctx.*}` style): `errors.required` (`Select an item.`), `errors.minSelected` (`Select at least
+  {ctx.min}.`, new `MinSelectedContext` = `{ min, selectedCount, missing, count: min }`), `errors.maxSelected`
+  (`Select at most {ctx.max}.`, new `MaxSelectedContext` = `{ max, selectedCount, excess, count: max }`).
+- `PlaceholderContext` gains `minSelectedCount` and `missing` (both null without a minimum); `ctx.count` = `missing`
+  while the minimum isn't met, else `remaining` with a max, else `selectedCount` — `'Select {ctx.missing} more'`.
+- Example page: data-api API11 "Required + validation" (a form, the native bubble on submit, a live
+  `validity` / `validationMessage` line). Docs: usage guide "Required and validation", accessibility guide; e2e
+  `required-validity.spec.ts` (fixture `test/required-validity.html`), unit `required-validity.test.ts`; CEM regenerated.
+
 ### Added — `maxSelectedCount`: a limit on user picks (2026-11-22)
 - **`max-selected-count` / `maxSelectedCount`** (positive integer, unset = no limit; multiple mode only — single mode
   ignores it; not reflected, like the other numeric inputs). At the limit every unselected option is not selectable by

@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, RemoveItemContext, AddContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
  *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
@@ -56,6 +56,9 @@ const DEFAULT_LABELS: Required<MultiSelectLabels> = {
     'buttons.selectAll': 'Select all',
     'buttons.clearSelection': 'Clear all',
     'errors.valueFormat': 'The value could not be formatted.',
+    'errors.required': 'Select an item.',
+    'errors.minSelected': 'Select at least {ctx.min}.',
+    'errors.maxSelected': 'Select at most {ctx.max}.',
 };
 
 /** Where a badge is rendered — the render-only half of {@link BadgeContentRenderContext}. */
@@ -598,6 +601,18 @@ export class MultiSelectEngine<T = any> {
     private selectionLimit(): number | null {
         const max = this.options.maxSelectedCount;
         return this.options.isMultiple && typeof max === 'number' && max > 0 ? max : null;
+    }
+
+    /** The active minimum — a positive `minSelectedCount` in multiple mode — or null. */
+    private selectionMinimum(): number | null {
+        const min = this.options.minSelectedCount;
+        return this.options.isMultiple && typeof min === 'number' && min > 0 ? min : null;
+    }
+
+    /** Picks still missing to reach the minimum (0 once met), or null without one. */
+    private missingPicks(): number | null {
+        const min = this.selectionMinimum();
+        return min === null ? null : Math.max(0, min - this.selectedValues.size);
     }
 
     /** Picks left under the limit (0 at / over it — a programmatic value is not truncated), or null without one. */
@@ -2161,6 +2176,7 @@ export class MultiSelectEngine<T = any> {
     private placeholderCtx(key: PlaceholderKey): PlaceholderContext<T> {
         const selectedCount = this.selectedValues.size;
         const remaining = this.remainingPicks();
+        const missing = this.missingPicks();
         return this.ctx({
             key,
             searchMode: this.options.searchMode || 'filter',
@@ -2169,7 +2185,9 @@ export class MultiSelectEngine<T = any> {
             totalCount: this.allOptions.length,
             maxSelectedCount: this.selectionLimit(),
             remaining,
-            count: remaining ?? selectedCount,
+            minSelectedCount: this.selectionMinimum(),
+            missing,
+            count: missing ? missing : remaining ?? selectedCount,
         });
     }
 
@@ -5438,6 +5456,40 @@ export class MultiSelectEngine<T = any> {
         } else {
             this.options.onFormatValidity?.(null);
         }
+    }
+
+    // ── Form validity (the element maps these onto core's validity flags, SPEC §6.6) ──
+
+    /** The `errors.required` label (`valueMissing` message). */
+    public getRequiredMessage(): string {
+        return this.labels.text('errors.required', { ctx: this.ctx({}) });
+    }
+
+    /**
+     * The count constraints (multiple mode): `rangeUnderflow` while 1 … `minSelectedCount`−1 options are
+     * selected (an empty selection is `required`'s business), `rangeOverflow` while more than
+     * `maxSelectedCount` are (a programmatic value). Each is its message, or `null` when the rule holds.
+     */
+    public getCountValidity(): { rangeUnderflow: string | null; rangeOverflow: string | null } {
+        const selectedCount = this.selectedValues.size;
+        const min = this.selectionMinimum();
+        const max = this.selectionLimit();
+        let rangeUnderflow: string | null = null;
+        let rangeOverflow: string | null = null;
+        if (min !== null && selectedCount > 0 && selectedCount < min) {
+            const ctx: MinSelectedContext<T> = this.ctx({ min, selectedCount, missing: min - selectedCount, count: min });
+            rangeUnderflow = this.labels.text('errors.minSelected', { ctx });
+        }
+        if (max !== null && selectedCount > max) {
+            const ctx: MaxSelectedContext<T> = this.ctx({ max, selectedCount, excess: selectedCount - max, count: max });
+            rangeOverflow = this.labels.text('errors.maxSelected', { ctx });
+        }
+        return { rangeUnderflow, rangeOverflow };
+    }
+
+    /** Where the browser anchors the validation bubble: the control's input (the focus target). */
+    public getValidityAnchor(): HTMLElement | undefined {
+        return this.input ?? undefined;
     }
 
     /**

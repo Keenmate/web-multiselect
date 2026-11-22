@@ -162,7 +162,8 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
   // ── Numbers ──────────────────────────────────────────────────────────────
   { configKey: 'badgesThreshold',         attribute: 'badges-threshold',            converter: toInt(),               on: 'update', description: 'Threshold at which badges collapse to a count/compact view.' },
   { configKey: 'maxVisibleBadgeCount',        attribute: 'max-visible-badge-count',          converter: toInt(),               on: 'update', description: 'Maximum number of badges rendered before overflow.' },
-  { configKey: 'maxSelectedCount',        attribute: 'max-selected-count',          converter: toInt({ min: 1 }), on: 'update', description: 'Multiple mode: the most options the user may pick (a positive integer; unset = no limit; single mode ignores it). At the limit the unselected options are not selectable (click / Enter / Space / group checkbox / add new / `controller.selectValue()`): they get `aria-disabled="true"` + `ms__option--limit`; Select All picks only up to the limit, in display order; reaching it is announced once (`labels[\'messages.limitReached\']`). A programmatic value (`el.value`, `setSelected()`) is NOT truncated; lowering the limit below the selection keeps it and only blocks adding. Placeholders read `{ctx.remaining}`.' },
+  { configKey: 'maxSelectedCount',        attribute: 'max-selected-count',          converter: toInt({ min: 1 }), on: 'update', description: 'Multiple mode: the most options the user may pick (a positive integer; unset = no limit; single mode ignores it). At the limit the unselected options are not selectable (click / Enter / Space / group checkbox / add new / `controller.selectValue()`): they get `aria-disabled="true"` + `ms__option--limit`; Select All picks only up to the limit, in display order; reaching it is announced once (`labels[\'messages.limitReached\']`). A programmatic value (`el.value`, `setSelected()`) is NOT truncated; lowering the limit below the selection keeps it and only blocks adding — while the selection is above the limit the host is invalid (`validity.rangeOverflow`, `labels["errors.maxSelected"]`, the form will not submit). Placeholders read `{ctx.remaining}`.' },
+  { configKey: 'minSelectedCount',        attribute: 'min-selected-count',          converter: toInt({ min: 1 }), on: 'update', description: 'Multiple mode: the fewest options a submitted selection may hold (a positive integer; unset = no minimum; single mode ignores it). A form constraint, not a pick block: while 1 … min−1 options are selected the host is invalid (`validity.rangeUnderflow`, `labels["errors.minSelected"]`, `:invalid`) and the form will not submit. An EMPTY selection is not checked (like a native min rule on an empty field) — add `required` for that. Placeholders read the picks still missing as `{ctx.missing}`.' },
   { configKey: 'collapseBadgesBelow',     attribute: 'collapse-badges-below',       converter: toInt(),               on: 'update', description: 'Container-responsive opt-in (off by default). When set to a px width, the control watches its OWN border box (not the window, via the core `sizeChanged` hook / a shared ResizeObserver) and collapses `badges-display-mode` to `count` ("N selected") while the box is narrower than this — so a picker in a narrow column/sidebar never overflows with pills, even on a wide monitor. Widening past the threshold restores the configured badges mode. Element-only: the override is applied to the live picker, never to your `badges-display-mode` config.' },
   { configKey: 'minSearchLength',         attribute: 'min-search-length',           converter: toInt({ default: 0 }), on: 'update', description: 'Minimum characters before searching/filtering starts.' },
   { configKey: 'searchDebounce',          attribute: 'search-debounce',             converter: toInt({ default: 0 }), on: 'update', description: 'Debounce delay in ms before the async `searchCallback` fires (local filtering is instant).' },
@@ -177,6 +178,7 @@ Flat + multiple only — no effect in tree mode (use \`checkbox-mode\`) or singl
 
   // ── Booleans (default true) ──────────────────────────────────────────────
   { configKey: 'isDisabled',              attribute: 'disabled',                    converter: toBool('presence'), shouldReflect: true, on: 'update', description: 'Disable the control: no interaction, not focusable, the value is not submitted with the form (like a native `disabled` control). A disabled ancestor `<fieldset>` disables it too (core `isEffectivelyDisabled`).' },
+  { configKey: 'isRequired',              attribute: 'required',                    converter: toBool('presence'), default: false, shouldReflect: true, on: 'update', description: 'A selection is required (like a native `required` `<select>`): while nothing is selected the host is invalid (`validity.valueMissing`, `labels["errors.required"]`, `:invalid`, `:state(required)`, `aria-required`) and the form will not submit — `reportValidity()` shows the browser bubble at the input. A readonly or disabled control is never missing.' },
   { configKey: 'isReadonly',              attribute: 'readonly',                    converter: toBool('presence'), shouldReflect: true, on: 'update', description: 'Read-only control: the user can\'t change the selection and the dropdown doesn\'t open, but the control stays focusable and its value IS submitted. Programmatic `setSelected()` still works.' },
   { configKey: 'isMultiple',       attribute: 'multiple',                    converter: toBool('default-true'), on: 'reinit', description: 'Allow selecting multiple options. When off, selecting one replaces the previous.' },
   { configKey: 'isGroupsAllowed',         attribute: 'allow-groups',                converter: toBool('default-true'), on: 'reinit', description: 'Allow grouping options under group headers.' },
@@ -303,7 +305,7 @@ const EVENTS = [
 // so it can read the private engine; no flush (a staged write keeps the getter on the stored value).
 let liveOptions: (el: HTMLElement) => ReadonlyArray<Record<string, unknown>> | undefined = () => undefined;
 
-const NON_PICKER_KEYS = new Set(['isDisabled', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+const NON_PICKER_KEYS = new Set(['isDisabled', 'isRequired', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** A torn-down picker's live state, carried to the next build (see #buildPicker). */
 type HeldSelection<T> = {
@@ -489,6 +491,42 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker?.repaintIcons();
   }
 
+  // ── form validity (core SPEC §6.6) ──────────────────────────────────────────
+
+  /** `required`: empty = nothing selected (also while detached — the held selection). */
+  protected override isValueEmpty(): boolean {
+    // Not `this.selectedValue`: its flush() would re-enter the flush that calls this.
+    const value = this.#picker ? this.#picker.selectedValue : this.#heldState?.selectedValue ?? null;
+    return value === null || (Array.isArray(value) && value.length === 0);
+  }
+
+  /** The `valueMissing` message: `labels['errors.required']`. */
+  protected override getRequiredMessage(): string {
+    return this.#picker?.getRequiredMessage() ?? super.getRequiredMessage();
+  }
+
+  /** The validation bubble points at the control's input. */
+  protected override getValidityAnchor(): HTMLElement | undefined {
+    return this.#picker?.getValidityAnchor();
+  }
+
+  /**
+   * Core's `required` evaluation (after every flush and from the value-change bridge) plus the count rules:
+   * `minSelectedCount` → `rangeUnderflow`, `maxSelectedCount` → `rangeOverflow` — each its own flag, so
+   * `validity` tells "empty" from "too few" / "too many". Like `valueMissing`, a readonly or disabled control
+   * is never out of range. Without a picker (detached after a removal) the last flags stay.
+   */
+  protected override refreshRequired(): void {
+    super.refreshRequired();
+    const picker = this.#picker;
+    if (!picker) return;
+    const isChecked = this.config.isReadonly !== true && !this.isEffectivelyDisabled;
+    const { rangeUnderflow, rangeOverflow } = isChecked ? picker.getCountValidity() : { rangeUnderflow: null, rangeOverflow: null };
+    const anchor = picker.getValidityAnchor();
+    this.setValidityFlag('rangeUnderflow', rangeUnderflow, rangeUnderflow ? anchor : undefined);
+    this.setValidityFlag('rangeOverflow', rangeOverflow, rangeOverflow ? anchor : undefined);
+  }
+
   /** `disabled` input or ancestor `<fieldset disabled>` flipped (core): apply it in place. */
   protected override disabledChanged(isDisabled: boolean): void {
     this.#picker?.setDisabled(isDisabled);
@@ -650,6 +688,8 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
     // Selected options the new list lacks ("add new" ones, from a re-parsed source) stay selected.
     if (isHeldKept) this.#picker.adoptSelectedOptions(held!.selectedOptions);
+    // The engine's first hidden-input write ran before #picker was set: evaluate the validity now.
+    this.refreshRequired();
     this.#applyCustomStyles();
     // A fresh picker starts 'floating'; re-assert the resolved presentation so a
     // rebuild (reinit) doesn't drop a fullscreen setting until the next env change.
@@ -698,7 +738,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     cfg.onClose = (detail: CloseEventDetail<T>) => this.emit('close', detail);
     cfg.onValueFormatError = (detail: ValueFormatErrorEventDetail<T>) => this.emit('value-format-error', detail);
     // A throwing getValueFormatCallback → customError validity (core SPEC §6.6); null clears it.
-    cfg.onFormatValidity = (failure, message) => this.setFormatError(failure ? failure.error ?? message : null, message);
+    // Every hidden-input write is a value change: re-evaluate `required` + the count rules too.
+    cfg.onFormatValidity = (failure, message) => {
+      this.setFormatError(failure ? failure.error ?? message : null, message);
+      if (this.#picker) this.refreshRequired();
+    };
 
     // Container (shadow) for the dropdown/hint/popover; host for light-DOM inputs. Contexts
     // carry THIS element and its (rebuild-proof) controller, not the engine's own.
