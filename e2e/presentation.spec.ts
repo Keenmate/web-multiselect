@@ -137,8 +137,8 @@ test.describe('fullscreen scale under base-css-variables (--base-rem: 1rem)', ()
         await input(p).click();
         await expect(fullscreen(p)).toBeVisible();
         const height = await p.evaluate((el) => {
-            const box = el.shadowRoot!.querySelector<HTMLElement>('[style*="--ms-option-height"]');
-            return box?.style.getPropertyValue('--ms-option-height');
+            const box = el.shadowRoot!.querySelector<HTMLElement>('[style*="--_ms-option-height"]');
+            return box?.style.getPropertyValue('--_ms-option-height');
         });
         expect(height).toBe('60px');
     });

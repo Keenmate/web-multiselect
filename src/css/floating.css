@@ -95,7 +95,7 @@
    cramped. Re-declaring them here — where --ms-rem is --ms-fullscreen-rem — scales
    the pill height, text, padding and remove button up with the rest of the overlay.
    The virtual list measures its row height from this --ms-badge-height (scaledBadgeHeight →
-   --ms-badge-height-virtual), so both paths agree. */
+   --_ms-badge-height-virtual), so both paths agree. */
 .ms__selected-popover--fullscreen {
   --ms-badge-height: calc(4.2 * var(--ms-rem));
   --ms-badge-font-size: calc(var(--ms-font-scale-sm) * var(--ms-rem));
@@ -822,9 +822,9 @@
 
 .ms__selected-popover-body--virtual .ms__badge {
   /* Fixed height for virtual scroll (default: 36px, configurable via badge-height attribute) */
-  height: var(--ms-badge-height-virtual, 36px);
-  min-height: var(--ms-badge-height-virtual, 36px);
-  max-height: var(--ms-badge-height-virtual, 36px);
+  height: var(--_ms-badge-height-virtual, 36px);
+  min-height: var(--_ms-badge-height-virtual, 36px);
+  max-height: var(--_ms-badge-height-virtual, 36px);
   margin-bottom: var(--ms-selected-popover-body-gap); /* Add gap between badges */
   overflow: hidden;
   box-sizing: border-box;

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — runtime CSS variables are private (2026-11-22)
+- **BREAKING:** the four custom properties the component writes from JS as internal state are now private
+  (`--_ms-*`, the core `--_km-*` convention): `--ms-input-current-width` → `--_ms-input-current-width` (the live field
+  width, published on the host each positioning frame), `--ms-option-height` → `--_ms-option-height` (the virtual-scroll
+  row height, from `virtual-scroll-item-height`), `--ms-badge-height-virtual` → `--_ms-badge-height-virtual` (the
+  virtual selected-popover row height, from `badge-height`), `--ms-tree-depth` → `--_ms-tree-depth` (a tree row's
+  indent depth). None was a knob — JS overwrote any value a consumer set — and none is in the variable manifest; the
+  public knobs stay (`--ms-dropdown-width` / `--ms-selected-popover-width` still default to the live field width,
+  `--ms-tree-indent` / `--ms-tree-base-indent`, the `virtual-scroll-item-height` / `badge-height` attributes). A
+  stylesheet that READ `var(--ms-input-current-width)` (an older changelog entry suggested it for the popover width)
+  drops the `var()`: both panel widths already default to the field width. No visual change (screenshots of the
+  basic, virtual-scroll and tree pages + the virtual selected popover identical).
+- Verified against the new core `1.0.0-rc25` tarball (full Chromium + mobile e2e, core lifecycle guard).
+
 ### Internal — base-variables sweep (C-BV-3 / C-BV-6 / C-BV-9) (2026-11-22)
 - `component-variables.manifest.json`: the 31 unset-by-design knobs are marked `"input": true` — the 19 `--ms-sheet-*`
   phone sheet overrides (mapped onto core's `--_km-sheet-*` with no fallback, so the page-wide `--km-sheet-*` still

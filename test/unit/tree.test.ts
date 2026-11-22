@@ -50,9 +50,9 @@ describe('tree mode — rendering', () => {
         expect(rows().every(r => r.classList.contains('ms__option--tree'))).toBe(true);
     });
 
-    it('indents each row by depth via --ms-tree-depth (level - 1)', () => {
+    it('indents each row by depth via --_ms-tree-depth (level - 1)', () => {
         const depthByPath = new Map(
-            rows().map(r => [r.dataset.path, r.style.getPropertyValue('--ms-tree-depth').trim()])
+            rows().map(r => [r.dataset.path, r.style.getPropertyValue('--_ms-tree-depth').trim()])
         );
         expect(depthByPath.get('1')).toBe('0');
         expect(depthByPath.get('1.1')).toBe('1');

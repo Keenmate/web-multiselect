@@ -1444,7 +1444,7 @@ export class MultiSelectEngine<T = any> {
         // count crosses the threshold (e.g. filtering from many matches to few).
         if (this.options.isVirtualScrollEnabled) {
             const virtualScrollItemHeight = this.scaledOptionHeight();
-            html += `<div class="ms__options ms__options--fixed-height"${this.listboxAttrs()} style="--ms-option-height: ${virtualScrollItemHeight}px;">`;
+            html += `<div class="ms__options ms__options--fixed-height"${this.listboxAttrs()} style="--_ms-option-height: ${virtualScrollItemHeight}px;">`;
         } else {
             html += `<div class="ms__options"${this.listboxAttrs()}>`;
         }
@@ -1630,7 +1630,7 @@ export class MultiSelectEngine<T = any> {
         // once (guarded by !virtualScroll) but the presentation can change afterwards
         // (floating ⇄ fullscreen). Floating: a fixed maxHeight scroll box. Fullscreen: the
         // panel is a flex column, so flex-fill it and drop the fixed height. Also refresh
-        // --ms-option-height so scaled rows match the JS itemHeight.
+        // --_ms-option-height so scaled rows match the JS itemHeight.
         this.applyVirtualOptionsSizing(this.optionsContainer);
 
         if (this.filteredOptions.length === 0) {
@@ -1645,7 +1645,7 @@ export class MultiSelectEngine<T = any> {
         }
 
         // Initialize or update virtual scroll (row height matches the scaled inline
-        // --ms-option-height above so the scroll math and the CSS agree).
+        // --_ms-option-height above so the scroll math and the CSS agree).
         const itemHeight = this.scaledOptionHeight();
         const bufferSize = this.options.virtualScrollOverscan ?? 10;
 
@@ -1853,7 +1853,7 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Render a single tree-mode row. Separate from `renderOption`: a tree row is
-     * indented by its depth (via the `--ms-tree-depth` custom property) and
+     * indented by its depth (via the `--_ms-tree-depth` custom property) and
      * tagged branch/leaf, but otherwise carries the same selection/checkbox/
      * icon/subtitle content. The tree is always fully expanded, so there is no
      * chevron/toggle — every node is just a normal, selectable option.
@@ -1902,7 +1902,7 @@ export class MultiSelectEngine<T = any> {
         const ariaOption = selectable
             ? ` role="option" aria-selected="${isSelected}" aria-level="${level}"${disabled ? ' aria-disabled="true"' : ''}`
             : ' role="presentation"';
-        let html = `<div class="${classes.join(' ')}"${ariaOption} data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
+        let html = `<div class="${classes.join(' ')}"${ariaOption} data-value="${escapeHtml(String(value))}" data-index="${index}" data-path="${escapeHtml(String(node.path))}" data-level="${level}" style="--_ms-tree-depth: ${depth};"${checkboxAlignAttr}${selectableAttr}>`;
 
         if (this.options.isCheckboxesShown && this.options.isMultiple && selectable) {
             html += this.checkboxHtml({ checked: isSelected, indeterminate: isIndeterminate, disabled });
@@ -4117,13 +4117,13 @@ export class MultiSelectEngine<T = any> {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
                 // defaults to the field width, which CSS can't measure — so we publish the live field
-                // (wrapper) width as --ms-input-current-width and let `.ms__dropdown { width: var(--ms-dropdown-width) }`
+                // (wrapper) width as --_ms-input-current-width and let `.ms__dropdown { width: var(--ms-dropdown-width) }`
                 // (whose default is that var) resolve it. It MUST be set on the host: --ms-dropdown-width is
                 // declared on :host, so its nested var() resolves against the host, not the panel where the
                 // width is used. From there the resolved width inherits down to the shadow-tree panels.
                 // Set BEFORE positioning so shift() measures the final width; otherwise it sees the
                 // natural content width and strands the panel.
-                (this.options.hostElement ?? this.element).style.setProperty('--ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
+                (this.options.hostElement ?? this.element).style.setProperty('--_ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
             onPlaced: (resolved) => {
@@ -4399,11 +4399,11 @@ export class MultiSelectEngine<T = any> {
      * Size the virtual options scroll container for the current presentation. Applied on
      * every render (the container itself is built once), so a floating⇄fullscreen switch
      * re-sizes it: floating = a fixed maxHeight scroll box; fullscreen = flex-fill the
-     * panel's flex column (no fixed height). Also refreshes --ms-option-height to the
+     * panel's flex column (no fixed height). Also refreshes --_ms-option-height to the
      * scaled row height so the CSS row height matches the virtual scroller's itemHeight.
      */
     private applyVirtualOptionsSizing(container: HTMLElement): void {
-        container.style.setProperty('--ms-option-height', `${this.scaledOptionHeight()}px`);
+        container.style.setProperty('--_ms-option-height', `${this.scaledOptionHeight()}px`);
         if (this.presentationMode === 'fullscreen') {
             container.style.flex = '1 1 0';
             container.style.minHeight = '0';
@@ -5060,7 +5060,7 @@ export class MultiSelectEngine<T = any> {
                     <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
                     <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('ariaLabels.close'))}"></button>
                 </div>
-                <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --ms-badge-height-virtual: ${badgeHeight}px;"></div>
+                <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --_ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
             this.selectedPopover.innerHTML = html;
             this.syncSelectedPopoverSheetChrome();

@@ -111,7 +111,7 @@ test.describe('width constraints', () => {
     test('removing selected-popover-width falls back to the field width', async ({ page }) => {
         const p = picker(page, 'panel-widths');
         // Drop the per-instance override; the attribute handler must clear the inline var so the
-        // :host default (var(--ms-input-current-width)) takes over — the popover then tracks the
+        // :host default (var(--_ms-input-current-width)) takes over — the popover then tracks the
         // live field width, same as the dropdown.
         await p.evaluate((el: HTMLElement) => el.removeAttribute('selected-popover-width'));
 

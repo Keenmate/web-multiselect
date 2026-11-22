@@ -3,7 +3,7 @@
    ==============================================================================
    Tree mode renders options as an always-expanded hierarchy. The only visual
    difference from a normal option is depth indentation: each row carries a
-   `--ms-tree-depth` custom property (0 for top-level nodes) set inline by the
+   `--_ms-tree-depth` custom property (0 for top-level nodes) set inline by the
    renderer, and we translate it into inline-start padding here.
 
    There is no chevron/toggle — the tree never collapses (that's web-treeview's
@@ -15,7 +15,7 @@
   /* base = a leaf/first-level row's inline-start padding; step = per-level indent */
   padding-inline-start: calc(
     var(--ms-tree-base-indent, calc(0.75 * var(--ms-rem))) +
-    var(--ms-tree-depth, 0) * var(--ms-tree-indent, calc(var(--ms-tree-indent-scale) * var(--ms-rem)))
+    var(--_ms-tree-depth, 0) * var(--ms-tree-indent, calc(var(--ms-tree-indent-scale) * var(--ms-rem)))
   );
 }
 

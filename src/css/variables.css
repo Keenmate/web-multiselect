@@ -374,11 +374,11 @@
   --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 8px 16px var(--ms-shadow-color));
   /* Live input width, published by JS each positioning frame. It's the only panel
      dimension CSS can't measure itself, so panels that "match the input" read it. */
-  --ms-input-current-width: auto;
+  --_ms-input-current-width: auto;
   /* Options dropdown width. Defaults to the input width; override at app/theme level
      (web-multiselect { --ms-dropdown-width: 60rem }) or per-instance via the
      dropdown-width attribute. dropdown-min-width / dropdown-max-width still clamp it. */
-  --ms-dropdown-width: var(--ms-input-current-width);
+  --ms-dropdown-width: var(--_ms-input-current-width);
   --ms-options-max-height: calc(32 * var(--ms-rem));
   /* Stacking follows the shared --base-z-* scale (pure-admin: dropdown 7500, popover 7600,
      tooltip 9000), so toasts and tooltips stack the same way around every component. The
@@ -576,7 +576,7 @@
      content-driven (padding + line-height), matching web-treeview's node rows.
      Set a length for a consistent minimum row height; rows still grow if their
      content is taller (unless you also truncate the title, below). Virtual-scroll
-     rows use the fixed `--ms-option-height` instead. */
+     rows use the fixed `--_ms-option-height` instead. */
   --ms-option-min-height: auto;
   /* Rings are drawn INSET: keep the offset equal to minus the ring width. */
   --ms-option-outline-focused: var(--base-focused-outline, var(--base-outline-width, 1px) solid var(--ms-option-outline-color-focused));
@@ -875,7 +875,7 @@
      as the dropdown, so the two panels line up under the control). Override at app/theme
      level or per-instance via the selected-popover-width attribute — e.g. a fixed
      calc(32 * var(--ms-rem)) for a constant width independent of the field. */
-  --ms-selected-popover-width: var(--ms-input-current-width);
+  --ms-selected-popover-width: var(--_ms-input-current-width);
   --ms-selected-popover-max-height: calc(32 * var(--ms-rem));
   --ms-selected-popover-border: var(--base-dropdown-border, var(--ms-border-width) solid var(--ms-selected-popover-border-color));
   --ms-selected-popover-border-radius: var(--ms-border-radius-lg);

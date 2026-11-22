@@ -233,7 +233,7 @@ export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
     childCount?: number;
     /** Tree only: 1-based depth level as derived from the path (top level = 1). */
     level?: number;
-    /** Tree only: 0-based indentation depth (`level - 1`), matching `--ms-tree-depth`. */
+    /** Tree only: 0-based indentation depth (`level - 1`), the depth the row is indented by. */
     depth?: number;
     /** Tree only: the node's materialized path (e.g. "1.1.2"). */
     path?: string;

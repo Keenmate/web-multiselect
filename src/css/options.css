@@ -37,22 +37,22 @@
 
 /* Virtual scroll - enforce consistent heights */
 .ms__options--virtual .ms__option {
-  height: var(--ms-option-height, 50px);
-  min-height: var(--ms-option-height, 50px);
-  max-height: var(--ms-option-height, 50px);
+  height: var(--_ms-option-height, 50px);
+  min-height: var(--_ms-option-height, 50px);
+  max-height: var(--_ms-option-height, 50px);
   overflow: hidden;
   box-sizing: border-box;
 }
 
 /* Non-virtual rendering while virtual scroll is *enabled* (result count is below
-   the threshold): pin rows to the same fixed --ms-option-height so the row height
+   the threshold): pin rows to the same fixed --_ms-option-height so the row height
    doesn't jump as filtering crosses the virtualization threshold. Mirrors the
    rule above; applied only when the consumer opted into virtual scroll, so plain
    non-virtual lists keep their natural content height. */
 .ms__options--fixed-height .ms__option {
-  height: var(--ms-option-height, 50px);
-  min-height: var(--ms-option-height, 50px);
-  max-height: var(--ms-option-height, 50px);
+  height: var(--_ms-option-height, 50px);
+  min-height: var(--_ms-option-height, 50px);
+  max-height: var(--_ms-option-height, 50px);
   overflow: hidden;
   box-sizing: border-box;
 }

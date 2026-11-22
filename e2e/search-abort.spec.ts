@@ -36,11 +36,16 @@ test('only the surviving request applies its results', async ({ page }) => {
 });
 
 test('destroying the element aborts the in-flight request', async ({ page }) => {
+    // The abort runs in removedCallback() — once the removal is confirmed at the next animation
+    // frame. Under a loaded run that frame can come later than the fixture's 300 ms delay, so the
+    // request resolved first and there was nothing left to abort: keep it in flight longer.
+    await page.evaluate(() => { (window as any).__searchDelay = 10_000; });
     const p = picker(page, 'ms-abort');
     await p.locator('.ms__input').click();
     await p.locator('.ms__input').type('a', { delay: 0 });
 
     // Remove the element while the request is still in flight → its signal should abort.
+    await expect.poll(() => page.evaluate(() => (window as any).__started)).toBe(1);
     await p.evaluate((el) => el.remove());
     await expect.poll(() => aborted(page)).toBe(1);
 });

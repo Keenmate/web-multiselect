@@ -256,7 +256,7 @@
         <section class="example-section">
             <h2>TR04 · Styling Rows</h2>
             <p class="description">
-                Each row is indented via an inline <code>--ms-tree-depth</code> custom property
+                Each row is indented by its depth
                 (0 at the top level). Tune the step with <code>--ms-tree-indent</code> and the
                 first-level offset with <code>--ms-tree-base-indent</code>. Branch/leaf rows also
                 carry <code>.ms__option--tree-branch</code> / <code>.ms__option--tree-leaf</code>
@@ -325,7 +325,7 @@
                 <li><code>isTreeNode</code> — <code>true</code> on tree rows (<code>false</code> for flat options).</li>
                 <li><code>isBranch</code> / <code>isLeaf</code> — has children, or not.</li>
                 <li><code>childCount</code> — number of direct children (0 for a leaf).</li>
-                <li><code>level</code> / <code>depth</code> — 1-based level and 0-based indent depth (<code>--ms-tree-depth</code>).</li>
+                <li><code>level</code> / <code>depth</code> — 1-based level and 0-based indent depth.</li>
                 <li><code>path</code> — the node's materialized path (<code>"1.1.2"</code>).</li>
                 <li><code>isSelectable</code> — <code>false</code> for structure-only branches.</li>
                 <li><code>isIndeterminate</code> — cascade tristate (a partially-checked branch).</li>

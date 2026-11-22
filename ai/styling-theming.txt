@@ -89,7 +89,7 @@ Dropdown/popover variables (defaults):
 --ms-dropdown-box-shadow: var(--base-dropdown-box-shadow, 0 8px 16px var(--ms-shadow-color))
 --ms-dropdown-border-radius: var(--ms-border-radius-lg)
 --ms-options-max-height: calc(32 * var(--ms-rem))   /* Max height of the options list */
---ms-dropdown-width: var(--ms-input-current-width)  /* Width = the live input width */
+--ms-dropdown-width: <live input width>              /* Default = the live input width */
 --ms-options-padding: 0
 --ms-z-index-dropdown: var(--base-z-dropdown, 7500)
 
