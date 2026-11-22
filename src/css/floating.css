@@ -532,10 +532,6 @@
 .ms__badge-tooltip {
   position: fixed;
   z-index: var(--ms-tooltip-z-index);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy), visibility var(--ms-transition-normal) var(--ms-easing-snappy);
-
   background: var(--ms-tooltip-bg);
   color: var(--ms-tooltip-text-color);
   padding: var(--ms-tooltip-padding);
@@ -551,21 +547,12 @@
   pointer-events: none; /* Prevent tooltip from interfering with mouse events */
 }
 
-.ms__badge-tooltip--visible {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* Option (dropdown row) tooltip. Same shape as the badge tooltip but reads its own
    --ms-option-tooltip-* hooks (which default to the shared --ms-tooltip-* surface), so it can be
    themed independently and targeted separately in custom CSS. */
 .ms__option-tooltip {
   position: fixed;
   z-index: var(--ms-option-tooltip-z-index);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy), visibility var(--ms-transition-normal) var(--ms-easing-snappy);
-
   background: var(--ms-option-tooltip-bg);
   color: var(--ms-option-tooltip-text-color);
   padding: var(--ms-option-tooltip-padding);
@@ -581,15 +568,21 @@
   pointer-events: none; /* Prevent tooltip from interfering with mouse events */
 }
 
-.ms__option-tooltip--visible {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* Truncated-label reveal fired from inside the fullscreen overlay — the tooltip tier, above
    the sheet (modal tier). */
 .ms__option-tooltip--fullscreen {
   z-index: var(--ms-z-index-fullscreen-tooltip);
+  /* Not a core createTooltip (no exit/entry motion from core): a createPopover panel that is
+     created hidden and revealed one frame after its first (async) placement, so it never
+     paints at the 0,0 origin — it keeps its own fade-in. */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--ms-transition-normal) var(--ms-easing-snappy), visibility var(--ms-transition-normal) var(--ms-easing-snappy);
+}
+
+.ms__option-tooltip--fullscreen.ms__option-tooltip--visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ==============================================================================

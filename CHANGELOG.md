@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-16
 
+### Changed — tooltip motion from core (2026-11-22)
+- Badge and option tooltips (`.ms__badge-tooltip` / `.ms__option-tooltip`) now take their motion from core
+  `createTooltip`: a short fade + slide toward the anchor on show AND on hide (was a fade-in only, then gone at once),
+  timed by `--base-duration-fast` (instant under `motion="none"` / OS reduced motion), and the tooltip carries
+  `data-placement`. The local `opacity` / `visibility` transition and the `--visible` rules are gone; the
+  fullscreen truncated-label reveal (`.ms__option-tooltip--fullscreen`, not a core tooltip) keeps its own fade-in.
+
 ### Added — page-wide icon hook repaint (2026-11-22)
 - Changing `window.components.renderIconCallback` after the picker rendered repaints the option / action-button icons
   in place (core `iconsChanged()`, rulebook C-CA-40) — selection, search term, scroll and an open dropdown are kept, so
