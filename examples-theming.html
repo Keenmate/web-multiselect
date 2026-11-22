@@ -220,29 +220,35 @@
             --ms-scrollbar-thumb-bg-hover: #00ffff;
         }
 
+        /* TH07–TH10 work in light AND dark: every colour a preset sets is a
+           light-dark(<light>, <dark>) pair, resolved by the color-scheme the card inherits from
+           the page — the component's own variables work the same way. A preset that set only the
+           light value (text #333, but the panel background left to the component) turned into
+           dark text on a dark panel once the page went dark. */
         /* Audi Corporate Theme */
         .audi-theme {
-            background: #f7f7f7;
+            background: light-dark(#f7f7f7, #1c1c1e);
         }
 
         .audi-theme h2 {
-            color: #bb0a30;
+            color: light-dark(#bb0a30, #f0435f);
             font-weight: 300;
             letter-spacing: 0.05em;
         }
 
         .audi-theme p,
         .audi-theme label {
-            color: #555;
+            color: light-dark(#555555, #b0b0b0);
         }
 
         #audi-mode {
             /* Base theme variables */
-            --base-text-color-1: #333333;
-            --base-text-color-3: #666666;
-            --base-border-color: #d0d0d0;
-            --base-hover-bg: #f5f5f5;
-            --base-primary-color: #bb0a30;
+            --base-main-bg: light-dark(#ffffff, #242426);
+            --base-text-color-1: light-dark(#333333, #e5e5e5);
+            --base-text-color-3: light-dark(#666666, #a0a0a0);
+            --base-border-color: light-dark(#d0d0d0, #4a4a4c);
+            --base-hover-bg: light-dark(#f5f5f5, #2e2e30);
+            --base-primary-color: light-dark(#bb0a30, #e0284e);
 
             /* Component-specific overrides */
             --ms-input-border-radius: 2px;
@@ -250,32 +256,33 @@
             --ms-dropdown-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
             /* Badges */
-            --ms-badge-text-bg: #f5f5f5;
-            --ms-badge-text-color: #333333;
-            --ms-badge-text-border: 1px solid #d0d0d0;
+            --ms-badge-text-bg: light-dark(#f5f5f5, #2e2e30);
+            --ms-badge-text-color: light-dark(#333333, #e5e5e5);
+            --ms-badge-text-border: 1px solid light-dark(#d0d0d0, #4a4a4c);
             --ms-badge-border-radius: 2px;
 
             /* Checkboxes */
             --ms-checkbox-border-radius: 2px;
 
             /* Scrollbar */
-            --ms-scrollbar-track-bg: #f7f7f7;
-            --ms-scrollbar-thumb-bg: #d0d0d0;
-            --ms-scrollbar-thumb-bg-hover: #bb0a30;
+            --ms-scrollbar-track-bg: light-dark(#f7f7f7, #1c1c1e);
+            --ms-scrollbar-thumb-bg: light-dark(#d0d0d0, #4a4a4c);
+            --ms-scrollbar-thumb-bg-hover: light-dark(#bb0a30, #e0284e);
         }
 
         /* Rounded/Soft Theme */
         .rounded-theme {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            background: linear-gradient(135deg, light-dark(#ffecd2, #3a2a24) 0%, light-dark(#fcb69f, #4a2a2c) 100%);
         }
 
         #rounded-mode {
             /* Base theme variables */
-            --base-text-color-1: #5a3e36;
-            --base-border-color: #f0d0c0;
-            --base-hover-bg: #fff5f0;
+            --base-main-bg: light-dark(#ffffff, #2e2220);
+            --base-text-color-1: light-dark(#5a3e36, #f3dcd3);
+            --base-border-color: light-dark(#f0d0c0, #6b4a40);
+            --base-hover-bg: light-dark(#fff5f0, #3a2a26);
             --base-primary-color: #ff6b9d;
-            --base-primary-bg-subtle: #ffe5f0;
+            --base-primary-bg-subtle: light-dark(#ffe5f0, #4a2236);
 
             /* Custom icons — soft rounded glyphs (circle chevron + circle x) to match the
                pill shapes. One --base-icon-* swap covers the toggle chevron and every ✕. */
@@ -288,31 +295,32 @@
             --ms-dropdown-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 
             /* Badges */
-            --ms-badge-text-border: 1px solid #ffc0dd;
+            --ms-badge-text-border: 1px solid light-dark(#ffc0dd, #8a3a5c);
             --ms-badge-border-radius: 20px;
 
             /* Checkboxes */
             --ms-checkbox-border-radius: 8px;
-            --ms-checkbox-border: 1px solid #ffc0dd;
+            --ms-checkbox-border: 1px solid light-dark(#ffc0dd, #8a3a5c);
 
             /* Scrollbar */
-            --ms-scrollbar-track-bg: #fff5f0;
-            --ms-scrollbar-thumb-bg: #ffc0dd;
+            --ms-scrollbar-track-bg: light-dark(#fff5f0, #2e2220);
+            --ms-scrollbar-thumb-bg: light-dark(#ffc0dd, #8a3a5c);
             --ms-scrollbar-thumb-bg-hover: #ff6b9d;
         }
 
         /* Sharp/Minimal Theme */
         .sharp-theme {
-            background: #ffffff;
-            border: 2px solid #000000;
+            background: light-dark(#ffffff, #000000);
+            border: 2px solid light-dark(#000000, #ffffff);
         }
 
         #sharp-mode {
             /* Base theme variables */
-            --base-text-color-1: #000000;
-            --base-border-color: #000000;
-            --base-hover-bg: #f0f0f0;
-            --base-primary-color: #000000;
+            --base-main-bg: light-dark(#ffffff, #000000);
+            --base-text-color-1: light-dark(#000000, #ffffff);
+            --base-border-color: light-dark(#000000, #ffffff);
+            --base-hover-bg: light-dark(#f0f0f0, #1a1a1a);
+            --base-primary-color: light-dark(#000000, #ffffff);
 
             /* Custom icons — hard geometric glyphs (filled squares) for the brutalist look.
                One --base-icon-* swap re-skins the toggle chevron and every ✕. */
@@ -320,44 +328,45 @@
             --base-icon-close: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M19 2h-14a3 3 0 0 0 -3 3v14a3 3 0 0 0 3 3h14a3 3 0 0 0 3 -3v-14a3 3 0 0 0 -3 -3zm-9.387 6.21l.094 .083l2.293 2.292l2.293 -2.292a1 1 0 0 1 1.497 1.32l-.083 .094l-2.292 2.293l2.292 2.293a1 1 0 0 1 -1.32 1.497l-.094 -.083l-2.293 -2.292l-2.293 2.292a1 1 0 0 1 -1.497 -1.32l.083 -.094l2.292 -2.293l-2.292 -2.293a1 1 0 0 1 1.32 -1.497z'/></svg>");
 
             /* Component-specific overrides */
-            --ms-input-border: 2px solid #000000;
+            --ms-input-border: 2px solid light-dark(#000000, #ffffff);
             --ms-input-border-radius: 0;
-            --ms-dropdown-border: 2px solid #000000;
+            --ms-dropdown-border: 2px solid light-dark(#000000, #ffffff);
             --ms-dropdown-border-radius: 0;
             --ms-dropdown-box-shadow: none;
 
             /* Badges */
-            --ms-badge-text-bg: #000000;
-            --ms-badge-text-color: #ffffff;
-            --ms-badge-text-border: 2px solid #000000;
+            --ms-badge-text-bg: light-dark(#000000, #ffffff);
+            --ms-badge-text-color: light-dark(#ffffff, #000000);
+            --ms-badge-text-border: 2px solid light-dark(#000000, #ffffff);
             --ms-badge-border-radius: 0;
-            --ms-badge-remove-bg: #ffffff;
-            --ms-badge-remove-color: #000000;
+            --ms-badge-remove-bg: light-dark(#ffffff, #000000);
+            --ms-badge-remove-color: light-dark(#000000, #ffffff);
 
             /* Checkboxes */
             --ms-checkbox-border-radius: 0;
-            --ms-checkbox-border: 2px solid #000000;
+            --ms-checkbox-border: 2px solid light-dark(#000000, #ffffff);
 
             /* Scrollbar */
             --ms-scrollbar-width: 12px;
-            --ms-scrollbar-track-bg: #ffffff;
-            --ms-scrollbar-thumb-bg: #000000;
-            --ms-scrollbar-thumb-bg-hover: #333333;
+            --ms-scrollbar-track-bg: light-dark(#ffffff, #000000);
+            --ms-scrollbar-thumb-bg: light-dark(#000000, #ffffff);
+            --ms-scrollbar-thumb-bg-hover: light-dark(#333333, #cccccc);
             --ms-scrollbar-thumb-border-radius: 0;
         }
 
         /* Material Design Theme */
         .material-theme {
-            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            background: linear-gradient(135deg, light-dark(#e3f2fd, #0d2236) 0%, light-dark(#f3e5f5, #2a1530) 100%);
         }
 
         #material-mode {
             /* Base theme variables */
-            --base-text-color-1: #212121;
-            --base-text-color-3: #757575;
-            --base-hover-bg: #f5f5f5;
+            --base-main-bg: light-dark(#ffffff, #1e1e1e);
+            --base-text-color-1: light-dark(#212121, #e0e0e0);
+            --base-text-color-3: light-dark(#757575, #9e9e9e);
+            --base-hover-bg: light-dark(#f5f5f5, #2c2c2c);
             --base-primary-color: #1976d2;
-            --base-primary-bg-subtle: #e3f2fd;
+            --base-primary-bg-subtle: light-dark(#e3f2fd, #0d2a45);
 
             /* Custom icon + rotation OPT-OUT. Material's dropdown indicator is a PRE-ORIENTED
                downward triangle (arrow_drop_down), so we hand the toggle a down-caret glyph and
@@ -387,7 +396,7 @@
 
             /* Scrollbar */
             --ms-scrollbar-track-bg: transparent;
-            --ms-scrollbar-thumb-bg: #bdbdbd;
+            --ms-scrollbar-thumb-bg: light-dark(#bdbdbd, #555555);
             --ms-scrollbar-thumb-bg-hover: #1976d2;
         }
 

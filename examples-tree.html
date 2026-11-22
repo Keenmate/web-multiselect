@@ -331,7 +331,7 @@
                 <li><code>isIndeterminate</code> — cascade tristate (a partially-checked branch).</li>
             </ul>
             <kmwc-demo>
-                <label class="demo-label">Branches are tinted and bold with a child count; leaves sit on white — the whole picker scaled compact via <code>--ms-rem</code>:</label>
+                <label class="demo-label">Branches are tinted and bold with a child count; leaves sit on the list background — the whole picker scaled compact via <code>--ms-rem</code>:</label>
                 <web-multiselect id="tree-render" multiple="true" show-checkboxes="true" checkbox-mode="cascade"
                     path-member="path" style="--ms-rem: 8px; --ms-tree-indent: 1rem;"></web-multiselect>
                 <script type="module" data-kmwc-show>
@@ -349,8 +349,9 @@
                     // 2) All styling lives in one shadow-DOM stylesheet — full-row backgrounds via the
                     //    branch/leaf theming hooks, plus the .node-count class used above.
                     el.getCustomStylesCallback = () => `
-                        .ms__option--tree-branch { background: #eef2ff; font-weight: 600; }  /* branches: tinted */
-                        .ms__option--tree-leaf   { background: #fff; }                      /* leaves: plain    */
+                        /* theme-aware: the component's own colour variables follow light / dark */
+                        .ms__option--tree-branch { background: color-mix(in srgb, var(--ms-accent-color) 12%, var(--ms-main-bg)); font-weight: 600; }
+                        .ms__option--tree-leaf   { background: var(--ms-main-bg); }
                         .node-count { opacity: .55; font-weight: 400; }
                     `;
                 </script>
