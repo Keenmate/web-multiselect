@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, MultiSelectIconName, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
  *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
@@ -79,6 +79,7 @@ import {
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
+import { MS_ICONS } from './icons';
 import { createLabels, formatNumber, getCollator, type Labels } from '@keenmate/web-components-core/locale';
 import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
@@ -1104,12 +1105,13 @@ export class MultiSelectEngine<T = any> {
 
         this.input.readOnly = this.isInputReadOnly();
 
-        // Chevron rendered via a CSS mask icon (see .ms__toggle in controls.css) for
-        // consistency with the other glyphs — no text character. It's now a real flex
-        // box beside the input (not an overlay the click falls through), so it drives
-        // open/close itself, mirroring the input's mousedown toggle.
+        // The chevron is ms's `toggle` icon (core renderIcon over MS_ICONS: a masked glyph by
+        // default, replaceable by name). It's a real flex box beside the input (not an overlay
+        // the click falls through), so it drives open/close itself, mirroring the input's
+        // mousedown toggle.
         const toggle = document.createElement('span');
         toggle.className = 'ms__toggle';
+        this.setIcon(toggle, 'toggle');
         toggle.addEventListener('mousedown', (e) => {
             e.preventDefault();      // keep the tap from shifting focus; we drive open/close directly
             e.stopPropagation();
@@ -1136,6 +1138,7 @@ export class MultiSelectEngine<T = any> {
         this.clearButton = document.createElement('button');
         this.clearButton.type = 'button';
         this.clearButton.className = 'ms__input-clear';
+        this.setIcon(this.clearButton, 'clearSelection');
         this.clearButton.tabIndex = -1;
         this.clearButton.setAttribute('aria-label', this.labels.text('ariaLabels.clearAllSelections'));
         this.clearButton.style.display = 'none';
@@ -1863,7 +1866,7 @@ export class MultiSelectEngine<T = any> {
      */
     private renderOptionInfoButton(): string {
         if (this.presentationMode !== 'fullscreen') return '';
-        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${escapeHtml(this.labels.text('ariaLabels.showFullLabel'))}"></button>`;
+        return `<button type="button" class="ms__option-info" tabindex="-1" aria-label="${escapeHtml(this.labels.text('ariaLabels.showFullLabel'))}" data-ms-icon="showFullLabel">${this.icon('showFullLabel')}</button>`;
     }
 
     /**
@@ -1979,7 +1982,7 @@ export class MultiSelectEngine<T = any> {
             }
             const focused = this.addNewFocused ? ' ms__add-new--focused' : '';
             return `<div class="ms__add-new${focused}" role="button" data-ms-action="add-new">`
-                + `<span class="ms__add-new-icon" aria-hidden="true"></span>`
+                + `<span class="ms__add-new-icon" aria-hidden="true" data-ms-icon="addNew">${this.icon('addNew')}</span>`
                 + `<span class="ms__add-new-text">${this.getAddNewText(value)}</span>`
                 + `</div>`;
         }
@@ -2240,7 +2243,7 @@ export class MultiSelectEngine<T = any> {
                 moreBadgeHtml = `
                     <div class="ms__badge ms__badge--counter ms__badge--more" data-ms-action="show-selected">
                         <span class="ms__badge-text">${moreText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeHiddenItems', { ctx: moreCtx }))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="remove-hidden" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeHiddenItems', { ctx: moreCtx }))}" data-ms-icon="removeItem">${this.icon('removeItem')}</button>
                     </div>
                 `;
             }
@@ -2264,7 +2267,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge" data-ms-action="show-selected">
                         <span class="ms__badge-text">${compactText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('ariaLabels.clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('ariaLabels.clearAllSelections'))}" data-ms-icon="removeItem">${this.icon('removeItem')}</button>
                     </div>
                 `;
             } else {
@@ -2278,7 +2281,7 @@ export class MultiSelectEngine<T = any> {
                 this.badgesContainer.innerHTML = `
                     <div class="ms__badge ms__badge--counter" data-ms-action="show-selected">
                         <span class="ms__badge-text">${countText}</span>
-                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('ariaLabels.clearAllSelections'))}"></button>
+                        <button type="button" class="ms__badge-remove" data-ms-action="clear-count" aria-label="${escapeHtml(this.labels.text('ariaLabels.clearAllSelections'))}" data-ms-icon="removeItem">${this.icon('removeItem')}</button>
                     </div>
                 `;
             } else {
@@ -4687,6 +4690,7 @@ export class MultiSelectEngine<T = any> {
             const clear = document.createElement('button');
             clear.type = 'button';
             clear.className = 'ms__fullscreen-search-clear';
+            this.setIcon(clear, 'clearSearch');
             clear.setAttribute('aria-label', this.labels.text('ariaLabels.clearSearch'));
             // Use mousedown+preventDefault so the tap doesn't blur/steal focus from
             // the search field, then run the clear on click and restore focus.
@@ -4742,12 +4746,14 @@ export class MultiSelectEngine<T = any> {
         const prev = document.createElement('button');
         prev.type = 'button';
         prev.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--prev';
+        this.setIcon(prev, 'prevMatch');
         prev.setAttribute('aria-label', this.labels.text('ariaLabels.prevMatch'));
         prev.addEventListener('click', () => this.focusPreviousMatch());
 
         const next = document.createElement('button');
         next.type = 'button';
         next.className = 'ms__fullscreen-nav-btn ms__fullscreen-nav-btn--next';
+        this.setIcon(next, 'nextMatch');
         next.setAttribute('aria-label', this.labels.text('ariaLabels.nextMatch'));
         next.addEventListener('click', () => this.focusNextMatch());
 
@@ -4804,6 +4810,9 @@ export class MultiSelectEngine<T = any> {
         if (!this.fullscreenModeToggle) return;
         const mode = (this.options.searchMode || 'filter');
         this.fullscreenModeToggle.dataset.mode = mode;
+        // The glyph shows the CURRENT mode (magnifier = navigate, funnel = filter).
+        const iconName: MultiSelectIconName = mode === 'navigate' ? 'navigateMode' : 'filterMode';
+        if (this.fullscreenModeToggle.dataset.msIcon !== iconName) this.setIcon(this.fullscreenModeToggle, iconName);
         // The button switches TO the other mode; label it by the action, expose current
         // mode via aria-pressed(=navigate) for assistive tech.
         const isNavigate = mode === 'navigate';
@@ -5056,7 +5065,7 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.innerHTML = `
             <div class="ms__selected-popover-header">
                 <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('ariaLabels.close'))}"></button>
+                <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('ariaLabels.close'))}" data-ms-icon="closePopover">${this.icon('closePopover')}</button>
             </div>
             <div class="ms__selected-popover-body">
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
@@ -5119,7 +5128,7 @@ export class MultiSelectEngine<T = any> {
             const html = `
                 <div class="ms__selected-popover-header">
                     <span>${escapeHtml(this.selectedPopoverTitleText(count))}</span>
-                    <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('ariaLabels.close'))}"></button>
+                    <button type="button" class="ms__selected-popover-close" aria-label="${escapeHtml(this.labels.text('ariaLabels.close'))}" data-ms-icon="closePopover">${this.icon('closePopover')}</button>
                 </div>
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --_ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
@@ -5128,7 +5137,7 @@ export class MultiSelectEngine<T = any> {
             this.selectedPopoverContainer = this.selectedPopover.querySelector('.ms__selected-popover-body') as HTMLDivElement;
         } else {
             // Just update the count in header
-            const header = this.selectedPopover.querySelector('.ms__selected-popover-header span');
+            const header = this.selectedPopover.querySelector('.ms__selected-popover-header > span');
             if (header) {
                 header.textContent = this.selectedPopoverTitleText(count);
             }
@@ -5288,7 +5297,7 @@ export class MultiSelectEngine<T = any> {
         return `
             <div class="${escapeHtml(badgeClasses)}">
                 <span class="ms__badge-text">${badgeContent}</span>
-                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeItem', { ctx: removeCtx }))}"></button>
+                <button type="button" class="ms__badge-remove" data-value="${escapeHtml(String(value))}" aria-label="${escapeHtml(this.labels.text('ariaLabels.removeItem', { ctx: removeCtx }))}" data-ms-icon="removeItem">${this.icon('removeItem')}</button>
             </div>
         `;
     }
@@ -5714,11 +5723,34 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Re-render every icon (option rows + action buttons) in place — the element's `iconsChanged()`
-     * path (the page-wide `renderIconCallback` changed). Keeps the selection, search term, highlight,
-     * scroll and an open dropdown.
+     * One of ms's own icons by name (core `renderIcon`, SPEC §12.33): `el.icons` / the page-wide
+     * `window.components.icons` / the hooks replace it, else {@link MS_ICONS} (a masked glyph).
+     */
+    private icon(name: MultiSelectIconName): string {
+        return renderIcon(name, { prefix: 'ms', host: this.hostEl(), defaults: MS_ICONS });
+    }
+
+    /** Fill a slot with an ms icon, tagged `data-ms-icon` so {@link repaintIcons} finds it again. */
+    private setIcon(slot: HTMLElement, name: MultiSelectIconName): void {
+        slot.dataset.msIcon = name;
+        slot.innerHTML = this.icon(name);
+    }
+
+    /**
+     * Re-render every icon in place — ms's own (`data-ms-icon` slots: chevron, ✕s, sheet controls) and
+     * the option rows + action buttons — the element's `iconsChanged()` path (`icons`, the page-wide
+     * `window.components.icons` or a `renderIconCallback` changed). Keeps the selection, search term,
+     * highlight, scroll and an open dropdown.
      */
     public repaintIcons(): void {
+        const roots = new Set<ParentNode>([this.element, this.dropdown, this.selectedPopover]);
+        const root = this.element.getRootNode();
+        if (root instanceof ShadowRoot || root instanceof Document) roots.add(root);
+        for (const r of roots) {
+            r?.querySelectorAll<HTMLElement>('[data-ms-icon]').forEach((slot) => {
+                slot.innerHTML = this.icon(slot.dataset.msIcon as MultiSelectIconName);
+            });
+        }
         // A virtual list builds its action block once (with the container) — swap it in place.
         if (this.virtualScroll) {
             const actions = this.dropdownInner.querySelector(':scope > .ms__actions');

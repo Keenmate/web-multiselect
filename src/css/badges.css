@@ -140,14 +140,17 @@
   box-shadow: var(--ms-badge-remove-box-shadow-focus);
 }
 
-.ms__badge-remove::before {
-  content: "";
+/* The ✕ = ms's `removeItem` icon (core renderIcon). */
+.ms__badge-remove > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-badge-remove-icon-size);
   height: var(--ms-badge-remove-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-remove) center / contain no-repeat;
-          mask: var(--ms-icon-remove) center / contain no-repeat;
+  inline-size: var(--ms-badge-remove-icon-size);
+  block-size: var(--ms-badge-remove-icon-size);
+  font-size: var(--ms-badge-remove-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 /* ==============================================================================

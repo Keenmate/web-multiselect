@@ -89,6 +89,34 @@ export interface MessageOptions {
 }
 
 /**
+ * web-multiselect's own icon names (core `renderIcon`, SPEC §12.33): the glyphs the component draws itself. Each is
+ * masked from its `--ms-icon-*` token by default; replace one through the `icons` map (instance) or the page-wide
+ * `window.components.icons` (`'web-multiselect.<name>'` before `'<name>'`), or a `renderIconCallback` hook.
+ *
+ * - `toggle` — the dropdown chevron (rotated by `--ms-toggle-rotate-closed` / `-open`; a pre-oriented glyph sets both to `0deg`)
+ * - `clearSelection` — the inline clear ✕ in the field (`is-clear-shown`)
+ * - `removeItem` — the ✕ on a badge (an item, the "+N more" badge, the count / compact badge)
+ * - `closePopover` — the ✕ of the floating selected-items popover (the phone sheet's ✕ is core's sheet close)
+ * - `clearSearch` — the ✕ in the phone sheet's search field
+ * - `navigateMode` / `filterMode` — the phone sheet's search-mode toggle (shows the CURRENT mode)
+ * - `prevMatch` / `nextMatch` — the phone sheet's match navigator (rotated like the toggle chevron)
+ * - `showFullLabel` — the ⓘ on a truncated phone-sheet row
+ * - `addNew` — the + on the "add new" row
+ *
+ * The checkbox mark (`--ms-icon-check` / `--ms-icon-indeterminate`) is part of the checkbox drawing, not an icon slot.
+ */
+export type MultiSelectIconName =
+    | 'toggle' | 'clearSelection' | 'removeItem' | 'closePopover' | 'clearSearch'
+    | 'navigateMode' | 'filterMode' | 'prevMatch' | 'nextMatch' | 'showFullLabel' | 'addNew';
+
+/**
+ * The `icons` input: icon overrides by name ({@link MultiSelectIconName}) → an icon string (markup, a core built-in
+ * name such as `close`, icon-font classes such as `fa-solid fa-xmark`, or text). Partial — an unmapped name keeps
+ * the ms glyph. Property (object) or JSON attribute (`icons='{"toggle":"fa-solid fa-caret-down"}'`).
+ */
+export type MultiSelectIcons = Partial<Record<MultiSelectIconName, string>>;
+
+/**
  * Every user-facing string of the component (rulebook D-NC-24), for internationalization. Keys are
  * flat `<elementType>.<name>` (`placeholders.search`, `messages.noResults`, `ariaLabels.close`,
  * `tooltips.removeItem`, …); a control with both an aria-label and a tooltip has one key of each.
@@ -917,13 +945,19 @@ export interface MultiSelectConfig<T = any> {
     renderLoadingCallback?: RenderLoadingCallback | null;
     /**
      * This element's icon hook (core `renderIcon`, SPEC §12.33). Asked for an option / action-button
-     * icon string that is not markup and not a built-in name (built-ins are reserved, no hook sees
-     * them), BEFORE the page-wide `window.components.renderIconCallback`. Return markup (`''` = no
-     * icon), or `null` / `undefined` = not mine (the page hook, then the icon-font / text rule).
+     * icon string or one of ms's own icon names ({@link MultiSelectIconName}) that is not markup, not in
+     * the `icons` / page-wide maps and not a built-in name (no hook sees those), BEFORE the page-wide
+     * `window.components.renderIconCallback`. Return markup (`''` = no icon), or `null` / `undefined` =
+     * not mine (the page hook, then ms's own glyph / the icon-font / text rule).
      * `ctx` carries `{ component, element, prefix: 'ms' }` + `option` (an option icon) or `item`
-     * (an action button).
+     * (an action button); an ms icon name has no extras.
      */
     renderIconCallback?: RenderIconCallback | null;
+    /**
+     * Icon overrides by name (see {@link MultiSelectIconName}) — core `renderIcon` asks this map first (after
+     * markup), then the page-wide `window.components.icons`, a built-in name, the hooks, then ms's own glyphs.
+     */
+    icons?: MultiSelectIcons | null;
     /**
      * This element's own label translator (core `/locale`). Asked for every label key this instance's
      * `labels` did not set, BEFORE the page-wide `window.components.locale.translateCallback`. Gets

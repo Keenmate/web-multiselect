@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Added — ms's own icons have names: the `icons` map (Q12, C-CA-42) (2026-11-23)
+- **New `icons` input** (property / JSON attribute, `MultiSelectIcons`): icon overrides by name, like `labels` for
+  icons. The glyphs web-multiselect draws itself now render through core `renderIcon` under a name — `toggle` (the
+  chevron), `clearSelection` (inline ✕), `removeItem` (badge ✕), `closePopover` (floating selected-items popover ✕),
+  `clearSearch`, `navigateMode` / `filterMode`, `prevMatch` / `nextMatch`, `showFullLabel` (phone sheet), `addNew` —
+  with ms's masked glyphs as renderIcon `defaults` (`src/icons.ts` `MS_ICONS`). `el.icons = { toggle: 'fa-solid
+  fa-caret-down' }` or the page-wide `window.components.icons` (`'web-multiselect.<name>'` before `'<name>'`) replaces
+  one; the `renderIconCallback` hooks see the names too. Order (core rc26): markup → `icons` → `window.components.icons`
+  → built-in → hooks → ms's glyphs → class names → text. A change repaints every icon in place (selection, search,
+  scroll, open dropdown kept). New exported types `MultiSelectIconName`, `MultiSelectIcons`.
+- Unmapped, each icon looks as before: a glyph masked from its `--ms-icon-*` token, sized by the slot's
+  `--ms-*-icon-size` token (which also sizes a replacement). The chevron / pager rotations apply to a replacement too.
+  The checkbox mark stays CSS (`--ms-icon-check` / `-indeterminate`).
+- Markup change: the icon is now a child element of its button / slot (`.ms__toggle > .ms__glyph--toggle`, …) instead
+  of the button's `::before` — custom CSS that targeted `.ms__toggle::before` & co. targets the child now.
+- Docs: `docs/examples.md` → "ms's own icons", API reference, README; example card CR11. e2e: `icons.spec.ts` (default
+  glyphs, `el.icons` property + attribute in place, page-wide map with the tag-prefixed key, element beats page).
+
 ### Internal — option tooltips hide on scroll through core (G9b) (2026-11-23)
 - ms's own "hide option tooltips on dropdown scroll" wiring (`hideOptionTooltips()`) is gone: core `createTooltip` hides a
   hover-shown tooltip on any scroll around its target by default (`shouldHideOnScroll`), and only once the row actually

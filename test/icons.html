@@ -24,10 +24,20 @@
         <web-multiselect id="ms-actions" value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">ms's own icons (toggle, inline clear, badge ✕) — icons map / page map</div>
+        <web-multiselect id="ms-own" show-clear value-member="value" display-value-member="label" value="a,b"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
         customElements.whenDefined('web-multiselect').then(() => {
+            document.getElementById('ms-own').options = [
+                { value: 'a', label: 'A' },
+                { value: 'b', label: 'B' },
+                { value: 'c', label: 'C' }
+            ];
             document.getElementById('ms-actions').options = [
                 { value: 'a', label: 'A' },
                 { value: 'b', label: 'B' }

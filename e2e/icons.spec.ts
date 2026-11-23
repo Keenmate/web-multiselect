@@ -126,3 +126,53 @@ for (const mode of ['standard', 'virtual'] as const) {
         await expect(p.locator('.ms__action-btn .ms__action-btn-icon i.ms__icon.my-all')).toHaveCount(1);
     });
 }
+
+// ── ms's own icons (C-CA-42): named, through core renderIcon with MS_ICONS as `defaults` ──────────────────────
+const own = (page: any) => page.locator('#ms-own');
+
+test('ms\'s own icons render as named glyphs (MS_ICONS defaults), sized by their slot', async ({ page }) => {
+    const p = own(page);
+    await expect(p.locator('.ms__toggle[data-ms-icon="toggle"] > .ms__glyph--toggle')).toHaveCount(1);
+    await expect(p.locator('.ms__input-clear[data-ms-icon="clearSelection"] > .ms__glyph--clearSelection')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove[data-ms-icon="removeItem"] > .ms__glyph--removeItem')).toHaveCount(2);
+    const box = await p.locator('.ms__glyph--toggle').boundingBox();
+    expect(box!.width).toBeGreaterThan(4);
+    // The glyph is masked from its --ms-icon-* token.
+    expect(await p.locator('.ms__glyph--toggle').evaluate((el: Element) => getComputedStyle(el).maskImage || (getComputedStyle(el) as any).webkitMaskImage)).toContain('url(');
+});
+
+test('el.icons replaces an ms icon by name (property + JSON attribute), in place; unset restores the glyph', async ({ page }) => {
+    const p = own(page);
+    await p.locator('.ms__input').click();
+    await expect(p.locator('.ms__dropdown')).toBeVisible();
+    await p.evaluate((el: any) => { el.icons = { toggle: 'fa-solid fa-caret-down', removeItem: '<b data-test-x>x</b>' }; });
+    await expect(p.locator('.ms__toggle > i.ms__icon.fa-solid.fa-caret-down')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove b[data-test-x]')).toHaveCount(2);
+    await expect(p.locator('.ms__input-clear > .ms__glyph--clearSelection')).toHaveCount(1);   // unmapped → glyph
+    // In place: the dropdown stays open, the selection is kept.
+    await expect(p.locator('.ms__dropdown')).toBeVisible();
+    expect(await p.evaluate((el: any) => el.value)).toBe('["a","b"]');
+    // The slot sizes the replacement (the toggle box, not the 1em icon-font default).
+    const size = await p.locator('.ms__toggle > i').evaluate((el: Element) => getComputedStyle(el).width);
+    const slot = await p.locator('.ms__toggle').evaluate((el: Element) => getComputedStyle(el).width);
+    expect(size).toBe(slot);
+    // A built-in name as the value draws the built-in.
+    await p.evaluate((el: any) => el.setAttribute('icons', '{"toggle":"chevron"}'));
+    await expect(p.locator('.ms__toggle > .km-icon.ms__icon--chevron')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove > .ms__glyph--removeItem')).toHaveCount(2);
+    await p.evaluate((el: any) => el.removeAttribute('icons'));
+    await expect(p.locator('.ms__toggle > .ms__glyph--toggle')).toHaveCount(1);
+});
+
+test('the page-wide window.components.icons replaces an ms icon ("web-multiselect.<name>" first); el.icons wins', async ({ page }) => {
+    const p = own(page);
+    await page.evaluate(() => {
+        (window as any).components.icons = { 'web-multiselect.clearSelection': '<b data-page-tag>t</b>', clearSelection: '<b data-page-plain>p</b>', removeItem: '<b data-page-remove>r</b>' };
+    });
+    await expect(p.locator('.ms__input-clear b[data-page-tag]')).toHaveCount(1);
+    await expect(p.locator('.ms__badge-remove b[data-page-remove]')).toHaveCount(2);
+    await p.evaluate((el: any) => { el.icons = { removeItem: '<b data-el-remove>e</b>' }; });
+    await expect(p.locator('.ms__badge-remove b[data-el-remove]')).toHaveCount(2);
+    await page.evaluate(() => { (window as any).components.icons = null; });
+    await expect(p.locator('.ms__input-clear > .ms__glyph--clearSelection')).toHaveCount(1);
+});

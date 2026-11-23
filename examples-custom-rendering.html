@@ -625,6 +625,53 @@
             </kmwc-demo>
         </div>
 
+        <div class="card">
+            <h2>CR11 · Replace ms's own icons — the <code>icons</code> map</h2>
+            <p>
+                The glyphs the picker draws itself have names — <code>toggle</code> (the chevron),
+                <code>clearSelection</code>, <code>removeItem</code> (a badge ✕), <code>closePopover</code>,
+                <code>addNew</code>, and the phone sheet's <code>clearSearch</code>, <code>navigateMode</code> /
+                <code>filterMode</code>, <code>prevMatch</code> / <code>nextMatch</code>, <code>showFullLabel</code>.
+                The <code>icons</code> map (property or JSON attribute) replaces one by name with any icon string:
+                markup, a core built-in name, icon-font classes or text. <code>window.components.icons</code> is the
+                page-wide twin (<code>'web-multiselect.&lt;name&gt;'</code> first). Unmapped names keep the masked
+                <code>--ms-icon-*</code> glyph.
+            </p>
+
+            <kmwc-demo>
+                <div class="form-group">
+                    <label>Default glyphs</label>
+                    <web-multiselect id="cr-icons-default" show-clear>
+                        <option value="react" selected>React</option>
+                        <option value="vue" selected>Vue.js</option>
+                        <option value="svelte">Svelte</option>
+                    </web-multiselect>
+                </div>
+                <div class="form-group">
+                    <label><code>icons</code>: a caret, a trash can, a built-in ✕</label>
+                    <web-multiselect id="cr-icons-mapped" show-clear
+                        style="--ms-toggle-rotate-closed: 0deg; --ms-toggle-rotate-open: 180deg;">
+                        <option value="react" selected>React</option>
+                        <option value="vue" selected>Vue.js</option>
+                        <option value="svelte">Svelte</option>
+                    </web-multiselect>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const svg = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+                    document.getElementById('cr-icons-mapped').icons = {
+                        toggle: svg('<path d="m7 10 5 5 5-5"/>'),            // already points down…
+                        removeItem: svg('<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/>'),
+                        clearSelection: 'close',                              // a core built-in name
+                    };
+                </script>
+                <small class="form-text">
+                    The chevron rotates (<code>--ms-toggle-rotate-closed</code> / <code>-open</code>); a glyph that
+                    already points down sets them to <code>0deg</code> / <code>180deg</code>.
+                </small>
+            </kmwc-demo>
+        </div>
+
     <style>
         /* Custom checkbox sizing for example #14 */
         #large-checkbox {

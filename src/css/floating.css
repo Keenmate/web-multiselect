@@ -256,21 +256,23 @@
   cursor: default;
 }
 
-.ms__fullscreen-nav-btn::before {
-  content: "";
+/* ms's `prevMatch` / `nextMatch` icons (core renderIcon). The default glyph (--ms-fullscreen-nav-btn-icon)
+   points RIGHT (the base chevron): rotated up for "prev", down for "next" (a replacement rotates too).
+   Its own token so a pre-oriented toggle glyph can't leak in here. */
+.ms__fullscreen-nav-btn > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-fullscreen-nav-btn-icon-size);
   height: var(--ms-fullscreen-nav-btn-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-fullscreen-nav-btn-icon) center / contain no-repeat;
-          mask: var(--ms-fullscreen-nav-btn-icon) center / contain no-repeat;
-  /* --ms-fullscreen-nav-btn-icon points RIGHT (defaults to the base chevron); rotate it to
-     point up for "prev". Its own token so a pre-oriented toggle glyph can't leak in here. */
+  inline-size: var(--ms-fullscreen-nav-btn-icon-size);
+  block-size: var(--ms-fullscreen-nav-btn-icon-size);
+  font-size: var(--ms-fullscreen-nav-btn-icon-size);
+  line-height: 1;
+  text-align: center;
   transform: rotate(-90deg);
 }
 
-/* The "next" (down) button rotates the same right-pointing chevron the other way. */
-.ms__fullscreen-nav-btn--next::before {
+.ms__fullscreen-nav-btn--next > :is(*, .km-icon) {
   transform: rotate(90deg);
 }
 
@@ -345,14 +347,17 @@
   background: var(--ms-fullscreen-search-clear-bg-hover);
 }
 
-.ms__fullscreen-search-clear::before {
-  content: "";
+/* ms's `clearSearch` icon (core renderIcon). */
+.ms__fullscreen-search-clear > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-fullscreen-search-clear-icon-size);
   height: var(--ms-fullscreen-search-clear-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-search-clear) center / contain no-repeat;
-          mask: var(--ms-icon-search-clear) center / contain no-repeat;
+  inline-size: var(--ms-fullscreen-search-clear-icon-size);
+  block-size: var(--ms-fullscreen-search-clear-icon-size);
+  font-size: var(--ms-fullscreen-search-clear-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 /* Leading search-mode toggle (opt-in: show-search-mode-toggle). In-flow at the field's
@@ -389,14 +394,17 @@
   background: var(--ms-fullscreen-mode-toggle-bg-hover);
 }
 
-.ms__fullscreen-mode-toggle::before {
-  content: "";
+/* ms's `navigateMode` / `filterMode` icon (core renderIcon; the engine swaps the name on a mode flip). */
+.ms__fullscreen-mode-toggle > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-fullscreen-mode-toggle-icon-size);
   height: var(--ms-fullscreen-mode-toggle-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-fullscreen-mode-toggle-icon, var(--ms-icon-search)) center / contain no-repeat;
-          mask: var(--ms-fullscreen-mode-toggle-icon, var(--ms-icon-search)) center / contain no-repeat;
+  inline-size: var(--ms-fullscreen-mode-toggle-icon-size);
+  block-size: var(--ms-fullscreen-mode-toggle-icon-size);
+  font-size: var(--ms-fullscreen-mode-toggle-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 /* Current mode → glyph: magnifier for navigate, funnel for filter. */
@@ -439,14 +447,17 @@
   }
 }
 
-.ms__dropdown--fullscreen .ms__option-info::before {
-  content: "";
+/* ms's `showFullLabel` icon (core renderIcon). */
+.ms__dropdown--fullscreen .ms__option-info > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-fullscreen-info-icon-size);
   height: var(--ms-fullscreen-info-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-info) center / contain no-repeat;
-          mask: var(--ms-icon-info) center / contain no-repeat;
+  inline-size: var(--ms-fullscreen-info-icon-size);
+  block-size: var(--ms-fullscreen-info-icon-size);
+  font-size: var(--ms-fullscreen-info-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 /* Inner scrolling container — the single content clip for the panel (holds the
@@ -715,14 +726,22 @@
   color: var(--ms-selected-popover-close-color-hover);
 }
 
-.ms__selected-popover-close:not(.km-sheet-close)::before {
-  content: "";
+/* ms's `closePopover` icon (core renderIcon) — the floating popover only; as the phone sheet the
+   button is core's km-sheet-close (its ::before draws the ✕), so the ms icon hides. */
+.ms__selected-popover-close > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-selected-popover-close-icon-size);
   height: var(--ms-selected-popover-close-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-remove) center / contain no-repeat;
-          mask: var(--ms-icon-remove) center / contain no-repeat;
+  inline-size: var(--ms-selected-popover-close-icon-size);
+  block-size: var(--ms-selected-popover-close-icon-size);
+  font-size: var(--ms-selected-popover-close-icon-size);
+  line-height: 1;
+  text-align: center;
+}
+
+.ms__selected-popover-close.km-sheet-close > * {
+  display: none;
 }
 
 .ms__selected-popover-body {

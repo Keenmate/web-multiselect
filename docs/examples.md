@@ -54,16 +54,19 @@ Icons support multiple formats — emojis, SVG markup, Font Awesome, images, or 
 
 ### How an icon string is read
 
-Option `icon` / `getIconCallback` and action-button `icon` go through core `renderIcon` (one rule for every
-Keenmate component), first match wins:
+Option `icon` / `getIconCallback`, action-button `icon` and ms's own icons (below) go through core `renderIcon`
+(one rule for every Keenmate component), first match wins:
 
 1. markup (starts with `<`) → inserted as is;
-2. a built-in name (`check`, `close`, `settings`, `delete`, `search`, … the `--base-icon-*` glyphs) → a masked
-   glyph in `currentColor` — reserved, no hook sees it;
-3. this element's `renderIconCallback(name, ctx)`, then the page-wide `window.components.renderIconCallback` →
+2. this element's `icons` map (`el.icons[name]`), then the page-wide `window.components.icons`
+   (`'web-multiselect.<name>'` before `'<name>'`) → the mapped value is read by the same rules;
+3. a built-in name (`check`, `close`, `settings`, `delete`, `search`, … the `--base-icon-*` glyphs) → a masked
+   glyph in `currentColor` — no hook sees it;
+4. this element's `renderIconCallback(name, ctx)`, then the page-wide `window.components.renderIconCallback` →
    markup, or `null` / `undefined` = not mine (the next step decides);
-4. class names (`fa-solid fa-flag`, `bi-gear`) → `<i class="ms__icon fa-solid fa-flag" aria-hidden="true">`;
-5. anything else (an emoji) → text.
+5. ms's own glyphs (for ms's icon names);
+6. class names (`fa-solid fa-flag`, `bi-gear`) → `<i class="ms__icon fa-solid fa-flag" aria-hidden="true">`;
+7. anything else (an emoji) → text.
 
 ```javascript
 // This picker maps its own names; ctx = { component, element, prefix: 'ms', option } (or `item` on an action button).
@@ -72,8 +75,39 @@ select.renderIconCallback = (name, ctx) => (name.startsWith('lucide-') ? lucideS
 window.components.renderIconCallback = (name) => (name === 'moon' ? moonSvg : null);
 ```
 
-Changing `window.components.renderIconCallback` later repaints the icons (selection, search and an open dropdown
-are kept). A class-list icon (step 4) needs the icon font's CSS inside the shadow root — see below.
+Changing `icons`, `window.components.icons` or `window.components.renderIconCallback` later repaints the icons
+(selection, search and an open dropdown are kept). A class-list icon (step 6) needs the icon font's CSS inside the
+shadow root — see below.
+
+### ms's own icons (`icons`)
+
+The glyphs web-multiselect draws itself have names; replace one like a label — per element with the `icons`
+property / JSON attribute, or page-wide with `window.components.icons`:
+
+| Name | Where |
+|---|---|
+| `toggle` | the dropdown chevron (rotated by `--ms-toggle-rotate-closed` / `-open`; a pre-oriented glyph sets both to `0deg`) |
+| `clearSelection` | the inline clear ✕ in the field (`show-clear`) |
+| `removeItem` | the ✕ on a badge (an item, the "+N more" badge, the count / compact badge) |
+| `closePopover` | the ✕ of the floating selected-items popover (the phone sheet's ✕ is core's sheet close) |
+| `clearSearch` | the ✕ in the phone sheet's search field |
+| `navigateMode` / `filterMode` | the phone sheet's search-mode toggle (shows the current mode) |
+| `prevMatch` / `nextMatch` | the phone sheet's match navigator (rotated like the chevron) |
+| `showFullLabel` | the ⓘ on a truncated phone-sheet row |
+| `addNew` | the + on the "add new" row |
+
+```html
+<web-multiselect icons='{"toggle":"fa-solid fa-caret-down","removeItem":"close"}'></web-multiselect>
+<script>
+  // Every multiselect on the page (the tag-prefixed key wins over the plain one):
+  window.components.icons = { 'web-multiselect.clearSelection': '<svg …>…</svg>' };
+</script>
+```
+
+Unmapped, each is a glyph masked from its `--ms-icon-*` token (`--ms-icon-chevron`, `--ms-icon-clear`,
+`--ms-icon-remove`, …), so re-skinning through the tokens keeps working. The slot sizes whatever replaces it (the
+`--ms-*-icon-size` tokens). The checkbox mark (`--ms-icon-check` / `--ms-icon-indeterminate`) is part of the checkbox
+drawing, not a named icon.
 
 ### Icons in Shadow DOM — SVG vs. font icons
 

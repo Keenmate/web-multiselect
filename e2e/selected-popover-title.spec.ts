@@ -14,7 +14,7 @@ test('labels["headers.selectedPopover"] translates the header and interpolates {
     await page.goto(PAGE);
     const p = page.locator('#popover-picker');
     const badge = p.locator('.ms__badge[data-ms-action="show-selected"]');
-    const header = p.locator('.ms__selected-popover-header span');
+    const header = p.locator('.ms__selected-popover-header > span');
 
     // Default (English) header.
     await badge.click();

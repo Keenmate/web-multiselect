@@ -138,24 +138,51 @@
    The two rotations are themeable via --ms-toggle-rotate-closed / --ms-toggle-rotate-open:
    the defaults (90deg / -90deg) orient the directional right-pointing base chevron. A theme
    supplying a PRE-ORIENTED glyph (already pointing down) can opt out of the orientation —
-   set both to `0deg` for a static glyph, or `0deg` / `180deg` to flip it up on open. */
-.ms__toggle::before {
-  content: "";
+   set both to `0deg` for a static glyph, or `0deg` / `180deg` to flip it up on open.
+   The glyph is ms's `toggle` icon (core renderIcon, `icons` map); the rotation applies to a
+   replacement too. `:is(*, .km-icon)` outranks core's `.km-icon` 1em box. */
+.ms__toggle > :is(*, .km-icon) {
   display: block;
-  width: 100%;
-  height: 100%;
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-chevron) center / contain no-repeat;
-          mask: var(--ms-icon-chevron) center / contain no-repeat;
+  flex: none;
+  width: var(--ms-toggle-icon-size);
+  height: var(--ms-toggle-icon-size);
+  inline-size: var(--ms-toggle-icon-size);
+  block-size: var(--ms-toggle-icon-size);
+  font-size: var(--ms-toggle-icon-size);
+  line-height: 1;
+  text-align: center;
   transform: rotate(var(--ms-toggle-rotate-closed, 90deg));
   transition: transform var(--ms-transition-normal) var(--ms-easing-snappy);
 }
+
+/* ==============================================================================
+   ms's OWN ICONS (core renderIcon `defaults`, src/icons.ts MS_ICONS)
+   ==============================================================================
+   Each default glyph is a span masked from its --ms-icon-* token in currentColor; it fills
+   the slot box its slot rule sizes. el.icons / window.components.icons / the
+   renderIconCallback hooks replace a glyph by name (the slot still sizes the replacement). */
+.ms__glyph {
+  background-color: currentColor;
+  -webkit-mask: var(--_ms-glyph) center / contain no-repeat;
+          mask: var(--_ms-glyph) center / contain no-repeat;
+}
+.ms__glyph--toggle { --_ms-glyph: var(--ms-icon-chevron); }
+.ms__glyph--clearSelection { --_ms-glyph: var(--ms-icon-clear); }
+.ms__glyph--removeItem,
+.ms__glyph--closePopover { --_ms-glyph: var(--ms-icon-remove); }
+.ms__glyph--clearSearch { --_ms-glyph: var(--ms-icon-search-clear); }
+.ms__glyph--navigateMode { --_ms-glyph: var(--ms-fullscreen-mode-toggle-icon, var(--ms-icon-search)); }
+.ms__glyph--filterMode { --_ms-glyph: var(--ms-fullscreen-mode-toggle-icon, var(--ms-icon-filter)); }
+.ms__glyph--prevMatch,
+.ms__glyph--nextMatch { --_ms-glyph: var(--ms-fullscreen-nav-btn-icon); }
+.ms__glyph--showFullLabel { --_ms-glyph: var(--ms-icon-info); }
+.ms__glyph--addNew { --_ms-glyph: var(--ms-icon-add-new); }
 
 .ms--open .ms__toggle {
   color: var(--ms-toggle-icon-color-open);
 }
 
-.ms--open .ms__toggle::before {
+.ms--open .ms__toggle > :is(*, .km-icon) {
   transform: rotate(var(--ms-toggle-rotate-open, -90deg));
 }
 
@@ -206,14 +233,17 @@
   background: var(--ms-input-clear-bg-hover);
 }
 
-.ms__input-clear::before {
-  content: "";
+/* ms's `clearSelection` icon (core renderIcon). */
+.ms__input-clear > :is(*, .km-icon) {
   display: block;
+  flex: none;
   width: var(--ms-input-clear-icon-size);
   height: var(--ms-input-clear-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-clear) center / contain no-repeat;
-          mask: var(--ms-icon-clear) center / contain no-repeat;
+  inline-size: var(--ms-input-clear-icon-size);
+  block-size: var(--ms-input-clear-icon-size);
+  font-size: var(--ms-input-clear-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 /* ==============================================================================

@@ -121,6 +121,8 @@ export type {
   MultiSelectActionEventDetail,
   MultiSelectController,
   MultiSelectLabels,
+  MultiSelectIconName,
+  MultiSelectIcons,
   SelectEventDetail,
   DeselectEventDetail,
   ChangeEventDetail,

@@ -611,13 +611,24 @@
   justify-content: center;
 }
 
+/* The slot of ms's `addNew` icon (core renderIcon). */
 .ms__add-new-icon {
+  display: inline-flex;
   flex-shrink: 0;
   width: var(--ms-add-new-icon-size);
   height: var(--ms-add-new-icon-size);
-  background-color: currentColor;
-  -webkit-mask: var(--ms-icon-add-new) center / contain no-repeat;
-          mask: var(--ms-icon-add-new) center / contain no-repeat;
+}
+
+.ms__add-new-icon > :is(*, .km-icon) {
+  display: block;
+  flex: none;
+  width: var(--ms-add-new-icon-size);
+  height: var(--ms-add-new-icon-size);
+  inline-size: var(--ms-add-new-icon-size);
+  block-size: var(--ms-add-new-icon-size);
+  font-size: var(--ms-add-new-icon-size);
+  line-height: 1;
+  text-align: center;
 }
 
 .ms__add-new-text {
