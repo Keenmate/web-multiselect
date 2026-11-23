@@ -1456,10 +1456,15 @@ export interface MultiSelectConfig<T = any> {
     hostElement?: HTMLElement;
     /** The public facade put on every callback `ctx` / event detail (the element passes its rebuild-proof `el.controller`). */
     controller?: MultiSelectController<T>;
+    /**
+     * The values selected when the engine is built (the element passes its resolved `value` /
+     * defaultValue, or the selection held across a rebuild). A single-select keeps only the first.
+     */
+    initialSelection?: ReadonlyArray<string | number> | null;
 }
 
 /** {@link MultiSelectConfig} members that are engine wiring, not `<web-multiselect>` inputs. */
-type MultiSelectEngineOnlyKey = `on${string}` | 'container' | 'hostElement' | 'controller' | 'isRtl';
+type MultiSelectEngineOnlyKey = `on${string}` | 'container' | 'hostElement' | 'controller' | 'isRtl' | 'initialSelection';
 
 /** Engine members the element types differently (a CSS length takes a number = px; no `null`). */
 type MultiSelectElementRetypedKey = 'dropdownMinWidth' | 'dropdownMaxWidth' | 'maxHeight' | 'badgesThreshold' | 'maxVisibleBadgeCount';

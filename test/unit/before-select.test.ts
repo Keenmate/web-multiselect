@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MultiSelectEngine } from '../../src/multiselect';
+import { ENGINE_DEFAULTS } from './engine-defaults';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -30,7 +31,7 @@ let host: HTMLDivElement;
 let instance: MultiSelectEngine<Item> | undefined;
 
 function make(opts: Partial<MultiSelectConfig<Item>> = {}): MultiSelectEngine<Item> {
-    instance = new MultiSelectEngine<Item>(host, { ...BASE, ...opts });
+    instance = new MultiSelectEngine<Item>(host, { ...ENGINE_DEFAULTS, ...BASE, ...opts });
     return instance;
 }
 

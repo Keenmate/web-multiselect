@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
  *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
@@ -679,55 +679,9 @@ export class MultiSelectEngine<T = any> {
         this.element = element;
         this.instanceId = createId('MS');
 
-        // Merge options with defaults (using internal naming with 'is' prefix for booleans)
-        this.options = {
-            // String options
-            dropdownMinWidth: element.dataset.dropdownMinWidth || undefined,
-            dropdownMaxWidth: element.dataset.dropdownMaxWidth || undefined,
-            badgesDisplayMode: (element.dataset.badgesDisplayMode as any) || 'badges',
-            badgesPosition: (element.dataset.badgesPosition as BadgesPosition) || 'bottom',
-            badgesThresholdMode: (element.dataset.badgesThresholdMode as any) || 'count',
-            maxHeight: element.dataset.maxHeight || '20rem',
-            searchMode: (element.dataset.searchMode as SearchMode) || 'filter',
-            searchBehavior: (element.dataset.searchBehavior as SearchBehavior) || 'normalized',
-            searchMatch: (element.dataset.searchMatch as SearchMatch) || 'contains',
-
-            // Number options
-            badgesThreshold: element.dataset.badgesThreshold ? parseInt(element.dataset.badgesThreshold) : undefined,
-            minSearchLength: parseInt(element.dataset.minSearchLength || '0') || 0,
-            searchDebounce: parseInt(element.dataset.searchDebounce || '0') || 0,
-
-            // Boolean options (internal names with 'is' prefix)
-            isMultiple: element.dataset.multiple !== 'false',
-            isGroupsAllowed: element.dataset.allowGroups !== 'false',
-            isCheckboxesShown: element.dataset.showCheckboxes !== 'false',
-            isActionsSticky: element.dataset.actionsSticky !== 'false',
-            shouldCloseOnSelect: element.dataset.closeOnSelect === 'true',
-            shouldCloseOnScroll: element.dataset.closeOnScroll !== 'false',
-            shouldLockPlacement: element.dataset.lockPlacement !== 'false',
-            isSearchEnabled: element.dataset.enableSearch !== 'false',
-            isAddNewAllowed: element.dataset.allowAddNew === 'true',
-            isCounterShown: element.dataset.showCounter === 'true',
-            isSelectedPopoverEnabled: element.dataset.enableSelectedPopover !== 'false',
-            isSearchModeToggleShown: element.dataset.showSearchModeToggle === 'true',
-            shouldKeepOptionsOnSearch: element.dataset.keepOptionsOnSearch !== 'false',
-            shouldKeepSearchOnClose: element.dataset.keepSearchOnClose === undefined ? null : element.dataset.keepSearchOnClose !== 'false',
-            tabBehavior: (element.dataset.tabBehavior as TabBehavior) || null,
-
-            // Data and callbacks
-            options: [],
-            // Member defaults (a get*Callback overrides its member; see extractField)
-            valueMember: 'value',
-            displayValueMember: 'label',
-            groupMember: 'group',
-            iconMember: 'icon',
-            subtitleMember: 'subtitle',
-            isDisabledMember: 'disabled',
-            container: undefined,
-
-            // Override with provided options
-            ...options
-        };
+        // Engine defaults come from config only: the element passes every input (its input
+        // table's defaults included) through getEngineConfig() — no second default table here.
+        this.options = { options: [], ...options };
 
         this.init();
     }
@@ -745,23 +699,12 @@ export class MultiSelectEngine<T = any> {
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
             placeholder: this.getPlaceholderText(),
             totalOptions: this.allOptions.length,
-            shouldCloseOnSelect: this.options.shouldCloseOnSelect,
-            dataAttribute: this.element.dataset.closeOnSelect
+            shouldCloseOnSelect: this.options.shouldCloseOnSelect
         });
     }
 
     private parseOptions(): void {
-        const dataOptions = this.element.dataset.options;
-        if (dataOptions) {
-            try {
-                this.allOptions = JSON.parse(dataOptions);
-            } catch (e) {
-                dataLogger.error(`[${this.instanceId}] Failed to parse data-options:`, e);
-                this.allOptions = [];
-            }
-        } else if (this.options.options) {
-            this.allOptions = this.options.options;
-        }
+        if (this.options.options) this.allOptions = this.options.options;
 
         this.filteredOptions = [...this.allOptions];
 
@@ -4951,25 +4894,19 @@ export class MultiSelectEngine<T = any> {
     }
 
     private parseInitialSelection(): void {
-        const initialValues = this.element.dataset.defaultValue;
-        if (initialValues) {
-            try {
-                const parsed = JSON.parse(initialValues);
-                // A single-select can only hold one value. When seeding more than one
-                // (declarative `value="a,b,c"`, or a reinit that preserved a
-                // multi-selection while `multiple` flipped to false), keep only the
-                // first — otherwise the extra values stay in selectedValues and their
-                // rows render with the stale selected highlight.
-                const values = this.options.isMultiple === false ? parsed.slice(0, 1) : parsed;
-                values.forEach((value: string | number) => {
-                    this.selectedValues.add(String(value));
-                });
-                this.reconcileSelectedOptions();
-                this.renderBadges();
-            } catch (e) {
-                dataLogger.error(`[${this.instanceId}] Failed to parse initial values:`, e);
-            }
-        }
+        const initialValues = this.options.initialSelection;
+        if (!initialValues || initialValues.length === 0) return;
+        // A single-select can only hold one value. When seeding more than one
+        // (declarative `value="a,b,c"`, or a reinit that preserved a
+        // multi-selection while `multiple` flipped to false), keep only the
+        // first — otherwise the extra values stay in selectedValues and their
+        // rows render with the stale selected highlight.
+        const values = this.options.isMultiple === false ? initialValues.slice(0, 1) : initialValues;
+        values.forEach(value => {
+            this.selectedValues.add(String(value));
+        });
+        this.reconcileSelectedOptions();
+        this.renderBadges();
     }
 
     /**

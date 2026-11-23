@@ -305,7 +305,7 @@ const EVENTS = [
 // so it can read the private engine; no flush (a staged write keeps the getter on the stored value).
 let liveOptions: (el: HTMLElement) => ReadonlyArray<Record<string, unknown>> | undefined = () => undefined;
 
-const NON_PICKER_KEYS = new Set(['isDisabled', 'isRequired', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
+export const NON_PICKER_KEYS = new Set(['isDisabled', 'isRequired', 'dropdownWidth', 'selectedPopoverWidth', 'defaultValue', 'optionsSource', 'optionsFormat', 'optionsSplitter', 'optionsRowSplitter', 'presentation', 'collapseBadgesBelow', 'customStyles', 'getCustomStylesCallback']);
 
 /** A torn-down picker's live state, carried to the next build (see #buildPicker). */
 type HeldSelection<T> = {
@@ -678,12 +678,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
       : defaultValues;
     this.#lastDefaultValueJSON = defaultJSON;
 
-    // The picker reads initial values off the container dataset.
-    if (initialValues && initialValues.length > 0) {
-      this.#container!.dataset.defaultValue = JSON.stringify(initialValues);
-    } else {
-      delete this.#container!.dataset.defaultValue;
-    }
+    cfg.initialSelection = initialValues && initialValues.length > 0 ? initialValues : null;
 
     this.#picker = new MultiSelectEngine<T>(this.#container!, cfg as any);
     // Selected options the new list lacks ("add new" ones, from a re-parsed source) stay selected.

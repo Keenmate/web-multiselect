@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MultiSelectEngine } from '../../src/multiselect';
+import { ENGINE_DEFAULTS } from './engine-defaults';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -27,7 +28,7 @@ let host: HTMLDivElement;
 let instance: MultiSelectEngine<any> | undefined;
 
 function make(opts: Partial<MultiSelectConfig<any>> = {}): any {
-    instance = new MultiSelectEngine(host, { valueMember: 'value', displayValueMember: 'label', options: [...ITEMS], ...opts });
+    instance = new MultiSelectEngine(host, { ...ENGINE_DEFAULTS, valueMember: 'value', displayValueMember: 'label', options: [...ITEMS], ...opts });
     return instance as any;
 }
 
@@ -175,5 +176,28 @@ describe('min-search-length counts the term as typed', () => {
         const ms = make({ searchCallback: searchCallback as any, minSearchLength: 3 });
         await ms.handleSearch(' b');
         expect(searchCallback).not.toHaveBeenCalled();
+    });
+});
+
+describe('initial selection (config, not the container dataset)', () => {
+    it('seeds the selection from initialSelection', () => {
+        const ms = make({ initialSelection: ['a', 'c'] });
+        expect(ms.selectedOptions.map((o: any) => o.value)).toEqual(['a', 'c']);
+        expect(host.dataset.defaultValue).toBeUndefined();
+    });
+
+    it('a single-select keeps only the first initial value', () => {
+        const ms = make({ isMultiple: false, initialSelection: ['b', 'c'] });
+        expect(ms.selectedOptions.map((o: any) => o.value)).toEqual(['b']);
+    });
+
+    it('ignores data-* attributes on the container (no dataset dialect)', () => {
+        host.dataset.defaultValue = '["a"]';
+        host.dataset.options = '[{"value":"x","label":"X"}]';
+        host.dataset.multiple = 'false';
+        const ms = make();
+        expect(ms.selectedOptions).toEqual([]);
+        expect(ms.allOptions.map((o: any) => o.value)).toEqual(['a', 'b', 'c']);
+        expect(ms.options.isMultiple).toBe(true);
     });
 });

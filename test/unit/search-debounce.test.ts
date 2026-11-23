@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MultiSelectEngine } from '../../src/multiselect';
+import { ENGINE_DEFAULTS } from './engine-defaults';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -20,7 +21,7 @@ function make(debounce: number): void {
         searchDebounce: debounce,
         minSearchLength: 0
     };
-    instance = new MultiSelectEngine(host, opts);
+    instance = new MultiSelectEngine(host, { ...ENGINE_DEFAULTS, ...opts });
 }
 
 // handleSearch is private; reach it directly to drive the search path without DOM event plumbing.
@@ -81,6 +82,7 @@ describe('searchDebounce > 0', () => {
     it('does not debounce local (non-async) filtering', async () => {
         // No searchCallback → local path runs synchronously regardless of searchDebounce.
         instance = new MultiSelectEngine(host, {
+            ...ENGINE_DEFAULTS,
             valueMember: 'value',
             displayValueMember: 'label',
             options: [{ value: 'apple', label: 'Apple' }, { value: 'banana', label: 'Banana' }],

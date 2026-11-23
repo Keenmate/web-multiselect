@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MultiSelectEngine } from '../../src/multiselect';
+import { ENGINE_DEFAULTS } from './engine-defaults';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -16,7 +17,7 @@ let host: HTMLDivElement;
 let engine: MultiSelectEngine<any> | undefined;
 
 function make(opts: Partial<MultiSelectConfig<any>> = {}): HTMLInputElement {
-    engine = new MultiSelectEngine(host, { ...BASE, ...opts });
+    engine = new MultiSelectEngine(host, { ...ENGINE_DEFAULTS, ...BASE, ...opts });
     return host.querySelector('.ms__input') as HTMLInputElement;
 }
 

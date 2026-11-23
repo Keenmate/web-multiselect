@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Internal — the engine's `data-*` dialect is gone (Q13) (2026-11-23)
+
+- The internal engine no longer reads ~30 settings off its container's `data-*` attributes (each with its own hard-coded
+  default). Those reads were dead — the element's private container never carries them — and the defaults were a second
+  copy of the input table's. The engine now takes its settings from config only: the element passes every input (its
+  input-table defaults included) through core `getEngineConfig()`, so there is one source of defaults (C-CA-37).
+- The initial selection reaches the engine as config (`initialSelection`, element → engine wiring) instead of a JSON
+  `data-default-value` written onto the container; the options list likewise comes only from config (the container's
+  `data-options` read is gone — the element's `data-options` attribute is parsed by the element, unchanged).
+- No consumer-facing change: attributes, properties and events are unchanged (the engine is not exported since rc04).
+  `MultiSelectConfig` (exported type) gains the engine-wiring member `initialSelection`, kept out of the element's config type.
+
 ### Changed — the phone sheets are modal, in core's full-screen frame (2026-11-23)
 - **Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) run through core
   `startModalSession`** (rulebook C-CA-19): `role="dialog"` + `aria-modal="true"`, the page behind is `inert`, Tab cycles

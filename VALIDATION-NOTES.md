@@ -16,11 +16,3 @@ directly. Every other rule reads the `--ms-*` layer.
 them is `import type { LTree } from './ltree'`, the type of the tree parameter; it is erased at build
 time, so there is no runtime dependency. The Logic class (`multiselect.ts`) creates the tree and passes
 it to the cascade functions, so the coordination already runs through it, as the rule asks.
-
-## C-RO-9 — safe-area padding comes from core `.km-sheet`
-
-Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) take their frame from core's
-`.km-sheet` (`SHEET_CHROME_CSS`, SPEC §12.29, adopted into the shadow root at runtime): `box-sizing: border-box` +
-`padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)`.
-The static scan only reads `src/css/`, so it can't see core's rule. PASS with note; drop this entry when the check
-counts a `.km-sheet` adoption as the safe-area frame.

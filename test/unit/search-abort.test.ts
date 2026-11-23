@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MultiSelectEngine } from '../../src/multiselect';
+import { ENGINE_DEFAULTS } from './engine-defaults';
 import type { MultiSelectConfig } from '../../src/types';
 
 /**
@@ -39,7 +40,7 @@ function make(): void {
         searchCallback: searchCallback as any,
         minSearchLength: 0
     };
-    instance = new MultiSelectEngine(host, opts);
+    instance = new MultiSelectEngine(host, { ...ENGINE_DEFAULTS, ...opts });
 }
 
 function type(value: string): Promise<void> {
@@ -113,6 +114,7 @@ describe('searchCallback AbortSignal', () => {
             return d.promise;
         });
         instance = new MultiSelectEngine(host, {
+            ...ENGINE_DEFAULTS,
             valueMember: 'value',
             displayValueMember: 'label',
             searchCallback: searchCallback as any,
