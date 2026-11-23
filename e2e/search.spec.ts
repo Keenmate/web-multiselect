@@ -307,6 +307,22 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
         // The core 44px close chip (base touch-target default), not the compact floating one.
         const box = await close.boundingBox();
         expect(Math.round(box!.width)).toBe(44);
+        // ms's own floating-popover ✕ icon (closePopover) is hidden under core's sheet close.
+        await expect(close.locator('.ms__glyph--closePopover')).toBeHidden();
+    });
+
+    test('closing animates the sheet out (core animateOut, km-sheet--closing), then hides it', async ({ page }) => {
+        const p = picker(page, 'popover-fs');
+        await openPopoverFullscreen(p);
+        const sheet = popover(p);
+        await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+        const during = await sheet.evaluate((el: HTMLElement) => {
+            (el.querySelector('.ms__selected-popover-close') as HTMLElement).click();
+            return { isClosing: el.classList.contains('km-sheet--closing'), isShown: el.classList.contains('ms__selected-popover--visible'), isInert: el.inert };
+        });
+        expect(during).toEqual({ isClosing: true, isShown: true, isInert: true });
+        await expect(p.locator('.ms__selected-popover--visible')).toHaveCount(0);
+        await expect(p.locator('.km-sheet, .km-sheet--closing')).toHaveCount(0);
     });
 });
 

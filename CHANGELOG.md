@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Changed — the phone sheets animate out; the dropdown sheet header is core's (W3) (2026-11-23)
+- **Closing a phone sheet** (the fullscreen dropdown and the fullscreen selected-items popover — ✕, Escape, Back, a
+  pick that closes, `el.close()`) now plays core's exit animation (`animateOut` with `km-sheet--closing`: the motion
+  tokens, inert while it runs) instead of vanishing; `motion="none"` / OS reduced motion close it at once. The modal
+  session (inert page, focus return) still ends at once. Reopening mid-exit shows a fresh sheet immediately.
+- The dropdown sheet's header is built by core `createSheetHeader({ content, closeLabel, closeCallback })` (the search
+  field is its content) instead of ms's own header / ✕ DOM — same classes (`km-sheet-header ms__fullscreen-header`,
+  `km-sheet-close ms__fullscreen-close`) and layout. The selected-items popover keeps one header that switches between
+  the floating and the sheet look.
+- e2e (mobile): `presentation.spec.ts` header structure, closing animation, `motion="none"`, reopen mid-exit;
+  `search.spec.ts` selected-items sheet closing animation.
+
 ### Added — ms's own icons have names: the `icons` map (Q12, C-CA-42) (2026-11-23)
 - **New `icons` input** (property / JSON attribute, `MultiSelectIcons`): icon overrides by name, like `labels` for
   icons. The glyphs web-multiselect draws itself now render through core `renderIcon` under a name — `toggle` (the

@@ -324,3 +324,76 @@ test.describe('fullscreen truncated-label reveal (info button → createPopover 
         expect(await p.evaluate((el: any) => el.selectedValue)).toEqual([]);
     });
 });
+
+test.describe('the phone sheet header + close animation (core createSheetHeader / animateOut, W3)', () => {
+    const isInert = (loc: Locator) => loc.evaluate((el) => {
+        for (let n: Node | null = el; n; n = (n as Element).parentElement ?? ((n.getRootNode() as ShadowRoot).host ?? null)) {
+            if (n instanceof Element && n.hasAttribute('inert')) return true;
+        }
+        return false;
+    });
+    test('the header is core\'s sheet header: the search field as content, then the ✕', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await input(p).click();
+        const header = p.locator('.ms__fullscreen-header.km-sheet-header');
+        await expect(header).toHaveCount(1);
+        expect(await header.evaluate((h) => Array.from(h.children).map((c) => c.className))).toEqual([
+            'ms__fullscreen-search-wrapper',
+            'km-sheet-close ms__fullscreen-close',
+        ]);
+        await expect(header.locator('.km-sheet-close')).toHaveAttribute('aria-label', 'Close');
+    });
+
+    test('closing animates the sheet out (km-sheet--closing, inert) and then hides it', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await input(p).click();
+        const sheet = fullscreen(p);
+        await expect(sheet).toBeVisible();
+        await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+        // Read the state in the same task as the close: the sheet is still shown, closing, inert.
+        const during = await sheet.evaluate((el: HTMLElement) => {
+            (el.querySelector('.ms__fullscreen-close') as HTMLElement).click();
+            return {
+                isClosing: el.classList.contains('km-sheet--closing'),
+                isShown: el.classList.contains('ms__dropdown--visible'),
+                isInert: el.inert,
+                animationName: getComputedStyle(el).animationName,
+            };
+        });
+        expect(during).toEqual({ isClosing: true, isShown: true, isInert: true, animationName: 'km-sheet-out' });
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+        await expect(p.locator('.km-sheet, .km-sheet--closing, .ms__fullscreen-header')).toHaveCount(0);
+        expect(await isInert(input(p))).toBe(false);
+    });
+
+    test('motion="none" closes it at once', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await p.evaluate((el) => el.setAttribute('motion', 'none'));
+        await input(p).click();
+        const sheet = fullscreen(p);
+        await expect(sheet).toBeVisible();
+        const isShown = await sheet.evaluate((el: HTMLElement) => {
+            (el.querySelector('.ms__fullscreen-close') as HTMLElement).click();
+            return el.classList.contains('ms__dropdown--visible');
+        });
+        expect(isShown).toBe(false);
+    });
+
+    test('reopening while the sheet animates out shows a fresh sheet', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await input(p).click();
+        const sheet = fullscreen(p);
+        await expect(sheet).toBeVisible();
+        await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+        await p.evaluate((el: any) => { el.close(); el.open(); });
+        await expect(sheet).toBeVisible();
+        await expect(sheet).toHaveClass(/km-sheet/);
+        await expect(sheet).not.toHaveClass(/km-sheet--closing/);
+        await expect(p.locator('.ms__fullscreen-header')).toHaveCount(1);
+        expect(await sheet.evaluate((el: HTMLElement) => el.inert)).toBe(false);
+        // Still a working modal sheet: Escape closes it.
+        await p.locator('.ms__fullscreen-search').focus();
+        await page.keyboard.press('Escape');
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+    });
+});

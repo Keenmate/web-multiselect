@@ -11,7 +11,7 @@
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, createSheetHeader, type AnimateOutHandle, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, MultiSelectIconName, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
@@ -208,6 +208,8 @@ export class MultiSelectEngine<T = any> {
     // Back, scroll lock, keyboard inset. One at a time — the dropdown and the selected-items
     // popover are mutually exclusive. See startSheet() / endSheet().
     private sheetSession: ModalSession | null = null;
+    /** The phone sheet animating out (core animateOut, `km-sheet--closing`): `finish` hides / tears it down. */
+    private sheetExit: { handle: AnimateOutHandle; finish: () => void } | null = null;
     // The last interaction inside the open sheet was a press (not a key): its close leaves focus
     // alone instead of returning it to the control input (which would pop the soft keyboard).
     private isSheetPressUsed = false;
@@ -4032,6 +4034,8 @@ export class MultiSelectEngine<T = any> {
         // stale anchor and above-overlay z-index — over the sheet.
         this.hideMessage();
 
+        // A sheet still animating out (closed a moment ago) is hidden now, before the reopen.
+        this.finishSheetExit();
         this.#isOpen = true;
         this.element.classList.add('ms--open');
         // Open unanchored (the panel shows, so the first render measures it); positionDropdown()
@@ -4106,11 +4110,20 @@ export class MultiSelectEngine<T = any> {
         this.syncListboxAria();
         // End the phone sheet's modal session first (page interactive again, focus back on a
         // keyboard close) — before the popover it hangs under leaves the overlay tree.
-        this.endSheet(this.shouldReturnSheetFocus(reason));
-        // Hides the panel, stops positioning, leaves the overlay tree.
+        const isSheetExit = !!this.sheetSession && this.dropdown.classList.contains('km-sheet');
+        this.endSheet(this.shouldReturnSheetFocus(reason), isSheetExit);
+        // Hides the panel, stops positioning, leaves the overlay tree — after the sheet's exit
+        // animation on a phone (the fullscreen chrome goes with it, see exitFullscreen below).
         const popover = this.dropdownPopover;
         this.dropdownPopover = null;
-        popover?.destroy();
+        if (isSheetExit) {
+            this.animateSheetOut(this.dropdown, () => {
+                popover?.destroy();
+                this.exitFullscreen();
+            });
+        } else {
+            popover?.destroy();
+        }
         if (this.hint) {
             this.hint.classList.remove('ms__hint--visible');
         }
@@ -4143,9 +4156,9 @@ export class MultiSelectEngine<T = any> {
             this.hintCleanup = null;
         }
 
-        // Tear down the fullscreen overlay chrome + restore page scroll (no-op when
-        // the panel was floating).
-        this.exitFullscreen();
+        // Tear down the fullscreen overlay chrome (no-op when the panel was floating; a phone
+        // sheet animating out does it when the animation ends).
+        if (!isSheetExit) this.exitFullscreen();
 
         // Reset placement tracking
         this.dropdownPlacement = null;
@@ -4438,8 +4451,11 @@ export class MultiSelectEngine<T = any> {
         this.isSheetContainingBlockChecked = true;
     }
 
-    /** End the phone sheet's session (no-op when none) and drop the `.km-sheet` frame. */
-    private endSheet(shouldReturnFocus: boolean): void {
+    /**
+     * End the phone sheet's session (no-op when none) and drop the `.km-sheet` frame — unless
+     * `shouldKeepFrame`: the caller animates the sheet out first ({@link animateSheetOut} drops it).
+     */
+    private endSheet(shouldReturnFocus: boolean, shouldKeepFrame = false): void {
         const session = this.sheetSession;
         if (!session) return;
         this.sheetSession = null;
@@ -4451,8 +4467,38 @@ export class MultiSelectEngine<T = any> {
         } finally {
             this.justClosedViaClick = wasJustClosed;
         }
+        if (shouldKeepFrame) return;
         this.dropdown.classList.remove('km-sheet');
         this.selectedPopover.classList.remove('km-sheet');
+    }
+
+    /**
+     * Animate a closing phone sheet out (core `animateOut` with `km-sheet--closing`: the motion tokens,
+     * instant with `motion="none"` / reduced motion), then drop the frame and run `finish` (hide the
+     * panel, tear the sheet chrome down). The panel is inert meanwhile. A reopen / destroy mid-exit
+     * finishes it at once ({@link finishSheetExit}).
+     */
+    private animateSheetOut(panel: HTMLElement, finish: () => void): void {
+        this.finishSheetExit();
+        let isDone = false;
+        const done = (): void => {
+            if (isDone) return;
+            isDone = true;
+            if (this.sheetExit?.finish === done) this.sheetExit = null;
+            panel.classList.remove('km-sheet', 'km-sheet--closing');
+            finish();
+        };
+        const handle = animateOut(panel, { className: 'km-sheet--closing', doneCallback: done });
+        if (!isDone) this.sheetExit = { handle, finish: done };
+    }
+
+    /** Cut a running sheet exit short (a reopen, a presentation switch, destroy): hide it now. */
+    private finishSheetExit(): void {
+        const exit = this.sheetExit;
+        if (!exit) return;
+        this.sheetExit = null;
+        exit.handle.cancel();
+        exit.finish();
     }
 
     /** A keyboard close (Escape, Enter on a row / the ✕) returns focus to the control; a touch
@@ -4639,12 +4685,11 @@ export class MultiSelectEngine<T = any> {
     private buildFullscreenHeader(): void {
         if (this.fullscreenHeader) return;
 
-        // Core sheet chrome (SPEC §12.9): the bar / close look is `km-sheet-*`; the ms classes
-        // keep only the ms layout around it (search field, wrapped nav row, mode toggle).
+        // Core sheet chrome (SPEC §12.9): the header is core's createSheetHeader({ content }) — the bar /
+        // close look is `km-sheet-*`; the ms classes keep only the ms layout around it (search field,
+        // wrapped nav row, mode toggle).
         this.adoptSheetChrome(this.dropdown);
-        const header = document.createElement('div');
-        header.className = 'ms__fullscreen-header km-sheet-header';
-        header.classList.toggle('ms__fullscreen-header--no-search', !this.options.isSearchEnabled);
+        const content: HTMLElement[] = [];
 
         if (this.options.isSearchEnabled) {
             // The input and its inline clear (✕) share a positioned wrapper so the
@@ -4699,17 +4744,19 @@ export class MultiSelectEngine<T = any> {
             searchWrapper.appendChild(clear);
             this.fullscreenSearchClear = clear;
 
-            header.appendChild(searchWrapper);
+            content.push(searchWrapper);
         }
 
-        const close = document.createElement('button');
-        close.type = 'button';
-        close.className = 'ms__fullscreen-close km-sheet-close';
-        close.setAttribute('aria-label', this.labels.text('ariaLabels.close'));
-        // No text: the ✕ is core's masked --base-icon-close (km-sheet-close), the same close
-        // the selected-items sheet gets.
-        close.addEventListener('click', () => this.closeWith('close-button'));
-        header.appendChild(close);
+        // The ✕ is core's masked --base-icon-close (km-sheet-close), the same close the
+        // selected-items sheet gets.
+        const { header, close } = createSheetHeader({
+            content,
+            closeLabel: this.labels.text('ariaLabels.close'),
+            closeCallback: () => this.closeWith('close-button'),
+        });
+        header.classList.add('ms__fullscreen-header');
+        header.classList.toggle('ms__fullscreen-header--no-search', !this.options.isSearchEnabled);
+        close.classList.add('ms__fullscreen-close');
 
         // Navigate mode keeps the whole list visible and jumps focus between matches.
         // Desktop uses Ctrl+Arrow for that; touch has no such shortcut, so append a match
@@ -4993,6 +5040,8 @@ export class MultiSelectEngine<T = any> {
         // (see open()); a stale control-anchored toast would otherwise float over it.
         this.hideMessage();
 
+        // A sheet still animating out (the dropdown sheet just closed, or this one) is hidden now.
+        this.finishSheetExit();
         this.showSelectedPopover = true;
         // The fullscreen modifier goes on BEFORE the render: it re-declares --ms-badge-height for
         // the sheet, and the virtual list measures its row height from that variable.
@@ -5023,14 +5072,21 @@ export class MultiSelectEngine<T = any> {
         uiLogger.debug(`[${this.instanceId}] hideSelectedPopover() called`);
         this.showSelectedPopover = false;
         // End the phone sheet's session first (no-op when floating) — before its parent popover goes.
-        this.endSheet(false);
-        // Hides the panel, stops positioning, leaves the overlay tree (its onClose('api') is a no-op).
+        const isSheetExit = !!this.sheetSession && this.selectedPopover.classList.contains('km-sheet');
+        this.endSheet(false, isSheetExit);
+        // Hides the panel, stops positioning, leaves the overlay tree (its onClose('api') is a no-op) —
+        // after the sheet's exit animation on a phone.
         const handle = this.selectedPopoverHandle;
         this.selectedPopoverHandle = null;
-        handle?.destroy();
-        this.selectedPopover.classList.remove('ms__selected-popover--visible');
-        this.selectedPopover.classList.remove('ms__selected-popover--virtual');
-        this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
+        const hidePanel = (): void => {
+            handle?.destroy();
+            this.selectedPopover.classList.remove('ms__selected-popover--visible');
+            this.selectedPopover.classList.remove('ms__selected-popover--virtual');
+            this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
+            this.syncSelectedPopoverSheetChrome();
+        };
+        if (isSheetExit) this.animateSheetOut(this.selectedPopover, hidePanel);
+        else hidePanel();
         this.hideMessage();
         this.selectedPopoverPlacement = null;
 
@@ -6272,6 +6328,7 @@ export class MultiSelectEngine<T = any> {
 
         this.abortInFlightSearch();
 
+        this.finishSheetExit();
         this.dropdownPopover?.destroy();
         this.dropdownPopover = null;
         if (this.hintCleanup) this.hintCleanup();
