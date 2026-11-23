@@ -69,6 +69,9 @@ export interface LTreeOptions<T> {
 	orderMember?: string | null;
 	sortCallback?: ((items: LTreeNode<T>[]) => LTreeNode<T>[]) | null;
 	getDisplayValueCallback?: ((node: LTreeNode<T>) => string) | null;
+	/** Text comparer for the default sort (paths, display values). The element passes core
+	 *  `getCollator(locale, { numeric: true }).compare`; default `localeCompare`. */
+	compare?: ((a: string, b: string) => number) | null;
 }
 
 export interface LTree<T> {
@@ -99,6 +102,7 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 	const _treeId = options.treeId || 'multiselect-tree';
 	const _orderMember = options.orderMember;
 	const _getDisplayValueCallback = options.getDisplayValueCallback;
+	const _compare = options.compare ?? ((a: string, b: string) => a.localeCompare(b));
 
 	const shouldCalculateParentPath = !_getParentPathCallback && isEmptyString(_parentPathMember);
 	const shouldCalculateLevel = !_getLevelCallback && isEmptyString(_levelMember);
@@ -298,7 +302,7 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 			if (a.parentPath !== b.parentPath) {
 				if (!a.parentPath) return -1;
 				if (!b.parentPath) return 1;
-				return a.parentPath.localeCompare(b.parentPath);
+				return _compare(a.parentPath, b.parentPath);
 			}
 
 			if (_orderMember && a.data && b.data) {
@@ -308,9 +312,9 @@ export function createLTree<T>(options: LTreeOptions<T> = {}): LTree<T> {
 			}
 
 			if (_getDisplayValueCallback) {
-				return _getDisplayValueCallback(a).localeCompare(_getDisplayValueCallback(b));
+				return _compare(_getDisplayValueCallback(a), _getDisplayValueCallback(b));
 			}
-			return a.path.localeCompare(b.path);
+			return _compare(a.path, b.path);
 		});
 	}
 

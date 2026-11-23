@@ -79,7 +79,7 @@ import {
     type ActiveSearchTerm,
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
-import { createLabels, formatNumber, type Labels } from '@keenmate/web-components-core/locale';
+import { createLabels, formatNumber, getCollator, type Labels } from '@keenmate/web-components-core/locale';
 import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
@@ -512,25 +512,32 @@ export class MultiSelectEngine<T = any> {
      * Never mutates state — always returns a fresh array. Display concern only: selectedValue/form
      * output/selectedOptions keep as-selected (insertion) order. See `selectedOrder`.
      */
+    /** Text comparer for every sort (selected order, tree siblings): core `getCollator` — the
+     *  `locale` input → page-wide → browser, numeric-aware ("item 2" before "item 10"). */
+    private textCompare(): (a: string, b: string) => number {
+        return getCollator(this.options.locale, { numeric: true }, this.hostEl()).compare;
+    }
+
     private getOrderedSelectedOptions(): T[] {
         const items = Array.from(this.selectedByValue.values());
         const mode = this.options.selectedOrder ?? 'as-selected';
         if (mode === 'as-selected' || items.length < 2) return items;
 
         const sorted = items.slice();
+        const compare = this.textCompare();
         switch (mode) {
             case 'label-asc':
-                sorted.sort((a, b) => this.getItemBadgeDisplayValue(a).localeCompare(this.getItemBadgeDisplayValue(b)));
+                sorted.sort((a, b) => compare(this.getItemBadgeDisplayValue(a), this.getItemBadgeDisplayValue(b)));
                 break;
             case 'label-desc':
-                sorted.sort((a, b) => this.getItemBadgeDisplayValue(b).localeCompare(this.getItemBadgeDisplayValue(a)));
+                sorted.sort((a, b) => compare(this.getItemBadgeDisplayValue(b), this.getItemBadgeDisplayValue(a)));
                 break;
             case 'member':
                 sorted.sort((a, b) => {
                     const ka = this.getItemSortKey(a);
                     const kb = this.getItemSortKey(b);
                     if (typeof ka === 'number' && typeof kb === 'number') return ka - kb;
-                    return String(ka).localeCompare(String(kb));
+                    return compare(String(ka), String(kb));
                 });
                 break;
             case 'custom':
@@ -749,7 +756,8 @@ export class MultiSelectEngine<T = any> {
                 : undefined,
             treePathSeparator: this.options.treePathSeparator,
             treeId: this.instanceId,
-            getDisplayValueCallback: (node) => this.getItemDisplayValue(node.data as T)
+            getDisplayValueCallback: (node) => this.getItemDisplayValue(node.data as T),
+            compare: this.textCompare()
         });
         this.tree.insertArray(this.allOptions);
         this.cascadeIndex = this.isCascadeMode()

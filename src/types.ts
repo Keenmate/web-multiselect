@@ -733,7 +733,7 @@ export interface MultiSelectConfig<T = any> {
      * as-selected (insertion) order regardless of this setting, and the options dropdown is never
      * reordered.
      * - `as-selected` (default) — the order items were picked.
-     * - `label-asc` / `label-desc` — by the badge label, A→Z / Z→A (locale-aware).
+     * - `label-asc` / `label-desc` — by the badge label, A→Z / Z→A (the `locale`'s collation, numeric-aware).
      * - `member` — by the `selectedOrderMember` property (or `getSelectedOrderCallback`); numeric
      *   keys sort numerically, everything else with a locale string compare.
      * - `custom` — delegate to `selectedOrderCompareCallback`.
@@ -1160,7 +1160,8 @@ export interface MultiSelectConfig<T = any> {
     /** ARIA labels / short UI strings for i18n (see {@link MultiSelectLabels}). Partial; unset
      *  keys fall back to their English defaults. */
     labels?: MultiSelectLabels;
-    /** BCP-47 locale for the numbers in labels and the group count chip (`cs-CZ` → `1 234`).
+    /** BCP-47 locale for the numbers in labels and the group count chip (`cs-CZ` → `1 234`) and for text
+     *  sorting (`selectedOrder` labels, tree siblings: `cs-CZ` sorts "ch" after "h").
      *  Unset = the page-wide `window.components.locale`, else the browser language. */
     locale?: string | null;
     /**

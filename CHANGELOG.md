@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Changed — text sorting follows the `locale` (core `getCollator`) (G33) (2026-11-23)
+- `selected-order="label-asc"` / `"label-desc"` / `"member"` (text keys) and the tree's sibling order sort with core
+  `getCollator(locale, { numeric: true })` instead of `localeCompare()` with the browser's default collation: the
+  `locale` input (→ page-wide `window.components.locale` → browser) now decides the order (`cs-CZ` sorts "ch" after "h"),
+  and numbers inside text sort numerically ("item 2" before "item 10"). The tree (ltree) takes the comparer from the
+  element (`compare` option). Unit: `collation.test.ts`.
+
 ### Internal — the custom-CSS variable lint is core's (G26) (2026-11-23)
 - The dev-mode check that warns when `custom-styles` / `getCustomStylesCallback` / the page-wide `customStyles` sets a
   `--ms-*` variable no web-multiselect style reads now runs in core `createCustomStyles({ lintCssVars })` (passed only
