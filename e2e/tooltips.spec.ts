@@ -219,13 +219,13 @@ test('option tooltip is dismissed immediately when the list scrolls', async ({ p
     const tooltip = page.locator('.ms__option-tooltip.ms__option-tooltip--visible');
     await expect(tooltip).toBeVisible({ timeout: 2000 });
 
-    // Scroll the options list — a shown tooltip must not trail its anchor row; it
-    // should vanish at once (core hide() ignores the hide delay; mount-on-show
-    // means the visible element is also removed).
+    // Scroll the options list — a shown tooltip must not trail its anchor row. Core
+    // createTooltip hides a hover-shown tooltip on any scroll around its target
+    // (shouldHideOnScroll, default true; ms has no scroll listener of its own for it).
+    // A real scroll of the list's scroller (core checks the row moved ≥ 3px). Only 10px, so the
+    // pointer stays on the same row (centre of a ~41px row): no mouseleave, only the scroll hides it.
     await p.evaluate((host: any) => {
-        const c = host.shadowRoot.querySelector('.ms__options--virtual, .ms__options');
-        c.scrollTop = 600;
-        c.dispatchEvent(new Event('scroll'));
+        host.shadowRoot.querySelector('.ms__dropdown-inner').scrollTop = 10;
     });
 
     await expect(tooltip).toHaveCount(0);

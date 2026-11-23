@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Internal — option tooltips hide on scroll through core (G9b) (2026-11-23)
+- ms's own "hide option tooltips on dropdown scroll" wiring (`hideOptionTooltips()`) is gone: core `createTooltip` hides a
+  hover-shown tooltip on any scroll around its target by default (`shouldHideOnScroll`), and only once the row actually
+  moved (≥ 3px), so a scroll event alone no longer hides it. The dropdown's capture scroll listener stays for the label
+  reveal (ms's own popup). e2e `tooltips.spec.ts` now scrolls the list's real scroller (a 10px scroll, the pointer stays
+  on the row).
+
 ### Changed — text sorting follows the `locale` (core `getCollator`) (G33) (2026-11-23)
 - `selected-order="label-asc"` / `"label-desc"` / `"member"` (text keys) and the tree's sibling order sort with core
   `getCollator(locale, { numeric: true })` instead of `localeCompare()` with the browser's default collation: the

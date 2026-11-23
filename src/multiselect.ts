@@ -240,13 +240,11 @@ export class MultiSelectEngine<T = any> {
     private messageCleanup: (() => void) | null = null;
     private messageTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Dismiss option tooltips the instant the list scrolls. Without this, a shown
-    // tooltip's floating-ui autoUpdate keeps chasing its anchor row as it scrolls
-    // (most visible under virtual scroll, where the row also recycles), so the
-    // tooltip visibly slides to the viewport edge before the next render clears it.
-    // Capturing so it catches scroll from the inner options container (scroll
-    // doesn't bubble). Same function ref → addEventListener dedupes across opens.
-    private readonly onDropdownScroll = (): void => { this.hideOptionTooltips(); this.hideLabelReveal(); };
+    // Hide the label reveal the instant the list scrolls (it's ms's own popup, not a core
+    // tooltip — option tooltips hide on scroll by themselves: core createTooltip
+    // shouldHideOnScroll). Capturing so it catches scroll from the inner options container
+    // (scroll doesn't bubble). Same function ref → addEventListener dedupes across opens.
+    private readonly onDropdownScroll = (): void => { this.hideLabelReveal(); };
 
     // Virtual scroll instance
     private virtualScroll: VirtualScroll<T> | null = null;
@@ -4077,7 +4075,7 @@ export class MultiSelectEngine<T = any> {
         }
         if (startIndex >= 0) requestAnimationFrame(() => this.revealFocusedOnOpen());
 
-        // Dismiss option tooltips immediately on scroll (see field comment).
+        // Hide the label reveal immediately on scroll (see field comment).
         this.dropdown.addEventListener('scroll', this.onDropdownScroll, true);
 
         // The hint mirrors the floating dropdown's placement; it has no role in the
@@ -6167,18 +6165,6 @@ export class MultiSelectEngine<T = any> {
             const el = this.messageEl;
             this.messageEl = null;
             animateOut(el, { className: 'ms__message--closing', doneCallback: () => el.remove() });
-        }
-    }
-
-    /**
-     * Hide (don't destroy) every currently-shown option tooltip immediately,
-     * ignoring the hide delay. Wired to dropdown scroll so a tooltip can't trail
-     * its recycling/scrolling anchor row. Handles stay in the map; a fresh hover
-     * re-shows them.
-     */
-    private hideOptionTooltips(): void {
-        for (const [id, handle] of this.tooltips) {
-            if (id.startsWith('option-')) handle.hide();
         }
     }
 
