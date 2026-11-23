@@ -8,7 +8,7 @@ import { MultiSelectEngine } from '../../src/multiselect';
  * Two entry points, both coalescing a group of changes into a SINGLE
  * reinit()/update() (one picker rebuild or one picker.updateOptions), flushed
  * synchronously:
- *   - `setAttributes({ configKey: typedValue })` — typed PROPERTY values by
+ *   - `setProperties({ configKey: typedValue })` — typed PROPERTY values by
  *     configKey (the batched analogue of a property assignment). Does NOT write
  *     attributes unless the input reflects.
  *   - `batch(() => { el.setAttribute(…); … })` — attribute STRINGS, parsed via
@@ -42,16 +42,16 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-describe('setAttributes — typed property batch', () => {
+describe('setProperties — typed property batch', () => {
     it('applies a multi-key set as a single picker.updateOptions call', async () => {
         await el.whenSettled(); // let the initial options reinit settle first
         const spy = vi.spyOn(MultiSelectEngine.prototype, 'updateOptions');
-        el.setAttributes({
+        el.setProperties({
             maxHeight: '15rem',
             badgeTooltipDelay: 50,
             searchDebounce: 20
         });
-        // setAttributes flushes synchronously → exactly one coalesced update.
+        // setProperties flushes synchronously → exactly one coalesced update.
         expect(spy).toHaveBeenCalledTimes(1);
         expect(spy.mock.calls[0][0]).toMatchObject({
             maxHeight: '15rem',
@@ -61,12 +61,12 @@ describe('setAttributes — typed property batch', () => {
     });
 
     it('applies the change so the live placeholder updates (i18n switch via labels)', () => {
-        el.setAttributes({ labels: { 'placeholders.search': 'Buscar…' } });
+        el.setProperties({ labels: { 'placeholders.search': 'Buscar…' } });
         expect(input().placeholder).toBe('Buscar…');
     });
 
     it('reflects only inputs marked reflect:true (members), not plain ones', () => {
-        el.setAttributes({ valueMember: 'id', searchDebounce: 5 });
+        el.setProperties({ valueMember: 'id', searchDebounce: 5 });
         // valueMember reflects; searchDebounce does not.
         expect(el.getAttribute('value-member')).toBe('id');
         expect(el.hasAttribute('search-debounce')).toBe(false);

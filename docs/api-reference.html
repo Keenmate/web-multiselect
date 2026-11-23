@@ -242,7 +242,7 @@
 
         <!-- JAVASCRIPT OPTIONS -->
         <h2>JavaScript Properties</h2>
-        <p class="section-intro">Set these as properties on the <code>&lt;web-multiselect&gt;</code> element (or several at once with <code>el.setAttributes({ … })</code>) and drive it through <code>el.controller</code>.</p>
+        <p class="section-intro">Set these as properties on the <code>&lt;web-multiselect&gt;</code> element (or several at once with <code>el.setProperties({ … })</code>) and drive it through <code>el.controller</code>.</p>
         <table>
             <thead>
                 <tr>
@@ -397,7 +397,7 @@
                 <tr>
                     <td><code>input-rejected</code></td>
                     <td class="type">InputRejection</td>
-                    <td>Fired synchronously (core <code>BlissElement</code>) whenever an attribute or property write is refused — an invalid value, or a <code>setAttributes()</code> key that names no input. The input keeps its previous value (a reflected input writes it back). Detail: <code>configKey</code>, <code>attribute?</code>, <code>value</code> (the raw string on the attribute path), <code>reason?</code>, <code>kept</code> (the value the input kept), <code>source</code> (<code>'attribute'</code> | <code>'property'</code>). Twin: <code>onInputRejected</code>.</td>
+                    <td>Fired synchronously (core <code>BlissElement</code>) whenever an attribute or property write is refused — an invalid value, or a <code>setProperties()</code> key that names no input. The input keeps its previous value (a reflected input writes it back). Detail: <code>configKey</code>, <code>attribute?</code>, <code>value</code> (the raw string on the attribute path), <code>reason?</code>, <code>kept</code> (the value the input kept), <code>source</code> (<code>'attribute'</code> | <code>'property'</code>). Twin: <code>onInputRejected</code>.</td>
                 </tr>
                 <tr>
                     <td colspan="3" style="background: #ecf0f1; font-style: italic; color: #7f8c8d;">
@@ -440,7 +440,7 @@
                     <td>The selected value(s) — a single value in single-select mode, an array in multi-select mode (same as <code>controller.selectedValue</code>).</td>
                 </tr>
                 <tr>
-                    <td><code>setAttributes</code></td>
+                    <td><code>setProperties</code></td>
                     <td class="type">(values: Record&lt;string, unknown&gt;) => InputRejection[]</td>
                     <td>Apply several inputs as one in-place update (one re-render instead of one per property). Returns the refused writes (<code>[]</code> when everything applied); each also fires <code>input-rejected</code>. Keys are property names (<code>configKey</code>, e.g. <code>maxHeight</code>) or their kebab attribute (<code>max-height</code>); values are <strong>typed property values</strong>, validated like a direct property assignment — not raw attribute strings. Flushes synchronously. To batch raw attribute strings, use <code>batch(() =&gt; { setAttribute(…) })</code>.</td>
                 </tr>

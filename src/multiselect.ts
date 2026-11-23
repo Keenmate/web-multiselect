@@ -4,14 +4,14 @@
  */
 
 // Positioning runs entirely on the core /positioning module. The dropdown/popover
-// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `onDrift` options — core owns
+// use `anchor`'s first-class `shouldUseFixedContainingBlock` + `driftCallback` options — core owns
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
 import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, observeKeyboardInset, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, onTextInput, isImeEnter, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, fitToVisibleViewport, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
@@ -72,7 +72,6 @@ import { initLogger, dataLogger, uiLogger, interactionLogger } from './logger';
 import {
     NO_SEARCH_TERM,
     createRegexCompiler,
-    escapeHtml,
     highlightHtml,
     matchesSearchTerm,
     normalizeSearchText,
@@ -209,7 +208,7 @@ export class MultiSelectEngine<T = any> {
     // helper is ref-counted; we hold at most one lock per instance. See lockBodyScroll().
     private bodyScrollUnlock: (() => void) | null = null;
     // Detaches the visualViewport listener that shrinks the fullscreen sheet to sit
-    // above the soft keyboard (null when not attached). See observeKeyboardInset().
+    // above the soft keyboard (null when not attached). See fitToVisibleViewport().
     private keyboardInsetCleanup: (() => void) | null = null;
     // Releases the history entry held for the open fullscreen sheet (null when none), so
     // the phone Back gesture/button closes the sheet instead of navigating the page. See
@@ -472,7 +471,7 @@ export class MultiSelectEngine<T = any> {
             match: this.options.searchMatch || 'contains',
             regex: this.searchRegex,
             getSearchTermCallback: callback ? (t) => callback(this.ctx(this.searchTermContext(t, 'internal'))) : undefined,
-            onObjectTerm: () => {
+            objectTermCallback: () => {
                 if (this.hasWarnedObjectSearchTerm) return;
                 this.hasWarnedObjectSearchTerm = true;
                 dataLogger.warn(`[${this.instanceId}] getSearchTermCallback returned an object for internal search (target "internal"): return a string or RegExp. Objects are for a custom searchCallback.`);
@@ -2380,8 +2379,8 @@ export class MultiSelectEngine<T = any> {
                 this.open();
             }
         });
-        // Core `onTextInput`: once per committed change — an IME's half-typed syllables don't search.
-        onTextInput(this.input, (value) => {
+        // Core `observeTextInput`: once per committed change — an IME's half-typed syllables don't search.
+        observeTextInput(this.input, (value) => {
             // Auto-open dropdown when user starts typing (if search is enabled)
             if (this.options.isSearchEnabled && !this.#isOpen) {
                 this.open();
@@ -2625,11 +2624,11 @@ export class MultiSelectEngine<T = any> {
     /** The async `searchCallback` source: one core runner per picker. */
     private readonly searchRunner = createAsyncRunner({
         debounceMs: () => this.options.searchDebounce || 0,
-        onLoadingChange: (isLoading) => {
+        loadingChangeCallback: (isLoading) => {
             this.isLoading = isLoading;
             if (isLoading) this.renderDropdown();
         },
-        onError: (error) => this.applySearchFailure(error),
+        errorCallback: (error) => this.applySearchFailure(error),
     });
 
     /**
@@ -4233,17 +4232,17 @@ export class MultiSelectEngine<T = any> {
             // resolved from the portaled panel — core builds the custom platform for us. The
             // panel is appended to `container` (the shadow root; standalone: core findOverlayContainer), so its containing block
             // can differ from the input's; measuring from the panel is what the browser does.
-            // Anything the heuristic still misses is caught by `onDrift`, which warns, pointing
+            // Anything the heuristic still misses is caught by `driftCallback`, which warns, pointing
             // at the likely culprit.
             shouldUseFixedContainingBlock: true,
             // Viewport-safety cap (core rc03): core's size() middleware sets the panel's
             // inline max-width to the space available on the resolved side (so long content
             // wraps instead of overflowing the viewport edge). We COMPOSE it with the
-            // author-chosen fixed `dropdownMaxWidth` in onPlaced (not beforeComputeCallback): this
+            // author-chosen fixed `dropdownMaxWidth` in placedCallback (not beforeComputeCallback): this
             // middleware runs during positioning and would otherwise clobber a fixed cap set
-            // earlier. onPlaced runs after it, so it gets the final say.
+            // earlier. placedCallback runs after it, so it gets the final say.
             maxWidth: { padding: 8 },
-            onDrift: (report) => this.warnDrift(report),
+            driftCallback: (report) => this.warnDrift(report),
             beforeComputeCallback: () => {
                 // Panel widths are CSS-variable driven (themeable at app level, overridable per
                 // instance via the dropdown-width / selected-popover-width attributes). The dropdown
@@ -4257,7 +4256,7 @@ export class MultiSelectEngine<T = any> {
                 (this.options.hostElement ?? this.element).style.setProperty('--_ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
-            onPlaced: (resolved) => {
+            placedCallback: (resolved) => {
                 // Record the placement once (the hint mirrors it); after freeze it never changes.
                 if (!opts.getPlacement()) opts.setPlacement(resolved);
                 // Compose the author cap with core's viewport cap. Core's size() apply just set
@@ -4277,7 +4276,7 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Surface a multiselect-branded, once-per-instance warning when core's drift check
-     * (`anchor`'s `onDrift`) reports the panel didn't land where it was positioned. The
+     * (`anchor`'s `driftCallback`) reports the panel didn't land where it was positioned. The
      * consumer has an ancestor that establishes a fixed containing block but isn't on the
      * reliable-anchors list.
      * We can't fix it from inside the library, but we point at the likely culprit. Core
@@ -4387,7 +4386,7 @@ export class MultiSelectEngine<T = any> {
             // floating dropdown; asked per scroll, so `close-on-scroll` and the presentation are
             // read live. The fullscreen sheet locks the page and is never closed this way.
             shouldCloseOnScroll: () => this.presentationMode === 'floating' && this.options.shouldCloseOnScroll !== false,
-            onClose: (reason: PopoverCloseReason) => {
+            closeCallback: (reason: PopoverCloseReason) => {
                 // The overlay tree closed it (another overlay opened, its parent closed): close
                 // the component too. 'api' is our own close() — already running.
                 if (reason !== 'api') this.closeWith(reason);
@@ -4486,12 +4485,12 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * While the fullscreen dropdown is open, keep it sitting above the soft keyboard.
-     * Delegates to core's `observeKeyboardInset` (which tracks `window.visualViewport`
+     * Delegates to core's `fitToVisibleViewport` (which tracks `window.visualViewport`
      * and pins the panel's height/top so its flex column reflows above the keyboard);
      * we just hold the returned cleanup. No-op where `visualViewport` is unavailable.
      */
     private observeKeyboardInset(): void {
-        this.keyboardInsetCleanup = observeKeyboardInset(this.dropdown);
+        this.keyboardInsetCleanup = fitToVisibleViewport(this.dropdown);
     }
 
     /** Detach keyboard-inset tracking and restore the panel's CSS-driven geometry. */
@@ -4721,7 +4720,7 @@ export class MultiSelectEngine<T = any> {
             this.setComboboxAria(search);
 
             // Proxy to the same search path as the main input, keeping the two in sync.
-            onTextInput(search, (value) => {
+            observeTextInput(search, (value) => {
                 this.input.value = value;
                 this.handleSearch(value);
                 this.updateFullscreenSearchClear();
@@ -5415,7 +5414,7 @@ export class MultiSelectEngine<T = any> {
             shouldCloseOnEscape: true,
             returnFocusTo: null,
             getInsideElements: () => [this.counter, ...Array.from(this.badgesContainer.querySelectorAll('[data-ms-action="show-selected"]'))],
-            onClose: (reason: PopoverCloseReason) => {
+            closeCallback: (reason: PopoverCloseReason) => {
                 // The overlay tree closed it (outside click, Escape, another overlay opened).
                 // 'api' is our own hideSelectedPopover() — already running.
                 if (reason !== 'api') this.hideSelectedPopover();
@@ -6225,7 +6224,7 @@ export class MultiSelectEngine<T = any> {
             // Fade out (core `animateOut`: the closing keyframes, instant with motion off), then remove.
             const el = this.messageEl;
             this.messageEl = null;
-            animateOut(el, { className: 'ms__message--closing', onDone: () => el.remove() });
+            animateOut(el, { className: 'ms__message--closing', doneCallback: () => el.remove() });
         }
     }
 

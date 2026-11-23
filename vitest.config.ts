@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config';
  *
  * Unit specs live in test/unit/*.test.ts and exercise the component logic in a
  * lightweight DOM (happy-dom) without a real browser — fast, isolated checks of
- * things like placeholder resolution and the setAttributes() batch update.
+ * things like placeholder resolution and the setProperties() batch update.
  *
  * Broader interaction/visual behaviour stays in the Playwright e2e suite (e2e/).
  *

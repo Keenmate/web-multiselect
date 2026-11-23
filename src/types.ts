@@ -3,7 +3,7 @@
  */
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
-import type { PresentationContext, ComponentContext, RenderLoaderCallback, RenderIconCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
+import type { PresentationContext, ComponentContext, RenderLoadingCallback, RenderIconCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
 import type { TranslateCallback } from '@keenmate/web-components-core/locale';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './utils/ltree-node';
@@ -914,7 +914,7 @@ export interface MultiSelectConfig<T = any> {
      * Beats the page-wide `window.components.renderLoadingCallback`; unset → the default
      * `.ms__loader` drawn from the `--ms-loader-*` tokens.
      */
-    renderLoadingCallback?: RenderLoaderCallback | null;
+    renderLoadingCallback?: RenderLoadingCallback | null;
     /**
      * This element's icon hook (core `renderIcon`, SPEC §12.33). Asked for an option / action-button
      * icon string that is not markup and not a built-in name (built-ins are reserved, no hook sees

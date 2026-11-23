@@ -121,7 +121,7 @@
 .ms__dropdown--fullscreen {
   position: fixed;
   /* top/left only — NOT `inset: 0`. `inset` also sets `bottom: 0`, and a fixed box with
-     both `top` and `bottom` constrained ignores its `height`. observeKeyboardInset()
+     both `top` and `bottom` constrained ignores its `height`. fitToVisibleViewport()
      shrinks the sheet above the soft keyboard by writing `height` (+ `top`), so a pinned
      `bottom` would silently defeat it — the list and bottom actions would stay behind the
      keyboard. With only top/left pinned, height governs and the keyboard reflow works. */
@@ -190,7 +190,7 @@
 }
 
 /* Pin the action row (Select All / Clear / custom) so it never shrinks and stays docked
-   at the bottom of the sheet. Once observeKeyboardInset() shrinks the panel above the
+   at the bottom of the sheet. Once fitToVisibleViewport() shrinks the panel above the
    soft keyboard, only .ms__options scrolls — the actions stay reachable above the keys. */
 .ms__dropdown--fullscreen .ms__actions {
   flex: 0 0 auto;

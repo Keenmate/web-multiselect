@@ -4,7 +4,7 @@
  *
  * All the custom-element plumbing that used to live here by hand — the
  * `ATTRIBUTE_TABLE`, `observedAttributes`, `attributeChangedCallback`,
- * `parseAttrValue`, the `setAttributes` batch, and the ~40 property/callback
+ * `parseAttrValue`, the `setProperties` batch, and the ~40 property/callback
  * getters/setters — is now declared ONCE as a core input table (`static inputs`)
  * plus an event table (`static events`). Core owns parsing, validation,
  * reactivity coalescing, reflection, and the managed `on<Name>` handler
@@ -723,7 +723,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // A cleared nullable input arrives as `null` and the picker resolves it falsily
     // (truthiness / `?? default`), so the clear lands — same result the old delete-null
     // loop produced, now via the one shared assembler instead of a per-component loop.
-    const cfg = this.engineConfig(NON_PICKER_KEYS);
+    const cfg = this.getEngineConfig(NON_PICKER_KEYS);
 
     cfg.options = this.#resolveOptionData(cfg.options as T[] | null | undefined);
 
@@ -813,7 +813,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
         css: this.config.customStyles as string | null | undefined,
         callback: this.config.getCustomStylesCallback as ((ctx: MultiSelectContext<T>) => string | null | undefined) | null | undefined,
       }),
-      onApply: (css) => { if (import.meta.env?.DEV) this.#checkCustomStyleVars(css); },
+      appliedCallback: (css) => { if (import.meta.env?.DEV) this.#checkCustomStyleVars(css); },
     });
   }
 

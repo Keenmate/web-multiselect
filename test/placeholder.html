@@ -10,7 +10,7 @@
 </head>
 <body>
     <h1>placeholders</h1>
-    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels['placeholders.select']</code>), the empty-list <code>labels['placeholders.noData']</code>, the mode-toggle keys, <code>{ctx.*}</code> placeholder templates, and live updates via <code>setAttributes()</code>.</p>
+    <p>Targeted by <code>e2e/placeholder.spec.ts</code>. Covers the search placeholder, the search-disabled "pick" placeholder (<code>labels['placeholders.select']</code>), the empty-list <code>labels['placeholders.noData']</code>, the mode-toggle keys, <code>{ctx.*}</code> placeholder templates, and live updates via <code>setProperties()</code>.</p>
 
     <div class="fixture">
         <div class="fixture-label">default (search enabled)</div>
@@ -64,7 +64,7 @@
 
             // Expose the data + a batch helper for the live-update tests.
             window.__items = items;
-            window.__setAttrs = (id, attrs) => document.getElementById(id).setAttributes(attrs);
+            window.__setAttrs = (id, attrs) => document.getElementById(id).setProperties(attrs);
         });
     </script>
 </body>

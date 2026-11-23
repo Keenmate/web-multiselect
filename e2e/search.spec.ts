@@ -972,7 +972,7 @@ test.describe('highlighting HTML labels', () => {
     });
 });
 
-test.describe('IME composition (core onTextInput / isImeEnter)', () => {
+test.describe('IME composition (core observeTextInput / isImeEnter)', () => {
     test('half-typed text does not filter; the committed word does; the confirming Enter selects nothing', async ({ page }) => {
         const p = picker(page, 'filter');
         await openDropdown(p);

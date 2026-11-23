@@ -223,7 +223,7 @@ their return value *is* consumed: `false` cancels, nothing continues.
 
 | Feature | Surface | Identifier | Notes | Wrapped? | E2E? |
 |---|---|---|---|---|---|
-| Batch attribute update | method | `setAttributes(attrs)` | One in-place render for many attrs; `null`/`false` removes, `true` → `""` | | |
+| Batch attribute update | method | `setProperties(attrs)` | One in-place render for many attrs; `null`/`false` removes, `true` → `""` | | |
 | Get selected options | method | `selectedOptions` | | | |
 | Set selected | method | `setSelected(values[])` | | | |
 | Get value | method | `selectedValue` | | | |

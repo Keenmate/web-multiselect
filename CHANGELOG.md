@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-rc04] - 2026-11-22 [PUBLISHED]
+## [3.0.0-rc04] - 2026-11-22
+
+### Changed — built on core `1.0.0-rc26` (the naming release) (2026-11-23)
+- `@keenmate/web-components-core` → `^1.0.0-rc26`; adopts core's final v1 names: `fitToVisibleViewport`
+  (was `observeKeyboardInset`), `observeTextInput` (was `onTextInput`), `RenderLoadingCallback` (was
+  `RenderLoaderCallback`), `getEngineConfig()` (was `engineConfig()`), `escapeHtml` from the main entry (was
+  `/search`), and the `*Callback` option fields (`objectTermCallback`, `loadingChangeCallback` / `errorCallback`,
+  `driftCallback`, `placedCallback`, `closeCallback`, `doneCallback`, `appliedCallback`). Internal only.
+- **BREAKING: `el.setAttributes({ … })` is now `el.setProperties({ … })`** — the batched typed-property write is
+  core's `BlissElement` method, renamed in core rc26; same arguments, same single update, same returned
+  rejections, no alias. Docs, tests and the release notes follow.
 
 ### Added — `required` + count constraints through core validity (C-CA-41) (2026-11-22)
 - **`required` / `isRequired`** (`toBool('presence')`, reflects, like native): while nothing is selected the host is
