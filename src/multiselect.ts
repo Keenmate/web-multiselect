@@ -4228,40 +4228,26 @@ export class MultiSelectEngine<T = any> {
             // Anything the heuristic still misses is caught by `driftCallback`, which warns, pointing
             // at the likely culprit.
             shouldUseFixedContainingBlock: true,
-            // Viewport-safety cap (core rc03): core's size() middleware sets the panel's
-            // inline max-width to the space available on the resolved side (so long content
-            // wraps instead of overflowing the viewport edge). We COMPOSE it with the
-            // author-chosen fixed `dropdownMaxWidth` in placedCallback (not beforeComputeCallback): this
-            // middleware runs during positioning and would otherwise clobber a fixed cap set
-            // earlier. placedCallback runs after it, so it gets the final say.
-            maxWidth: { padding: 8 },
+            // Viewport-safety cap: core's size() middleware sets the panel's inline max-width to the
+            // space available on the resolved side (long content wraps instead of overflowing the
+            // viewport edge); `cap` keeps the author's `dropdownMaxWidth` too — `min(cap, available)`.
+            // Read when the popover is created (the dropdown's is created per open).
+            maxWidth: { padding: 8, cap: (opts.applyMaxWidth && this.options.dropdownMaxWidth) || undefined },
+            // Panel widths are CSS-variable driven (themeable at app level, overridable per instance via
+            // the dropdown-width / selected-popover-width attributes). The dropdown defaults to the field
+            // width, which CSS can't measure — core publishes the live field (wrapper) width as
+            // --_ms-input-current-width before every computation (so shift() measures the final width) and
+            // `.ms__dropdown { width: var(--ms-dropdown-width) }` (whose default is that var) resolves it. It
+            // MUST be set on the host: --ms-dropdown-width is declared on :host, so its nested var() resolves
+            // against the host, not the panel; the resolved width inherits down to the shadow-tree panels.
+            referenceWidthVar: { name: '--_ms-input-current-width', element: this.options.hostElement ?? this.element },
             driftCallback: (report) => this.warnDrift(report),
             beforeComputeCallback: () => {
-                // Panel widths are CSS-variable driven (themeable at app level, overridable per
-                // instance via the dropdown-width / selected-popover-width attributes). The dropdown
-                // defaults to the field width, which CSS can't measure — so we publish the live field
-                // (wrapper) width as --_ms-input-current-width and let `.ms__dropdown { width: var(--ms-dropdown-width) }`
-                // (whose default is that var) resolve it. It MUST be set on the host: --ms-dropdown-width is
-                // declared on :host, so its nested var() resolves against the host, not the panel where the
-                // width is used. From there the resolved width inherits down to the shadow-tree panels.
-                // Set BEFORE positioning so shift() measures the final width; otherwise it sees the
-                // natural content width and strands the panel.
-                (this.options.hostElement ?? this.element).style.setProperty('--_ms-input-current-width', `${this.inputWrapper.offsetWidth}px`);
                 if (this.options.dropdownMinWidth) panel.style.minWidth = this.options.dropdownMinWidth;
             },
             placedCallback: (resolved) => {
                 // Record the placement once (the hint mirrors it); after freeze it never changes.
                 if (!opts.getPlacement()) opts.setPlacement(resolved);
-                // Compose the author cap with core's viewport cap. Core's size() apply just set
-                // panel.style.maxWidth to the available viewport width (a px string); clamp it to
-                // min(authorCap, available) so BOTH bounds hold. CSS min() handles mixed units
-                // (the author cap may be rem/%/px). Runs every frame after apply, so it's stable.
-                if (opts.applyMaxWidth && this.options.dropdownMaxWidth) {
-                    const available = panel.style.maxWidth; // px, set by core's maxWidth middleware
-                    panel.style.maxWidth = available
-                        ? `min(${this.options.dropdownMaxWidth}, ${available})`
-                        : this.options.dropdownMaxWidth;
-                }
                 opts.afterPosition?.();
             }
         };
@@ -4395,7 +4381,7 @@ export class MultiSelectEngine<T = any> {
             if (mode === 'fullscreen') {
                 this.selectedPopoverHandle?.setAnchored(false); // still open, now CSS-placed
                 this.selectedPopoverPlacement = null;
-                this.clearFloatingInlineGeometry(this.selectedPopover);
+                this.clearFloatingMinWidth(this.selectedPopover);
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
                 this.syncSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
@@ -4609,27 +4595,17 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Clear the inline geometry that floating-ui's `anchor` writes on a panel
-     * (position/left/top plus our composed max-width/min-width). Inline styles beat
-     * the stylesheet, so a panel left over from a floating cycle would otherwise pin
-     * itself where it last anchored and ignore the fullscreen CSS (position: fixed;
-     * inset: 0; width: 100vw). Must run when switching a panel floating → fullscreen.
+     * Clear the `dropdownMinWidth` ms writes on a floating panel (beforeComputeCallback) when it
+     * turns fullscreen — an inline min-width beats the sheet CSS. The anchor's own geometry
+     * (position / left / top, max-width) core puts back itself (`setAnchored(false)` / destroy).
      */
-    private clearFloatingInlineGeometry(panel: HTMLElement): void {
-        panel.style.position = '';
-        panel.style.left = '';
-        panel.style.top = '';
-        panel.style.right = '';
-        panel.style.bottom = '';
-        panel.style.transform = '';
-        panel.style.maxWidth = '';
+    private clearFloatingMinWidth(panel: HTMLElement): void {
         panel.style.minWidth = '';
-        panel.style.width = '';
     }
 
     /** Stand up the fullscreen dropdown overlay: modifier class, header, scroll lock, focus. */
     private enterFullscreen(): void {
-        this.clearFloatingInlineGeometry(this.dropdown);
+        this.clearFloatingMinWidth(this.dropdown);
         this.dropdown.classList.add('ms__dropdown--fullscreen');
         this.buildFullscreenHeader();
         // Modal: inert page + Tab trap, Escape / Back close, scroll lock, the sheet shrinks to sit

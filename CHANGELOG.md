@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Internal — floating panel sizing through core anchor options (CONSOLIDATED §8 (T)) (2026-11-23)
+- The `dropdown-max-width` cap is core `anchor({ maxWidth: { padding: 8, cap } })` (`min(cap, available)`) instead of
+  ms re-writing `max-width` in `placedCallback` every frame. The cap is read when the dropdown opens (a change while it
+  is open applies on the next open).
+- The field width (`--_ms-input-current-width` on the host, the default of `--ms-dropdown-width`) is published by core
+  `referenceWidthVar` before every computation instead of ms's own `beforeComputeCallback` write (now the rendered
+  width, `getBoundingClientRect`, not the rounded `offsetWidth`).
+- `clearFloatingInlineGeometry()` → `clearFloatingMinWidth()`: on a floating → fullscreen switch core already puts back
+  the position / left / top and the max-width it wrote; only ms's own `dropdown-min-width` write is cleared.
+
 ### Added — render callbacks get `labels` / `isReadonly` / `isDisabled` and re-run in place when they change (2026-11-23)
 - Every render / display callback's ctx (`MultiSelectRenderContext`, the web-treeview shape) carries `labels` (core
   `createLabelsView`: `ctx.labels.text(key, params)` / `ctx.labels.html(key, params)` — instance `labels` → the
