@@ -31,8 +31,6 @@ import {
   toValue,
   adoptStyles,
   createCustomStyles,
-  extractConsumedCssVars,
-  lintCssVars,
   getEnvironment,
   resolvePresentation,
   createControllerFacade,
@@ -322,15 +320,6 @@ const CSS_VARS: Record<string, string> = {
   selectedPopoverWidth: '--ms-selected-popover-width',
 };
 
-// getCustomStylesCallback dev-mode lint (see #checkCustomStyleVars). The set of
-// `--ms-*` variables the stylesheet reads is computed once from the (static)
-// bundled stylesheet. Empty when the CSS isn't inlined (e.g. under vitest),
-// which the check treats as "no ground truth" and skips.
-let consumedMsVarsCache: Set<string> | null = null;
-function consumedMsVars(): Set<string> {
-  return (consumedMsVarsCache ??= extractConsumedCssVars(styles, '--ms-'));
-}
-
 export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents, MultiSelectController<T>> {
   // Opt into the form-associated custom element lifecycle so form.reset() and
   // form.elements see the control.
@@ -368,8 +357,6 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
   // reinit or a re-attach (keep the live selection). See #buildPicker.
   #lastDefaultValueJSON?: string;
   #customStyles: CustomStylesHandle | null = null;
-  // Dev-mode getCustomStylesCallback lint: unknown --ms-* names already warned about.
-  #warnedCssVars = new Set<string>();
 
   // Declarative <option>/<optgroup> state (parsed once from light DOM).
   #declParsed = false;
@@ -808,34 +795,10 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
         css: this.config.customStyles as string | null | undefined,
         callback: this.config.getCustomStylesCallback as ((ctx: MultiSelectContext<T>) => string | null | undefined) | null | undefined,
       }),
-      appliedCallback: (css) => { if (import.meta.env?.DEV) this.#checkCustomStyleVars(css); },
+      // Dev-only lint (core): warn once per variable when custom CSS sets a `--ms-*` name no
+      // web-multiselect style reads ("Did you mean …?"). Not passed in the production build.
+      lintCssVars: import.meta.env?.DEV ? { prefix: '--ms-', componentCss: styles } : undefined,
     });
-  }
-
-  /**
-   * Dev-only lint: warn when `getCustomStylesCallback` *sets* a `--ms-*` variable
-   * that no web-multiselect style ever reads (`var(--ms-…)`) — a misspelled or
-   * renamed variable fails silently otherwise (e.g. `--ms-badge-text-background`
-   * instead of `--ms-badge-text-bg`). Guarded by `import.meta.env.DEV`, so it's
-   * stripped from the production build and never fires for shipped consumers.
-   * De-duped per instance. If you genuinely define a `--ms-*` var for your own
-   * custom-rendered content, ignore the warning (or use a different prefix).
-   */
-  #checkCustomStyleVars(css: string): void {
-    const consumed = consumedMsVars();
-    if (consumed.size === 0) return; // stylesheet not inlined (e.g. vitest) — no ground truth
-    // Pure lint lives in core (lintCssVars); the element owns only the dev gate
-    // (see the call site), per-instance de-dup, and the (instance-logger) message.
-    for (const { name, suggestions } of lintCssVars(css, { prefix: '--ms-', consumed })) {
-      if (this.#warnedCssVars.has(name)) continue;
-      this.#warnedCssVars.add(name);
-      this.log.UI.warn(
-        `getCustomStylesCallback sets "${name}", which no ` +
-          `web-multiselect style consumes — it will have no effect.` +
-          (suggestions.length ? ` Did you mean: ${suggestions.join(', ')}?` : '') +
-          ` (If it's for your own custom-rendered content, ignore this.)`
-      );
-    }
   }
 
   // ── CSS-var sugar ─────────────────────────────────────────────────────────

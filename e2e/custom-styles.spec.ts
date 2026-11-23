@@ -87,3 +87,17 @@ test('an @import is applied in the shadow root and linked once in <head> (fonts 
     await page.evaluate(() => { (window as any).components['web-multiselect'].customStyles = null; });
     await expect.poll(headLinks).toEqual([]);
 });
+
+test('dev-mode lint: custom CSS setting an unknown --ms-* variable warns once, with a suggestion (core lintCssVars)', async ({ page }) => {
+    const warnings: string[] = [];
+    page.on('console', (m) => { if (m.type() === 'warning' && m.text().includes('--ms-input-border-colour')) warnings.push(m.text()); });
+    const p = picker(page, 'cs-reactive');
+    await p.evaluate(el => el.setAttribute('custom-styles', ':host { --ms-input-border-colour: red; }'));
+    await expect.poll(() => warnings.length).toBe(1);
+    expect(warnings[0]).toContain('Did you mean');
+    expect(warnings[0]).toContain('--ms-input-border-color');
+    // A refresh with the same variable doesn't repeat it.
+    await p.evaluate(el => el.setAttribute('custom-styles', ':host { --ms-input-border-colour: blue; }'));
+    await page.waitForTimeout(100);
+    expect(warnings.length).toBe(1);
+});

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Internal — the custom-CSS variable lint is core's (G26) (2026-11-23)
+- The dev-mode check that warns when `custom-styles` / `getCustomStylesCallback` / the page-wide `customStyles` sets a
+  `--ms-*` variable no web-multiselect style reads now runs in core `createCustomStyles({ lintCssVars })` (passed only
+  under `import.meta.env.DEV`, so it stays out of the production build). Same behaviour: once per variable per element,
+  with "Did you mean …?" suggestions; the message text is core's (THEME category). ms's own copy
+  (`#checkCustomStyleVars`, the consumed-variables cache) is gone. e2e: `custom-styles.spec.ts` dev-mode lint.
+
 ### Internal — the engine's `data-*` dialect is gone (Q13) (2026-11-23)
 
 - The internal engine no longer reads ~30 settings off its container's `data-*` attributes (each with its own hard-coded
