@@ -85,6 +85,7 @@ export type {
   MessageVariant,
   MessageOptions,
   MultiSelectContext,
+  MultiSelectRenderContext,
   ItemContext,
   SelectedOrderCompareContext,
   TreeNodeContext,

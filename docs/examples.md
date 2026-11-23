@@ -596,7 +596,8 @@ Customize how options appear in the dropdown:
   ];
 
   select.renderOptionContentCallback = ({ option }) => {
-    // ctx provides: { option, optionIndex, isSelected, isFocused, isMatched, isDisabled,
+    // ctx provides: { option, optionIndex, isSelected, isFocused, isMatched, isOptionDisabled,
+    //                 labels, isReadonly, isDisabled,
     //                 presentation, isFullscreen, controller, element, + tree fields }
 
     return `
@@ -617,7 +618,12 @@ Customize how options appear in the dropdown:
 - `isSelected: boolean` — whether the option is currently selected.
 - `isFocused: boolean` — whether the option is currently focused (keyboard navigation).
 - `isMatched: boolean` — whether the option matches the current search term (navigate mode only).
-- `isDisabled: boolean` — whether the option is disabled.
+- `isOptionDisabled: boolean` — whether THIS option is disabled (`isDisabledMember` / `getIsDisabledCallback`).
+- `labels` — the component's UI strings (core `createLabelsView`): `ctx.labels.text(key, params)` /
+  `ctx.labels.html(key, params)`, the same chain the built-in texts use (instance `labels` → `translateCallback`s →
+  page-wide labels → English).
+- `isReadonly: boolean` — the component is read-only (`readonly`).
+- `isDisabled: boolean` — the component's effective disabled state (`disabled`, or a disabled `<fieldset>`).
 - `presentation: 'floating' | 'modal' | 'fullscreen'` — how the open panel is presented (this
   component only ever emits `floating` — the anchored desktop/tablet dropdown — or `fullscreen`,
   the phone overlay). Resolved from the device/viewport and **reactive**: rotating/resizing across
@@ -627,6 +633,21 @@ Customize how options appear in the dropdown:
 - `isModal: boolean` — convenience for `presentation === 'modal'` (always `false` here).
 - Tree-mode rows also carry `isTreeNode / isBranch / isLeaf / childCount / level / depth / path /
   isSelectable / isIndeterminate`.
+
+**Every render callback gets `labels` / `isReadonly` / `isDisabled`** (`MultiSelectRenderContext`): the option,
+badge (`renderBadgeContentCallback`, `renderBadgeCallback`, `renderSelectedItemContentCallback`,
+`getBadgeDisplayCallback`, the class callbacks), single-select (`renderSelectedContentCallback`), group label,
+tooltip (`getOptionTooltipCallback`, `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback`), counter
+(`getCounterCallback`, `getCountLabelCallback`) and add-new (`getAddNewTextCallback`) callbacks. A change of
+`labels`, `locale`, `translateCallback`, the page-wide `window.components.locale`, `readonly` or the effective disabled
+state re-runs the rendered callbacks IN PLACE — the selection, the search, an open dropdown and its scroll are kept:
+
+```javascript
+select.renderOptionContentCallback = ({ option, labels, isReadonly, isDisabled }) =>
+  `<span class="${isReadonly || isDisabled ? 'muted' : ''}">${option.name}</span>`
+  + (option.isDraft ? ` <small>${labels.html('labels.addNew', { ctx: { value: option.name } })}</small>` : '');
+// el.isReadonly = true / el.labels = {…} / window.components.locale = {…} → the rows re-render with the new values
+```
 
 **Responsive rendering** — render rich rows on desktop and a leaner variant on the phone, from
 one callback (no `matchMedia` wiring; the component drives it):

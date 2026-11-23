@@ -672,6 +672,49 @@
             </kmwc-demo>
         </div>
 
+        <div class="card">
+            <h2>CR12 · Render callbacks read <code>labels</code> / <code>isReadonly</code> / <code>isDisabled</code></h2>
+            <p>
+                Every render callback's <code>ctx</code> carries <code>labels</code> (<code>ctx.labels.text(key)</code> /
+                <code>.html(key)</code> — the same chain as the built-in texts), <code>isReadonly</code> and
+                <code>isDisabled</code> (the effective state, a disabled <code>&lt;fieldset&gt;</code> included). When one
+                of them changes — <code>labels</code>, <code>locale</code>, <code>translateCallback</code>, the page-wide
+                <code>window.components.locale</code>, <code>readonly</code>, <code>disabled</code> — the rendered
+                callbacks re-run in place: the selection and the search stay.
+            </p>
+
+            <kmwc-demo>
+                <div class="controls">
+                    <label><input type="checkbox" role="switch" id="cr-ctx-readonly"> <code>readonly</code></label>
+                    <label><input type="checkbox" role="switch" id="cr-ctx-disabled"> <code>disabled</code></label>
+                    <label><input type="checkbox" role="switch" id="cr-ctx-czech"> Czech <code>labels</code></label>
+                </div>
+                <div class="form-group">
+                    <label>Badges and rows follow the state</label>
+                    <web-multiselect id="cr-ctx">
+                        <option value="react" selected>React</option>
+                        <option value="vue" selected>Vue.js</option>
+                        <option value="svelte">Svelte</option>
+                    </web-multiselect>
+                </div>
+                <script type="module" data-kmwc-show>
+                    const el = document.getElementById('cr-ctx');
+                    const lock = (ctx) => ctx.isDisabled ? '⛔ ' : ctx.isReadonly ? '🔒 ' : '';
+                    // ctx.labels reads the element's labels → translateCallback → page-wide labels → English.
+                    el.renderOptionContentCallback = (ctx) => `${lock(ctx)}${ctx.option.label}`
+                        + (ctx.isSelected && !ctx.isReadonly
+                            ? ` <small>· ${ctx.labels.html('ariaLabels.removeItem', { ctx: { displayValue: ctx.option.label } })}</small>`
+                            : '');
+                    el.renderBadgeContentCallback = (ctx) => `${lock(ctx)}${ctx.option.label}`;
+                    document.getElementById('cr-ctx-readonly').addEventListener('change', (e) => { el.isReadonly = e.target.checked; });
+                    document.getElementById('cr-ctx-disabled').addEventListener('change', (e) => { el.isDisabled = e.target.checked; });
+                    document.getElementById('cr-ctx-czech').addEventListener('change', (e) => {
+                        el.labels = e.target.checked ? { 'ariaLabels.removeItem': 'Odebrat {ctx.displayValue}' } : {};
+                    });
+                </script>
+            </kmwc-demo>
+        </div>
+
     <style>
         /* Custom checkbox sizing for example #14 */
         #large-checkbox {

@@ -110,3 +110,51 @@ test('checkbox-align="top" puts the checkbox on the first text line of a tall cu
     });
     expect(Math.abs(offset)).toBeLessThan(3);
 });
+
+test.describe('render ctx: labels / isReadonly / isDisabled', () => {
+    test('readonly / disabled / labels / page-wide locale re-run the callbacks in place (no rebuild, selection kept)', async ({ page }) => {
+        const p = picker(page, 'ctx-render');
+        const badge = p.locator('.js-ctx-badge');
+        await expect(badge).toHaveText('apple|Select all|rw|on');
+        // A rebuild would replace the input; in place keeps it.
+        await p.evaluate((el: any) => { el.shadowRoot.querySelector('.ms__input').dataset.mark = 'kept'; });
+
+        await p.evaluate(async (el: any) => { el.isReadonly = true; await el.whenSettled(); });
+        await expect(badge).toHaveText('apple|Select all|ro|on');
+
+        await p.evaluate(async (el: any) => { el.labels = { 'buttons.selectAll': 'Vybrat vse' }; await el.whenSettled(); });
+        await expect(badge).toHaveText('apple|Vybrat vse|ro|on');
+
+        await p.evaluate((el: any) => el.setAttribute('disabled', ''));
+        await expect(badge).toHaveText('apple|Vybrat vse|ro|off');
+
+        await p.evaluate(async (el: any) => { el.isDisabled = false; el.isReadonly = false; el.labels = {}; await el.whenSettled(); });
+        await expect(badge).toHaveText('apple|Select all|rw|on');
+        await page.evaluate(() => {
+            (window as any).components.locale = { labels: { 'web-multiselect.buttons.selectAll': 'Tout' } };
+        });
+        await expect(badge).toHaveText('apple|Tout|rw|on');
+
+        await expect(p.locator('.ms__input')).toHaveAttribute('data-mark', 'kept');
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
+    });
+
+    test('a labels change while the dropdown is open re-runs the option rows in place: open, search and selection kept', async ({ page }) => {
+        const p = picker(page, 'ctx-render');
+        await openDropdown(p);
+        await expect(p.locator('.ms__option[data-value="apple"] .js-ctx-opt')).toHaveText('apple|Select all|rw|on');
+        // isOptionDisabled = this option; isDisabled = the component.
+        await expect(p.locator('.ms__option[data-value="durian"] .js-ctx-optdis')).toHaveText('true');
+        await expect(p.locator('.ms__option[data-value="apple"] .js-ctx-optdis')).toHaveText('false');
+        await p.locator('.ms__input').fill('an');
+        await expect(p.locator('.ms__option[data-value="banana"]')).toBeVisible();
+        await expect(p.locator('.ms__option[data-value="apple"]')).toHaveCount(0);
+
+        await p.evaluate(async (el: any) => { el.labels = { 'buttons.selectAll': 'Alle' }; await el.whenSettled(); });
+        await expect(p.locator('.ms__option[data-value="banana"] .js-ctx-opt')).toHaveText('banana|Alle|rw|on');
+        await expect(p.locator('.ms__dropdown')).toBeVisible();
+        await expect(p.locator('.ms__input')).toHaveValue('an');
+        await expect(p.locator('.ms__option[data-value="apple"]')).toHaveCount(0);
+        expect(await p.evaluate((el: any) => el.selectedValue)).toEqual(['apple']);
+    });
+});

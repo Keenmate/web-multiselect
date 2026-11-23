@@ -51,6 +51,11 @@
             value-member="value" display-value-member="label"></web-multiselect>
     </div>
 
+    <div class="fixture">
+        <div class="fixture-label">render ctx: labels / isReadonly / isDisabled (re-run in place on a change)</div>
+        <web-multiselect id="ctx-render" value-member="value" display-value-member="label"></web-multiselect>
+    </div>
+
     <script type="module">
         import '/src/index.ts';
 
@@ -84,6 +89,15 @@
             // Popover item: the ctx is a BadgeContentRenderContext — surface isInPopover.
             document.getElementById('sel-item').renderSelectedItemContentCallback = ({ option, isInPopover }) =>
                 `<span class="js-sel-item" data-pop="${isInPopover}">${option.label}</span>`;
+
+            // Render callbacks whose output depends on the values their ctx carries (labels, isReadonly, isDisabled).
+            const out = (cls, { option, labels, isReadonly, isDisabled }) =>
+                `<span class="${cls}">${option.value}|${labels.text('buttons.selectAll')}|${isReadonly ? 'ro' : 'rw'}|${isDisabled ? 'off' : 'on'}</span>`;
+            const ctxEl = document.getElementById('ctx-render');
+            ctxEl.options = [...items, { value: 'durian', label: 'Durian', disabled: true }];
+            ctxEl.value = ['apple'];
+            ctxEl.renderOptionContentCallback = (ctx) => out('js-ctx-opt', ctx) + `<i class="js-ctx-optdis">${ctx.isOptionDisabled}</i>`;
+            ctxEl.renderBadgeContentCallback = (ctx) => out('js-ctx-badge', ctx);
         });
     </script>
 </body>

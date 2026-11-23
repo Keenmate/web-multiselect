@@ -541,7 +541,9 @@ multiselect.renderGroupLabelContentCallback = (ctx) => {
   return `<strong>📦 ${ctx.groupName.toUpperCase()}</strong> ${ctx.selectedCount}/${ctx.memberCount}`;
 };
 
-// ctx: { option, optionIndex, isSelected, isFocused, isMatched, isDisabled, …tree fields }
+// ctx: { option, optionIndex, isSelected, isFocused, isMatched, isOptionDisabled, …tree fields,
+//        labels, isReadonly, isDisabled } — every render callback's ctx carries labels (ctx.labels.text(key)),
+//        isReadonly and isDisabled (the component's effective state); a change of one re-runs them in place.
 // A [data-action] element inside fires the `action` event (source 'option') and
 // never toggles the row.
 multiselect.renderOptionContentCallback = ({ option }) => {
@@ -718,7 +720,8 @@ texts), `labels.*` (other visible text), `headers.*`, `buttons.*`, `ariaLabels.*
 deliberately empty (renders nothing). Labels shown inside the dropdown / badges (`messages.noData`,
 `messages.noResults`, `messages.searching`, `labels.addNew`, `messages.addNewPending`, `labels.selectedCount`,
 `labels.moreCount`) may contain HTML (inserted as-is — sanitize untrusted text); ARIA labels, tooltips and
-placeholders are plain text. A `labels` change rebuilds the picker (the selection is kept).
+placeholders are plain text. A `labels` change applies in place (no rebuild — selection, search, an open dropdown
+and its scroll are kept) and re-runs the render callbacks, whose `ctx.labels` reads the same chain.
 
 **Templates read the text spot's context — `{ctx.<path>}`.** A dynamic text hands its context to the label as
 `{ ctx }`: the SAME object the spot's callback gets, where it has one (`labels.selectedCount` / `labels.moreCount`
@@ -737,12 +740,12 @@ context RAW as `params.ctx` — one generic bridge pluralizes every key:
 
 Labels resolve per key through core `/locale` (`createLabels`): the instance `labels` (short key, or the full
 `web-multiselect.<key>`) → the page-wide flat dictionary `window.components.locale.labels['web-multiselect.<key>']`
-→ the English default. Assigning `window.components.locale` re-renders every live picker (selection kept); a
+→ the English default. Assigning `window.components.locale` re-renders every live picker in place (selection kept); a
 page-wide `translateCallback({ component, key, template, params, locale })` (i18next / ICU) gets the full key of
 every label the instance didn't set (return a string, or `null` = not mine), and `window.components.security =
 { shouldEscapeLabels: true }` turns the HTML labels above into plain text. The element's own `translateCallback`
 property (same shape) is asked first — one multiselect needs no page setup; `null` passes the key on to the
-page-wide one, and the instance `labels` beat both. Changing it rebuilds the picker (selection kept).
+page-wide one, and the instance `labels` beat both. Changing it applies in place (selection kept).
 
 ```js
 select.translateCallback = ({ key, params }) => {

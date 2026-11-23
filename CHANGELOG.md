@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Added — render callbacks get `labels` / `isReadonly` / `isDisabled` and re-run in place when they change (2026-11-23)
+- Every render / display callback's ctx (`MultiSelectRenderContext`, the web-treeview shape) carries `labels` (core
+  `createLabelsView`: `ctx.labels.text(key, params)` / `ctx.labels.html(key, params)` — instance `labels` → the
+  `translateCallback`s → page-wide labels → English), `isReadonly` and `isDisabled` (the effective state, a disabled
+  `<fieldset>` included): `renderOptionContentCallback`, `getOptionTooltipCallback`, `renderBadgeContentCallback`,
+  `renderBadgeCallback`, `renderSelectedItemContentCallback`, `renderSelectedContentCallback`,
+  `renderGroupLabelContentCallback`, `getBadgeDisplayCallback`, `getBadgeClassCallback`, `getSelectedItemClassCallback`,
+  `getBadgeTooltipCallback`, `getRemoveButtonTooltipCallback`, `getCounterCallback`, `getCountLabelCallback`,
+  `getAddNewTextCallback` (+ `beforeAddCallback`, same `AddContext`). `renderLoadingCallback` keeps core's
+  `LoaderRenderContext` (its `label` is already the resolved text).
+- A change of `labels`, `locale`, `translateCallback`, the page-wide `window.components.locale`, `isReadonly` or the
+  effective disabled state re-runs the rendered callbacks IN PLACE. **A `labels` / `locale` / `translateCallback` /
+  page-wide locale change no longer rebuilds the picker**: the texts built once (inline clear, search hint — created /
+  removed as its label turns non-empty / empty — placeholders, the phone sheet's controls, the selected-items popover)
+  re-resolve where they are; the selection, the search term, an open dropdown and its scroll are kept. A disabled flip
+  now re-renders the list + badges too (before, only the interaction state changed).
+- **BREAKING:** `OptionContentRenderContext.isDisabled` (the ROW's disabled flag) is now `isOptionDisabled`;
+  `ctx.isDisabled` is the component's effective disabled state, the same field every Keenmate component's render ctx
+  has. `SelectedContentRenderContext` is an interface now (was an alias of `ItemContext`).
+- Docs: `docs/examples.md` custom rendering (ctx list + the shared render ctx), `docs/usage.md`; example card CR12
+  (`examples-custom-rendering.html`). e2e `custom-rendering.spec.ts`: readonly / labels / disabled / page-wide locale
+  update the output in place (same input element, selection kept), a labels change keeps an open dropdown + its search;
+  unit `placeholder.test.ts` (labels in place, hint created / removed).
+
 ### Changed — the phone sheets animate out; the dropdown sheet header is core's (W3) (2026-11-23)
 - **Closing a phone sheet** (the fullscreen dropdown and the fullscreen selected-items popover — ✕, Escape, Back, a
   pick that closes, `el.close()`) now plays core's exit animation (`animateOut` with `km-sheet--closing`: the motion

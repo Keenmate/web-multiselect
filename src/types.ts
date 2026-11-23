@@ -4,7 +4,7 @@
 
 import type { Placement } from '@keenmate/web-components-core/positioning';
 import type { PresentationContext, ComponentContext, RenderLoadingCallback, RenderIconCallback, ResponsiveMap, ResponsiveCallback } from '@keenmate/web-components-core';
-import type { TranslateCallback } from '@keenmate/web-components-core/locale';
+import type { TranslateCallback, LabelsView } from '@keenmate/web-components-core/locale';
 import type { ActionItem, ActionEventDetail } from '@keenmate/web-components-core/actions';
 import type { LTreeNode } from './utils/ltree-node';
 import type { OptionsFormat } from './option-formats';
@@ -232,6 +232,26 @@ export type ActionsAlign = 'stretch' | 'left' | 'right' | 'center' | 'space-betw
  */
 export interface MultiSelectContext<T = any> extends ComponentContext<MultiSelectController<T>>, PresentationContext {}
 
+/**
+ * The values every RENDER callback's `ctx` carries on top of {@link MultiSelectContext} — the render / display
+ * callbacks (`renderOptionContentCallback`, `renderBadgeContentCallback`, `renderBadgeCallback`,
+ * `renderSelectedItemContentCallback`, `renderSelectedContentCallback`, `renderGroupLabelContentCallback`,
+ * `getBadgeDisplayCallback`, `getBadgeClassCallback`, `getSelectedItemClassCallback`, `getBadgeTooltipCallback`,
+ * `getOptionTooltipCallback`, `getRemoveButtonTooltipCallback`, `getCounterCallback`, `getCountLabelCallback`,
+ * `getAddNewTextCallback`). A change of any value here (`labels` / `locale` / `translateCallback`, the page-wide
+ * locale, `isReadonly`, the effective disabled state) re-runs the rendered callbacks in place — the selection,
+ * the search, an open dropdown and its scroll are kept.
+ */
+export interface MultiSelectRenderContext<T = any> extends MultiSelectContext<T> {
+    /** The component's UI strings (core `createLabelsView`): `ctx.labels.text(key, params)` / `ctx.labels.html(key, params)` —
+     *  instance `labels` → own / page-wide `translateCallback` → page-wide labels → English, `{count}` locale-formatted. */
+    labels: LabelsView<Required<MultiSelectLabels>>;
+    /** Read-only (`isReadonly`): the user can't change the selection. */
+    isReadonly: boolean;
+    /** The effective disabled state (`isDisabled`, or a disabled `<fieldset>`). */
+    isDisabled: boolean;
+}
+
 /** `ctx` of the per-option callbacks (`getValueCallback`, `getIconCallback`, …): the option is `option`. */
 export interface ItemContext<T = any> extends MultiSelectContext<T> {
     /** The option this call is about. */
@@ -245,10 +265,11 @@ export interface TreeNodeContext<T = any> extends ItemContext<T> {
 }
 
 /**
- * `ctx` of `renderOptionContentCallback` / `getOptionTooltipCallback` — one dropdown row.
+ * `ctx` of `renderOptionContentCallback` / `getOptionTooltipCallback` — one dropdown row, plus the
+ * {@link MultiSelectRenderContext} values (`labels`, `isReadonly`, `isDisabled` — the component's state).
  * Reactive: swapping presentation re-renders and re-invokes the callback with the new value.
  */
-export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
+export interface OptionContentRenderContext<T = any> extends ItemContext<T>, MultiSelectRenderContext<T> {
     /** Index of the option in the filtered list */
     optionIndex: number;
     /** Whether the option is currently selected */
@@ -257,8 +278,9 @@ export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
     isFocused: boolean;
     /** Whether the option matches the current search term (navigate mode only) */
     isMatched: boolean;
-    /** Whether the option is disabled */
-    isDisabled: boolean;
+    /** Whether THIS option is disabled (`isDisabledMember` / `getIsDisabledCallback`). The component's own
+     *  disabled state is `isDisabled`. */
+    isOptionDisabled: boolean;
 
     // --- Tree fields (present only when rendering a tree-mode node) ---
     /** True when this row is a tree node (path-member / tree mode). Absent/false for flat options. */
@@ -288,7 +310,7 @@ export interface OptionContentRenderContext<T = any> extends ItemContext<T> {
  * Outside a badge render (selected-order sorting, the counter tooltip) `displayMode` is the
  * configured mode and `isInPopover` is `false`.
  */
-export interface BadgeContentRenderContext<T = any> extends ItemContext<T> {
+export interface BadgeContentRenderContext<T = any> extends ItemContext<T>, MultiSelectRenderContext<T> {
     /** Current badges display mode */
     displayMode: BadgesDisplayMode;
     /** Whether the badge is being rendered in the selected items popover */
@@ -305,7 +327,7 @@ export interface RemoveItemContext<T = any> extends BadgeContentRenderContext<T>
 }
 
 /** `ctx` of `renderSelectedContentCallback` (the single-select selected-value display). */
-export type SelectedContentRenderContext<T = any> = ItemContext<T>;
+export interface SelectedContentRenderContext<T = any> extends ItemContext<T>, MultiSelectRenderContext<T> {}
 
 /**
  * `ctx` of `renderGroupLabelContentCallback`, so a custom group header can reflect the
@@ -314,7 +336,7 @@ export type SelectedContentRenderContext<T = any> = ItemContext<T>;
  * Under the default rendering (no callback) the component draws the count itself; with a
  * callback, YOU own the content and can render the count however you like from these fields.
  */
-export interface GroupLabelRenderContext<T = any> extends MultiSelectContext<T> {
+export interface GroupLabelRenderContext<T = any> extends MultiSelectRenderContext<T> {
     /** The group name. */
     groupName: string;
     /** The group's currently-visible (filtered) members, in render order. */
@@ -347,7 +369,7 @@ export interface SelectionCountContext<T = any> extends MultiSelectContext<T> {
  * of `labels.selectedCount`, `labels.moreCount` and the "+X more" badge's remove (×) labels
  * (`ariaLabels.removeHiddenItems` / `tooltips.removeHiddenItems`).
  */
-export interface CounterContext<T = any> extends SelectionCountContext<T> {
+export interface CounterContext<T = any> extends SelectionCountContext<T>, MultiSelectRenderContext<T> {
     /** Partial / compact mode: the number of items behind the "+X more" badge. Absent for the plain count. */
     moreCount?: number;
     /** The number the text's noun agrees with: `moreCount` when set (the "+X more" items), else `selectedCount`. */
@@ -355,7 +377,7 @@ export interface CounterContext<T = any> extends SelectionCountContext<T> {
 }
 
 /** `ctx` of `getCountLabelCallback` — the small count chip (in-input counter, group headers). */
-export interface CountLabelContext<T = any> extends MultiSelectContext<T> {
+export interface CountLabelContext<T = any> extends MultiSelectRenderContext<T> {
     /** Selected count. */
     selectedCount: number;
     /** In-input counter: the whole option list; group header: that group's member count. */
@@ -473,8 +495,8 @@ export interface ValueFormatContext<T = any> extends MultiSelectContext<T> {
     selectedOptions: T[];
 }
 
-/** `ctx` of `getAddNewTextCallback` and `beforeAddCallback` — the typed text. */
-export interface AddContext<T = any> extends MultiSelectContext<T> {
+/** `ctx` of `getAddNewTextCallback` and `beforeAddCallback` — the typed text (+ the {@link MultiSelectRenderContext} values). */
+export interface AddContext<T = any> extends MultiSelectRenderContext<T> {
     /** The typed text (trimmed). */
     value: string;
 }

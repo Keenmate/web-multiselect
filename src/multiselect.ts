@@ -14,7 +14,7 @@ import { anchor, createTooltip, createPopover, findOverlayContainer, type Popove
 import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, createSheetHeader, type AnimateOutHandle, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
-import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, MultiSelectIconName, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
+import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, MultiSelectIconName, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext, MultiSelectRenderContext } from './types';
 
 /** English fallbacks for the i18n `labels` map (every UI string). `{ctx.<path>}` placeholders read the text
  *  spot's context (passed as `{ ctx }`, rulebook D-NC-24), interpolated by core `createLabels` (`this.labels`). Every key here is also optional on `MultiSelectLabels`. */
@@ -80,7 +80,7 @@ import {
 } from '@keenmate/web-components-core/search';
 import { VirtualScroll } from './virtual-scroll';
 import { MS_ICONS } from './icons';
-import { createLabels, formatNumber, getCollator, type Labels } from '@keenmate/web-components-core/locale';
+import { createLabels, createLabelsView, formatNumber, getCollator, type Labels, type LabelsView } from '@keenmate/web-components-core/locale';
 import { createActiveDescendant, type ActiveDescendant } from '@keenmate/web-components-core/a11y';
 import { createLTree, type LTree } from './tree/ltree';
 import type { LTreeNode } from './utils/ltree-node';
@@ -1192,14 +1192,7 @@ export class MultiSelectEngine<T = any> {
         container.appendChild(this.dropdown);
 
         // Create hint if provided (attached to container)
-        const searchHint = this.labels.text('labels.searchHint');
-        if (searchHint) {
-            this.hint = document.createElement('div');
-            this.hint.className = 'ms__hint';
-            if (panelDir) this.hint.dir = panelDir;
-            this.hint.textContent = searchHint;
-            container.appendChild(this.hint);
-        }
+        this.syncSearchHint(container);
 
         // Create selected popover (attached to container)
         this.selectedPopover = document.createElement('div');
@@ -1311,7 +1304,7 @@ export class MultiSelectEngine<T = any> {
 
     /** The {@link CountLabelContext} of a count chip — `getCountLabelCallback`'s ctx and the `ariaLabels.groupSelected` label ctx. */
     private countLabelCtx(selected: number, total: number, groupName?: string): CountLabelContext<T> {
-        return this.ctx(groupName === undefined
+        return this.renderCtx(groupName === undefined
             ? { selectedCount: selected, totalCount: total, count: selected }
             : { selectedCount: selected, totalCount: total, groupName, count: selected });
     }
@@ -1507,7 +1500,7 @@ export class MultiSelectEngine<T = any> {
                         // half of GroupLabelRenderContext, spread so it can't drift.
                         const callback = this.options.renderGroupLabelContentCallback;
                         const slot = callback
-                            ? renderSlotHtml(() => callback(this.ctx({ groupName, ...info })), defaultLabel)
+                            ? renderSlotHtml(() => callback(this.renderCtx({ groupName, ...info })), defaultLabel)
                             : { html: defaultLabel(), kind: 'default' as const };
                         const labelClass = slot.kind === 'default' && countHtml ? `${baseLabelClass} ms__group-label--has-count` : baseLabelClass;
                         html += `<div class="${labelClass}"${groupAttr}${selectAttr}>${checkbox}${slot.html}</div>`;
@@ -1836,13 +1829,13 @@ export class MultiSelectEngine<T = any> {
 
         // Check if custom render callback is provided
         if (this.options.renderOptionContentCallback) {
-            const context: OptionContentRenderContext<T> = this.ctx({
+            const context: OptionContentRenderContext<T> = this.renderCtx({
                 option,
                 optionIndex: index,
                 isSelected,
                 isFocused,
                 isMatched,
-                isDisabled: disabled,
+                isOptionDisabled: disabled,
                 isTreeNode: false
             });
             const callback = this.options.renderOptionContentCallback;
@@ -1934,13 +1927,13 @@ export class MultiSelectEngine<T = any> {
         html += '<div class="ms__option-content">';
 
         if (this.options.renderOptionContentCallback) {
-            const context: OptionContentRenderContext<T> = this.ctx({
+            const context: OptionContentRenderContext<T> = this.renderCtx({
                 option,
                 optionIndex: index,
                 isSelected,
                 isFocused,
                 isMatched,
-                isDisabled: disabled,
+                isOptionDisabled: disabled,
                 // Tree metadata — lets the callback branch on depth / branch-vs-leaf /
                 // tristate without re-deriving any of it from the raw data item.
                 isTreeNode: true,
@@ -2013,7 +2006,7 @@ export class MultiSelectEngine<T = any> {
      * only the `{value}` substitution is escaped) → the default `Add "{value}"`.
      */
     private getAddNewText(value: string): string {
-        const ctx: AddContext<T> = this.ctx({ value });
+        const ctx: AddContext<T> = this.renderCtx({ value });
         if (this.options.getAddNewTextCallback) {
             return escapeHtml(String(this.options.getAddNewTextCallback(ctx)));
         }
@@ -2057,7 +2050,7 @@ export class MultiSelectEngine<T = any> {
 
     /** Pending-prompt label shown (with a spinner) while an async beforeAddCallback runs. */
     private getAddNewPendingText(value: string): string {
-        const ctx: AddContext<T> = this.ctx({ value });
+        const ctx: AddContext<T> = this.renderCtx({ value });
         return this.labels.html('messages.addNewPending', { ctx });
     }
 
@@ -2168,7 +2161,7 @@ export class MultiSelectEngine<T = any> {
             if (selectedOptions[0]) {
                 // Check if custom render callback is provided
                 if (this.options.renderSelectedContentCallback) {
-                    selectedLabel = this.options.renderSelectedContentCallback(this.ctx({ option: selectedOptions[0] }));
+                    selectedLabel = this.options.renderSelectedContentCallback(this.renderCtx({ option: selectedOptions[0] }));
                 } else {
                     selectedLabel = this.getItemDisplayValue(selectedOptions[0]);
                 }
@@ -3203,6 +3196,20 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
+     * {@link ctx} plus the values every render callback receives ({@link MultiSelectRenderContext}): `labels` (core
+     * `createLabelsView` — the whole chain, read live), `isReadonly`, `isDisabled` (effective). When one of them
+     * changes the rendered callbacks re-run in place ({@link refreshLabels}, {@link setDisabled}, `updateOptions`).
+     */
+    private renderCtx<F extends object>(fields: F): F & MultiSelectRenderContext<T> {
+        return this.ctx(Object.assign(fields, {
+            labels: (this.labelsView ??= createLabelsView(this.labels)),
+            isReadonly: !!this.options.isReadonly,
+            isDisabled: !!this.options.isDisabled,
+        }));
+    }
+    private labelsView?: LabelsView<Required<MultiSelectLabels>>;
+
+    /**
      * The per-option ctx (`{ option }`) for the data accessors (`getValueCallback`, …), which run
      * for every option on every pass: one shared prototype carries `controller` / `element` /
      * the presentation flags as getters, so a call allocates one small object.
@@ -3706,7 +3713,7 @@ export class MultiSelectEngine<T = any> {
                 let gate: BeforeCallbackResult<T>;
                 try {
                     gate = await runBeforeCallbackEager<object, T>(this.options.beforeAddCallback as (ctx: object) => unknown,
-                        this.ctx({ value }), 'beforeAddCallback');
+                        this.renderCtx({ value }), 'beforeAddCallback');
                 } finally {
                     this.addNewPending = false;
                 }
@@ -5278,7 +5285,7 @@ export class MultiSelectEngine<T = any> {
 
     /** The {@link BadgeContentRenderContext} for `item` — outside a render: configured mode, not in the popover. */
     private badgeCtx(option: T, info?: BadgeRenderInfo): BadgeContentRenderContext<T> {
-        return this.ctx({ option, ...(info ?? this.badgeRenderContext(false)) });
+        return this.renderCtx({ option, ...(info ?? this.badgeRenderContext(false)) });
     }
 
     /** Badges-area count text ("N selected" / "+X more") — `getCounterCallback(ctx)` or the label with the same ctx. */
@@ -5290,7 +5297,7 @@ export class MultiSelectEngine<T = any> {
 
     /** The {@link CounterContext}: `count` = `moreCount` for the "+X more" text, else the selection count. */
     private counterCtx(selectedCount: number, moreCount?: number): CounterContext<T> {
-        return this.ctx(moreCount === undefined
+        return this.renderCtx(moreCount === undefined
             ? { selectedCount, count: selectedCount }
             : { selectedCount, moreCount, count: moreCount });
     }
@@ -5562,16 +5569,19 @@ export class MultiSelectEngine<T = any> {
      * Handles the cheap structural toggles inline (no-checkboxes class, badges-position class,
      * input placeholder, search-input mode) and re-renders dropdown + badges + hidden inputs.
      *
-     * Returns `true` if the change could be applied in place. Returns `false` for changes that
-     * truly require rebuilding the DOM scaffolding (currently: adding/removing the `searchHint`
-     * element, since it's only created in `buildHTML` if a hint string was provided). The caller
-     * should fall back to destroy + re-init in that case.
+     * Returns `true` if the change could be applied in place, `false` when it needs a rebuild of the DOM
+     * scaffolding (the caller falls back to destroy + re-init then). Every key applies in place today — a
+     * `labels` / `locale` / `translateCallback` change too (refreshLabelChrome: the search hint is created /
+     * removed in place).
      */
     /** Effective disabled state (the element merges its `isDisabled` input with a disabled `<fieldset>`). */
     public setDisabled(isDisabled: boolean): void {
         if (!!this.options.isDisabled === isDisabled) return;
         this.options.isDisabled = isDisabled;
         this.applyInteractionState();
+        // `ctx.isDisabled` of the render callbacks: re-run them in place (selection / scroll kept).
+        this.renderDropdown({ preserveScroll: true });
+        this.renderBadges();
     }
 
     /** Disabled or readonly: the user can't change the selection or open the dropdown. */
@@ -5623,13 +5633,12 @@ export class MultiSelectEngine<T = any> {
     }
 
     public updateOptions(partial: Partial<MultiSelectConfig<T>>): boolean {
-        // A `labels` change rebuilds: the hint element and the build-time ARIA labels / texts
-        // are created by buildHTML (the element preserves the selection across a rebuild).
-        // `locale` likewise (the numbers in the labels / count chips) — the `localeChanged()` path —
-        // and `translateCallback` (the element's own label translator).
-        if ('labels' in partial || 'locale' in partial || 'translateCallback' in partial) return false;
+        // `labels` / `locale` / `translateCallback` (the element's own label translator) re-resolve every UI
+        // string in place (refreshLabels below) — no rebuild: selection, search, an open dropdown are kept.
+        const isLabelsChanged = 'labels' in partial || 'locale' in partial || 'translateCallback' in partial;
 
         Object.assign(this.options, partial);
+        if (isLabelsChanged) this.refreshLabelChrome('locale' in partial);
 
         if ('isReadonly' in partial || 'isDisabled' in partial) this.applyInteractionState();
 
@@ -5744,6 +5753,76 @@ export class MultiSelectEngine<T = any> {
             void this.handleSearch(this.typedTerm);
         }
         return true;
+    }
+
+    /**
+     * The UI strings changed — the page-wide `window.components.locale` (the element's `localeChanged()`); an
+     * own `labels` / `locale` / `translateCallback` change takes the same path through {@link updateOptions}.
+     * Re-resolves every label in place and re-runs the render callbacks (their `ctx.labels` reads the new chain):
+     * selection, search term, highlight, an open dropdown and its scroll are kept — no rebuild.
+     */
+    public refreshLabels(): void {
+        this.refreshLabelChrome(true);
+        this.renderDropdown({ preserveScroll: true });
+        this.renderBadges();
+    }
+
+    /**
+     * The label-bearing chrome built once (not by a render pass): the inline clear's `aria-label`, the search
+     * hint, the placeholders, the phone sheet's controls and the selected-items popover. `isLocaleChanged`:
+     * the collation may differ too — a tree re-sorts its siblings. The caller re-renders the list + badges.
+     */
+    private refreshLabelChrome(isLocaleChanged: boolean): void {
+        const text = (key: keyof MultiSelectLabels) => this.labels.text(key);
+        this.clearButton?.setAttribute('aria-label', text('ariaLabels.clearAllSelections'));
+        this.syncSearchHint();
+        this.refreshSearchPlaceholder();
+        this.fullscreenSearchClear?.setAttribute('aria-label', text('ariaLabels.clearSearch'));
+        this.fullscreenHeader?.querySelector('.ms__fullscreen-close')?.setAttribute('aria-label', text('ariaLabels.close'));
+        this.fullscreenNavPrev?.setAttribute('aria-label', text('ariaLabels.prevMatch'));
+        this.fullscreenNavNext?.setAttribute('aria-label', text('ariaLabels.nextMatch'));
+        if (this.fullscreenHeader) {
+            this.updateFullscreenModeToggle();
+            this.updateFullscreenNav();
+        }
+        if (this.showSelectedPopover) {
+            // The virtual popover keeps its header across renders — re-label it first.
+            this.selectedPopover.querySelector('.ms__selected-popover-close')?.setAttribute('aria-label', text('ariaLabels.close'));
+            this.renderSelectedPopover();
+        }
+        if (isLocaleChanged && this.isTreeMode()) this.buildTree();
+    }
+
+    /**
+     * The search hint (`labels.searchHint`) — the panel opposite the dropdown, present only while the label is
+     * non-empty: created / re-texted / removed in place (a label change while open shows / hides it at once).
+     */
+    private syncSearchHint(container?: Node): void {
+        const text = this.labels.text('labels.searchHint');
+        if (!text) {
+            if (this.hint) {
+                this.hintCleanup?.();
+                this.hintCleanup = null;
+                this.hint.remove();
+                this.hint = undefined;
+            }
+            return;
+        }
+        if (!this.hint) {
+            const parent = container ?? this.dropdown.parentNode;
+            if (!parent) return;
+            this.hint = document.createElement('div');
+            this.hint.className = 'ms__hint';
+            if (this.isRTL) this.hint.dir = 'rtl';
+            parent.appendChild(this.hint);
+            this.hint.textContent = text;
+            if (this.#isOpen && this.presentationMode === 'floating') {
+                this.hint.classList.add('ms__hint--visible');
+                this.positionHint();
+            }
+            return;
+        }
+        this.hint.textContent = text;
     }
 
     /**
@@ -5941,7 +6020,7 @@ export class MultiSelectEngine<T = any> {
 
     /** Build the remove-button tooltip text (callback > `labels['tooltips.removeItem']`, one {@link RemoveItemContext}). */
     private buildRemoveButtonTooltipText(displayValue: string, option: T, info?: BadgeRenderInfo): string {
-        const ctx: RemoveItemContext<T> = this.ctx({ ...this.badgeCtx(option, info), displayValue });
+        const ctx: RemoveItemContext<T> = this.renderCtx({ ...this.badgeCtx(option, info), displayValue });
         if (this.options.getRemoveButtonTooltipCallback) return this.options.getRemoveButtonTooltipCallback(ctx);
         return this.labels.text('tooltips.removeItem', { ctx });
     }
@@ -6039,13 +6118,13 @@ export class MultiSelectEngine<T = any> {
             // tooltip callback sees exactly the state its row shows. Flat shape (isTreeNode:false);
             // tree-only fields are left unset, matching the non-tree render path.
             const value = this.getItemValue(option);
-            const context: OptionContentRenderContext<T> = this.ctx({
+            const context: OptionContentRenderContext<T> = this.renderCtx({
                 option,
                 optionIndex: index,
                 isSelected: this.selectedValues.has(String(value)),
                 isFocused: index === this.focusedIndex,
                 isMatched: this.matchingIndices.has(index),
-                isDisabled: this.getItemDisabled(option),
+                isOptionDisabled: this.getItemDisabled(option),
                 isTreeNode: false
             });
 
@@ -6113,13 +6192,13 @@ export class MultiSelectEngine<T = any> {
         if (!option) return;
 
         const value = this.getItemValue(option);
-        const content = this.buildOptionTooltipContent(option, this.ctx({
+        const content = this.buildOptionTooltipContent(option, this.renderCtx({
             option,
             optionIndex: index,
             isSelected: this.selectedValues.has(String(value)),
             isFocused: index === this.focusedIndex,
             isMatched: this.matchingIndices.has(index),
-            isDisabled: this.getItemDisabled(option),
+            isOptionDisabled: this.getItemDisabled(option),
             isTreeNode: this.isTreeMode()
         }));
         if (!content) return;

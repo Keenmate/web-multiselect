@@ -94,9 +94,21 @@ describe('placeholder — no data', () => {
 });
 
 describe('placeholder — live updates (cascade / i18n)', () => {
-    it('a labels change asks the element for a rebuild (updateOptions returns false)', () => {
+    it('a labels change applies in place (no rebuild): same input, new placeholder', () => {
+        const input = make({ options: ITEMS });
+        expect(instance!.updateOptions({ labels: { 'placeholders.search': 'Buscar…' } })).toBe(true);
+        expect(host.querySelector('.ms__input')).toBe(input);
+        expect(input.placeholder).toBe('Buscar…');
+    });
+
+    it('a labels change creates / removes the search hint in place', () => {
         make({ options: ITEMS });
-        expect(instance!.updateOptions({ labels: { 'placeholders.search': 'Buscar…' } })).toBe(false);
+        const hint = () => document.querySelector('.ms__hint');
+        expect(hint()).toBeNull(); // the default hint is empty
+        instance!.updateOptions({ labels: { 'labels.searchHint': 'Type to filter' } });
+        expect(hint()?.textContent).toBe('Type to filter');
+        instance!.updateOptions({ labels: { 'labels.searchHint': '' } });
+        expect(hint()).toBeNull();
     });
 
     it('switches to labels["placeholders.noData"] when options are emptied (cascade clear)', () => {

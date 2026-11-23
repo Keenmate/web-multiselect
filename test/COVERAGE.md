@@ -184,6 +184,7 @@ When a row is marked `✓`/`△`, the **Spec** column points at the file under
 | `getSelectedItemClassCallback` adds classes in popover        | ✗      |      |         |
 | `customStylesCallback` injects styles into Shadow DOM         | ✓      | `custom-rendering.spec.ts`   | `custom-rendering.html`   |
 | `iconMember` / `subtitleMember` rendered in options           | ✓      | `custom-rendering.spec.ts`   | `custom-rendering.html`   |
+| render ctx `labels` / `isReadonly` / `isDisabled` re-run in place (labels, readonly, disabled, page locale; open + search kept) | ✓ | `custom-rendering.spec.ts` | `custom-rendering.html` |
 | Icon strings via core `renderIcon` (markup / built-in mask / class list `<i class="ms__icon …">` / text); element `renderIconCallback` beats the page hook, `null` falls through, built-ins never reach a hook; live hook change re-renders; action-button icons + `ctx.item` | ✓ | `icons.spec.ts` | `icons.html` |
 | ms's own icons by name (C-CA-42): `MS_ICONS` glyph defaults sized by their slot; `el.icons` (property + JSON attribute) replaces one in place (state kept), a built-in name as value, unset restores; page-wide `window.components.icons` (`web-multiselect.<name>` first), element beats page | ✓ | `icons.spec.ts` | `icons.html` (`#ms-own`) |
 | Element `translateCallback` beats the page-wide `window.components.locale.translateCallback`; `null` falls through; instance `labels` beat both; a change rebuilds (selection kept) | ✓ | `labels.spec.ts` | `labels.html` |
