@@ -8,8 +8,8 @@ import { test, expect, Page, Locator } from './fixtures';
  * / `filter` / `backdrop-filter` / a qualifying `will-change`), the browser anchors the
  * sheet to that ancestor's box instead of the viewport, so it stops covering the screen.
  * Unlike the floating path there's no drift to measure (nothing anchors the sheet), so the
- * component proactively asks core's containing-block heuristic on open and warns once per
- * instance. This spec verifies the warning fires for a transformed ancestor and stays
+ * sheet's core modal session (startModalSession → startSheetSession) runs core's containing-block
+ * check on the instance's first sheet — once per instance. This spec verifies the warning fires for a transformed ancestor and stays
  * silent for a plain one.
  *
  * Fixture: test/fullscreen-containing-block.html. `presentation="fullscreen"` forces
@@ -17,7 +17,7 @@ import { test, expect, Page, Locator } from './fixtures';
  */
 
 const PAGE = '/test/fullscreen-containing-block.html';
-const WARN_TAG = 'Fullscreen overlay is anchored to an ancestor';
+const WARN_TAG = 'the full-screen sheet is trapped in';
 
 function picker(page: Page, id: string): Locator {
     return page.locator(`#${id}`);
@@ -37,12 +37,11 @@ test('warns once, pointing at the culprit, when a transformed ancestor mis-ancho
 
     const fsWarnings = warnings.filter((w) => w.includes(WARN_TAG));
     expect(fsWarnings).toHaveLength(1);
-    // Names the culprit element + its containing-block CSS, and stays actionable.
+    // Names the culprit element (core: tag + id) + its containing-block CSS.
     expect(fsWarnings[0]).toContain('transform');
     expect(fsWarnings[0]).toContain('wrap-transform');
 
-    // Once per instance: reopening must not warn again. Close via the sheet's own ✕
-    // (Escape doesn't close the fullscreen overlay — it's the phone close affordance).
+    // Once per instance: reopening must not warn again. Close via the sheet's own ✕.
     await p.locator('.ms__fullscreen-close').click();
     await expect(openSheet).toBeHidden();
     await p.locator('.ms__input').click();

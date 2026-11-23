@@ -17,11 +17,10 @@ them is `import type { LTree } from './ltree'`, the type of the tree parameter; 
 time, so there is no runtime dependency. The Logic class (`multiselect.ts`) creates the tree and passes
 it to the cascade functions, so the coordination already runs through it, as the rule asks.
 
-## C-RO-4 — `100vw` inside a CSS comment
+## C-RO-9 — safe-area padding comes from core `.km-sheet`
 
-`src/css/floating.css` (fullscreen sheet) has one `100vw` in a comment that explains why a plain
-`width: 100vw` sheet clips on landscape phones; the rule itself uses `100dvw` / `100dvh`. There is no
-bare `vh` / `vw` in a declaration.
-
-Rulebook gap: `_agent-progress/rulebook-gaps-from-devkit.md` #20 (strip `/* … */` before grepping).
-PASS with note; drop this entry when the check ignores comments.
+Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) take their frame from core's
+`.km-sheet` (`SHEET_CHROME_CSS`, SPEC §12.29, adopted into the shadow root at runtime): `box-sizing: border-box` +
+`padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)`.
+The static scan only reads `src/css/`, so it can't see core's rule. PASS with note; drop this entry when the check
+counts a `.km-sheet` adoption as the safe-area frame.

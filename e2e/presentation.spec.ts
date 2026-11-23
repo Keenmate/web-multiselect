@@ -144,6 +144,79 @@ test.describe('fullscreen scale under base-css-variables (--base-rem: 1rem)', ()
     });
 });
 
+test.describe('the phone sheet is modal (core startModalSession + .km-sheet frame, C-CA-19)', () => {
+    // Is `el` (or an ancestor, across shadow roots) inert?
+    const isInert = (loc: Locator) => loc.evaluate((el) => {
+        for (let n: Node | null = el; n; n = (n as Element).parentElement ?? ((n.getRootNode() as ShadowRoot).host ?? null)) {
+            if (n instanceof Element && n.hasAttribute('inert')) return true;
+        }
+        return false;
+    });
+    // The focused element, through shadow roots: its class name.
+    const focusedClass = (page: Page) => page.evaluate(() => {
+        let a: Element | null = document.activeElement;
+        while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement;
+        return a?.className ?? '';
+    });
+
+    test('covers the viewport, makes the page inert, keeps Tab inside, Escape closes and returns focus', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await input(p).click();
+        const sheet = fullscreen(p);
+        await expect(sheet).toBeVisible();
+        await expect(sheet).toHaveClass(/km-sheet/);
+        await expect(sheet).toHaveAttribute('aria-modal', 'true');
+        await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+        const box = (await sheet.boundingBox())!;
+        expect(box).toMatchObject({ x: 0, y: 0, width: PHONE_PORTRAIT.width, height: PHONE_PORTRAIT.height });
+
+        // The page behind (another picker, the control under the sheet) is inert.
+        expect(await isInert(input(picker(page, 'floating')))).toBe(true);
+        expect(await isInert(input(p))).toBe(true);
+
+        // Tab cycles inside the sheet, never closes it.
+        await p.locator('.ms__fullscreen-search').focus();
+        for (let i = 0; i < 6; i++) {
+            await page.keyboard.press('Tab');
+            await expect(sheet).toBeVisible();
+            expect(await sheet.evaluate((el) => {
+                let a: Element | null = document.activeElement;
+                while (a?.shadowRoot?.activeElement) a = a.shadowRoot.activeElement;
+                return !!a && el.contains(a);
+            })).toBe(true);
+        }
+
+        // Escape: a typed search is cleared first, the next Escape closes.
+        await p.locator('.ms__fullscreen-search').fill('ch');
+        await page.keyboard.press('Escape');
+        await expect(sheet).toBeVisible();
+        await expect(p.locator('.ms__fullscreen-search')).toHaveValue('');
+        await page.keyboard.press('Escape');
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+        await expect(p.locator('.km-sheet')).toHaveCount(0);
+        // Focus is back on the control (a keyboard close), the page is live again, no reopen.
+        expect(await focusedClass(page)).toContain('ms__input');
+        expect(await isInert(input(picker(page, 'floating')))).toBe(false);
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+    });
+
+    test('the phone Back gesture closes it; a touch close leaves focus alone (no soft keyboard)', async ({ page }) => {
+        const p = picker(page, 'fullscreen');
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+        await page.evaluate(() => history.back());
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+        expect(await focusedClass(page)).not.toContain('ms__input');
+
+        await input(p).click();
+        await expect(fullscreen(p)).toBeVisible();
+        await p.locator('.ms__fullscreen-close').click();
+        await expect(p.locator('.ms__dropdown--visible')).toHaveCount(0);
+        expect(await focusedClass(page)).not.toContain('ms__input');
+        expect(await isInert(input(p))).toBe(false);
+    });
+});
+
 test.describe('closing the fullscreen sheet keeps the page scroll (core claimBackEntry, C-RO-15)', () => {
     test('✕ and the phone Back gesture close it without jumping the page to the top', async ({ page }) => {
         // A tall page with the picker well below the top.
@@ -215,6 +288,8 @@ test.describe('fullscreen truncated-label reveal (info button → createPopover 
         }, LONG);
         await input(p).click();
         await expect(fullscreen(p)).toBeVisible();
+        // The sheet slides in (core .km-sheet); a click mid-slide scrolls the moving panel.
+        await fullscreen(p).evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
 
         const longRow = fullscreen(p).locator('.ms__option[data-value="long"]');
         const shortRow = fullscreen(p).locator('.ms__option[data-value="apple"]');

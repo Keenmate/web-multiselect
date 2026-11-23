@@ -79,6 +79,7 @@ These are the ARIA keys; `labels` also holds every visible string — all keys a
 - Arrow-key navigation moves a *visual* focus indicator through options without moving DOM focus — the search input stays focused so typing continues to filter.
 - **Escape** behaves in priority order: close the selected-items popover (if open) → clear the search text (if any) → close the dropdown.
 - **Tab** closes the dropdown and moves DOM focus to the next focusable element in the page, matching native `<select>` semantics.
+- **The phone sheets are modal** (the fullscreen dropdown and the fullscreen selected-items popover, core `startModalSession`): `role="dialog"` + `aria-modal="true"`, the page behind is `inert`, Tab cycles inside the sheet (it never closes it), Escape (after clearing a typed search) and the phone Back gesture close it. A keyboard close returns focus to the control's input; a touch close leaves focus alone so the soft keyboard doesn't pop up.
 - Disabled options and, in tree mode, non-selectable nodes (`is-selectable-member` / `getIsSelectableCallback`) are skipped by every navigation key (↑ / ↓, Home / End, Page Up / Page Down, Ctrl + ↑ / ↓) and by the auto-focus of the first search result or the selected option on open — the same rule as core's menus. Arrowing past the last enabled option stays on it; when every option is disabled nothing is highlighted. Hovering a disabled option doesn't highlight it either, and Enter / click are ignored on it.
 
 ## Form integration & screen readers

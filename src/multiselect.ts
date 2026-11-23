@@ -8,10 +8,10 @@
 // the fixed-position containing-block heuristic and the drift measurement; this file
 // keeps only the multiselect-branded warning copy (see warnDrift). No direct
 // `@floating-ui/dom` dependency: core owns the one pinned version.
-import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, getFixedPositionOffsetParent, describeContainingBlockProps, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
+import { anchor, createTooltip, createPopover, findOverlayContainer, type PopoverCloseReason, type Placement, type TooltipHandle, type PopoverHandle, type DriftReport, type AnchorOptions } from '@keenmate/web-components-core/positioning';
 // Fullscreen-overlay primitives (SPEC §12.9) — shared with any component that swaps a
 // floating panel for a full-viewport sheet on phones (daterangepicker's fullscreen calendar).
-import { renderLoader, adoptStyles, SHEET_CHROME_CSS, claimBackEntry, lockBodyScroll, fitToVisibleViewport, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult } from '@keenmate/web-components-core';
+import { renderLoader, adoptStyles, SHEET_CHROME_CSS, startModalSession, createPresentationContext, withComponentContext, runBeforeCallbackEager, runBeforeCallbackSync, scrollIntoContainer, findScrollContainer, createFormInputs, formatFormValue, createAsyncRunner, createId, readCssLengthPx, readScrollBehavior, observeTextInput, isImeEnter, escapeHtml, renderIcon, renderSlotHtml, announce, animateOut, type FormInputs, type PresentationContext, type BeforeCallbackResult, type ModalSession, type ModalDismissReason } from '@keenmate/web-components-core';
 // Action items (SPEC §12.12): resolve / normalize / run — the one activation order for every component.
 import { resolveActionItem, normalizeActionItems, readActionDataset, runAction, type ActionSource } from '@keenmate/web-components-core/actions';
 import type { MultiSelectConfig, BadgesPosition, BadgesDisplayMode, SearchMode, SearchBehavior, SearchMatch, TabBehavior, SearchEntry, SearchTermContext, OptionContentRenderContext, BadgeContentRenderContext, MultiSelectController, MultiSelectContext, ItemContext, MultiSelectSearchContext, MessageOptions, ActionContext, MultiSelectAction, MultiSelectActionItem, MultiSelectActionEventDetail, MultiSelectLabels, SelectionSource, DropdownCloseReason, MultiSelectScrollSource, MultiSelectScrollOptions, CounterContext, CountLabelContext, CounterTooltipContext, MatchCountContext, SelectionCountContext, PlaceholderContext, PlaceholderKey, LimitContext, MinSelectedContext, MaxSelectedContext, RemoveItemContext, AddContext } from './types';
@@ -177,10 +177,9 @@ export class MultiSelectEngine<T = any> {
     private effectiveBadgesPosition: BadgesPosition = 'bottom';
     private justClosedViaClick = false;
     private positioningDriftWarned = false;
-    // Fullscreen counterpart of positioningDriftWarned: warn once per instance when an
-    // ancestor establishes a fixed-positioning containing block, so the full-viewport
-    // sheet is anchored to that ancestor instead of the viewport (see warnFullscreenContainingBlock).
-    private fullscreenContainingBlockWarned = false;
+    // Core's containing-block check (an ancestor transform traps the fixed sheet) runs on the
+    // first sheet of this instance only — once per instance, like positioningDriftWarned.
+    private isSheetContainingBlockChecked = false;
 
     // How the open dropdown is presented. 'floating' anchors it to the input (the
     // default); 'fullscreen' renders it as a full-viewport overlay with its own
@@ -204,16 +203,16 @@ export class MultiSelectEngine<T = any> {
     private fullscreenNavCount: HTMLElement | null = null;
     private fullscreenNavPrev: HTMLButtonElement | null = null;
     private fullscreenNavNext: HTMLButtonElement | null = null;
-    // Releases this instance's page-scroll lock (null when not locked). The core
-    // helper is ref-counted; we hold at most one lock per instance. See lockBodyScroll().
-    private bodyScrollUnlock: (() => void) | null = null;
-    // Detaches the visualViewport listener that shrinks the fullscreen sheet to sit
-    // above the soft keyboard (null when not attached). See fitToVisibleViewport().
-    private keyboardInsetCleanup: (() => void) | null = null;
-    // Releases the history entry held for the open fullscreen sheet (null when none), so
-    // the phone Back gesture/button closes the sheet instead of navigating the page. See
-    // claimBackEntry() / releaseBackEntry().
-    private releaseBack: (() => void) | null = null;
+    // The open phone sheet's core modal session (null when none): inert page + Tab trap, Escape /
+    // Back, scroll lock, keyboard inset. One at a time — the dropdown and the selected-items
+    // popover are mutually exclusive. See startSheet() / endSheet().
+    private sheetSession: ModalSession | null = null;
+    // The last interaction inside the open sheet was a press (not a key): its close leaves focus
+    // alone instead of returning it to the control input (which would pop the soft keyboard).
+    private isSheetPressUsed = false;
+    // The open() in progress was started by a press (mousedown on the input / chevron): the
+    // sheet swallows that tap's trailing click (core ghost-click guard, C-CA-23).
+    private isOpeningByPress = false;
 
     // Floating UI cleanup functions
     /** The open dropdown as a core popover (kept mounted; anchored only while floating). Created per open. */
@@ -1170,7 +1169,7 @@ export class MultiSelectEngine<T = any> {
                 this.closeWith('toggle');
                 setTimeout(() => { this.justClosedViaClick = false; }, 0);
             } else {
-                this.open();
+                this.openFromPress();
                 // Focus the search field so keyboard nav works right after opening (open()
                 // already guards the trailing click). The fullscreen overlay owns its own focus.
                 if (this.presentationMode !== 'fullscreen') this.input.focus();
@@ -2368,7 +2367,7 @@ export class MultiSelectEngine<T = any> {
                 // Open if closed (don't rely on focus event as input might already be
                 // focused). The click that follows is inside (the host), so core's overlay
                 // tree never reads it as an outside click.
-                this.open();
+                this.openFromPress();
             }
         });
 
@@ -2418,6 +2417,13 @@ export class MultiSelectEngine<T = any> {
         }, { passive: true });
 
         this.dropdown.addEventListener('click', (e) => this.handleDropdownClick(e));
+
+        // Phone sheet: did the user last press or type inside it? A keyboard close returns focus
+        // to the control input, a touch close leaves it (see endSheet()).
+        for (const panel of [this.dropdown, this.selectedPopover]) {
+            panel.addEventListener('pointerdown', () => { this.isSheetPressUsed = true; });
+            panel.addEventListener('keydown', () => { this.isSheetPressUsed = false; });
+        }
 
 
         // Prevent click propagation for show-selected action (in badges container)
@@ -2786,6 +2792,8 @@ export class MultiSelectEngine<T = any> {
                 }
                 break;
             case 'Tab':
+                // The phone sheet is modal: Tab cycles inside it (core focus trap), never closes it.
+                if (this.presentationMode === 'fullscreen') break;
                 // No preventDefault: focus moves on to the next / previous field as usual.
                 this.commitOnTab();
                 this.closeWith('tab');
@@ -4043,6 +4051,16 @@ export class MultiSelectEngine<T = any> {
         this.dropdownPopover?.claimCurrentClick();
     }
 
+    /** open() from a press (mousedown on the input / chevron): a phone sheet guards the tap's trailing click. */
+    private openFromPress(): void {
+        this.isOpeningByPress = true;
+        try {
+            this.open();
+        } finally {
+            this.isOpeningByPress = false;
+        }
+    }
+
     /** Open the dropdown (no-op if already open, or if there is nothing to show). */
     open(): void {
         uiLogger.debug(`[${this.instanceId}] open() called`, { isOpen: this.#isOpen });
@@ -4134,6 +4152,9 @@ export class MultiSelectEngine<T = any> {
         this.#isOpen = false;
         this.element.classList.remove('ms--open');
         this.syncListboxAria();
+        // End the phone sheet's modal session first (page interactive again, focus back on a
+        // keyboard close) — before the popover it hangs under leaves the overlay tree.
+        this.endSheet(this.shouldReturnSheetFocus(reason));
         // Hides the panel, stops positioning, leaves the overlay tree.
         const popover = this.dropdownPopover;
         this.dropdownPopover = null;
@@ -4297,44 +4318,6 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Fullscreen counterpart of {@link warnDrift}. The overlay is a `position: fixed`,
-     * full-viewport sheet — but if an ancestor of the host establishes a fixed-positioning
-     * containing block (`transform` / `perspective` / `filter` / `backdrop-filter` / a
-     * qualifying `will-change`), the browser anchors the sheet to THAT ancestor's box instead
-     * of the viewport, so it no longer covers the screen (offset, clipped, or mis-sized).
-     *
-     * Unlike the floating path — where core measures real drift after positioning — nothing
-     * anchors the sheet, so there's no drift to observe. Instead we ask core's shared
-     * heuristic (`getFixedPositionOffsetParent`, the same one that feeds the floating platform)
-     * whether the sheet's true offset parent is the viewport (`window`) or an element. An
-     * element means it WILL be mis-anchored; warn once, pointing at the culprit. We only check
-     * the reliably-honoured properties core lists (transform family) — `contain` /
-     * `container-type` are omitted because browsers don't honour them for fixed positioning,
-     * so they don't actually break the sheet.
-     */
-    private warnFullscreenContainingBlock(): void {
-        if (this.fullscreenContainingBlockWarned || typeof window === 'undefined') return;
-        const offsetParent = getFixedPositionOffsetParent(this.dropdown);
-        if (offsetParent === window) return; // viewport-anchored → sheet covers the screen, all good
-        this.fullscreenContainingBlockWarned = true;
-        const culprit = offsetParent as Element;
-        const id = culprit.id ? `#${culprit.id}` : '';
-        const cls = culprit.classList.length ? `.${Array.from(culprit.classList).join('.')}` : '';
-        const desc = `<${culprit.tagName.toLowerCase()}${id}${cls}>`;
-        const css = describeContainingBlockProps(culprit);
-        uiLogger.warn(
-            `[${this.instanceId}] Fullscreen overlay is anchored to an ancestor ${desc}` +
-            (css ? ` (has ${css})` : '') + ` instead of the viewport, so it may not cover the ` +
-            `screen (offset, clipped, or mis-sized).\n` +
-            `An ancestor of <web-multiselect> establishes a fixed-positioning containing block ` +
-            `(transform / perspective / filter / backdrop-filter / will-change). Fix on your side: ` +
-            `move the component out of that ancestor's subtree, OR remove/replace that property. If ` +
-            `neither is acceptable, please file an issue at ` +
-            `https://github.com/keenmate/web-multiselect/issues with the ancestor's computed CSS.`
-        );
-    }
-
-    /**
      * Re-anchor an already-open floating dropdown from scratch so a frozen placement
      * is re-evaluated against the panel's CURRENT height.
      *
@@ -4444,12 +4427,12 @@ export class MultiSelectEngine<T = any> {
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
                 this.syncSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
-                this.lockBodyScroll();
+                this.startSelectedPopoverSheet();
             } else {
+                this.endSheet(true);
                 this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
                 this.syncSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
-                this.unlockBodyScroll();
                 this.positionSelectedPopover();
             }
         }
@@ -4469,36 +4452,75 @@ export class MultiSelectEngine<T = any> {
     }
 
     /**
-     * Lock page scroll behind a fullscreen overlay via the core ref-counted helper.
-     * Idempotent per instance: the dropdown and the selected-items popover are mutually
-     * exclusive (opening one closes the other), so we hold at most one lock at a time,
-     * and a redundant call is a no-op rather than acquiring a second.
+     * The phone sheet's modal session (core `startModalSession`, SPEC §12.19, rulebook C-CA-19):
+     * the page behind goes inert, Tab cycles inside, Escape / the phone Back gesture ask to close
+     * (`dismissCallback` closes the panel, which ends the session), page scroll is locked, the
+     * page's open overlays are dismissed, and a press-opened sheet swallows the tap's trailing
+     * click. The panel becomes core's full-screen frame (`.km-sheet`, SHEET_CHROME_CSS, SPEC §12.29)
+     * while the session runs. `trigger: panel` makes the panel's own open popover (createPopover,
+     * same element) the session's parent in the overlay tree, so it isn't dismissed with the
+     * page's overlays. Focus moves nowhere on open — the dropdown focuses its own search only
+     * with `shouldFullscreenAutofocus` (the soft keyboard stays down otherwise).
      */
-    private lockBodyScroll(): void {
-        if (!this.bodyScrollUnlock) this.bodyScrollUnlock = lockBodyScroll();
+    private startSheet(panel: HTMLElement, opts: {
+        dismissCallback: (reason: ModalDismissReason) => void;
+        returnFocusTo: HTMLElement | null;
+        beforeEscapeCallback?: () => boolean | void;
+        shouldFitToVisibleViewport?: boolean;
+    }): void {
+        if (this.sheetSession) return;
+        this.adoptSheetChrome(panel);
+        panel.classList.add('km-sheet');
+        this.isSheetPressUsed = this.isOpeningByPress;
+        this.sheetSession = startModalSession(panel, {
+            trigger: panel,
+            dismissCallback: opts.dismissCallback,
+            initialFocus: false,
+            returnFocusTo: opts.returnFocusTo,
+            ...(opts.beforeEscapeCallback ? { beforeEscapeCallback: opts.beforeEscapeCallback } : {}),
+            shouldFitToVisibleViewport: !!opts.shouldFitToVisibleViewport,
+            isOpenedByPointer: this.isOpeningByPress,
+            shouldCheckContainingBlock: !this.isSheetContainingBlockChecked,
+            logSource: this.hostEl(),
+        });
+        this.isSheetContainingBlockChecked = true;
     }
 
-    /** Restore page scroll (no-op if it wasn't locked). */
-    private unlockBodyScroll(): void {
-        if (this.bodyScrollUnlock) { this.bodyScrollUnlock(); this.bodyScrollUnlock = null; }
-    }
-
-    /**
-     * While the fullscreen dropdown is open, keep it sitting above the soft keyboard.
-     * Delegates to core's `fitToVisibleViewport` (which tracks `window.visualViewport`
-     * and pins the panel's height/top so its flex column reflows above the keyboard);
-     * we just hold the returned cleanup. No-op where `visualViewport` is unavailable.
-     */
-    private observeKeyboardInset(): void {
-        this.keyboardInsetCleanup = fitToVisibleViewport(this.dropdown);
-    }
-
-    /** Detach keyboard-inset tracking and restore the panel's CSS-driven geometry. */
-    private unobserveKeyboardInset(): void {
-        if (this.keyboardInsetCleanup) {
-            this.keyboardInsetCleanup();
-            this.keyboardInsetCleanup = null;
+    /** End the phone sheet's session (no-op when none) and drop the `.km-sheet` frame. */
+    private endSheet(shouldReturnFocus: boolean): void {
+        const session = this.sheetSession;
+        if (!session) return;
+        this.sheetSession = null;
+        // Focus goes back to the control input: its focus handler must not reopen the dropdown.
+        const wasJustClosed = this.justClosedViaClick;
+        this.justClosedViaClick = true;
+        try {
+            session.end({ shouldReturnFocus });
+        } finally {
+            this.justClosedViaClick = wasJustClosed;
         }
+        this.dropdown.classList.remove('km-sheet');
+        this.selectedPopover.classList.remove('km-sheet');
+    }
+
+    /** A keyboard close (Escape, Enter on a row / the ✕) returns focus to the control; a touch
+     *  close or Back leaves it alone, so the soft keyboard doesn't pop up behind a closed sheet. */
+    private shouldReturnSheetFocus(reason: DropdownCloseReason): boolean {
+        return reason === 'escape' || (reason !== 'back' && !this.isSheetPressUsed);
+    }
+
+    /** The dropdown's close reason for a core modal-session dismissal (Escape / Back / the overlay tree). */
+    private sheetCloseReason(reason: ModalDismissReason): DropdownCloseReason {
+        return reason === 'backdrop' ? 'outside-click' : reason;
+    }
+
+    /** The selected-items popover as a phone sheet (its own header + ✕; no search, no keyboard inset). */
+    private startSelectedPopoverSheet(): void {
+        this.startSheet(this.selectedPopover, {
+            dismissCallback: () => this.hideSelectedPopover(),
+            // Like the floating popover: focusing the input would open the dropdown.
+            returnFocusTo: null,
+        });
     }
 
     /**
@@ -4604,15 +4626,21 @@ export class MultiSelectEngine<T = any> {
     private enterFullscreen(): void {
         this.clearFloatingInlineGeometry(this.dropdown);
         this.dropdown.classList.add('ms__dropdown--fullscreen');
-        // A transform/filter/… on an ancestor anchors this fixed sheet to that ancestor
-        // instead of the viewport — warn once, since it can't be fixed from inside the library.
-        this.warnFullscreenContainingBlock();
         this.buildFullscreenHeader();
-        this.lockBodyScroll();
-        // Trap the phone Back gesture/button so it closes the sheet instead of navigating.
-        this.claimBackEntry();
-        // Track the soft keyboard so the sheet shrinks to sit above it (see method doc).
-        this.observeKeyboardInset();
+        // Modal: inert page + Tab trap, Escape / Back close, scroll lock, the sheet shrinks to sit
+        // above the soft keyboard, a transformed ancestor trapping the fixed sheet warns once.
+        this.startSheet(this.dropdown, {
+            dismissCallback: (reason) => this.closeWith(this.sheetCloseReason(reason)),
+            returnFocusTo: this.input,
+            // Escape clears a typed search first (as in the floating dropdown), then closes.
+            beforeEscapeCallback: () => {
+                if (this.options.isSearchEnabled && this.input.value) {
+                    this.clearSearch();
+                    return false;
+                }
+            },
+            shouldFitToVisibleViewport: true,
+        });
 
         // Seed the header search with the current term. Auto-focus (which pops the soft
         // keyboard) is OPT-IN via shouldFullscreenAutofocus — default is to open with the list
@@ -4633,9 +4661,8 @@ export class MultiSelectEngine<T = any> {
 
     /** Tear down the fullscreen dropdown chrome and restore page scroll (no-op if floating). */
     private exitFullscreen(): void {
-        this.unobserveKeyboardInset();
-        // Give back the history entry held on open (no-op if the Back gesture already popped it).
-        this.releaseBackEntry();
+        // No-op after a close (closeWith ended it); a live switch to floating returns focus to the input.
+        this.endSheet(true);
         this.dropdown.classList.remove('ms__dropdown--fullscreen');
         if (this.fullscreenHeader) {
             this.fullscreenHeader.remove();
@@ -4648,31 +4675,6 @@ export class MultiSelectEngine<T = any> {
             this.fullscreenNavPrev = null;
             this.fullscreenNavNext = null;
         }
-        this.unlockBodyScroll();
-    }
-
-    /**
-     * Back-gesture handling for the fullscreen sheet (core `claimBackEntry()`, rulebook C-RO-15):
-     * one history entry while it is open, so the phone Back gesture/button closes the sheet
-     * instead of navigating away from the page. Any other close gives the entry back
-     * (`releaseBackEntry()`), and the page keeps its scroll position.
-     */
-    private claimBackEntry(): void {
-        if (this.releaseBack) return;
-        this.releaseBack = claimBackEntry(() => {
-            this.releaseBack = null;
-            // Close whichever fullscreen sheet holds the entry — the options dropdown or the
-            // selected-items popover (mutually exclusive; showPopover() closes the dropdown first).
-            if (this.#isOpen) this.closeWith('back');
-            else if (this.showSelectedPopover) this.hideSelectedPopover();
-        });
-    }
-
-    /** A close other than Back: give the entry back (no-op when none is held). */
-    private releaseBackEntry(): void {
-        const release = this.releaseBack;
-        this.releaseBack = null;
-        release?.();
     }
 
     /**
@@ -5058,11 +5060,8 @@ export class MultiSelectEngine<T = any> {
 
         if (this.presentationMode === 'fullscreen') {
             // Full-viewport overlay: no anchoring. The popover already renders its own
-            // header + close button, so it just needs the modifier class + scroll lock.
-            // Push a history entry too, so the phone Back gesture closes the sheet instead
-            // of navigating the page away (same guard the options dropdown uses).
-            this.lockBodyScroll();
-            this.claimBackEntry();
+            // header + close button; the modal session does the rest (see startSheet()).
+            this.startSelectedPopoverSheet();
         } else {
             this.positionSelectedPopover();
         }
@@ -5071,6 +5070,8 @@ export class MultiSelectEngine<T = any> {
     private hideSelectedPopover(): void {
         uiLogger.debug(`[${this.instanceId}] hideSelectedPopover() called`);
         this.showSelectedPopover = false;
+        // End the phone sheet's session first (no-op when floating) — before its parent popover goes.
+        this.endSheet(false);
         // Hides the panel, stops positioning, leaves the overlay tree (its onClose('api') is a no-op).
         const handle = this.selectedPopoverHandle;
         this.selectedPopoverHandle = null;
@@ -5078,10 +5079,6 @@ export class MultiSelectEngine<T = any> {
         this.selectedPopover.classList.remove('ms__selected-popover--visible');
         this.selectedPopover.classList.remove('ms__selected-popover--virtual');
         this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
-        this.unlockBodyScroll();
-        // Give back the history entry held on fullscreen open (no-op if a Back gesture
-        // already popped it, or if we were never fullscreen).
-        this.releaseBackEntry();
         this.hideMessage();
         this.selectedPopoverPlacement = null;
 

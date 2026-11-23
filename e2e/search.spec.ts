@@ -279,6 +279,21 @@ test.describe('fullscreen selected-items popover — Back-gesture guard', () => 
         await expect.poll(() => onOverlayEntry()).toBe(false); // moved back off it
     });
 
+    test('the sheet is modal (core .km-sheet + startModalSession): page inert, Escape closes', async ({ page }) => {
+        const p = picker(page, 'popover-fs');
+        await openPopoverFullscreen(p);
+        const sheet = popover(p);
+        await expect(sheet).toHaveClass(/km-sheet/);
+        await expect(sheet).toHaveAttribute('aria-modal', 'true');
+        // The control under the sheet is inert (its sibling in the shadow root).
+        expect(await p.evaluate((el) => !!el.shadowRoot!.querySelector('.ms__input')!.closest('[inert]'))).toBe(true);
+
+        await page.keyboard.press('Escape');
+        await expect(p.locator('.ms__selected-popover--visible')).toHaveCount(0);
+        await expect(p.locator('.km-sheet')).toHaveCount(0);
+        expect(await p.evaluate((el) => !!el.shadowRoot!.querySelector('.ms__input')!.closest('[inert]'))).toBe(false);
+    });
+
     test('the sheet header is core sheet chrome (km-sheet-*), labelled from ms labels', async ({ page }) => {
         const p = picker(page, 'popover-fs');
         await openPopoverFullscreen(p);

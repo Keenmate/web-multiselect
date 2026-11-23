@@ -118,44 +118,22 @@
   --ms-action-btn-font-size: calc(var(--ms-font-scale-sm) * var(--ms-rem));
 }
 
+/* The frame — fixed full-viewport box pinned by top / inline-start (NOT inset: 0: the keyboard inset
+   writes an inline height), safe-area padding, full-bleed background, the modal tier — is core's
+   .km-sheet (SHEET_CHROME_CSS, SPEC §12.29), added by JS while the sheet is open. The ms theme
+   variables feed core's instance layer here (no fallback: unset falls through to --km-sheet-*). */
+.ms__dropdown--fullscreen,
+.ms__selected-popover--fullscreen {
+  --_km-sheet-bg: var(--ms-fullscreen-bg);
+  --_km-sheet-color: var(--ms-fullscreen-text-color);
+  --_km-sheet-z-index: var(--ms-z-index-fullscreen);
+}
+
 .ms__dropdown--fullscreen {
-  position: fixed;
-  /* top/left only — NOT `inset: 0`. `inset` also sets `bottom: 0`, and a fixed box with
-     both `top` and `bottom` constrained ignores its `height`. fitToVisibleViewport()
-     shrinks the sheet above the soft keyboard by writing `height` (+ `top`), so a pinned
-     `bottom` would silently defeat it — the list and bottom actions would stay behind the
-     keyboard. With only top/left pinned, height governs and the keyboard reflow works. */
-  top: 0;
-  inset-inline-start: 0;
-  width: 100dvw;
-  max-width: 100dvw;
-  height: 100dvh;
-  max-height: 100dvh;
-  border: none;
-  border-radius: 0;
   /* The sheet is a squared full-viewport overlay, so the inner content must not
      round its corners — zero the inner clip radius here (the base var derives from
      --ms-dropdown-border-radius, which isn't 0 in this scope). */
   --ms-dropdown-inner-border-radius: 0;
-  background: var(--ms-fullscreen-bg);
-  color: var(--ms-fullscreen-text-color);
-  z-index: var(--ms-z-index-fullscreen);
-
-  /* Keep the sheet's CONTENT inside the display's safe area — the biggest offender is
-     LANDSCAPE, where the Android nav bar sits on one side and a camera cutout / rounded
-     corner on the other, so a plain full-viewport-width sheet runs its rows and search box
-     UNDER those system bars (left/right edges clipped, the field looks "too wide for the
-     screen"). `box-sizing: border-box` keeps the outer box a full-bleed 100dvw × 100dvh
-     (so the BACKGROUND still paints edge-to-edge with no gaps at the corners), while the
-     safe-area padding pulls the flex column (header · list · actions) into the visible
-     region. `env(safe-area-inset-*)` is 0 unless the host page opts into edge-to-edge
-     with `<meta name="viewport" content="… viewport-fit=cover">`, so this is a no-op on
-     non-cutout / letterboxed pages — never a regression, only a fix where it's needed. */
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
 }
 
 .ms__dropdown--fullscreen .ms__dropdown-inner {
@@ -688,28 +666,11 @@
    height is dropped in fullscreen — see renderSelectedPopoverVirtual).
    ------------------------------------------------------------------------------ */
 .ms__selected-popover--fullscreen {
-  position: fixed;
-  inset: 0;
+  /* Frame = core .km-sheet (see the dropdown sheet above). Only the flex column stays here: it must
+     beat --virtual's display: block for a large (virtual) selection. */
   display: flex;
   flex-direction: column;
-  width: 100dvw;
-  max-width: 100dvw;
-  height: 100dvh;
-  max-height: 100dvh;
-  border: none;
-  border-radius: 0;
   overflow: hidden;
-  background: var(--ms-fullscreen-bg);
-  color: var(--ms-fullscreen-text-color);
-  z-index: var(--ms-z-index-fullscreen);
-
-  /* Same safe-area contract as the dropdown sheet above — full-bleed background,
-     content inset out from under the landscape side bars / cutout. See that note. */
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
 }
 
 .ms__selected-popover--fullscreen .ms__selected-popover-body {

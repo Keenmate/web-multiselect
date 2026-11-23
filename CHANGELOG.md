@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0-rc04] - 2026-11-22
 
+### Changed — the phone sheets are modal, in core's full-screen frame (2026-11-23)
+- **Both phone sheets (the fullscreen dropdown and the fullscreen selected-items popover) run through core
+  `startModalSession`** (rulebook C-CA-19): `role="dialog"` + `aria-modal="true"`, the page behind is `inert`, Tab cycles
+  inside the sheet (in the dropdown sheet Tab no longer closes it), Escape closes it (the dropdown sheet clears a typed
+  search first, like the floating dropdown), the phone Back gesture closes it, page scroll is locked, the dropdown sheet
+  shrinks above the soft keyboard, and the page's open dropdowns / popovers / menus are dismissed when it opens. A keyboard
+  close returns focus to the control's input (without reopening); a touch close / Back leaves focus alone, so the soft
+  keyboard stays down. A sheet opened by a press (the input / chevron `mousedown`) swallows that tap's trailing click
+  (core ghost-click guard, C-CA-23). Replaces ms's own scroll lock / `claimBackEntry` / keyboard-inset wiring.
+- **The sheet frame is core's `.km-sheet`** (`SHEET_CHROME_CSS`, SPEC §12.29) instead of ms's own `position: fixed` /
+  100dvw × 100dvh / safe-area / modal-tier rules — same geometry, plus core's slide-in (motion tokens; instant with
+  `motion="none"` / reduced motion). `--ms-fullscreen-bg`, `--ms-fullscreen-text-color` and `--ms-z-index-fullscreen` keep
+  working (mapped onto core's `--_km-sheet-bg` / `-color` / `-z-index`); unset, a page-wide `--km-sheet-*` now applies.
+- The "sheet trapped by a transformed ancestor" warning is core's (once per instance, on the first sheet); its text
+  changed to core's `the full-screen sheet is trapped in <tag#id> (…)`.
+- e2e: `presentation.spec.ts` "the phone sheet is modal" (viewport cover, inert page, Tab trap, Escape → focus back,
+  Back / ✕ leave focus), `search.spec.ts` selected-items sheet modal; `fullscreen-containing-block.spec.ts` follows the
+  core warning.
+
 ### Changed — built on core `1.0.0-rc26` (the naming release) (2026-11-23)
 - `@keenmate/web-components-core` → `^1.0.0-rc26`; adopts core's final v1 names: `fitToVisibleViewport`
   (was `observeKeyboardInset`), `observeTextInput` (was `onTextInput`), `RenderLoadingCallback` (was
