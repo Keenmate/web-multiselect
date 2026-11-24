@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0-rc04] - 2026-11-22
+## [3.0.0-rc04] - 2026-11-24 [PUBLISHED]
 
 ### Internal — floating panel sizing through core anchor options (CONSOLIDATED §8 (T)) (2026-11-23)
 - The `dropdown-max-width` cap is core `anchor({ maxWidth: { padding: 8, cap } })` (`min(cap, available)`) instead of
@@ -250,7 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed — `MultiSelectEngine` export (2026-11-20)
 - **BREAKING: `MultiSelectEngine` is no longer exported: it only drew the same UI without the custom element.
   Use `<web-multiselect>`** (drive it through `el.controller`; set config as properties or with
-  `el.setAttributes({ … })`). The config / option / context / event-detail types stay exported (rulebook C-CA-37).
+  `el.setProperties({ … })`). The config / option / context / event-detail types stay exported (rulebook C-CA-37).
 
 ### Added — `translateCallback` (2026-11-20)
 - **New input `translateCallback(ctx)`** (property, `on: 'update'`, core `TranslateCallback`): this element's own label
