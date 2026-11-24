@@ -4206,7 +4206,7 @@ export class MultiSelectEngine<T = any> {
         getPlacement: () => Placement | null;
         setPlacement: (p: Placement) => void;
         isLocked?: () => boolean;
-        applyMaxWidth?: boolean;
+        shouldCapMaxWidth?: boolean;
         afterPosition?: () => void;
     }): AnchorOptions {
         const locked = opts.isLocked?.() ?? true;
@@ -4232,7 +4232,7 @@ export class MultiSelectEngine<T = any> {
             // space available on the resolved side (long content wraps instead of overflowing the
             // viewport edge); `cap` keeps the author's `dropdownMaxWidth` too — `min(cap, available)`.
             // Read when the popover is created (the dropdown's is created per open).
-            maxWidth: { padding: 8, cap: (opts.applyMaxWidth && this.options.dropdownMaxWidth) || undefined },
+            maxWidth: { padding: 8, cap: (opts.shouldCapMaxWidth && this.options.dropdownMaxWidth) || undefined },
             // Panel widths are CSS-variable driven (themeable at app level, overridable per instance via
             // the dropdown-width / selected-popover-width attributes). The dropdown defaults to the field
             // width, which CSS can't measure — core publishes the live field (wrapper) width as
@@ -4339,7 +4339,7 @@ export class MultiSelectEngine<T = any> {
                     uiLogger.debug(`[${this.instanceId}] Locked dropdown placement:`, p);
                 },
                 isLocked: () => locked,
-                applyMaxWidth: true,
+                shouldCapMaxWidth: true,
                 afterPosition: () => { if (this.hint && this.#isOpen) this.positionHint(); }
             }),
         });
