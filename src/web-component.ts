@@ -425,7 +425,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   /** Structural change (or first connect): mirror CSS vars, then (re)build the picker. */
   protected override reinit(): void {
-    this.#mirrorAllCssVars();
+    this.#reconcileAllCssVars();
     // reinit() runs on first connect (isConnected true) and on later on:'reinit'
     // changes. Build/rebuild here; connect() covers the plain-reconnect case.
     // Core's `defer` gate holds reinit() itself until release().
@@ -434,7 +434,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   /** Cosmetic change: mirror CSS vars / custom styles, patch the picker in place. */
   protected override update(partial: Record<string, unknown>): void {
-    this.#mirrorCssVars(partial);
+    this.#reconcileCssVars(partial);
     if ('getCustomStylesCallback' in partial || 'customStyles' in partial) this.#customStyles?.refresh();
 
     // Everything else goes to the live picker as an in-place patch. Forward `null`
@@ -460,12 +460,12 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     // the raw setting. When the author changes the attribute we re-resolve it
     // against the current environment ourselves (environmentChanged only fires on an
     // env change, not an attribute change).
-    if ('presentation' in partial) this.#applyPresentation(getEnvironment());
+    if ('presentation' in partial) this.#reconcilePresentation(getEnvironment());
 
     // `collapseBadgesBelow` is element-only too — re-evaluate against the current
     // box when the threshold is set/changed/cleared (the `sizeChanged` hook only fires
     // on a box change, not an attribute change).
-    if ('collapseBadgesBelow' in partial) this.#applyBadgeCollapse(this.offsetWidth);
+    if ('collapseBadgesBelow' in partial) this.#reconcileBadgeCollapse(this.offsetWidth);
   }
 
   /** The page-wide `window.components.locale` changed (core /locale): every label and placeholder re-resolves
@@ -554,11 +554,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    * set before the dropdown can open.
    */
   protected override environmentChanged(env: EnvironmentSnapshot): void {
-    this.#applyPresentation(env);
+    this.#reconcilePresentation(env);
   }
 
   /** Resolve `presentation` against `env` and relay it to the live picker. */
-  #applyPresentation(env: EnvironmentSnapshot): void {
+  #reconcilePresentation(env: EnvironmentSnapshot): void {
     const mode = (this.config.presentation as Presentation | null) ?? 'auto';
     // Class-only policy (core §12.9): `resolvePresentation` classifies the device
     // (`classifyDevice`) and applies the default map — fullscreen on a phone, floating
@@ -586,7 +586,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    * below` is set; otherwise it's a cheap no-op.
    */
   protected override sizeChanged({ width }: ElementSize): void {
-    this.#applyBadgeCollapse(width);
+    this.#reconcileBadgeCollapse(width);
   }
 
   /**
@@ -596,7 +596,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    * and widening past the threshold restores it exactly. A structural JS decision,
    * so it lives here rather than in a CSS container query.
    */
-  #applyBadgeCollapse(width: number): void {
+  #reconcileBadgeCollapse(width: number): void {
     const threshold = this.config.collapseBadgesBelow as number | null | undefined;
     // Feature off (attribute unset) → lift any collapse we applied, then bail.
     if (threshold == null) {
@@ -676,17 +676,17 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
     if (isHeldKept) this.#picker.adoptSelectedOptions(held!.selectedOptions);
     // The engine's first hidden-input write ran before #picker was set: evaluate the validity now.
     this.refreshRequired();
-    this.#applyCustomStyles();
+    this.#reconcileCustomStyles();
     // A fresh picker starts 'floating'; re-assert the resolved presentation so a
     // rebuild (reinit) doesn't drop a fullscreen setting until the next env change.
-    this.#applyPresentation(getEnvironment());
+    this.#reconcilePresentation(getEnvironment());
     // Likewise re-assert the container-responsive badge collapse: the fresh picker
     // is at the base badges mode, so reset our flag and re-evaluate the current box
     // (the throttled `sizeChanged` hook would otherwise leave it uncollapsed until the
     // next box change). offsetWidth is the layout width (no transforms) — the same number
     // core's sizeChanged() reports since rc18, so the first read and the hook agree.
     this.#badgesCollapsed = false;
-    this.#applyBadgeCollapse(this.offsetWidth);
+    this.#reconcileBadgeCollapse(this.offsetWidth);
   }
 
   #ensureContainer(): void {
@@ -790,7 +790,7 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
    * head, so an imported icon font's `@font-face` registers. Called once per build (#buildPicker)
    * and when either input changes (update()); destroyed in destroyCallback().
    */
-  #applyCustomStyles(): void {
+  #reconcileCustomStyles(): void {
     if (this.#customStyles) return this.#customStyles.refresh();
     this.#customStyles = createCustomStyles<MultiSelectContext<T>>(this, this.#shadow, { // writes both layers now
       cssClass: 'ms-custom-styles',
@@ -807,11 +807,11 @@ export class MultiSelectElement<T = any> extends BlissElement<MultiSelectEvents,
 
   // ── CSS-var sugar ─────────────────────────────────────────────────────────
 
-  #mirrorAllCssVars(): void {
+  #reconcileAllCssVars(): void {
     for (const key of Object.keys(CSS_VARS)) this.#setVar(CSS_VARS[key], this.config[key]);
   }
 
-  #mirrorCssVars(partial: Record<string, unknown>): void {
+  #reconcileCssVars(partial: Record<string, unknown>): void {
     for (const key of Object.keys(CSS_VARS)) {
       if (key in partial) this.#setVar(CSS_VARS[key], partial[key]);
     }

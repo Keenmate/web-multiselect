@@ -5,7 +5,7 @@ import {
 	nodeCheckState,
 	toggleNodeCascade,
 	expandToAtoms,
-	projectSelection
+	computeSelection
 } from '../../src/tree/cascade';
 
 interface Row {
@@ -104,33 +104,33 @@ describe('policy projection', () => {
 	const all = new Set(['1.1.1', '1.1.2', '1.2.1', '1.2.2']); // whole tree
 
 	it('rolled-up collapses a full subtree to its root', () => {
-		expect(projectSelection(index, all, 'rolled-up', getValue)).toEqual(['1']);
+		expect(computeSelection(index, all, 'rolled-up', getValue)).toEqual(['1']);
 	});
 	it('leaves emits only atoms', () => {
-		expect(projectSelection(index, all, 'leaves', getValue).sort()).toEqual([
+		expect(computeSelection(index, all, 'leaves', getValue).sort()).toEqual([
 			'1.1.1', '1.1.2', '1.2.1', '1.2.2'
 		]);
 	});
 	it('all emits every fully-checked node (branches + leaves)', () => {
-		expect(projectSelection(index, all, 'all', getValue)).toEqual([
+		expect(computeSelection(index, all, 'all', getValue)).toEqual([
 			'1', '1.1', '1.1.1', '1.1.2', '1.2', '1.2.1', '1.2.2'
 		]);
 	});
 
 	it('partial selection: rolled-up surfaces the individual leaf', () => {
 		const partial = new Set(['1.1.1']);
-		expect(projectSelection(index, partial, 'rolled-up', getValue)).toEqual(['1.1.1']);
-		expect(projectSelection(index, partial, 'all', getValue)).toEqual(['1.1.1']);
+		expect(computeSelection(index, partial, 'rolled-up', getValue)).toEqual(['1.1.1']);
+		expect(computeSelection(index, partial, 'all', getValue)).toEqual(['1.1.1']);
 	});
 
 	it('mixed: one full branch rolls up, a sibling partial stays granular', () => {
 		const mixed = new Set(['1.1.1', '1.1.2', '1.2.1']); // Pome full, Citrus partial
-		expect(projectSelection(index, mixed, 'rolled-up', getValue)).toEqual(['1.1', '1.2.1']);
+		expect(computeSelection(index, mixed, 'rolled-up', getValue)).toEqual(['1.1', '1.2.1']);
 	});
 
 	it('every policy round-trips back to the same atoms', () => {
 		for (const policy of ['rolled-up', 'leaves', 'all'] as const) {
-			const emitted = projectSelection(index, all, policy, getValue);
+			const emitted = computeSelection(index, all, policy, getValue);
 			expect(expandToAtoms(index, emitted)).toEqual(all);
 		}
 	});
@@ -142,8 +142,8 @@ describe('select-all parity (fill every atom, then project)', () => {
 		const index = buildCascadeIndex(tree, getValue);
 		// "Select All" = fill every atom in the tree.
 		const everyAtom = new Set(index.atomPaths); // atom paths == atom values here
-		expect(projectSelection(index, everyAtom, 'rolled-up', getValue)).toEqual(['1']);
-		expect(projectSelection(index, everyAtom, 'leaves', getValue).sort()).toEqual([
+		expect(computeSelection(index, everyAtom, 'rolled-up', getValue)).toEqual(['1']);
+		expect(computeSelection(index, everyAtom, 'leaves', getValue).sort()).toEqual([
 			'1.1.1', '1.1.2', '1.2.1', '1.2.2'
 		]);
 	});
@@ -156,7 +156,7 @@ describe('rolled-up with non-selectable roots (leaves-only tree)', () => {
 		const all = new Set(['1.1.1', '1.1.2', '1.2.1', '1.2.2']);
 		// Fruit + Pome + Citrus are non-selectable branches → cannot be emitted;
 		// roll-up descends to the leaves.
-		expect(projectSelection(index, all, 'rolled-up', getValue).sort()).toEqual([
+		expect(computeSelection(index, all, 'rolled-up', getValue).sort()).toEqual([
 			'1.1.1', '1.1.2', '1.2.1', '1.2.2'
 		]);
 	});

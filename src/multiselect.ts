@@ -89,7 +89,7 @@ import {
     nodeCheckState,
     expandToAtoms,
     toggleNodeCascade,
-    projectSelection,
+    computeSelection,
     type CascadeIndex,
     type CascadeSelectPolicy,
     type NodeCheckState
@@ -702,7 +702,7 @@ export class MultiSelectEngine<T = any> {
         // Submit the initial selection (`value` attribute / defaultValue) without waiting
         // for the first interaction.
         this.updateHiddenInput();
-        this.applyInteractionState();
+        this.reconcileInteractionState();
 
         initLogger.debug(`Initialized [${this.instanceId}] with options:`, {
             placeholder: this.getPlaceholderText(),
@@ -805,13 +805,13 @@ export class MultiSelectEngine<T = any> {
         if (max === null || !this.cascadeIndex) return false;
         const index = this.cascadeIndex;
         const { checkedAtoms } = toggleNodeCascade(index, node, expandToAtoms(index, this.selectedValues));
-        const size = this.projectCascade(checkedAtoms).length;
+        const size = this.computeCascadeValues(checkedAtoms).length;
         return size > max && size > this.selectedValues.size;
     }
 
     /** The emitted values of a checked-atom set under the active policy. */
-    private projectCascade(checkedAtoms: Set<string>): string[] {
-        return projectSelection(this.cascadeIndex!, checkedAtoms, this.cascadePolicy(), (d) => String(this.getItemValue(d)));
+    private computeCascadeValues(checkedAtoms: Set<string>): string[] {
+        return computeSelection(this.cascadeIndex!, checkedAtoms, this.cascadePolicy(), (d) => String(this.getItemValue(d)));
     }
 
     private toggleTreeCascade(node: LTreeNode<T>): void {
@@ -829,7 +829,7 @@ export class MultiSelectEngine<T = any> {
      */
     private commitCascadeAtoms(checkedAtoms: Set<string>): void {
         const index = this.cascadeIndex!;
-        const emitted = projectSelection(
+        const emitted = computeSelection(
             index,
             checkedAtoms,
             this.cascadePolicy(),
@@ -867,7 +867,7 @@ export class MultiSelectEngine<T = any> {
      */
     private counterSelection(): T[] {
         if (this.isCascadeMode() && this.cascadeIndex) {
-            const emitted = projectSelection(
+            const emitted = computeSelection(
                 this.cascadeIndex,
                 this.cascadeCheckedAtoms,
                 'rolled-up',
@@ -1192,7 +1192,7 @@ export class MultiSelectEngine<T = any> {
         container.appendChild(this.dropdown);
 
         // Create hint if provided (attached to container)
-        this.syncSearchHint(container);
+        this.reconcileSearchHint(container);
 
         // Create selected popover (attached to container)
         this.selectedPopover = document.createElement('div');
@@ -1369,7 +1369,7 @@ export class MultiSelectEngine<T = any> {
      * virtual rows, the "add new" prompt, caret-aware Home / End, `beforeKeydownCallback`), so core's helper
      * runs with `shouldHandleKeys: false` (ARIA only) and the picker drives `setActive()`.
      */
-    private syncListboxAria(): void {
+    private reconcileListboxAria(): void {
         if (this.#isDestroyed) return;
         for (const field of [this.input, this.fullscreenSearchInput]) field?.setAttribute('aria-expanded', String(this.#isOpen));
         const listbox = this.#isOpen ? (this.dropdown?.querySelector('[role="listbox"]') as HTMLElement | null) : null;
@@ -1394,7 +1394,7 @@ export class MultiSelectEngine<T = any> {
 
     private renderDropdown(opts?: { preserveScroll?: boolean }): void {
         this.renderDropdownContent(opts);
-        this.syncListboxAria();
+        this.reconcileListboxAria();
     }
 
     private renderDropdownContent(opts?: { preserveScroll?: boolean }): void {
@@ -1550,7 +1550,7 @@ export class MultiSelectEngine<T = any> {
         // Flag clipped labels so their fullscreen info affordance appears.
         this.markTruncatedOptions();
         // Round the first/last rows so a focused row's outline follows the panel corners.
-        this.applyEdgeOptionRadii();
+        this.reconcileEdgeOptionRadii();
     }
 
     /**
@@ -1570,7 +1570,7 @@ export class MultiSelectEngine<T = any> {
      * corners stay square then (the panel's rounded end corner is the scrollbar
      * track's). The radius is 0 in the fullscreen sheet (that scope zeroes the var).
      */
-    private applyEdgeOptionRadii(): void {
+    private reconcileEdgeOptionRadii(): void {
         const optionsEl = this.dropdownInner.querySelector('.ms__options') as HTMLElement | null;
         if (!optionsEl) return;
         // The scroll container is the options list itself (fullscreen / virtual, where it
@@ -1640,7 +1640,7 @@ export class MultiSelectEngine<T = any> {
         // (floating ⇄ fullscreen). Floating: a fixed maxHeight scroll box. Fullscreen: the
         // panel is a flex column, so flex-fill it and drop the fixed height. Also refresh
         // --_ms-option-height so scaled rows match the JS itemHeight.
-        this.applyVirtualOptionsSizing(this.optionsContainer);
+        this.reconcileVirtualOptionsSizing(this.optionsContainer);
 
         if (this.filteredOptions.length === 0) {
             // Destroy virtual scroll when showing empty message to prevent stale state
@@ -1680,9 +1680,9 @@ export class MultiSelectEngine<T = any> {
                         // Re-flag clipped labels on the freshly-rendered rows.
                         this.markTruncatedOptions();
                         // Re-round the edge rows as they're recycled into/out of view.
-                        this.applyEdgeOptionRadii();
+                        this.reconcileEdgeOptionRadii();
                         // The active row may have been recycled into / out of view.
-                        this.syncListboxAria();
+                        this.reconcileListboxAria();
                     }
                 });
             } else {
@@ -1700,7 +1700,7 @@ export class MultiSelectEngine<T = any> {
 
             // Attach tooltips to action buttons after rendering
             this.attachActionButtonTooltips();
-            this.syncListboxAria();
+            this.reconcileListboxAria();
         });
     }
 
@@ -2581,7 +2581,7 @@ export class MultiSelectEngine<T = any> {
             this.isLoading = isLoading;
             if (isLoading) this.renderDropdown();
         },
-        errorCallback: (error) => this.applySearchFailure(error),
+        errorCallback: (error) => this.handleSearchFailure(error),
     });
 
     /**
@@ -2601,12 +2601,12 @@ export class MultiSelectEngine<T = any> {
             (results) => {
                 // A term changed by a path that didn't start a new run: drop the stale results.
                 if (this.typedTerm !== value) return;
-                this.applySearchResults(results || []);
+                this.renderSearchResults(results || []);
             },
         );
     }
 
-    private applySearchResults(searchResults: T[]): void {
+    private renderSearchResults(searchResults: T[]): void {
         // Show the results. In tree mode, rebuild the hierarchy from the
         // returned matches (adding ancestors) so external search renders as a
         // coherent tree instead of a flat, mis-indexed list.
@@ -2628,7 +2628,7 @@ export class MultiSelectEngine<T = any> {
         dataLogger.debug(`[${this.instanceId}] Loaded ${searchResults.length} results`);
     }
 
-    private applySearchFailure(error: unknown): void {
+    private handleSearchFailure(error: unknown): void {
         dataLogger.error(`[${this.instanceId}] Error loading data:`, error);
         this.isLoading = false;
         if (this.options.shouldKeepOptionsOnSearch) {
@@ -3830,7 +3830,7 @@ export class MultiSelectEngine<T = any> {
                     const atom = String(this.getItemValue(option));
                     checkedAtoms.add(atom);
                     // The pick limit: stop (display order) before the projection outgrows it.
-                    if (max !== null && this.projectCascade(checkedAtoms).length > max) {
+                    if (max !== null && this.computeCascadeValues(checkedAtoms).length > max) {
                         checkedAtoms.delete(atom);
                         break;
                     }
@@ -4042,7 +4042,7 @@ export class MultiSelectEngine<T = any> {
         this.hideMessage();
 
         // A sheet still animating out (closed a moment ago) is hidden now, before the reopen.
-        this.finishSheetExit();
+        this.completeSheetExit();
         this.#isOpen = true;
         this.element.classList.add('ms--open');
         // Open unanchored (the panel shows, so the first render measures it); positionDropdown()
@@ -4114,7 +4114,7 @@ export class MultiSelectEngine<T = any> {
 
         this.#isOpen = false;
         this.element.classList.remove('ms--open');
-        this.syncListboxAria();
+        this.reconcileListboxAria();
         // End the phone sheet's modal session first (page interactive again, focus back on a
         // keyboard close) — before the popover it hangs under leaves the overlay tree.
         const isSheetExit = !!this.sheetSession && this.dropdown.classList.contains('km-sheet');
@@ -4383,13 +4383,13 @@ export class MultiSelectEngine<T = any> {
                 this.selectedPopoverPlacement = null;
                 this.clearFloatingMinWidth(this.selectedPopover);
                 this.selectedPopover.classList.add('ms__selected-popover--fullscreen');
-                this.syncSelectedPopoverSheetChrome();
+                this.reconcileSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
                 this.startSelectedPopoverSheet();
             } else {
                 this.endSheet(true);
                 this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
-                this.syncSelectedPopoverSheetChrome();
+                this.reconcileSelectedPopoverSheetChrome();
                 this.rebuildSelectedPopoverVirtual();
                 this.positionSelectedPopover();
             }
@@ -4469,10 +4469,10 @@ export class MultiSelectEngine<T = any> {
      * Animate a closing phone sheet out (core `animateOut` with `km-sheet--closing`: the motion tokens,
      * instant with `motion="none"` / reduced motion), then drop the frame and run `finish` (hide the
      * panel, tear the sheet chrome down). The panel is inert meanwhile. A reopen / destroy mid-exit
-     * finishes it at once ({@link finishSheetExit}).
+     * finishes it at once ({@link completeSheetExit}).
      */
     private animateSheetOut(panel: HTMLElement, finish: () => void): void {
-        this.finishSheetExit();
+        this.completeSheetExit();
         let isDone = false;
         const done = (): void => {
             if (isDone) return;
@@ -4486,7 +4486,7 @@ export class MultiSelectEngine<T = any> {
     }
 
     /** Cut a running sheet exit short (a reopen, a presentation switch, destroy): hide it now. */
-    private finishSheetExit(): void {
+    private completeSheetExit(): void {
         const exit = this.sheetExit;
         if (!exit) return;
         this.sheetExit = null;
@@ -4545,7 +4545,7 @@ export class MultiSelectEngine<T = any> {
      * panel's flex column (no fixed height). Also refreshes --_ms-option-height to the
      * scaled row height so the CSS row height matches the virtual scroller's itemHeight.
      */
-    private applyVirtualOptionsSizing(container: HTMLElement): void {
+    private reconcileVirtualOptionsSizing(container: HTMLElement): void {
         container.style.setProperty('--_ms-option-height', `${this.scaledOptionHeight()}px`);
         if (this.presentationMode === 'fullscreen') {
             container.style.flex = '1 1 0';
@@ -5024,7 +5024,7 @@ export class MultiSelectEngine<T = any> {
         this.hideMessage();
 
         // A sheet still animating out (the dropdown sheet just closed, or this one) is hidden now.
-        this.finishSheetExit();
+        this.completeSheetExit();
         this.showSelectedPopover = true;
         // The fullscreen modifier goes on BEFORE the render: it re-declares --ms-badge-height for
         // the sheet, and the virtual list measures its row height from that variable.
@@ -5066,7 +5066,7 @@ export class MultiSelectEngine<T = any> {
             this.selectedPopover.classList.remove('ms__selected-popover--visible');
             this.selectedPopover.classList.remove('ms__selected-popover--virtual');
             this.selectedPopover.classList.remove('ms__selected-popover--fullscreen');
-            this.syncSelectedPopoverSheetChrome();
+            this.reconcileSelectedPopoverSheetChrome();
         };
         if (isSheetExit) this.animateSheetOut(this.selectedPopover, hidePanel);
         else hidePanel();
@@ -5110,7 +5110,7 @@ export class MultiSelectEngine<T = any> {
                 ${selectedOptions.map(option => this.renderBadgeHTML(option, { displayMode: this.options.badgesDisplayMode || 'badges', isInPopover: true })).join('')}
             </div>
         `;
-        this.syncSelectedPopoverSheetChrome();
+        this.reconcileSelectedPopoverSheetChrome();
 
         // Attach tooltips to popover badges
         this.attachBadgeTooltips(this.selectedPopover);
@@ -5126,7 +5126,7 @@ export class MultiSelectEngine<T = any> {
     /** The selected-items popover header is a core sheet header (`km-sheet-header` / `-title` /
      *  `-close`, SPEC §12.9) only while it is the phone sheet — the floating popover keeps its
      *  own compact header. Re-run after every render and on a presentation switch. */
-    private syncSelectedPopoverSheetChrome(): void {
+    private reconcileSelectedPopoverSheetChrome(): void {
         const isSheet = this.selectedPopover.classList.contains('ms__selected-popover--fullscreen');
         if (isSheet) this.adoptSheetChrome(this.selectedPopover);
         this.selectedPopover.querySelector('.ms__selected-popover-header')?.classList.toggle('km-sheet-header', isSheet);
@@ -5172,7 +5172,7 @@ export class MultiSelectEngine<T = any> {
                 <div class="ms__selected-popover-body ms__selected-popover-body--virtual" style="${bodySizing} overflow-y: auto; position: relative; --_ms-badge-height-virtual: ${badgeHeight}px;"></div>
             `;
             this.selectedPopover.innerHTML = html;
-            this.syncSelectedPopoverSheetChrome();
+            this.reconcileSelectedPopoverSheetChrome();
             this.selectedPopoverContainer = this.selectedPopover.querySelector('.ms__selected-popover-body') as HTMLDivElement;
         } else {
             // Just update the count in header
@@ -5180,7 +5180,7 @@ export class MultiSelectEngine<T = any> {
             if (header) {
                 header.textContent = this.selectedPopoverTitleText(count);
             }
-            this.syncSelectedPopoverSheetChrome();
+            this.reconcileSelectedPopoverSheetChrome();
         }
 
         if (!this.selectedPopoverContainer) return;
@@ -5554,7 +5554,7 @@ export class MultiSelectEngine<T = any> {
     public setDisabled(isDisabled: boolean): void {
         if (!!this.options.isDisabled === isDisabled) return;
         this.options.isDisabled = isDisabled;
-        this.applyInteractionState();
+        this.reconcileInteractionState();
         // `ctx.isDisabled` of the render callbacks: re-run them in place (selection / scroll kept).
         this.renderDropdown({ preserveScroll: true });
         this.renderBadges();
@@ -5586,7 +5586,7 @@ export class MultiSelectEngine<T = any> {
      * `.ms--readonly`, the input stays focusable but read-only, the value is still submitted.
      * Either closes an open dropdown and hides the inline clear (✕).
      */
-    private applyInteractionState(): void {
+    private reconcileInteractionState(): void {
         const isDisabled = !!this.options.isDisabled;
         const isReadonly = !!this.options.isReadonly;
         this.element.classList.toggle('ms--disabled', isDisabled);
@@ -5616,7 +5616,7 @@ export class MultiSelectEngine<T = any> {
         Object.assign(this.options, partial);
         if (isLabelsChanged) this.refreshLabelChrome('locale' in partial);
 
-        if ('isReadonly' in partial || 'isDisabled' in partial) this.applyInteractionState();
+        if ('isReadonly' in partial || 'isDisabled' in partial) this.reconcileInteractionState();
 
         // Inputs to the search-value pipeline — cached values are stale if any changed.
         if ('options' in partial || 'searchValueMember' in partial || 'getSearchValueCallback' in partial
@@ -5675,7 +5675,7 @@ export class MultiSelectEngine<T = any> {
                 : null;
             if (this.isCascadeMode() && this.cascadeIndex) {
                 this.cascadeCheckedAtoms = expandToAtoms(this.cascadeIndex, this.selectedValues);
-                const emitted = projectSelection(
+                const emitted = computeSelection(
                     this.cascadeIndex,
                     this.cascadeCheckedAtoms,
                     this.cascadePolicy(),
@@ -5751,7 +5751,7 @@ export class MultiSelectEngine<T = any> {
     private refreshLabelChrome(isLocaleChanged: boolean): void {
         const text = (key: keyof MultiSelectLabels) => this.labels.text(key);
         this.clearButton?.setAttribute('aria-label', text('ariaLabels.clearAllSelections'));
-        this.syncSearchHint();
+        this.reconcileSearchHint();
         this.refreshSearchPlaceholder();
         this.fullscreenSearchClear?.setAttribute('aria-label', text('ariaLabels.clearSearch'));
         this.fullscreenHeader?.querySelector('.ms__fullscreen-close')?.setAttribute('aria-label', text('ariaLabels.close'));
@@ -5773,7 +5773,7 @@ export class MultiSelectEngine<T = any> {
      * The search hint (`labels.searchHint`) — the panel opposite the dropdown, present only while the label is
      * non-empty: created / re-texted / removed in place (a label change while open shows / hides it at once).
      */
-    private syncSearchHint(container?: Node): void {
+    private reconcileSearchHint(container?: Node): void {
         const text = this.labels.text('labels.searchHint');
         if (!text) {
             if (this.hint) {
@@ -6383,7 +6383,7 @@ export class MultiSelectEngine<T = any> {
 
         this.abortInFlightSearch();
 
-        this.finishSheetExit();
+        this.completeSheetExit();
         this.dropdownPopover?.destroy();
         this.dropdownPopover = null;
         if (this.hintCleanup) this.hintCleanup();

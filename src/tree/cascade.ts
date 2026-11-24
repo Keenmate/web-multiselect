@@ -138,7 +138,7 @@ export function toggleNodeCascade<T>(
 }
 
 /**
- * Project the checked-atom set to the emitted value list under a policy, in tree
+ * Compute the emitted value list of the checked-atom set under a policy, in tree
  * (depth-first) order:
  *   - `all`      → every fully-checked selectable node (branches + atoms).
  *   - `leaves`   → the checked atoms only.
@@ -147,7 +147,7 @@ export function toggleNodeCascade<T>(
  *                  subtree (nearest selectable descendants); an indeterminate node
  *                  descends so its individually-checked descendants surface.
  */
-export function projectSelection<T>(
+export function computeSelection<T>(
 	index: CascadeIndex<T>,
 	checkedAtoms: Set<string>,
 	policy: CascadeSelectPolicy,
