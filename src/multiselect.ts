@@ -208,8 +208,8 @@ export class MultiSelectEngine<T = any> {
     // Back, scroll lock, keyboard inset. One at a time — the dropdown and the selected-items
     // popover are mutually exclusive. See startSheet() / endSheet().
     private sheetSession: ModalSession | null = null;
-    /** The phone sheet animating out (core animateOut, `km-sheet--closing`): `finish` hides / tears it down. */
-    private sheetExit: { handle: AnimateOutHandle; finish: () => void } | null = null;
+    /** The phone sheet animating out (core animateOut, `km-sheet--closing`): `complete` hides / tears it down. */
+    private sheetExit: { handle: AnimateOutHandle; complete: () => void } | null = null;
     // The last interaction inside the open sheet was a press (not a key): its close leaves focus
     // alone instead of returning it to the control input (which would pop the soft keyboard).
     private isSheetPressUsed = false;
@@ -3380,7 +3380,7 @@ export class MultiSelectEngine<T = any> {
         if (!focusedElement) return;
         // Keyboard-driven (arrow keys, navigate-mode typing): always instant — a smooth scroll per
         // keystroke lags behind the focus and is torn down by the next re-render.
-        this.applyScrollIntoContainer(focusedElement, { isInstant: true, source, target });
+        this.scrollIntoDropdown(focusedElement, { isInstant: true, source, target });
     }
 
     /**
@@ -3395,7 +3395,7 @@ export class MultiSelectEngine<T = any> {
      * (→ `--base-scroll-behavior`: smooth; `auto` under reduced motion or `motion="none"`).
      * The caller may override `block`.
      */
-    private applyScrollIntoContainer(
+    private scrollIntoDropdown(
         el: HTMLElement,
         opts: { block?: ScrollLogicalPosition; isInstant?: boolean; source: MultiSelectScrollSource; target: { option: T | null; index: number; group?: string } },
     ): void {
@@ -3490,7 +3490,7 @@ export class MultiSelectEngine<T = any> {
             if (label) {
                 interactionLogger.debug(`[${this.instanceId}] scrollToGroup(${name}) — header found, scrolling label into view (block=${block})`);
                 const first = this.filteredOptions.findIndex(o => (this.getItemGroup(o) || '') === name);
-                this.applyScrollIntoContainer(label, { block, source: 'api', target: { option: null, index: first, group: name } });
+                this.scrollIntoDropdown(label, { block, source: 'api', target: { option: null, index: first, group: name } });
                 return Promise.resolve(true);
             }
         }
@@ -3522,7 +3522,7 @@ export class MultiSelectEngine<T = any> {
                 }
                 const el = this.dropdown.querySelector(`.ms__option[data-index="${index}"]`) as HTMLElement | null;
                 if (el) {
-                    this.applyScrollIntoContainer(el, { block: opts?.block, source: 'api', target });
+                    this.scrollIntoDropdown(el, { block: opts?.block, source: 'api', target });
                     interactionLogger.debug(`[${this.instanceId}] scrollToRenderedIndex(${index}) via the DOM row`);
                     return resolve(true);
                 }
@@ -4467,22 +4467,22 @@ export class MultiSelectEngine<T = any> {
 
     /**
      * Animate a closing phone sheet out (core `animateOut` with `km-sheet--closing`: the motion tokens,
-     * instant with `motion="none"` / reduced motion), then drop the frame and run `finish` (hide the
+     * instant with `motion="none"` / reduced motion), then drop the frame and run `complete` (hide the
      * panel, tear the sheet chrome down). The panel is inert meanwhile. A reopen / destroy mid-exit
      * finishes it at once ({@link completeSheetExit}).
      */
-    private animateSheetOut(panel: HTMLElement, finish: () => void): void {
+    private animateSheetOut(panel: HTMLElement, complete: () => void): void {
         this.completeSheetExit();
         let isDone = false;
         const done = (): void => {
             if (isDone) return;
             isDone = true;
-            if (this.sheetExit?.finish === done) this.sheetExit = null;
+            if (this.sheetExit?.complete === done) this.sheetExit = null;
             panel.classList.remove('km-sheet', 'km-sheet--closing');
-            finish();
+            complete();
         };
         const handle = animateOut(panel, { className: 'km-sheet--closing', doneCallback: done });
-        if (!isDone) this.sheetExit = { handle, finish: done };
+        if (!isDone) this.sheetExit = { handle, complete: done };
     }
 
     /** Cut a running sheet exit short (a reopen, a presentation switch, destroy): hide it now. */
@@ -4491,7 +4491,7 @@ export class MultiSelectEngine<T = any> {
         if (!exit) return;
         this.sheetExit = null;
         exit.handle.cancel();
-        exit.finish();
+        exit.complete();
     }
 
     /** A keyboard close (Escape, Enter on a row / the ✕) returns focus to the control; a touch
