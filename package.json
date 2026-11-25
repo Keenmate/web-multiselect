@@ -143,7 +143,7 @@
       "plausibleSiteId": "pa-5vUESDVyztHMyzN5gs5A4"
     },
     "image": {
-      "name": "registry.km8.es/web-multiselect-examples:prod",
+      "name": "registry.keenmate.dev/web-multiselect-examples:prod",
       "runner": "podman"
     },
     "cssVariables": {
