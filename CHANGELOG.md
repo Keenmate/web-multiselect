@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc05] - 2026-11-27
+
+### Changed — built on core ^1.0.0-rc27 (2026-11-27)
+- `@keenmate/web-components-core` `^1.0.0-rc27`: core's renamed internal verbs (`runAction`'s `emitAction` option is
+  now `dispatchAction`; no consumer-facing change), and built-in icon names (`check`, `close`, … through
+  `icon-member` / the `icons` map) now draw on a page without `base-css-variables` (core ships the contract glyphs as
+  fallbacks).
+
 ## [3.0.0-rc04] - 2026-11-24 [PUBLISHED]
 
 ### Internal — floating panel sizing through core anchor options (CONSOLIDATED §8 (T)) (2026-11-23)

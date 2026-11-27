@@ -3319,7 +3319,7 @@ export class MultiSelectEngine<T = any> {
             beforeActionCallback: this.options.beforeActionCallback,
             // The event reports the state the built-in / onClick left: refresh the selection snapshot.
             // An async beforeActionCallback may outlive the engine (reinit / DOM move): then nothing runs.
-            emitAction: (d) => { if (!this.#isDestroyed) this.options.onAction?.(Object.assign(d, this.selectionSnapshot())); },
+            dispatchAction: (d) => { if (!this.#isDestroyed) this.options.onAction?.(Object.assign(d, this.selectionSnapshot())); },
             runBuiltIn: (d) => this.#isDestroyed ? undefined : this.runBuiltInAction(d.action),
         });
     }
