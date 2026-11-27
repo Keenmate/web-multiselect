@@ -287,8 +287,8 @@
             </div>
             <div class="controls">
                 <span><code>--ms-scroll-behavior</code>:</span>
-                <label><input type="radio" name="scroll-behavior" value="" checked> default (<code>smooth</code>)</label>
-                <label><input type="radio" name="scroll-behavior" value="auto"> auto (instant)</label>
+                <label><input type="radio" name="scroll-behavior" value="" checked data-kmwc-css-variable="--ms-scroll-behavior" data-kmwc-css-target="#scroll-grouped, #scroll-virtual"> default (<code>smooth</code>)</label>
+                <label><input type="radio" name="scroll-behavior" value="auto" data-kmwc-css-variable="--ms-scroll-behavior" data-kmwc-css-target="#scroll-grouped, #scroll-virtual"> auto (instant)</label>
                 <span class="muted" style="margin-inline-start:0.5rem">the motion level / reduced motion also set it; virtual scroll always jumps</span>
             </div>
             <div class="grid">
@@ -897,14 +897,8 @@ normalizeSearchText('Český Krumlov');   // 'cesky krumlov'</code></pre></div>
 
             // The block option for every BU06 jump ('' = the method's default, 'start').
             const scrollBlock = () => document.querySelector('input[name="scroll-block"]:checked').value;
-            document.querySelectorAll('input[name="scroll-behavior"]').forEach((r) =>
-                r.addEventListener('change', (e) => {
-                    if (!e.target.checked) return;
-                    for (const el of [scrollGrouped, scrollVirtual]) {
-                        if (e.target.value) el.style.setProperty('--ms-scroll-behavior', e.target.value);
-                        else el.style.removeProperty('--ms-scroll-behavior');
-                    }
-                }));
+            // The scroll-behavior radios set --ms-scroll-behavior on both pickers through the devkit
+            // (data-kmwc-css-variable on a radio group: the checked one; '' = the default).
             const runScroll = (el, spec) => {
                 el.open();
                 if (spec === 'clear') { el.clearSearch(); scrollLog('clearSearch() — search reset, full list restored'); return; }

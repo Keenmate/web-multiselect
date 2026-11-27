@@ -42,7 +42,7 @@
                 <web-multiselect id="ab-static" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
-                    <pre id="out-static">[]</pre>
+                    <pre id="out-static" data-kmwc-value-readout="ab-static" data-kmwc-property="selectedValue"></pre>
                 </div>
                 <script type="module" data-kmwc-show>
                     const colors = document.getElementById('ab-static');
@@ -110,7 +110,7 @@
                 <web-multiselect id="ab-dynamic" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
-                    <pre id="out-dynamic">[]</pre>
+                    <pre id="out-dynamic" data-kmwc-value-readout="ab-dynamic" data-kmwc-property="selectedValue"></pre>
                 </div>
             </div>
 
@@ -144,7 +144,7 @@
                 <web-multiselect id="ab-custom" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
-                    <pre id="out-custom">[]</pre>
+                    <pre id="out-custom" data-kmwc-value-readout="ab-custom" data-kmwc-property="selectedValue"></pre>
                 </div>
                 <script type="module" data-kmwc-show>
                     const languages = document.getElementById('ab-custom');
@@ -200,7 +200,7 @@
                 <web-multiselect id="ab-icons" multiple="true"></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
-                    <pre id="out-icons">[]</pre>
+                    <pre id="out-icons" data-kmwc-value-readout="ab-icons" data-kmwc-property="selectedValue"></pre>
                 </div>
             </div>
 
@@ -285,7 +285,7 @@
                 <web-multiselect id="ab-adaptive" multiple="true" data-adaptive-actions></web-multiselect>
                 <div class="output">
                     <div class="output-label">Selected:</div>
-                    <pre id="out-adaptive">[]</pre>
+                    <pre id="out-adaptive" data-kmwc-value-readout="ab-adaptive" data-kmwc-property="selectedValue"></pre>
                 </div>
                 <script type="module" data-kmwc-show>
                     const items = [
@@ -423,18 +423,9 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             .inactive-state { opacity:0.6; }
         `;
 
-        const wireOutput = (el, pre) => {
-            const render = () => { pre.textContent = JSON.stringify(el.selectedValue, null, 2); };
-            el.addEventListener('change', render);
-            render();
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
-            // AB01 / AB03 / AB06 configure their pickers in their own (shown) demo scripts;
-            // the page only wires the "Selected:" read-outs.
-            wireOutput(document.getElementById('ab-static'), document.getElementById('out-static'));
-            wireOutput(document.getElementById('ab-custom'), document.getElementById('out-custom'));
-            wireOutput(document.getElementById('ab-adaptive'), document.getElementById('out-adaptive'));
+            // AB01 / AB03 / AB06 configure their pickers in their own (shown) demo scripts; the
+            // "Selected:" read-outs are the devkit's (data-kmwc-value-readout).
 
             // Shared helpers — `ctx` is the action-item selection snapshot.
             const values = (opts) => opts.map((o) => o[0]);
@@ -509,7 +500,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             document.querySelectorAll('input[name="dyn-cb"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) abDyn.actionButtons = dynSets[e.target.value](); }));
             abDyn.actionButtons = dynSets.none();
-            wireOutput(abDyn, document.getElementById('out-dynamic'));
 
             // ── AB04 · Icon buttons (Unicode glyphs vs Font Awesome) ─────
             const abIcons = document.getElementById('ab-icons');
@@ -547,7 +537,6 @@ actions-align     // 'stretch' (default) | 'left' | 'center' | 'right' | 'space-
             document.querySelectorAll('input[name="ico-lib"]').forEach((r) =>
                 r.addEventListener('change', (e) => { if (e.target.checked) applyIcons(e.target.value); }));
             applyIcons('glyph');
-            wireOutput(abIcons, document.getElementById('out-icons'));
 
             // ── AB05 · Positioning, rows & alignment ─────────────────────
             const abLayout = document.getElementById('ab-layout');
