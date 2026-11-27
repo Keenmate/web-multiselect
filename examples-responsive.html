@@ -5,43 +5,8 @@
     <link rel="stylesheet" href="/src/css/main.css">
 
     <style>
-        /* A user-resizable frame around a picker so you can drag its OWN width and
-           watch the component react to its box (not the window). `resize` needs a
-           non-visible overflow; the floating dropdown is fixed-positioned so it
-           isn't clipped by this. The grab handle sits at the bottom-right corner. */
-        .resizable {
-            resize: horizontal;
-            overflow: auto;
-            /* Cap the START width to what's available so a phone viewport isn't
-               overflowed (a hard 520px would push the page wider than the screen and
-               force a zoom-out). Dragging still sets an explicit px width from here. */
-            width: min(520px, 100%);
-            min-width: 200px;
-            max-width: 760px;
-            padding: 1rem;
-            border: 2px dashed var(--kmwc-border-color-strong);
-            border-radius: 10px;
-            background: var(--kmwc-main-bg);
-        }
-        .resizable .form-group { margin-bottom: 0; }
-
-        /* Live width read-out chip driven by a page-side ResizeObserver (display
-           only — the collapse itself is the component's job). Flips accent when the
-           box is under the threshold so the cause/effect is obvious. */
-        .width-readout {
-            display: inline-flex;
-            align-items: baseline;
-            gap: 0.4rem;
-            font-family: var(--kmwc-mono-font-family);
-            font-size: 0.85rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 999px;
-            background: var(--kmwc-accent-light-bg);
-            color: var(--kmwc-inline-code-color);
-            margin-bottom: 0.75rem;
-        }
-        .width-readout.is-narrow { background: color-mix(in srgb, var(--kmwc-warning-color) 18%, transparent); color: var(--kmwc-warning-color); }
-        .width-readout strong { font-size: 1rem; }
+        /* The drag frame is the kit's .resize-frame; its picker sits flush. */
+        #drag-frame .form-group { margin-bottom: 0; }
 
         /* A deliberately narrow fixed column on a wide page — the "sidebar on a big
            monitor" case: the window is wide, but the picker's box isn't. */
@@ -328,8 +293,8 @@
                 <em>"4 selected"</em> count; widen it back and the pills return. The window never changes —
                 only the picker's box does.
             </p>
-            <div class="width-readout" id="drag-readout">picker box: <strong>—</strong></div>
-            <div class="resizable" id="drag-frame">
+            <div class="width-readout" data-kmwc-width-readout="drag-select" data-kmwc-narrow-below="360">picker box: <strong>—</strong></div>
+            <div class="resize-frame" id="drag-frame">
                 <div class="form-group">
                     <label>Cloud services</label>
                     <web-multiselect id="drag-select" multiple="true" collapse-badges-below="360"
@@ -602,21 +567,6 @@ el.collapseBadgesBelow = null;</code></pre></div>
             dragSelect.options = options;
             dragSelect.setSelected(['0-0', '0-1', '1-0', '2-0']); // 4 → visible collapse at 360px
 
-            // Page-side ResizeObserver: purely a read-out of the picker's OWN box so the
-            // cause (box narrowing) is visible next to the effect (badges collapsing). It
-            // watches the same element and reports the border box (borderBoxSize), so the
-            // number matches exactly what the component's `resized` hook sees. The COMPONENT
-            // does its own observing via the hook — this is display only.
-            const readout = document.getElementById('drag-readout');
-            const THRESHOLD = 360;
-            const ro = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const w = Math.round(entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width);
-                    readout.innerHTML = `picker box: <strong>${w}px</strong>`;
-                    readout.classList.toggle('is-narrow', w < THRESHOLD);
-                }
-            });
-            ro.observe(dragSelect);
 
             // --- 8. Sidebar -----------------------------------------
             const sidebarSelect = document.getElementById('sidebar-select');
