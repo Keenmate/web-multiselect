@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now `dispatchAction`; no consumer-facing change), and built-in icon names (`check`, `close`, … through
   `icon-member` / the `icons` map) now draw on a page without `base-css-variables` (core ships the contract glyphs as
   fallbacks).
+- `@keenmate/base-css-variables` `^2.2.0`: without pure-admin the component now renders at its intended size (the
+  contract's `--base-rem` is 10px, was 1rem → 1.6× too big); the `--base-rem` contract allowance is removed.
 
 ### Internal
 - Private method and option names follow the rulebook's verbs (D-NC-30 / C-NC-16): no `notify*` / `sync*` / `apply*`
