@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `icon-member` / the `icons` map) now draw on a page without `base-css-variables` (core ships the contract glyphs as
   fallbacks).
 
+### Internal
+- Private method and option names follow the rulebook's verbs (D-NC-30 / C-NC-16): no `notify*` / `sync*` / `apply*`
+  internally (e.g. `applyScrollIntoContainer` → `scrollIntoDropdown`, the sheet exit's `finish` → `complete`, the
+  `anchor()` flag `applyMaxWidth` → `shouldCapMaxWidth`). No public API change.
+- Dev tooling: `@keenmate/web-components-devkit` `^1.0.0-rc15` (accent colour from the devkit registry, `social.png`
+  link-preview card on the example pages).
+
 ## [3.0.0-rc04] - 2026-11-24 [PUBLISHED]
 
 ### Internal — floating panel sizing through core anchor options (CONSOLIDATED §8 (T)) (2026-11-23)
